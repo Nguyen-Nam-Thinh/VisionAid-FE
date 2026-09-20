@@ -23,8 +23,10 @@ export type Command =
  | {type:'person'; person:Person}
  | {type:'link'; link:Link}
  | {type:'unlink'; id:string}
+ | {type:'transfer'; viuId:string; caregiverId:string}
  | {type:'transition'; id:string; status:AlertStatus; version:number}
  | {type:'photo'; faceId:string; photo:Photo; remove?:boolean}
  | {type:'rollback'; revisionId:string}
  | {type:'simulate'; event:'tick'|'alert'|'stale'};
 export const emptySnapshot = (): Snapshot => ({people:[],links:[],entities:{organizations:[],faces:[],places:[],geofences:[],contacts:[],preferences:[],tts:[],rules:[],configs:[]},photos:[],alerts:[],locations:[],activities:[],audit:[],revisions:[],deliveries:[],metrics:[]});
+

@@ -14,7 +14,9 @@ export interface VisionService {
  execute(command:Command):Promise<void>;
  resetDemo():Promise<void>;
  demoAccounts():Promise<Person[]>;
+ addSecondary(viuId:string,email:string):Promise<void>;
  generateLink(viuId:string):Promise<string>;
  acceptLink(code:string):Promise<void>;
  resetAccountPassword(id:string):Promise<string>;
 }
+
