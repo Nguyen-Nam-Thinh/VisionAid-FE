@@ -18,6 +18,7 @@ export function seed():Snapshot {
  db.entities.organizations=[entity('org1','Trung tâm Ánh Dương',{address:'Thủ Đức, TP. Hồ Chí Minh',phone:'02838221234',email:'hello@anhduong.demo',taxCode:'DEMO-001'}),entity('org2','Trung tâm Hy Vọng',{address:'Đà Nẵng',phone:'02363888888',email:'hello@hyvong.demo',taxCode:'DEMO-002'})];
  for(const [i,id] of ['viu1','viu2','viu3','viu4','other'].entries()){
   db.locations.push({viuId:id,lat:10.841+i*.002,lng:106.81+i*.003,at:ago(i===1?12:0),battery:i===1?18:82-i*10,accuracy:8+i,network:i===1?'Mất kết nối':'4G'});
+  for(let k=0;k<12;k++)db.activities.push({id:'move'+i+'-'+k,viuId:id,type:'MOVEMENT',at:ago(k*5),text:'Vị trí ghi nhận trên tuyến demo',online:true,lat:10.841+i*.002+k*.0002,lng:106.81+i*.003+k*.0003});
   db.entities.places.push(entity('place'+i,'Nhà riêng',{lat:10.841+i*.002,lng:106.81+i*.003,radius:50,message:'Bạn đã về đến nhà'},{viuId:id}));
   db.entities.geofences.push(entity('zone'+i,'Khu vực an toàn',{lat:10.842+i*.002,lng:106.812+i*.003,radius:300,enter:false,exit:true},{viuId:id}));
   db.entities.contacts.push(entity('contact'+i,'Người thân',{type:'PHONE',phone:'0901234567',zalo:'',priority:1},{viuId:id}));
@@ -32,3 +33,4 @@ export function seed():Snapshot {
  for(let i=0;i<14;i++)for(const [j,model] of ['YOLOv8n','VietOCR','FaceNet'].entries())db.metrics.push({model,day:ago(i*1440).slice(0,10),latency:120+j*320+i*3,successes:92+j*2,total:100,confidence:.84+j*.03});
  return db;
 }
+
