@@ -20,6 +20,7 @@ export function createMockService(persistence?:DemoPersistence,delay=180):Vision
  function validateEntity(kind:Kind,e:Entity){
   nameSchema.parse(e.name);
   if(['places','geofences'].includes(kind)){z.object({lat:z.number().min(-90).max(90),lng:z.number().min(-180).max(180),radius:z.number().positive()}).parse(e.fields);if(!db.entities[kind].some(x=>x.id===e.id)&&db.entities[kind].filter(x=>x.viuId===e.viuId).length>=20)fail('Tối đa 20 địa điểm/vùng cho mỗi người.');}
+  if(kind==='organizations'){z.email('Email tổ chức không hợp lệ.').parse(e.fields.email);if(e.fields.taxCode&&db.entities.organizations.some(o=>o.id!==e.id&&o.fields.taxCode===e.fields.taxCode))fail('Mã số thuế/giấy phép đã tồn tại.');const old=db.entities.organizations.find(o=>o.id===e.id);if(actor().role==='CenterAdmin'&&old&&old.active!==e.active)fail('Chỉ quản trị hệ thống được thay đổi trạng thái tổ chức.',403);}
   if(kind==='faces'&&!db.entities.faces.some(x=>x.id===e.id)&&db.entities.faces.filter(x=>x.viuId===e.viuId).length>=20)fail('Tối đa 20 người trong danh bạ khuôn mặt.');
   if(kind==='contacts'){const f=e.fields;const t=f.type;if(!['PHONE','ZALO','BOTH'].includes(String(t)))fail('Loại liên hệ không hợp lệ.');if((t==='PHONE'||t==='BOTH')&&!phoneSchema.safeParse(String(f.phone)).success)fail('Số điện thoại không hợp lệ.');if((t==='PHONE'||t==='BOTH')&&!f.phone)fail('Cần số điện thoại.');if((t==='ZALO'||t==='BOTH')&&!f.zalo)fail('Cần định danh Zalo.');if(t==='PHONE'&&f.zalo||t==='ZALO'&&f.phone)fail('PHONE chỉ có điện thoại; ZALO chỉ có định danh Zalo.');if(!Number.isInteger(f.priority)||Number(f.priority)<1)fail('Ưu tiên phải là số nguyên dương.');const others=db.entities.contacts.filter(x=>x.viuId===e.viuId&&x.id!==e.id);if(others.length>=5)fail('Tối đa 5 liên hệ.');if(others.some(x=>x.fields.priority===f.priority))fail('Thứ tự ưu tiên đã được sử dụng.');}
   if(kind==='configs'){const value=Number(e.fields.value);const old=db.entities.configs.find(x=>x.id===e.id);if(!old)fail('Không thể thêm khóa cấu hình chưa xác định.');if(!Number.isFinite(value)||value<Number(old.fields.min)||value>Number(old.fields.max))fail('Giá trị nằm ngoài giới hạn cấu hình.');e.fields={...old.fields,value};}
@@ -68,6 +69,7 @@ export function createMockService(persistence?:DemoPersistence,delay=180):Vision
   async resetAccountPassword(targetId){await pause();const a=actor();const p=db.people.find(p=>p.id===targetId);if(!p)fail('Không tìm thấy tài khoản.',404);allowed(canManagePerson(a,p));const code='DEMO-'+id().slice(0,8);recovery[code]=p.id;audit(a,'Yêu cầu đặt lại mật khẩu (mô phỏng)',p.name);save();return code;}
  };
 }
+
 
 
 
