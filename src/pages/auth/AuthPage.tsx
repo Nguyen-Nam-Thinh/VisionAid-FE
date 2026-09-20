@@ -4,9 +4,145 @@ import { Eye, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { Form, type FieldSpec } from '../../components/Form';
 import { useAuth, useDemoAccounts, useSession } from '../../hooks/useService';
 import { roles } from '../../constants/labels';
-export function AuthPage(){const {action='login'}=useParams();const auth=useAuth();const {data:user}=useSession();const {data:accounts=[]}=useDemoAccounts();const nav=useNavigate();const [email,setEmail]=useState('caregiver@demo.vn');const [message,setMessage]=useState('');
- if(user)return <Navigate to="/" replace/>;
- const titles:Record<string,string>={login:'Chào mừng trở lại.',register:'Bắt đầu đồng hành.',recover:'Khôi phục mật khẩu',reset:'Đặt mật khẩu mới'};if(!titles[action])return <Navigate to="/not-found" replace/>;
- const fields:FieldSpec[]=action==='reset'?[{key:'code',label:'Mã khôi phục demo',required:true},{key:'password',label:'Mật khẩu mới',type:'password',required:true}]:[{key:'email',label:'Địa chỉ email',type:'email',required:true},...(action==='register'?[{key:'name',label:'Họ và tên',required:true}]:[]),...(action!=='recover'?[{key:'password',label:'Mật khẩu',type:'password' as const,required:true}]:[])];
- return <div className="auth"><aside className="auth-story"><div className="row"><Eye size={36}/><strong style={{fontSize:24}}>VisionAid.</strong></div><div className="stack"><span className="eyebrow" style={{color:'#d5e0ff'}}>Một kết nối. Nhiều an tâm.</span><h1>Luôn gần bên,<br/>dù ở nơi đâu.</h1><p>Kết nối người chăm sóc và người thân trong một không gian an toàn, rõ ràng và dễ sử dụng.</p><div className="auth-mark"><Eye size={110} strokeWidth={1}/></div></div><div className="row"><ShieldCheck size={20}/><span>Đồng hành cùng sự tự lập mỗi ngày</span></div></aside><main className="auth-form"><div className="stack"><span className="badge blue">VISIONAID WEB DASHBOARD</span><h1>{titles[action]}</h1><p className="muted">{action==='register'?'Tạo tài khoản người chăm sóc gia đình.':'Không gian chăm sóc dành cho bạn.'}</p>{auth.mode==='mock'&&<div className="notice">Bản demo · Dữ liệu giả lưu trên trình duyệt. Mật khẩu mẫu: <strong>Demo@123</strong>. Không nhập dữ liệu hoặc mật khẩu thật.</div>}{action==='login'&&auth.mode==='mock'&&<label className="field">Chọn tài khoản demo<select value={email} onChange={e=>setEmail(e.target.value)}>{accounts.map(p=><option key={p.id} value={p.email}>{p.name} · {roles[p.role]}</option>)}</select></label>}<Form key={action+email} fields={fields} initial={{email,password:auth.mode==='mock'?'Demo@123':''}} submit={action==='login'?'Đăng nhập':action==='register'?'Tạo tài khoản':action==='recover'?'Tạo yêu cầu khôi phục':'Đặt mật khẩu'} onSubmit={async v=>{setMessage('');if(action==='login'){await auth.login(String(v.email),String(v.password));nav('/');}if(action==='register'){await auth.register(String(v.name),String(v.email),String(v.password));nav('/');}if(action==='recover'){const code=await auth.recover(String(v.email));setMessage('Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo (chỉ dùng với email tồn tại): '+code);}if(action==='reset'){await auth.resetPassword(String(v.code),String(v.password));setMessage('Đã đổi mật khẩu demo. Bạn có thể đăng nhập lại.');}}}/>{message&&<p role="status" className="notice">{message}</p>}<div className="row between"><Link to="/auth/login">Đăng nhập</Link><Link to="/auth/register">Đăng ký <ArrowUpRight size={14}/></Link></div><div className="row between"><Link to="/auth/recover">Quên mật khẩu?</Link><Link to="/auth/reset">Nhập mã khôi phục</Link></div><small>Hệ thống hỗ trợ người khiếm thị · FA26SE013</small></div></main></div>;
+export function AuthPage() {
+  const { action = 'login' } = useParams();
+  const auth = useAuth();
+  const { data: user } = useSession();
+  const { data: accounts = [] } = useDemoAccounts();
+  const nav = useNavigate();
+  const [email, setEmail] = useState('caregiver@demo.vn');
+  const [message, setMessage] = useState('');
+  if (user) return <Navigate to="/" replace />;
+  const titles: Record<string, string> = {
+    login: 'Chào mừng trở lại.',
+    register: 'Bắt đầu đồng hành.',
+    recover: 'Khôi phục mật khẩu',
+    reset: 'Đặt mật khẩu mới',
+  };
+  if (!titles[action]) return <Navigate to="/not-found" replace />;
+  const fields: FieldSpec[] =
+    action === 'reset'
+      ? [
+          { key: 'code', label: 'Mã khôi phục demo', required: true },
+          { key: 'password', label: 'Mật khẩu mới', type: 'password', required: true },
+        ]
+      : [
+          { key: 'email', label: 'Địa chỉ email', type: 'email', required: true },
+          ...(action === 'register' ? [{ key: 'name', label: 'Họ và tên', required: true }] : []),
+          ...(action !== 'recover'
+            ? [{ key: 'password', label: 'Mật khẩu', type: 'password' as const, required: true }]
+            : []),
+        ];
+  return (
+    <div className="auth">
+      <aside className="auth-story">
+        <div className="row">
+          <Eye size={36} />
+          <strong style={{ fontSize: 24 }}>VisionAid.</strong>
+        </div>
+        <div className="stack">
+          <span className="eyebrow" style={{ color: '#d5e0ff' }}>
+            Một kết nối. Nhiều an tâm.
+          </span>
+          <h1>
+            Luôn gần bên,
+            <br />
+            dù ở nơi đâu.
+          </h1>
+          <p>
+            Kết nối người chăm sóc và người thân trong một không gian an toàn, rõ ràng và dễ sử
+            dụng.
+          </p>
+          <div className="auth-mark">
+            <Eye size={110} strokeWidth={1} />
+          </div>
+        </div>
+        <div className="row">
+          <ShieldCheck size={20} />
+          <span>Đồng hành cùng sự tự lập mỗi ngày</span>
+        </div>
+      </aside>
+      <main className="auth-form">
+        <div className="stack">
+          <span className="badge blue">VISIONAID WEB DASHBOARD</span>
+          <h1>{titles[action]}</h1>
+          <p className="muted">
+            {action === 'register'
+              ? 'Tạo tài khoản người chăm sóc gia đình.'
+              : 'Không gian chăm sóc dành cho bạn.'}
+          </p>
+          {auth.mode === 'mock' && (
+            <div className="notice">
+              Bản demo · Dữ liệu giả lưu trên trình duyệt. Mật khẩu mẫu: <strong>Demo@123</strong>.
+              Không nhập dữ liệu hoặc mật khẩu thật.
+            </div>
+          )}
+          {action === 'login' && auth.mode === 'mock' && (
+            <label className="field">
+              Chọn tài khoản demo
+              <select value={email} onChange={(e) => setEmail(e.target.value)}>
+                {accounts.map((p) => (
+                  <option key={p.id} value={p.email}>
+                    {p.name} · {roles[p.role]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <Form
+            key={action + email}
+            fields={fields}
+            initial={{ email, password: auth.mode === 'mock' ? 'Demo@123' : '' }}
+            submit={
+              action === 'login'
+                ? 'Đăng nhập'
+                : action === 'register'
+                  ? 'Tạo tài khoản'
+                  : action === 'recover'
+                    ? 'Tạo yêu cầu khôi phục'
+                    : 'Đặt mật khẩu'
+            }
+            onSubmit={async (v) => {
+              setMessage('');
+              if (action === 'login') {
+                await auth.login(String(v.email), String(v.password));
+                nav('/');
+              }
+              if (action === 'register') {
+                await auth.register(String(v.name), String(v.email), String(v.password));
+                nav('/');
+              }
+              if (action === 'recover') {
+                const code = await auth.recover(String(v.email));
+                setMessage(
+                  'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo (chỉ dùng với email tồn tại): ' +
+                    code,
+                );
+              }
+              if (action === 'reset') {
+                await auth.resetPassword(String(v.code), String(v.password));
+                setMessage('Đã đổi mật khẩu demo. Bạn có thể đăng nhập lại.');
+              }
+            }}
+          />
+          {message && (
+            <p role="status" className="notice">
+              {message}
+            </p>
+          )}
+          <div className="row between">
+            <Link to="/auth/login">Đăng nhập</Link>
+            <Link to="/auth/register">
+              Đăng ký <ArrowUpRight size={14} />
+            </Link>
+          </div>
+          <div className="row between">
+            <Link to="/auth/recover">Quên mật khẩu?</Link>
+            <Link to="/auth/reset">Nhập mã khôi phục</Link>
+          </div>
+          <small>Hệ thống hỗ trợ người khiếm thị · FA26SE013</small>
+        </div>
+      </main>
+    </div>
+  );
 }

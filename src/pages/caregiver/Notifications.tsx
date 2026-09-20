@@ -3,5 +3,103 @@ import { useCommand } from '../../hooks/useService';
 import { useNotifications } from '../../hooks/useNotifications';
 import { PageHead, State, Badge } from '../../components/UI';
 import { Form } from '../../components/Form';
-export function Notifications(){const {query,db,user}=useWorkspace();const cmd=useCommand();const notifications=useNotifications();const events=[...new Set(db?.entities.rules.filter(r=>r.active).map(r=>String(r.fields.event))??[])];return <><PageHead title="Tùy chọn thông báo" description="Chọn kênh nhận tin phù hợp; các thông báo bắt buộc luôn được giữ lại." actions={<button className="btn" disabled={notifications.pending} onClick={notifications.request}>Xin quyền thông báo trình duyệt</button>}/><p className="notice" style={{marginBottom:20}}>Email và push trong phiên bản này chỉ được mô phỏng. Chưa gửi hoặc đăng ký FCM thật.</p>{notifications.message&&<p className="notice" role="status">{notifications.message}</p>}<State loading={query.isPending} error={query.error} retry={()=>query.refetch()}><div className="grid">{events.map(event=>{const rules=db!.entities.rules.filter(r=>r.active&&r.fields.event===event);const rule=rules.find(r=>r.orgId===user.orgId&&r.orgId)||rules.find(r=>!r.orgId)!;const pref=db!.entities.preferences.find(p=>p.ownerId===user.id&&p.fields.event===event);return <section key={event} className="glass card stack"><div className="row between"><h2>{rule.name}</h2><Badge tone={rule.fields.mandatory?'amber':'blue'}>{rule.fields.mandatory?'Bắt buộc':'Tùy chọn'}</Badge></div><Form key={pref?.version??0} fields={[{key:'push',label:'Thông báo đẩy',type:'checkbox',disabled:!!rule.fields.mandatory&&!!rule.fields.push},{key:'email',label:'Email',type:'checkbox',disabled:!!rule.fields.mandatory&&!!rule.fields.email}]} initial={{push:Boolean(rule.fields.mandatory?rule.fields.push:pref?.fields.push??rule.fields.push),email:Boolean(rule.fields.mandatory?rule.fields.email:pref?.fields.email??rule.fields.email)}} onSubmit={v=>cmd.mutateAsync({type:'save',kind:'preferences',entity:{id:pref?.id??crypto.randomUUID(),name:rule.name,active:true,ownerId:user.id,orgId:'',viuId:'',version:pref?.version??0,fields:{event,push:Boolean(rule.fields.mandatory&&rule.fields.push||v.push),email:Boolean(rule.fields.mandatory&&rule.fields.email||v.email)}}})}/></section>;})}</div></State></>;}
-
+export function Notifications() {
+  const { query, db, user } = useWorkspace();
+  const cmd = useCommand();
+  const notifications = useNotifications();
+  const events = [
+    ...new Set(db?.entities.rules.filter((r) => r.active).map((r) => String(r.fields.event)) ?? []),
+  ];
+  return (
+    <>
+      <PageHead
+        title="Tùy chọn thông báo"
+        description="Chọn kênh nhận tin phù hợp; các thông báo bắt buộc luôn được giữ lại."
+        actions={
+          <button className="btn" disabled={notifications.pending} onClick={notifications.request}>
+            Xin quyền thông báo trình duyệt
+          </button>
+        }
+      />
+      <p className="notice" style={{ marginBottom: 20 }}>
+        Email và push trong phiên bản này chỉ được mô phỏng. Chưa gửi hoặc đăng ký FCM thật.
+      </p>
+      {notifications.message && (
+        <p className="notice" role="status">
+          {notifications.message}
+        </p>
+      )}
+      <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
+        <div className="grid">
+          {events.map((event) => {
+            const rules = db!.entities.rules.filter((r) => r.active && r.fields.event === event);
+            const rule =
+              rules.find((r) => r.orgId === user.orgId && r.orgId) || rules.find((r) => !r.orgId)!;
+            const pref = db!.entities.preferences.find(
+              (p) => p.ownerId === user.id && p.fields.event === event,
+            );
+            return (
+              <section key={event} className="glass card stack">
+                <div className="row between">
+                  <h2>{rule.name}</h2>
+                  <Badge tone={rule.fields.mandatory ? 'amber' : 'blue'}>
+                    {rule.fields.mandatory ? 'Bắt buộc' : 'Tùy chọn'}
+                  </Badge>
+                </div>
+                <Form
+                  key={pref?.version ?? 0}
+                  fields={[
+                    {
+                      key: 'push',
+                      label: 'Thông báo đẩy',
+                      type: 'checkbox',
+                      disabled: !!rule.fields.mandatory && !!rule.fields.push,
+                    },
+                    {
+                      key: 'email',
+                      label: 'Email',
+                      type: 'checkbox',
+                      disabled: !!rule.fields.mandatory && !!rule.fields.email,
+                    },
+                  ]}
+                  initial={{
+                    push: Boolean(
+                      rule.fields.mandatory
+                        ? rule.fields.push
+                        : (pref?.fields.push ?? rule.fields.push),
+                    ),
+                    email: Boolean(
+                      rule.fields.mandatory
+                        ? rule.fields.email
+                        : (pref?.fields.email ?? rule.fields.email),
+                    ),
+                  }}
+                  onSubmit={(v) =>
+                    cmd.mutateAsync({
+                      type: 'save',
+                      kind: 'preferences',
+                      entity: {
+                        id: pref?.id ?? crypto.randomUUID(),
+                        name: rule.name,
+                        active: true,
+                        ownerId: user.id,
+                        orgId: '',
+                        viuId: '',
+                        version: pref?.version ?? 0,
+                        fields: {
+                          event,
+                          push: Boolean((rule.fields.mandatory && rule.fields.push) || v.push),
+                          email: Boolean((rule.fields.mandatory && rule.fields.email) || v.email),
+                        },
+                      },
+                    })
+                  }
+                />
+              </section>
+            );
+          })}
+        </div>
+      </State>
+    </>
+  );
+}
