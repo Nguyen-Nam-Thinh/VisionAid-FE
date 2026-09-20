@@ -1,4 +1,28 @@
-import { expect,it } from 'vitest';
+import { expect, it } from 'vitest';
 import { createMockService } from './mocks/service';
-it('transfers primary atomically and revokes previous primary management',async()=>{const s=createMockService(undefined,0);await s.login('caregiver@demo.vn','Demo@123');await s.execute({type:'transfer',viuId:'viu1',caregiverId:'cg2'});const links=(await s.snapshot()).links.filter(l=>l.viuId==='viu1');expect(links.filter(l=>l.primary).map(l=>l.caregiverId)).toEqual(['cg2']);await expect(s.addSecondary('viu1','staff@demo.vn')).rejects.toMatchObject({status:403});});
-it('rejects cross-tenant assignments even with valid account IDs',async()=>{const s=createMockService(undefined,0);await s.login('center@demo.vn','Demo@123');await expect(s.execute({type:'link',link:{id:'bad',caregiverId:'staff1',viuId:'other',primary:true,alerts:true,registry:true,locations:true}})).rejects.toThrow('cùng phạm vi');});
+it('transfers primary atomically and revokes previous primary management', async () => {
+  const s = createMockService(undefined, 0);
+  await s.login('caregiver@demo.vn', 'Demo@123');
+  await s.execute({ type: 'transfer', viuId: 'viu1', caregiverId: 'cg2' });
+  const links = (await s.snapshot()).links.filter((l) => l.viuId === 'viu1');
+  expect(links.filter((l) => l.primary).map((l) => l.caregiverId)).toEqual(['cg2']);
+  await expect(s.addSecondary('viu1', 'staff@demo.vn')).rejects.toMatchObject({ status: 403 });
+});
+it('rejects cross-tenant assignments even with valid account IDs', async () => {
+  const s = createMockService(undefined, 0);
+  await s.login('center@demo.vn', 'Demo@123');
+  await expect(
+    s.execute({
+      type: 'link',
+      link: {
+        id: 'bad',
+        caregiverId: 'staff1',
+        viuId: 'other',
+        primary: true,
+        alerts: true,
+        registry: true,
+        locations: true,
+      },
+    }),
+  ).rejects.toThrow('cùng phạm vi');
+});

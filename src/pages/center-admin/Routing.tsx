@@ -1,2 +1,4 @@
 import { RulesManager } from '../../components/RulesManager';
-export function Routing(){return <RulesManager/>;}
+export function Routing() {
+  return <RulesManager />;
+}

@@ -1,2 +1,4 @@
 import { TrackingMap } from '../../components/TrackingMap';
-export function LiveMap(){return <TrackingMap/>;}
+export function LiveMap() {
+  return <TrackingMap />;
+}

@@ -1,77 +1,612 @@
 import { z } from 'zod';
 import type { Command, Entity, Kind, Link, Person } from '../../models/domain';
 import { ServiceError, type VisionService } from '../contracts';
-import { canManagePerson, canSeeViu, canWrite, linkPermission, nextStates, scopeSnapshot } from '../policy';
+import {
+  canManagePerson,
+  canSeeViu,
+  canWrite,
+  linkPermission,
+  nextStates,
+  scopeSnapshot,
+} from '../policy';
 import { seed } from './seed';
-export interface DemoPersistence { read():string|null; write(value:string):void }
-const nameSchema=z.string().trim().min(2,'Tên cần ít nhất 2 ký tự.').max(200);
-const phoneSchema=z.string().refine(v=>!v||/^(0|\+84)[35789]\d{8}$/.test(v),'Số điện thoại Việt Nam không hợp lệ.');
-export const accountSchema=z.object({name:nameSchema,email:z.email('Email không hợp lệ.'),phone:phoneSchema});
-function fail(message:string,status=422):never {throw new ServiceError(message,status);}
-const id=()=>crypto.randomUUID();
-export function createMockService(persistence?:DemoPersistence,delay=180):VisionService {
- let db=seed();let current:string|null=null;let passwords:Record<string,string>={};let recovery:Record<string,string>={};let invitations:Record<string,{viuId:string;expires:number;creator:string}>={};
- try{const raw=persistence?.read();if(raw){const saved=JSON.parse(raw);if(saved.schema===1){db=saved.db;current=saved.current;passwords=saved.passwords??{};recovery=saved.recovery??{};invitations=saved.invitations??{};}}}catch{/* Damaged demo storage starts from seed. API mode never uses this implementation. */}
- const save=()=>{try{persistence?.write(JSON.stringify({schema:1,db,current,passwords,recovery,invitations}));}catch{fail('Bộ nhớ demo đã đầy. Giảm số ảnh hoặc reset dữ liệu.',507);}};
- const pause=async(signal?:AbortSignal)=>{await new Promise(r=>setTimeout(r,delay));if(signal?.aborted)throw new DOMException('Aborted','AbortError');};
- const actor=()=>{const a=db.people.find(p=>p.id===current&&p.active);if(!a) return fail('Phiên đã kết thúc. Vui lòng đăng nhập lại.',401);if(a.orgId&&!db.entities.organizations.some(o=>o.id===a.orgId&&o.active))return fail('Tổ chức đã ngừng hoạt động.',403);return a;};
- const allowed=(ok:boolean)=>{if(!ok)fail('Bạn không có quyền thực hiện thao tác này.',403);};
- const audit=(a:Person,action:string,target:string)=>db.audit.unshift({id:id(),actor:a.id,orgId:a.orgId,at:new Date().toISOString(),action,target});
- function validateEntity(kind:Kind,e:Entity){
-  nameSchema.parse(e.name);
-  if(['places','geofences'].includes(kind)){z.object({lat:z.number().min(-90).max(90),lng:z.number().min(-180).max(180),radius:z.number().positive()}).parse(e.fields);if(!db.entities[kind].some(x=>x.id===e.id)&&db.entities[kind].filter(x=>x.viuId===e.viuId).length>=20)fail('Tối đa 20 địa điểm/vùng cho mỗi người.');}
-  if(kind==='organizations'){z.email('Email tổ chức không hợp lệ.').parse(e.fields.email);if(e.fields.taxCode&&db.entities.organizations.some(o=>o.id!==e.id&&o.fields.taxCode===e.fields.taxCode))fail('Mã số thuế/giấy phép đã tồn tại.');const old=db.entities.organizations.find(o=>o.id===e.id);if(actor().role==='CenterAdmin'&&old&&old.active!==e.active)fail('Chỉ quản trị hệ thống được thay đổi trạng thái tổ chức.',403);}
-  if(kind==='faces'&&!db.entities.faces.some(x=>x.id===e.id)&&db.entities.faces.filter(x=>x.viuId===e.viuId).length>=20)fail('Tối đa 20 người trong danh bạ khuôn mặt.');
-  if(kind==='contacts'){const f=e.fields;const t=f.type;if(!['PHONE','ZALO','BOTH'].includes(String(t)))fail('Loại liên hệ không hợp lệ.');if((t==='PHONE'||t==='BOTH')&&!phoneSchema.safeParse(String(f.phone)).success)fail('Số điện thoại không hợp lệ.');if((t==='PHONE'||t==='BOTH')&&!f.phone)fail('Cần số điện thoại.');if((t==='ZALO'||t==='BOTH')&&!f.zalo)fail('Cần định danh Zalo.');if(t==='PHONE'&&f.zalo||t==='ZALO'&&f.phone)fail('PHONE chỉ có điện thoại; ZALO chỉ có định danh Zalo.');if(!Number.isInteger(f.priority)||Number(f.priority)<1)fail('Ưu tiên phải là số nguyên dương.');const others=db.entities.contacts.filter(x=>x.viuId===e.viuId&&x.id!==e.id);if(others.length>=5)fail('Tối đa 5 liên hệ.');if(others.some(x=>x.fields.priority===f.priority))fail('Thứ tự ưu tiên đã được sử dụng.');}
-  if(kind==='configs'){const value=Number(e.fields.value);const old=db.entities.configs.find(x=>x.id===e.id);if(!old)fail('Không thể thêm khóa cấu hình chưa xác định.');if(!Number.isFinite(value)||value<Number(old.fields.min)||value>Number(old.fields.max))fail('Giá trị nằm ngoài giới hạn cấu hình.');e.fields={...old.fields,value};}
-  if(kind==='tts'&&db.entities.tts.some(x=>x.id!==e.id&&x.viuId===e.viuId))fail('Mỗi người dùng chỉ có một bộ cấu hình TTS.');
-  if(kind==='tts')z.object({speed:z.number().min(.5).max(2),volume:z.number().min(0).max(100),voice:z.enum(['Nam','Nữ'])}).parse(e.fields);
-  if(kind==='rules'){if(e.fields.recipient)z.email('Email bàn trực không hợp lệ.').parse(e.fields.recipient);if(!['SOS','FALL','GEOFENCE','BATTERY'].includes(String(e.fields.event)))fail('Loại sự kiện không hợp lệ.');if(db.entities.rules.some(x=>x.id!==e.id&&x.orgId===e.orgId&&x.fields.event===e.fields.event))fail('Đã có quy tắc cho sự kiện trong phạm vi này.');if(e.fields.mandatory&&!e.fields.push&&!e.fields.email)fail('Quy tắc bắt buộc cần ít nhất một kênh.');}
-  if(kind==='preferences'){if(db.entities.preferences.some(x=>x.id!==e.id&&x.ownerId===e.ownerId&&x.fields.event===e.fields.event))fail('Tùy chọn đã tồn tại. Vui lòng tải lại.',409);const user=actor();const rules=db.entities.rules.filter(r=>r.active&&r.fields.event===e.fields.event);const rule=rules.find(r=>r.orgId===user.orgId&&r.orgId)||rules.find(r=>!r.orgId);if(rule?.fields.mandatory&&((rule.fields.push&&!e.fields.push)||(rule.fields.email&&!e.fields.email)))fail('Không thể tắt kênh thông báo bắt buộc.');}
- }
- function writeLink(a:Person,link:Link){
-  const viu=db.people.find(p=>p.id===link.viuId&&p.active&&p.role==='VisuallyImpaired');const cg=db.people.find(p=>p.id===link.caregiverId&&p.active&&p.role==='Caregiver');
-  if(!viu||!cg||viu.orgId!==cg.orgId)fail('Hai tài khoản phải đang hoạt động và cùng phạm vi tổ chức/cá nhân.');
-  allowed(a.role==='Admin'||a.role==='CenterAdmin'&&viu.orgId===a.orgId||linkPermission(db,a,viu.id,'primary'));
-  const old=db.links.find(l=>l.id===link.id);if(old&&(old.viuId!==link.viuId||old.caregiverId!==link.caregiverId))fail('Không thể đổi đối tượng của liên kết.');
-  const others=db.links.filter(l=>l.id!==link.id);if(others.some(l=>l.caregiverId===cg.id&&l.viuId===viu.id))fail('Liên kết đã tồn tại.');if(others.filter(l=>l.caregiverId===cg.id).length>=3||others.filter(l=>l.viuId===viu.id).length>=3)fail('Tối đa 3 liên kết trên mỗi người.');
-  if(link.primary&&others.some(l=>l.viuId===viu.id&&l.primary))fail('Người dùng đã có người chăm sóc chính.');if(!link.primary&&!others.some(l=>l.viuId===viu.id&&l.primary))fail('Cần duy trì một người chăm sóc chính.');
-  if(old)Object.assign(old,link);else db.links.push(link);
- }
- async function execute(command:Command){await pause();const a=actor();const before=structuredClone(db);try{
-  switch(command.type){
-   case 'save':{const e=structuredClone(command.entity);const list=db.entities[command.kind];const old=list.find(x=>x.id===e.id);allowed(canWrite(db,a,command.kind,e)&&(!old||canWrite(db,a,command.kind,old)));if(old&&(old.viuId!==e.viuId||old.orgId!==e.orgId||old.ownerId!==e.ownerId))fail('Không thể đổi phạm vi dữ liệu.');if(old&&old.version!==e.version)fail('Dữ liệu đã thay đổi. Vui lòng tải lại.',409);validateEntity(command.kind,e);if(command.kind==='faces')e.active=db.photos.filter(p=>p.faceId===e.id).length>=3;if(command.kind==='configs'&&old)db.revisions.unshift({id:id(),configId:e.id,name:e.name,before:old.fields.value,after:e.fields.value,actor:a.id,at:new Date().toISOString()});e.version=(old?.version??0)+1;if(old)list.splice(list.indexOf(old),1,e);else list.push(e);audit(a,'Lưu '+command.kind,e.name);break;}
-   case 'delete':{const e=db.entities[command.kind].find(x=>x.id===command.id);if(!e)fail('Không tìm thấy dữ liệu.',404);allowed(canWrite(db,a,command.kind,e));if(e.version!==command.version)fail('Dữ liệu đã thay đổi. Vui lòng tải lại.',409);if(['configs','organizations','tts'].includes(command.kind))fail('Dữ liệu này chỉ được cập nhật trạng thái, không xóa.');db.entities[command.kind]=db.entities[command.kind].filter(x=>x.id!==e.id);if(command.kind==='faces')db.photos=db.photos.filter(p=>p.faceId!==e.id);audit(a,'Xóa '+command.kind,e.name);break;}
-   case 'person':{const p=structuredClone(command.person);accountSchema.parse(p);const old=db.people.find(x=>x.id===p.id);const personalNew=!old&&a.role==='Caregiver'&&!a.orgId&&p.role==='VisuallyImpaired'&&!p.orgId;allowed(personalNew||canManagePerson(a,p)&&(!old||canManagePerson(a,old)));if(old&&(old.orgId!==p.orgId||old.role!==p.role)&&db.links.some(l=>l.viuId===old.id||l.caregiverId===old.id))fail('Gỡ liên kết hiện có trước khi đổi vai trò hoặc tổ chức.');if(!['Admin','CenterAdmin','Caregiver','VisuallyImpaired'].includes(p.role))fail('Vai trò không hợp lệ.');if(p.role==='CenterAdmin'&&!p.orgId||(!old&&a.role==='Admin'&&['Caregiver','VisuallyImpaired'].includes(p.role)&&!p.orgId))fail('Tài khoản hỗ trợ phải thuộc tổ chức.');if(p.orgId&&!db.entities.organizations.some(o=>o.id===p.orgId&&o.active))fail('Tổ chức không hoạt động.');if(db.people.some(x=>x.id!==p.id&&x.email.toLowerCase()===p.email.toLowerCase()))fail('Email đã tồn tại.');if(personalNew&&db.links.filter(l=>l.caregiverId===a.id).length>=3)fail('Bạn đã đạt giới hạn 3 người được liên kết.');if(old)Object.assign(old,p);else{db.people.push(p);if(personalNew)db.links.push({id:id(),caregiverId:a.id,viuId:p.id,primary:true,alerts:true,registry:true,locations:true});}audit(a,'Cập nhật tài khoản',p.name);break;}
-   case 'link':writeLink(a,command.link);audit(a,'Cập nhật phân công',command.link.viuId);break;
-   case 'transfer':{const viu=db.people.find(p=>p.id===command.viuId);allowed(!!viu&&(a.role==='Admin'||a.role==='CenterAdmin'&&viu.orgId===a.orgId||linkPermission(db,a,viu.id,'primary')));const target=db.links.find(l=>l.viuId===command.viuId&&l.caregiverId===command.caregiverId);if(!target||!db.people.some(p=>p.id===target.caregiverId&&p.active))fail('Người chăm sóc đích phải đang hoạt động và có liên kết.');db.links.filter(l=>l.viuId===command.viuId).forEach(l=>l.primary=l.id===target.id);audit(a,'Chuyển người chăm sóc chính',command.viuId);break;}
-   case 'unlink':{const link=db.links.find(l=>l.id===command.id);if(!link)fail('Liên kết không tồn tại.',404);const viu=db.people.find(p=>p.id===link.viuId)!;allowed(a.role==='Admin'||a.role==='CenterAdmin'&&viu.orgId===a.orgId||linkPermission(db,a,link.viuId,'primary'));if(link.primary&&db.links.some(l=>l.id!==link.id&&l.viuId===link.viuId))fail('Gỡ các liên kết phụ trước khi gỡ người chăm sóc chính.');db.links=db.links.filter(l=>l.id!==link.id);audit(a,'Gỡ liên kết',viu.name);break;}
-   case 'transition':{const alert=db.alerts.find(x=>x.id===command.id);if(!alert)fail('Không tìm thấy cảnh báo.',404);allowed(linkPermission(db,a,alert.viuId,'alerts'));if(alert.version!==command.version)fail('Cảnh báo vừa được xử lý. Vui lòng tải lại.',409);if(!nextStates[alert.status].includes(command.status))fail('Chuyển trạng thái không hợp lệ.');alert.history.push({at:new Date().toISOString(),from:alert.status,to:command.status,actor:a.id});alert.status=command.status;alert.version++;audit(a,'Xử lý cảnh báo '+command.status,alert.id);break;}
-   case 'photo':{const face=db.entities.faces.find(f=>f.id===command.faceId);if(!face)fail('Không tìm thấy người trong registry.',404);allowed(canWrite(db,a,'faces',face));if(command.photo.faceId!==face.id)fail('Ảnh không thuộc người đã chọn.');const photo=db.photos.find(p=>p.id===command.photo.id);if(photo&&photo.faceId!==face.id)fail('Không có quyền với ảnh này.',403);if(command.remove)db.photos=db.photos.filter(p=>p.id!==command.photo.id);else {if(!/^data:image\/(png|jpeg);base64,/.test(command.photo.url)&&!photo)fail('Chỉ nhận ảnh JPG/PNG từ thiết bị.');if(command.photo.url.length>2800000)fail('Giới hạn demo 2 MB mỗi ảnh.');if(command.photo.primary)db.photos.filter(p=>p.faceId===face.id).forEach(p=>p.primary=false);if(photo)Object.assign(photo,command.photo);else db.photos.push(command.photo);}const photos=db.photos.filter(p=>p.faceId===face.id);if(photos.length&&!photos.some(p=>p.primary))photos[0].primary=true;face.active=photos.length>=3;face.version++;audit(a,'Cập nhật ảnh registry',face.name);break;}
-   case 'rollback':{allowed(a.role==='Admin');const r=db.revisions.find(r=>r.id===command.revisionId);if(!r)fail('Không tìm thấy phiên bản.',404);const c=db.entities.configs.find(c=>c.id===r.configId)!;db.revisions.unshift({id:id(),configId:c.id,name:c.name,before:c.fields.value,after:r.before,at:new Date().toISOString(),actor:a.id});c.fields.value=r.before;c.version++;audit(a,'Khôi phục cấu hình',c.name);break;}
-   case 'simulate':{const visible=db.locations.filter(l=>canSeeViu(db,a,l.viuId));if(command.event==='alert'){const first=visible[0];if(first)db.alerts.unshift({id:id(),viuId:first.viuId,type:'SOS',status:'SENT',version:1,at:new Date().toISOString(),lat:first.lat,lng:first.lng,history:[{at:new Date().toISOString(),from:null,to:'SENT',actor:null}]});}else for(const location of visible){if(command.event==='stale')location.at=new Date(Date.now()-600000).toISOString();else{location.lat+=.00008;location.lng+=.00006;location.at=new Date().toISOString();location.network='4G';}}break;}
-  }save();
- }catch(e){db=before;if(e instanceof z.ZodError)throw new ServiceError(e.issues.map(x=>x.message).join(' '));throw e;}}
- return {mode:'mock',
-  async session(){await pause();if(!current)return null;return structuredClone(actor());},
-  async demoAccounts(){return structuredClone(db.people.filter(p=>p.active&&p.role!=='VisuallyImpaired'));},
-  async login(email,password){await pause();const p=db.people.find(p=>p.email.toLowerCase()===email.toLowerCase()&&p.active&&p.role!=='VisuallyImpaired');if(!p||password!==(passwords[p.id]??'Demo@123'))fail('Email hoặc mật khẩu không đúng.',401);current=p.id;actor();save();return structuredClone(p);},
-  async register(name,email,password){await pause();accountSchema.parse({name,email,phone:''});z.string().min(8).parse(password);if(db.people.some(p=>p.email.toLowerCase()===email.toLowerCase()))fail('Email đã tồn tại.');const p:Person={id:id(),name,email,phone:'',role:'Caregiver',orgId:'',active:true};db.people.push(p);passwords[p.id]=password;current=p.id;save();return structuredClone(p);},
-  async logout(){current=null;save();},
-  async recover(email){await pause();z.email().parse(email);const p=db.people.find(p=>p.email.toLowerCase()===email.toLowerCase());const code='DEMO-'+id().slice(0,8);if(p)recovery[code]=p.id;save();return code;},
-  async resetPassword(code,password){await pause();z.string().min(8).parse(password);const user=recovery[code];if(!user)fail('Mã demo không hợp lệ hoặc đã dùng.');passwords[user]=password;delete recovery[code];save();},
-  async changePassword(currentPassword,next){await pause();const p=actor();if(currentPassword!==(passwords[p.id]??'Demo@123'))fail('Mật khẩu hiện tại không đúng.');z.string().min(8).parse(next);passwords[p.id]=next;save();},
-  async profile(values){await pause();const p=actor();accountSchema.parse({...p,...values});if(values.avatar&&!/^data:image\/(png|jpeg);base64,/.test(values.avatar))fail('Avatar phải là ảnh JPG/PNG.');Object.assign(p,values);save();return structuredClone(p);},
-  async snapshot(signal){await pause(signal);return structuredClone(scopeSnapshot(db,actor()));},execute,
-  async resetDemo(){db=seed();current=null;passwords={};recovery={};invitations={};save();},
-  async addSecondary(viuId,email){await pause();const a=actor();allowed(linkPermission(db,a,viuId,'primary'));const cg=db.people.find(p=>p.role==='Caregiver'&&p.email.toLowerCase()===email.toLowerCase()&&p.active&&p.orgId===a.orgId);if(!cg)fail('Không tìm thấy Caregiver phù hợp trong phạm vi.');writeLink(a,{id:id(),viuId,caregiverId:cg.id,primary:false,alerts:true,registry:false,locations:false});audit(a,'Thêm người chăm sóc phụ',viuId);save();},
-  async generateLink(viuId){await pause();const a=actor();allowed(!a.orgId&&linkPermission(db,a,viuId,'primary'));const code='VA-DEMO-'+id().slice(0,8);invitations[code]={viuId,creator:a.id,expires:Date.now()+600000};save();return code;},
-  async acceptLink(code){await pause();const a=actor();const invitation=invitations[code];if(!invitation||invitation.expires<Date.now())fail('Mã hết hạn hoặc không hợp lệ.');allowed(a.role==='Caregiver'&&!a.orgId);const creator=db.people.find(p=>p.id===invitation.creator&&p.active);if(!creator)fail('Người tạo mã không còn hoạt động.');writeLink(creator,{id:id(),viuId:invitation.viuId,caregiverId:a.id,primary:false,alerts:true,registry:false,locations:false});delete invitations[code];save();},
-  async resetAccountPassword(targetId){await pause();const a=actor();const p=db.people.find(p=>p.id===targetId);if(!p)fail('Không tìm thấy tài khoản.',404);allowed(canManagePerson(a,p));const code='DEMO-'+id().slice(0,8);recovery[code]=p.id;audit(a,'Yêu cầu đặt lại mật khẩu (mô phỏng)',p.name);save();return code;}
- };
+export interface DemoPersistence {
+  read(): string | null;
+  write(value: string): void;
 }
-
-
-
-
-
+const nameSchema = z.string().trim().min(2, 'Tên cần ít nhất 2 ký tự.').max(200);
+const phoneSchema = z
+  .string()
+  .refine((v) => !v || /^(0|\+84)[35789]\d{8}$/.test(v), 'Số điện thoại Việt Nam không hợp lệ.');
+export const accountSchema = z.object({
+  name: nameSchema,
+  email: z.email('Email không hợp lệ.'),
+  phone: phoneSchema,
+});
+function fail(message: string, status = 422): never {
+  throw new ServiceError(message, status);
+}
+const id = () => crypto.randomUUID();
+export function createMockService(persistence?: DemoPersistence, delay = 180): VisionService {
+  let db = seed();
+  let current: string | null = null;
+  let passwords: Record<string, string> = {};
+  let recovery: Record<string, string> = {};
+  let invitations: Record<string, { viuId: string; expires: number; creator: string }> = {};
+  try {
+    const raw = persistence?.read();
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved.schema === 1) {
+        db = saved.db;
+        current = saved.current;
+        passwords = saved.passwords ?? {};
+        recovery = saved.recovery ?? {};
+        invitations = saved.invitations ?? {};
+      }
+    }
+  } catch {
+    /* Damaged demo storage starts from seed. API mode never uses this implementation. */
+  }
+  const save = () => {
+    try {
+      persistence?.write(
+        JSON.stringify({ schema: 1, db, current, passwords, recovery, invitations }),
+      );
+    } catch {
+      fail('Bộ nhớ demo đã đầy. Giảm số ảnh hoặc reset dữ liệu.', 507);
+    }
+  };
+  const pause = async (signal?: AbortSignal) => {
+    await new Promise((r) => setTimeout(r, delay));
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+  };
+  const actor = () => {
+    const a = db.people.find((p) => p.id === current && p.active);
+    if (!a) return fail('Phiên đã kết thúc. Vui lòng đăng nhập lại.', 401);
+    if (a.orgId && !db.entities.organizations.some((o) => o.id === a.orgId && o.active))
+      return fail('Tổ chức đã ngừng hoạt động.', 403);
+    return a;
+  };
+  const allowed = (ok: boolean) => {
+    if (!ok) fail('Bạn không có quyền thực hiện thao tác này.', 403);
+  };
+  const audit = (a: Person, action: string, target: string) =>
+    db.audit.unshift({
+      id: id(),
+      actor: a.id,
+      orgId: a.orgId,
+      at: new Date().toISOString(),
+      action,
+      target,
+    });
+  function validateEntity(kind: Kind, e: Entity) {
+    nameSchema.parse(e.name);
+    if (['places', 'geofences'].includes(kind)) {
+      z.object({
+        lat: z.number().min(-90).max(90),
+        lng: z.number().min(-180).max(180),
+        radius: z.number().positive(),
+      }).parse(e.fields);
+      if (
+        !db.entities[kind].some((x) => x.id === e.id) &&
+        db.entities[kind].filter((x) => x.viuId === e.viuId).length >= 20
+      )
+        fail('Tối đa 20 địa điểm/vùng cho mỗi người.');
+    }
+    if (kind === 'organizations') {
+      z.email('Email tổ chức không hợp lệ.').parse(e.fields.email);
+      if (
+        e.fields.taxCode &&
+        db.entities.organizations.some(
+          (o) => o.id !== e.id && o.fields.taxCode === e.fields.taxCode,
+        )
+      )
+        fail('Mã số thuế/giấy phép đã tồn tại.');
+      const old = db.entities.organizations.find((o) => o.id === e.id);
+      if (actor().role === 'CenterAdmin' && old && old.active !== e.active)
+        fail('Chỉ quản trị hệ thống được thay đổi trạng thái tổ chức.', 403);
+    }
+    if (
+      kind === 'faces' &&
+      !db.entities.faces.some((x) => x.id === e.id) &&
+      db.entities.faces.filter((x) => x.viuId === e.viuId).length >= 20
+    )
+      fail('Tối đa 20 người trong danh bạ khuôn mặt.');
+    if (kind === 'contacts') {
+      const f = e.fields;
+      const t = f.type;
+      if (!['PHONE', 'ZALO', 'BOTH'].includes(String(t))) fail('Loại liên hệ không hợp lệ.');
+      if ((t === 'PHONE' || t === 'BOTH') && !phoneSchema.safeParse(String(f.phone)).success)
+        fail('Số điện thoại không hợp lệ.');
+      if ((t === 'PHONE' || t === 'BOTH') && !f.phone) fail('Cần số điện thoại.');
+      if ((t === 'ZALO' || t === 'BOTH') && !f.zalo) fail('Cần định danh Zalo.');
+      if ((t === 'PHONE' && f.zalo) || (t === 'ZALO' && f.phone))
+        fail('PHONE chỉ có điện thoại; ZALO chỉ có định danh Zalo.');
+      if (!Number.isInteger(f.priority) || Number(f.priority) < 1)
+        fail('Ưu tiên phải là số nguyên dương.');
+      const others = db.entities.contacts.filter((x) => x.viuId === e.viuId && x.id !== e.id);
+      if (others.length >= 5) fail('Tối đa 5 liên hệ.');
+      if (others.some((x) => x.fields.priority === f.priority))
+        fail('Thứ tự ưu tiên đã được sử dụng.');
+    }
+    if (kind === 'configs') {
+      const value = Number(e.fields.value);
+      const old = db.entities.configs.find((x) => x.id === e.id);
+      if (!old) fail('Không thể thêm khóa cấu hình chưa xác định.');
+      if (
+        !Number.isFinite(value) ||
+        value < Number(old.fields.min) ||
+        value > Number(old.fields.max)
+      )
+        fail('Giá trị nằm ngoài giới hạn cấu hình.');
+      e.fields = { ...old.fields, value };
+    }
+    if (kind === 'tts' && db.entities.tts.some((x) => x.id !== e.id && x.viuId === e.viuId))
+      fail('Mỗi người dùng chỉ có một bộ cấu hình TTS.');
+    if (kind === 'tts')
+      z.object({
+        speed: z.number().min(0.5).max(2),
+        volume: z.number().min(0).max(100),
+        voice: z.enum(['Nam', 'Nữ']),
+      }).parse(e.fields);
+    if (kind === 'rules') {
+      if (e.fields.recipient) z.email('Email bàn trực không hợp lệ.').parse(e.fields.recipient);
+      if (!['SOS', 'FALL', 'GEOFENCE', 'BATTERY'].includes(String(e.fields.event)))
+        fail('Loại sự kiện không hợp lệ.');
+      if (
+        db.entities.rules.some(
+          (x) => x.id !== e.id && x.orgId === e.orgId && x.fields.event === e.fields.event,
+        )
+      )
+        fail('Đã có quy tắc cho sự kiện trong phạm vi này.');
+      if (e.fields.mandatory && !e.fields.push && !e.fields.email)
+        fail('Quy tắc bắt buộc cần ít nhất một kênh.');
+    }
+    if (kind === 'preferences') {
+      if (
+        db.entities.preferences.some(
+          (x) => x.id !== e.id && x.ownerId === e.ownerId && x.fields.event === e.fields.event,
+        )
+      )
+        fail('Tùy chọn đã tồn tại. Vui lòng tải lại.', 409);
+      const user = actor();
+      const rules = db.entities.rules.filter((r) => r.active && r.fields.event === e.fields.event);
+      const rule =
+        rules.find((r) => r.orgId === user.orgId && r.orgId) || rules.find((r) => !r.orgId);
+      if (
+        rule?.fields.mandatory &&
+        ((rule.fields.push && !e.fields.push) || (rule.fields.email && !e.fields.email))
+      )
+        fail('Không thể tắt kênh thông báo bắt buộc.');
+    }
+  }
+  function writeLink(a: Person, link: Link) {
+    const viu = db.people.find(
+      (p) => p.id === link.viuId && p.active && p.role === 'VisuallyImpaired',
+    );
+    const cg = db.people.find(
+      (p) => p.id === link.caregiverId && p.active && p.role === 'Caregiver',
+    );
+    if (!viu || !cg || viu.orgId !== cg.orgId)
+      fail('Hai tài khoản phải đang hoạt động và cùng phạm vi tổ chức/cá nhân.');
+    allowed(
+      a.role === 'Admin' ||
+        (a.role === 'CenterAdmin' && viu.orgId === a.orgId) ||
+        linkPermission(db, a, viu.id, 'primary'),
+    );
+    const old = db.links.find((l) => l.id === link.id);
+    if (old && (old.viuId !== link.viuId || old.caregiverId !== link.caregiverId))
+      fail('Không thể đổi đối tượng của liên kết.');
+    const others = db.links.filter((l) => l.id !== link.id);
+    if (others.some((l) => l.caregiverId === cg.id && l.viuId === viu.id))
+      fail('Liên kết đã tồn tại.');
+    if (
+      others.filter((l) => l.caregiverId === cg.id).length >= 3 ||
+      others.filter((l) => l.viuId === viu.id).length >= 3
+    )
+      fail('Tối đa 3 liên kết trên mỗi người.');
+    if (link.primary && others.some((l) => l.viuId === viu.id && l.primary))
+      fail('Người dùng đã có người chăm sóc chính.');
+    if (!link.primary && !others.some((l) => l.viuId === viu.id && l.primary))
+      fail('Cần duy trì một người chăm sóc chính.');
+    if (old) Object.assign(old, link);
+    else db.links.push(link);
+  }
+  async function execute(command: Command) {
+    await pause();
+    const a = actor();
+    const before = structuredClone(db);
+    try {
+      switch (command.type) {
+        case 'save': {
+          const e = structuredClone(command.entity);
+          const list = db.entities[command.kind];
+          const old = list.find((x) => x.id === e.id);
+          allowed(canWrite(db, a, command.kind, e) && (!old || canWrite(db, a, command.kind, old)));
+          if (old && (old.viuId !== e.viuId || old.orgId !== e.orgId || old.ownerId !== e.ownerId))
+            fail('Không thể đổi phạm vi dữ liệu.');
+          if (old && old.version !== e.version) fail('Dữ liệu đã thay đổi. Vui lòng tải lại.', 409);
+          validateEntity(command.kind, e);
+          if (command.kind === 'faces')
+            e.active = db.photos.filter((p) => p.faceId === e.id).length >= 3;
+          if (command.kind === 'configs' && old)
+            db.revisions.unshift({
+              id: id(),
+              configId: e.id,
+              name: e.name,
+              before: old.fields.value,
+              after: e.fields.value,
+              actor: a.id,
+              at: new Date().toISOString(),
+            });
+          e.version = (old?.version ?? 0) + 1;
+          if (old) list.splice(list.indexOf(old), 1, e);
+          else list.push(e);
+          audit(a, 'Lưu ' + command.kind, e.name);
+          break;
+        }
+        case 'delete': {
+          const e = db.entities[command.kind].find((x) => x.id === command.id);
+          if (!e) fail('Không tìm thấy dữ liệu.', 404);
+          allowed(canWrite(db, a, command.kind, e));
+          if (e.version !== command.version) fail('Dữ liệu đã thay đổi. Vui lòng tải lại.', 409);
+          if (['configs', 'organizations', 'tts'].includes(command.kind))
+            fail('Dữ liệu này chỉ được cập nhật trạng thái, không xóa.');
+          db.entities[command.kind] = db.entities[command.kind].filter((x) => x.id !== e.id);
+          if (command.kind === 'faces') db.photos = db.photos.filter((p) => p.faceId !== e.id);
+          audit(a, 'Xóa ' + command.kind, e.name);
+          break;
+        }
+        case 'person': {
+          const p = structuredClone(command.person);
+          accountSchema.parse(p);
+          const old = db.people.find((x) => x.id === p.id);
+          const personalNew =
+            !old && a.role === 'Caregiver' && !a.orgId && p.role === 'VisuallyImpaired' && !p.orgId;
+          allowed(personalNew || (canManagePerson(a, p) && (!old || canManagePerson(a, old))));
+          if (
+            old &&
+            (old.orgId !== p.orgId || old.role !== p.role) &&
+            db.links.some((l) => l.viuId === old.id || l.caregiverId === old.id)
+          )
+            fail('Gỡ liên kết hiện có trước khi đổi vai trò hoặc tổ chức.');
+          if (!['Admin', 'CenterAdmin', 'Caregiver', 'VisuallyImpaired'].includes(p.role))
+            fail('Vai trò không hợp lệ.');
+          if (
+            (p.role === 'CenterAdmin' && !p.orgId) ||
+            (!old &&
+              a.role === 'Admin' &&
+              ['Caregiver', 'VisuallyImpaired'].includes(p.role) &&
+              !p.orgId)
+          )
+            fail('Tài khoản hỗ trợ phải thuộc tổ chức.');
+          if (p.orgId && !db.entities.organizations.some((o) => o.id === p.orgId && o.active))
+            fail('Tổ chức không hoạt động.');
+          if (
+            db.people.some((x) => x.id !== p.id && x.email.toLowerCase() === p.email.toLowerCase())
+          )
+            fail('Email đã tồn tại.');
+          if (personalNew && db.links.filter((l) => l.caregiverId === a.id).length >= 3)
+            fail('Bạn đã đạt giới hạn 3 người được liên kết.');
+          if (old) Object.assign(old, p);
+          else {
+            db.people.push(p);
+            if (personalNew)
+              db.links.push({
+                id: id(),
+                caregiverId: a.id,
+                viuId: p.id,
+                primary: true,
+                alerts: true,
+                registry: true,
+                locations: true,
+              });
+          }
+          audit(a, 'Cập nhật tài khoản', p.name);
+          break;
+        }
+        case 'link':
+          writeLink(a, command.link);
+          audit(a, 'Cập nhật phân công', command.link.viuId);
+          break;
+        case 'transfer': {
+          const viu = db.people.find((p) => p.id === command.viuId);
+          allowed(
+            !!viu &&
+              (a.role === 'Admin' ||
+                (a.role === 'CenterAdmin' && viu.orgId === a.orgId) ||
+                linkPermission(db, a, viu.id, 'primary')),
+          );
+          const target = db.links.find(
+            (l) => l.viuId === command.viuId && l.caregiverId === command.caregiverId,
+          );
+          if (!target || !db.people.some((p) => p.id === target.caregiverId && p.active))
+            fail('Người chăm sóc đích phải đang hoạt động và có liên kết.');
+          db.links
+            .filter((l) => l.viuId === command.viuId)
+            .forEach((l) => (l.primary = l.id === target.id));
+          audit(a, 'Chuyển người chăm sóc chính', command.viuId);
+          break;
+        }
+        case 'unlink': {
+          const link = db.links.find((l) => l.id === command.id);
+          if (!link) fail('Liên kết không tồn tại.', 404);
+          const viu = db.people.find((p) => p.id === link.viuId)!;
+          allowed(
+            a.role === 'Admin' ||
+              (a.role === 'CenterAdmin' && viu.orgId === a.orgId) ||
+              linkPermission(db, a, link.viuId, 'primary'),
+          );
+          if (link.primary && db.links.some((l) => l.id !== link.id && l.viuId === link.viuId))
+            fail('Gỡ các liên kết phụ trước khi gỡ người chăm sóc chính.');
+          db.links = db.links.filter((l) => l.id !== link.id);
+          audit(a, 'Gỡ liên kết', viu.name);
+          break;
+        }
+        case 'transition': {
+          const alert = db.alerts.find((x) => x.id === command.id);
+          if (!alert) fail('Không tìm thấy cảnh báo.', 404);
+          allowed(linkPermission(db, a, alert.viuId, 'alerts'));
+          if (alert.version !== command.version)
+            fail('Cảnh báo vừa được xử lý. Vui lòng tải lại.', 409);
+          if (!nextStates[alert.status].includes(command.status))
+            fail('Chuyển trạng thái không hợp lệ.');
+          alert.history.push({
+            at: new Date().toISOString(),
+            from: alert.status,
+            to: command.status,
+            actor: a.id,
+          });
+          alert.status = command.status;
+          alert.version++;
+          audit(a, 'Xử lý cảnh báo ' + command.status, alert.id);
+          break;
+        }
+        case 'photo': {
+          const face = db.entities.faces.find((f) => f.id === command.faceId);
+          if (!face) fail('Không tìm thấy người trong registry.', 404);
+          allowed(canWrite(db, a, 'faces', face));
+          if (command.photo.faceId !== face.id) fail('Ảnh không thuộc người đã chọn.');
+          const photo = db.photos.find((p) => p.id === command.photo.id);
+          if (photo && photo.faceId !== face.id) fail('Không có quyền với ảnh này.', 403);
+          if (command.remove) db.photos = db.photos.filter((p) => p.id !== command.photo.id);
+          else {
+            if (!/^data:image\/(png|jpeg);base64,/.test(command.photo.url) && !photo)
+              fail('Chỉ nhận ảnh JPG/PNG từ thiết bị.');
+            if (command.photo.url.length > 2800000) fail('Giới hạn demo 2 MB mỗi ảnh.');
+            if (command.photo.primary)
+              db.photos.filter((p) => p.faceId === face.id).forEach((p) => (p.primary = false));
+            if (photo) Object.assign(photo, command.photo);
+            else db.photos.push(command.photo);
+          }
+          const photos = db.photos.filter((p) => p.faceId === face.id);
+          if (photos.length && !photos.some((p) => p.primary)) photos[0].primary = true;
+          face.active = photos.length >= 3;
+          face.version++;
+          audit(a, 'Cập nhật ảnh registry', face.name);
+          break;
+        }
+        case 'rollback': {
+          allowed(a.role === 'Admin');
+          const r = db.revisions.find((r) => r.id === command.revisionId);
+          if (!r) fail('Không tìm thấy phiên bản.', 404);
+          const c = db.entities.configs.find((c) => c.id === r.configId)!;
+          db.revisions.unshift({
+            id: id(),
+            configId: c.id,
+            name: c.name,
+            before: c.fields.value,
+            after: r.before,
+            at: new Date().toISOString(),
+            actor: a.id,
+          });
+          c.fields.value = r.before;
+          c.version++;
+          audit(a, 'Khôi phục cấu hình', c.name);
+          break;
+        }
+        case 'simulate': {
+          const visible = db.locations.filter((l) => canSeeViu(db, a, l.viuId));
+          if (command.event === 'alert') {
+            const first = visible[0];
+            if (first)
+              db.alerts.unshift({
+                id: id(),
+                viuId: first.viuId,
+                type: 'SOS',
+                status: 'SENT',
+                version: 1,
+                at: new Date().toISOString(),
+                lat: first.lat,
+                lng: first.lng,
+                history: [{ at: new Date().toISOString(), from: null, to: 'SENT', actor: null }],
+              });
+          } else
+            for (const location of visible) {
+              if (command.event === 'stale')
+                location.at = new Date(Date.now() - 600000).toISOString();
+              else {
+                location.lat += 0.00008;
+                location.lng += 0.00006;
+                location.at = new Date().toISOString();
+                location.network = '4G';
+              }
+            }
+          break;
+        }
+      }
+      save();
+    } catch (e) {
+      db = before;
+      if (e instanceof z.ZodError) throw new ServiceError(e.issues.map((x) => x.message).join(' '));
+      throw e;
+    }
+  }
+  return {
+    mode: 'mock',
+    async session() {
+      await pause();
+      if (!current) return null;
+      return structuredClone(actor());
+    },
+    async demoAccounts() {
+      return structuredClone(db.people.filter((p) => p.active && p.role !== 'VisuallyImpaired'));
+    },
+    async login(email, password) {
+      await pause();
+      const p = db.people.find(
+        (p) =>
+          p.email.toLowerCase() === email.toLowerCase() &&
+          p.active &&
+          p.role !== 'VisuallyImpaired',
+      );
+      if (!p || password !== (passwords[p.id] ?? 'Demo@123'))
+        fail('Email hoặc mật khẩu không đúng.', 401);
+      current = p.id;
+      actor();
+      save();
+      return structuredClone(p);
+    },
+    async register(name, email, password) {
+      await pause();
+      accountSchema.parse({ name, email, phone: '' });
+      z.string().min(8).parse(password);
+      if (db.people.some((p) => p.email.toLowerCase() === email.toLowerCase()))
+        fail('Email đã tồn tại.');
+      const p: Person = {
+        id: id(),
+        name,
+        email,
+        phone: '',
+        role: 'Caregiver',
+        orgId: '',
+        active: true,
+      };
+      db.people.push(p);
+      passwords[p.id] = password;
+      current = p.id;
+      save();
+      return structuredClone(p);
+    },
+    async logout() {
+      current = null;
+      save();
+    },
+    async recover(email) {
+      await pause();
+      z.email().parse(email);
+      const p = db.people.find((p) => p.email.toLowerCase() === email.toLowerCase());
+      const code = 'DEMO-' + id().slice(0, 8);
+      if (p) recovery[code] = p.id;
+      save();
+      return code;
+    },
+    async resetPassword(code, password) {
+      await pause();
+      z.string().min(8).parse(password);
+      const user = recovery[code];
+      if (!user) fail('Mã demo không hợp lệ hoặc đã dùng.');
+      passwords[user] = password;
+      delete recovery[code];
+      save();
+    },
+    async changePassword(currentPassword, next) {
+      await pause();
+      const p = actor();
+      if (currentPassword !== (passwords[p.id] ?? 'Demo@123'))
+        fail('Mật khẩu hiện tại không đúng.');
+      z.string().min(8).parse(next);
+      passwords[p.id] = next;
+      save();
+    },
+    async profile(values) {
+      await pause();
+      const p = actor();
+      accountSchema.parse({ ...p, ...values });
+      if (values.avatar && !/^data:image\/(png|jpeg);base64,/.test(values.avatar))
+        fail('Avatar phải là ảnh JPG/PNG.');
+      Object.assign(p, values);
+      save();
+      return structuredClone(p);
+    },
+    async snapshot(signal) {
+      await pause(signal);
+      return structuredClone(scopeSnapshot(db, actor()));
+    },
+    execute,
+    async resetDemo() {
+      db = seed();
+      current = null;
+      passwords = {};
+      recovery = {};
+      invitations = {};
+      save();
+    },
+    async addSecondary(viuId, email) {
+      await pause();
+      const a = actor();
+      allowed(linkPermission(db, a, viuId, 'primary'));
+      const cg = db.people.find(
+        (p) =>
+          p.role === 'Caregiver' &&
+          p.email.toLowerCase() === email.toLowerCase() &&
+          p.active &&
+          p.orgId === a.orgId,
+      );
+      if (!cg) fail('Không tìm thấy Caregiver phù hợp trong phạm vi.');
+      writeLink(a, {
+        id: id(),
+        viuId,
+        caregiverId: cg.id,
+        primary: false,
+        alerts: true,
+        registry: false,
+        locations: false,
+      });
+      audit(a, 'Thêm người chăm sóc phụ', viuId);
+      save();
+    },
+    async generateLink(viuId) {
+      await pause();
+      const a = actor();
+      allowed(!a.orgId && linkPermission(db, a, viuId, 'primary'));
+      const code = 'VA-DEMO-' + id().slice(0, 8);
+      invitations[code] = { viuId, creator: a.id, expires: Date.now() + 600000 };
+      save();
+      return code;
+    },
+    async acceptLink(code) {
+      await pause();
+      const a = actor();
+      const invitation = invitations[code];
+      if (!invitation || invitation.expires < Date.now()) fail('Mã hết hạn hoặc không hợp lệ.');
+      allowed(a.role === 'Caregiver' && !a.orgId);
+      const creator = db.people.find((p) => p.id === invitation.creator && p.active);
+      if (!creator) fail('Người tạo mã không còn hoạt động.');
+      writeLink(creator, {
+        id: id(),
+        viuId: invitation.viuId,
+        caregiverId: a.id,
+        primary: false,
+        alerts: true,
+        registry: false,
+        locations: false,
+      });
+      delete invitations[code];
+      save();
+    },
+    async resetAccountPassword(targetId) {
+      await pause();
+      const a = actor();
+      const p = db.people.find((p) => p.id === targetId);
+      if (!p) fail('Không tìm thấy tài khoản.', 404);
+      allowed(canManagePerson(a, p));
+      const code = 'DEMO-' + id().slice(0, 8);
+      recovery[code] = p.id;
+      audit(a, 'Yêu cầu đặt lại mật khẩu (mô phỏng)', p.name);
+      save();
+      return code;
+    },
+  };
+}
