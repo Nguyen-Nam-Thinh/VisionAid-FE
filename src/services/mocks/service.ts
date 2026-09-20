@@ -24,9 +24,10 @@ export function createMockService(persistence?:DemoPersistence,delay=180):Vision
   if(kind==='faces'&&!db.entities.faces.some(x=>x.id===e.id)&&db.entities.faces.filter(x=>x.viuId===e.viuId).length>=20)fail('Tối đa 20 người trong danh bạ khuôn mặt.');
   if(kind==='contacts'){const f=e.fields;const t=f.type;if(!['PHONE','ZALO','BOTH'].includes(String(t)))fail('Loại liên hệ không hợp lệ.');if((t==='PHONE'||t==='BOTH')&&!phoneSchema.safeParse(String(f.phone)).success)fail('Số điện thoại không hợp lệ.');if((t==='PHONE'||t==='BOTH')&&!f.phone)fail('Cần số điện thoại.');if((t==='ZALO'||t==='BOTH')&&!f.zalo)fail('Cần định danh Zalo.');if(t==='PHONE'&&f.zalo||t==='ZALO'&&f.phone)fail('PHONE chỉ có điện thoại; ZALO chỉ có định danh Zalo.');if(!Number.isInteger(f.priority)||Number(f.priority)<1)fail('Ưu tiên phải là số nguyên dương.');const others=db.entities.contacts.filter(x=>x.viuId===e.viuId&&x.id!==e.id);if(others.length>=5)fail('Tối đa 5 liên hệ.');if(others.some(x=>x.fields.priority===f.priority))fail('Thứ tự ưu tiên đã được sử dụng.');}
   if(kind==='configs'){const value=Number(e.fields.value);const old=db.entities.configs.find(x=>x.id===e.id);if(!old)fail('Không thể thêm khóa cấu hình chưa xác định.');if(!Number.isFinite(value)||value<Number(old.fields.min)||value>Number(old.fields.max))fail('Giá trị nằm ngoài giới hạn cấu hình.');e.fields={...old.fields,value};}
+  if(kind==='tts'&&db.entities.tts.some(x=>x.id!==e.id&&x.viuId===e.viuId))fail('Mỗi người dùng chỉ có một bộ cấu hình TTS.');
   if(kind==='tts')z.object({speed:z.number().min(.5).max(2),volume:z.number().min(0).max(100),voice:z.enum(['Nam','Nữ'])}).parse(e.fields);
   if(kind==='rules'){if(e.fields.recipient)z.email('Email bàn trực không hợp lệ.').parse(e.fields.recipient);if(!['SOS','FALL','GEOFENCE','BATTERY'].includes(String(e.fields.event)))fail('Loại sự kiện không hợp lệ.');if(db.entities.rules.some(x=>x.id!==e.id&&x.orgId===e.orgId&&x.fields.event===e.fields.event))fail('Đã có quy tắc cho sự kiện trong phạm vi này.');if(e.fields.mandatory&&!e.fields.push&&!e.fields.email)fail('Quy tắc bắt buộc cần ít nhất một kênh.');}
-  if(kind==='preferences'){const user=actor();const rules=db.entities.rules.filter(r=>r.fields.event===e.fields.event);const rule=rules.find(r=>r.orgId===user.orgId&&r.orgId)||rules.find(r=>!r.orgId);if(rule?.fields.mandatory&&((rule.fields.push&&!e.fields.push)||(rule.fields.email&&!e.fields.email)))fail('Không thể tắt kênh thông báo bắt buộc.');}
+  if(kind==='preferences'){if(db.entities.preferences.some(x=>x.id!==e.id&&x.ownerId===e.ownerId&&x.fields.event===e.fields.event))fail('Tùy chọn đã tồn tại. Vui lòng tải lại.',409);const user=actor();const rules=db.entities.rules.filter(r=>r.active&&r.fields.event===e.fields.event);const rule=rules.find(r=>r.orgId===user.orgId&&r.orgId)||rules.find(r=>!r.orgId);if(rule?.fields.mandatory&&((rule.fields.push&&!e.fields.push)||(rule.fields.email&&!e.fields.email)))fail('Không thể tắt kênh thông báo bắt buộc.');}
  }
  function writeLink(a:Person,link:Link){
   const viu=db.people.find(p=>p.id===link.viuId&&p.active&&p.role==='VisuallyImpaired');const cg=db.people.find(p=>p.id===link.caregiverId&&p.active&&p.role==='Caregiver');
@@ -69,6 +70,7 @@ export function createMockService(persistence?:DemoPersistence,delay=180):Vision
   async resetAccountPassword(targetId){await pause();const a=actor();const p=db.people.find(p=>p.id===targetId);if(!p)fail('Không tìm thấy tài khoản.',404);allowed(canManagePerson(a,p));const code='DEMO-'+id().slice(0,8);recovery[code]=p.id;audit(a,'Yêu cầu đặt lại mật khẩu (mô phỏng)',p.name);save();return code;}
  };
 }
+
 
 
 

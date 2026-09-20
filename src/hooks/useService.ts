@@ -6,7 +6,7 @@ import { uiStore } from '../stores/ui';
 export const useSession=()=>useQuery({queryKey:['session'],queryFn:()=>service.session(),retry:false,staleTime:30000});
 export function useSnapshot(){const {data:user}=useSession();return useQuery({queryKey:['snapshot',user?.id,user?.orgId],queryFn:({signal})=>service.snapshot(signal),enabled:!!user,retry:false,staleTime:5000});}
 export function useCommand(){const client=useQueryClient();return useMutation({mutationFn:(cmd:Command)=>service.execute(cmd),onSuccess:async()=>{await client.invalidateQueries({queryKey:['snapshot']});uiStore.set({notice:'Đã lưu thay đổi trong dữ liệu demo.'});},onError:async(error)=>{if(error instanceof ServiceError&&error.status===409)await client.invalidateQueries({queryKey:['snapshot']});}});}
-export function useAuth(){const client=useQueryClient();const setSession=async(user:Person|null)=>{await client.cancelQueries();client.clear();uiStore.clear();client.setQueryData(['session'],user);};return {
+export function useAuth(){const client=useQueryClient();const setSession=async(user:Person|null)=>{await client.cancelQueries();client.setQueryData(['session'],user);client.removeQueries({predicate:q=>q.queryKey[0]!=='session'});uiStore.clear();};return {
  mode:service.mode,
  login:async(email:string,password:string)=>{const p=await service.login(email,password);await setSession(p);},
  register:async(name:string,email:string,password:string)=>{const p=await service.register(name,email,password);await setSession(p);},
@@ -18,4 +18,5 @@ export function useAuth(){const client=useQueryClient();const setSession=async(u
  };}
 export const useDemoAccounts=()=>useQuery({queryKey:['demo-accounts'],queryFn:()=>service.demoAccounts(),enabled:service.mode==='mock'});
 export function useLinkActions(){const client=useQueryClient();return {addSecondary:async(viuId:string,email:string)=>{await service.addSecondary(viuId,email);await client.invalidateQueries({queryKey:['snapshot']});},generate:(id:string)=>service.generateLink(id),accept:async(code:string)=>{await service.acceptLink(code);await client.invalidateQueries({queryKey:['snapshot']});},resetPassword:(id:string)=>service.resetAccountPassword(id)};}
+
 
