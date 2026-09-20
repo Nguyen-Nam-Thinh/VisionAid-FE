@@ -1,3 +1,4 @@
+import { decodeInvitation } from '../services/qr';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { service } from '../services';
 import { ServiceError } from '../services/contracts';
@@ -17,6 +18,7 @@ export function useAuth(){const client=useQueryClient();const setSession=async(u
  profile:async(values:Pick<Person,'name'|'phone'|'avatar'>)=>{const p=await service.profile(values);client.setQueryData(['session'],p);await client.invalidateQueries({queryKey:['snapshot']});},
  };}
 export const useDemoAccounts=()=>useQuery({queryKey:['demo-accounts'],queryFn:()=>service.demoAccounts(),enabled:service.mode==='mock'});
-export function useLinkActions(){const client=useQueryClient();return {addSecondary:async(viuId:string,email:string)=>{await service.addSecondary(viuId,email);await client.invalidateQueries({queryKey:['snapshot']});},generate:(id:string)=>service.generateLink(id),accept:async(code:string)=>{await service.acceptLink(code);await client.invalidateQueries({queryKey:['snapshot']});},resetPassword:(id:string)=>service.resetAccountPassword(id)};}
+export function useLinkActions(){const client=useQueryClient();return {scan:decodeInvitation,addSecondary:async(viuId:string,email:string)=>{await service.addSecondary(viuId,email);await client.invalidateQueries({queryKey:['snapshot']});},generate:(id:string)=>service.generateLink(id),accept:async(code:string)=>{await service.acceptLink(code);await client.invalidateQueries({queryKey:['snapshot']});},resetPassword:(id:string)=>service.resetAccountPassword(id)};}
+
 
 
