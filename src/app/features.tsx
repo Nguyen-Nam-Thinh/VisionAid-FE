@@ -1,3 +1,4 @@
+import { Notifications } from '../pages/caregiver/Notifications';
 import { Activity } from '../pages/caregiver/Activity';
 import { Secondary } from '../pages/caregiver/Secondary';
 import { Contacts } from '../pages/caregiver/Contacts';
@@ -9,7 +10,8 @@ import type { ComponentType } from 'react';
 import type { Role } from '../models/domain';
 import { LinkedUsers } from '../pages/caregiver/LinkedUsers';
 export interface Feature {role:Role;path:string;label:string;component:ComponentType}
-export const features:Feature[]=[{role:'Caregiver',path:'activity',label:'Nhật ký hoạt động',component:Activity},{role:'Caregiver',path:'caregivers',label:'Người chăm sóc phụ',component:Secondary},{role:'Caregiver',path:'contacts',label:'Liên hệ khẩn cấp',component:Contacts},{role:'Caregiver',path:'locations',label:'Địa điểm & vùng an toàn',component:Locations},{role:'Caregiver',path:'registry',label:'Gương mặt thân quen',component:Registry},{role:'Caregiver',path:'alerts',label:'Cảnh báo khẩn cấp',component:Alerts},{role:'Caregiver',path:'map',label:'Bản đồ theo dõi',component:LiveMap},{role:'Caregiver',path:'users',label:'Người được chăm sóc',component:LinkedUsers}];
+export const features:Feature[]=[{role:'Caregiver',path:'notifications',label:'Tùy chọn thông báo',component:Notifications},{role:'Caregiver',path:'activity',label:'Nhật ký hoạt động',component:Activity},{role:'Caregiver',path:'caregivers',label:'Người chăm sóc phụ',component:Secondary},{role:'Caregiver',path:'contacts',label:'Liên hệ khẩn cấp',component:Contacts},{role:'Caregiver',path:'locations',label:'Địa điểm & vùng an toàn',component:Locations},{role:'Caregiver',path:'registry',label:'Gương mặt thân quen',component:Registry},{role:'Caregiver',path:'alerts',label:'Cảnh báo khẩn cấp',component:Alerts},{role:'Caregiver',path:'map',label:'Bản đồ theo dõi',component:LiveMap},{role:'Caregiver',path:'users',label:'Người được chăm sóc',component:LinkedUsers}];
+
 
 
 
