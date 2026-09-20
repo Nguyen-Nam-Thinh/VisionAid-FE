@@ -11,7 +11,7 @@ export type AlertStatus = 'DETECTED' | 'DISMISSED' | 'SENT' | 'ACKNOWLEDGED' | '
 export interface Transition { at: string; from: AlertStatus | null; to: AlertStatus; actor: string | null }
 export interface Alert { id: string; viuId: string; type: 'SOS' | 'FALL' | 'GEOFENCE'; status: AlertStatus; at: string; version: number; history: Transition[]; lat: number; lng: number }
 export interface Location { viuId: string; lat: number; lng: number; at: string; battery: number | null; accuracy: number | null; network: string | null }
-export interface Activity { id: string; viuId: string; type: 'MOVEMENT' | 'OCR' | 'QR' | 'FACE' | 'VOICE'; at: string; text: string; online: boolean }
+export interface Activity { id: string; viuId: string; type: 'MOVEMENT' | 'OCR' | 'QR' | 'FACE' | 'VOICE'; at: string; text: string; online: boolean; lat?:number; lng?:number }
 export interface Audit { id: string; actor: string; orgId: string; at: string; action: string; target: string }
 export interface ConfigRevision { id: string; configId: string; name: string; before: Value; after: Value; at: string; actor: string }
 export interface Delivery { id: string; orgId: string; channel: 'PUSH' | 'EMAIL'; status: 'SENT' | 'FAILED' | 'PENDING'; event: string; at: string }
@@ -29,4 +29,5 @@ export type Command =
  | {type:'rollback'; revisionId:string}
  | {type:'simulate'; event:'tick'|'alert'|'stale'};
 export const emptySnapshot = (): Snapshot => ({people:[],links:[],entities:{organizations:[],faces:[],places:[],geofences:[],contacts:[],preferences:[],tts:[],rules:[],configs:[]},photos:[],alerts:[],locations:[],activities:[],audit:[],revisions:[],deliveries:[],metrics:[]});
+
 
