@@ -39,3 +39,12 @@ No low-opacity body text, blur behind forms, unlabeled icons, fake operational b
 - [ ] Empty/error/forbidden/loading/success states exercised.
 - [ ] Desktop/tablet/narrow widths and long Vietnamese names.
 - [ ] Reduced motion and consistent tokens; no stacked blur.
+
+### Executed checks (2026-09-21)
+
+- [x] Axe WCAG A/AA checks on login, caregiver dashboard and invalid contact dialog: no automated violations.
+- [x] Invalid form focus, Escape dismissal and focus restoration to dialog opener.
+- [x] Browser workflows at 1440 px; all 25 role feature routes at 1024 px without document overflow or page errors; navigation/reset at 390 px.
+- [x] Error validation, forbidden access, mutation success and stale/reconnect states exercised in workflow tests.
+
+The broader checklist above remains an ongoing review checklist. Automated axe is not WCAG certification or full screen-reader testing. Exhaustive keyboard coverage, contrast sampling of every composited state, reduced-motion visual review and cross-browser/touch testing are not claimed complete.
