@@ -1,11 +1,14 @@
 import { service } from '../index';
+import type { VisionService } from '../contracts';
 export type Connection = 'connected' | 'disconnected' | 'reconnecting' | 'unconfigured';
 export interface RealtimeClient {
   start(onData: () => void, onState: (state: Connection) => void): () => void;
   disconnect(): void;
   reconnect(): void;
 }
-export function createRealtimeClient(): RealtimeClient {
+export function createRealtimeClient(
+  transport: Pick<VisionService, 'mode' | 'execute'> = service,
+): RealtimeClient {
   let timer: ReturnType<typeof setInterval> | undefined;
   let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   let active = false;
@@ -27,7 +30,7 @@ export function createRealtimeClient(): RealtimeClient {
     timer = setInterval(async () => {
       const epoch = generation;
       try {
-        await service.execute({ type: 'simulate', event: 'tick' });
+        await transport.execute({ type: 'simulate', event: 'tick' });
         if (active && epoch === generation) data();
       } catch {
         if (active && epoch === generation) {
@@ -43,7 +46,7 @@ export function createRealtimeClient(): RealtimeClient {
       active = true;
       data = onData;
       status = onState;
-      if (service.mode === 'api') {
+      if (transport.mode === 'api') {
         state = 'unconfigured';
         status(state);
       } else connect();
@@ -60,7 +63,7 @@ export function createRealtimeClient(): RealtimeClient {
       status(state);
     },
     reconnect() {
-      if (service.mode === 'api') return;
+      if (transport.mode === 'api') return;
       generation++;
       stop();
       state = 'reconnecting';
