@@ -472,12 +472,18 @@ tbody tr:hover {
   margin: 40px;
 }
 .dialog {
+  /* Restore native modal centering after the Tailwind margin reset. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
   border: 1px solid white;
   border-radius: 22px;
   padding: 0;
   max-width: 600px;
   width: calc(100% - 32px);
   max-height: 90vh;
+  max-height: 90dvh;
+  overflow-y: auto;
   box-shadow: 0 30px 100px #11225540;
 }
 .dialog::backdrop {
