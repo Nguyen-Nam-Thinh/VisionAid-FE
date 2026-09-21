@@ -15,6 +15,8 @@ Mở http://127.0.0.1:5173. Trên shell khác có thể dùng `npm` thay `npm.cm
 
 Mặc định là `mock`, không cần `.env`. Nếu cần cấu hình, sao chép `.env.example` thành `.env.local`. Biến `VITE_*` là dữ liệu public trong bản build, không chứa secret.
 
+Trang chủ công khai ở `/` giới thiệu VisionAid, tính năng và cách bắt đầu. Đăng nhập/đăng ký thành công chuyển đến `/dashboard` có bảo vệ phiên. Các đường dẫn nghiệp vụ theo vai trò giữ nguyên; trang đăng nhập có liên kết quay về trang chủ.
+
 ## Tài khoản demo
 
 Mật khẩu ban đầu: `Demo@123`. Có thể chọn nhanh tài khoản trên màn hình đăng nhập.
