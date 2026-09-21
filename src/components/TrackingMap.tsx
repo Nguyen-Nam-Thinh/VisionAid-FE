@@ -1,0 +1,151 @@
+import { useNow } from '../hooks/useNow';
+import { useState } from 'react';
+import { Wifi, WifiOff, MapPin } from 'lucide-react';
+import { useWorkspace } from '../hooks/useWorkspace';
+import { useCommand } from '../hooks/useService';
+import { useRealtime } from '../hooks/useRealtime';
+import { isStale } from '../services/maps/adapter';
+import { PageHead, State, Badge, DataTable } from './UI';
+import { MapPanel } from './MapPanel';
+import { formatTime } from '../constants/labels';
+export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
+  const { query, db, setSelected, selected } = useWorkspace();
+  const now = useNow();
+  const rt = useRealtime();
+  const cmd = useCommand();
+  const [filter, setFilter] = useState('all');
+  const points =
+    db?.locations.filter(
+      (l) =>
+        filter === 'all' ||
+        (filter === 'alerts'
+          ? !!db?.alerts.some(
+              (a) =>
+                a.viuId === l.viuId && ['SENT', 'ACKNOWLEDGED', 'ESCALATED'].includes(a.status),
+            )
+          : filter === 'stale'
+            ? isStale(l, now)
+            : !isStale(l, now)),
+    ) ?? [];
+  const current = points.find((l) => l.viuId === selected?.id);
+  return (
+    <>
+      <PageHead
+        title={fleet ? 'Bản đồ toàn trung tâm' : 'Bản đồ theo dõi'}
+        description="Vị trí gần nhất và tình trạng kết nối của người được chăm sóc."
+        actions={
+          <Badge tone={rt.state === 'connected' ? 'green' : 'amber'}>
+            {rt.state === 'connected' ? <Wifi size={14} /> : <WifiOff size={14} />}
+            {
+              {
+                connected: 'Realtime mô phỏng',
+                disconnected: 'Đã ngắt kết nối',
+                reconnecting: 'Đang kết nối lại…',
+                unconfigured: 'Chưa cấu hình SignalR',
+              }[rt.state]
+            }
+          </Badge>
+        }
+      />
+      <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
+        <div className="stack">
+          <div className="row between">
+            <label className="field">
+              Trạng thái vị trí
+              <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+                <option value="all">Tất cả</option>
+                <option value="live">Cập nhật gần đây</option>
+                <option value="stale">Dữ liệu cũ</option>
+                <option value="alerts">Có cảnh báo đang mở</option>
+              </select>
+            </label>
+            <div className="row">
+              <button className="btn" onClick={rt.disconnect}>
+                Mô phỏng ngắt kết nối
+              </button>
+              <button className="btn" onClick={rt.reconnect} disabled={rt.state === 'reconnecting'}>
+                Kết nối lại
+              </button>
+              <button
+                className="btn"
+                disabled={cmd.isPending}
+                onClick={() => {
+                  rt.disconnect();
+                  cmd.mutate({ type: 'simulate', event: 'stale' });
+                }}
+              >
+                Mô phỏng vị trí cũ
+              </button>
+            </div>
+          </div>
+          {cmd.error && <p className="notice error">{cmd.error.message}</p>}
+          <section className="glass card">
+            <MapPanel locations={points} people={db?.people ?? []} onSelect={setSelected} />
+          </section>
+          {current && (
+            <section className="glass card row between">
+              <div className="row">
+                <span className="icon-tile">
+                  <MapPin size={22} />
+                </span>
+                <div>
+                  <h2>{selected?.name}</h2>
+                  <p className="muted">Lần ghi nhận: {formatTime(current.at)} · UTC+7</p>
+                </div>
+              </div>
+              <Badge tone={isStale(current, now) ? 'amber' : 'green'}>
+                {isStale(current, now)
+                  ? 'Vị trí cũ — không phải trực tiếp'
+                  : 'Cập nhật gần đây (mô phỏng)'}
+              </Badge>
+            </section>
+          )}
+          <DataTable
+            title="Danh sách vị trí"
+            rows={points.map((l) => ({ ...l, id: l.viuId }))}
+            searchText={(l) => db?.people.find((p) => p.id === l.viuId)?.name ?? ''}
+            columns={[
+              {
+                label: 'Người dùng',
+                render: (l) => (
+                  <button className="btn small" onClick={() => setSelected(l.viuId)}>
+                    {db?.people.find((p) => p.id === l.viuId)?.name}
+                  </button>
+                ),
+              },
+              {
+                label: 'Tọa độ (vĩ độ, kinh độ)',
+                render: (l) => (
+                  <span className="mono">
+                    {l.lat.toFixed(5)}, {l.lng.toFixed(5)}
+                  </span>
+                ),
+              },
+              {
+                label: 'Pin / mạng',
+                render: (l) =>
+                  `${l.battery === null ? '—' : l.battery + '%'} · ${l.network ?? '—'}`,
+              },
+              {
+                label: 'Độ chính xác',
+                render: (l) => (l.accuracy === null ? '—' : `±${l.accuracy} m`),
+              },
+              {
+                label: 'Ghi nhận',
+                render: (l) => (
+                  <>
+                    <small>{formatTime(l.at)}</small>
+                    <br />
+                    <Badge tone={isStale(l, now) ? 'amber' : 'green'}>
+                      {isStale(l, now) ? 'Dữ liệu cũ' : 'Gần đây'}
+                    </Badge>
+                  </>
+                ),
+              },
+            ]}
+          />
+        </div>
+      </State>
+    </>
+  );
+}

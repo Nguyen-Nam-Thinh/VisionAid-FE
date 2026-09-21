@@ -1,0 +1,63 @@
+import { useState } from 'react';
+import { ResourcePage } from '../../components/ResourcePage';
+import type { FieldSpec } from '../../components/Form';
+const coordinates: FieldSpec[] = [
+  { key: 'lat', label: 'Vĩ độ', type: 'number', min: -90, max: 90 },
+  { key: 'lng', label: 'Kinh độ', type: 'number', min: -180, max: 180 },
+  { key: 'radius', label: 'Bán kính (m)', type: 'number', min: 1 },
+];
+export function Locations() {
+  const [zone, setZone] = useState(false);
+  return (
+    <>
+      <div className="row" style={{ marginBottom: 20 }}>
+        <button className={'btn ' + (!zone ? 'primary' : '')} onClick={() => setZone(false)}>
+          Địa điểm đã lưu
+        </button>
+        <button className={'btn ' + (zone ? 'primary' : '')} onClick={() => setZone(true)}>
+          Vùng an toàn
+        </button>
+      </div>
+      <ResourcePage
+        key={String(zone)}
+        kind={zone ? 'geofences' : 'places'}
+        title={zone ? 'Vùng an toàn' : 'Địa điểm quen thuộc'}
+        description={
+          zone
+            ? 'Vùng tròn, cảnh báo khi đi vào hoặc ra ngoài. Sơ đồ chỉ là bản xem trước mô phỏng.'
+            : 'Lưu nơi thường đến và lời nhắc khi đến nơi. Bán kính mặc định 50 m.'
+        }
+        defaults={{
+          lat: 10.841,
+          lng: 106.81,
+          radius: zone ? 300 : 50,
+          enter: false,
+          exit: true,
+          message: '',
+        }}
+        fields={[
+          ...coordinates,
+          ...(zone
+            ? [
+                { key: 'enter', label: 'Cảnh báo khi đi vào', type: 'checkbox' as const },
+                { key: 'exit', label: 'Cảnh báo khi đi ra', type: 'checkbox' as const },
+              ]
+            : [{ key: 'message', label: 'Lời nhắc khi đến nơi', type: 'textarea' as const }]),
+        ]}
+        details={(e) => (
+          <>
+            <span className="mono">
+              {Number(e.fields.lat).toFixed(4)}, {Number(e.fields.lng).toFixed(4)}
+            </span>
+            <p>
+              {String(e.fields.radius)} m{' '}
+              {zone
+                ? `· Vào: ${e.fields.enter ? 'bật' : 'tắt'} · Ra: ${e.fields.exit ? 'bật' : 'tắt'}`
+                : ''}
+            </p>
+          </>
+        )}
+      />
+    </>
+  );
+}

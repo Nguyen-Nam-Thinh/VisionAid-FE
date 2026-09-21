@@ -1,0 +1,289 @@
+import { Link } from 'react-router-dom';
+import {
+  ArrowUpRight,
+  Users,
+  BellRing,
+  HeartHandshake,
+  ShieldCheck,
+  Activity,
+  Building2,
+  Cpu,
+  Send,
+  MapPin,
+} from 'lucide-react';
+import { useWorkspace } from '../../hooks/useWorkspace';
+import { useNow } from '../../hooks/useNow';
+import { PageHead, State, Badge } from '../../components/UI';
+import { MapPanel } from '../../components/MapPanel';
+import { formatTime, statuses } from '../../constants/labels';
+export function Dashboard() {
+  const { query, db, user, setSelected } = useWorkspace();
+  const now = useNow();
+  const admin = user.role === 'Admin';
+  const center = user.role === 'CenterAdmin';
+  const base = admin ? '/admin' : center ? '/center-admin' : '/caregiver';
+  const vius = db?.people.filter((p) => p.role === 'VisuallyImpaired' && p.active) ?? [];
+  const activeAlerts =
+    db?.alerts.filter((a) => ['SENT', 'ACKNOWLEDGED', 'ESCALATED'].includes(a.status)) ?? [];
+  const cards = admin
+    ? [
+        {
+          label: 'Tổ chức đang hoạt động',
+          value: db?.entities.organizations.filter((o) => o.active).length ?? 0,
+          icon: Building2,
+          path: 'organizations',
+          foot: 'Mạng lưới hỗ trợ',
+        },
+        {
+          label: 'Tài khoản hoạt động',
+          value: db?.people.filter((p) => p.active).length ?? 0,
+          icon: Users,
+          path: 'accounts',
+          foot: 'Trên toàn nền tảng',
+        },
+        {
+          label: 'Mô hình AI',
+          value: new Set(db?.metrics.map((m) => m.model)).size,
+          icon: Cpu,
+          path: 'metrics',
+          foot: 'Chỉ số tổng hợp',
+        },
+        {
+          label: 'Delivery thất bại',
+          value: db?.deliveries.filter((d) => d.status === 'FAILED').length ?? 0,
+          icon: Send,
+          path: 'delivery',
+          foot: 'Cần kiểm tra · mô phỏng',
+        },
+      ]
+    : [
+        {
+          label: 'Người được chăm sóc',
+          value: vius.length,
+          icon: Users,
+          path: 'users',
+          foot: center ? 'Trong tổ chức của bạn' : 'Đang được liên kết',
+        },
+        {
+          label: 'Cảnh báo đang mở',
+          value: activeAlerts.length,
+          icon: BellRing,
+          path: center ? 'reports' : 'alerts',
+          foot: 'Ưu tiên phản hồi kịp thời',
+        },
+        {
+          label: center ? 'Nhân viên chăm sóc' : 'Người cùng đồng hành',
+          value: center
+            ? (db?.people.filter((p) => p.role === 'Caregiver' && p.active).length ?? 0)
+            : new Set(db?.links.map((l) => l.caregiverId)).size,
+          icon: HeartHandshake,
+          path: center ? 'staff' : 'caregivers',
+          foot: center ? 'Trong trung tâm' : 'Chia sẻ trách nhiệm chăm sóc',
+        },
+        {
+          label: 'Vị trí cập nhật gần đây',
+          value: db?.locations.filter((l) => now - new Date(l.at).getTime() < 120000).length ?? 0,
+          icon: MapPin,
+          path: 'map',
+          foot: 'Dữ liệu trong 2 phút gần nhất',
+        },
+      ];
+  return (
+    <>
+      <PageHead
+        title={`Xin chào, ${user.name.split(' ').at(-1)} 👋`}
+        description={
+          admin
+            ? 'Một góc nhìn rõ ràng về toàn bộ nền tảng.'
+            : center
+              ? 'Cùng đội ngũ tạo nên một ngày an toàn hơn.'
+              : 'Mọi kết nối đều bắt đầu từ sự quan tâm.'
+        }
+        actions={
+          <span className="badge">
+            {new Intl.DateTimeFormat('vi-VN', {
+              weekday: 'long',
+              day: '2-digit',
+              month: 'long',
+              timeZone: 'Asia/Ho_Chi_Minh',
+            }).format(now)}
+          </span>
+        }
+      />
+      <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
+        <div className="stack">
+          <section className="dashboard-hero">
+            <div className="stack">
+              <span className="eyebrow" style={{ color: '#d9e3ff' }}>
+                ĐỒNG HÀNH MỖI NGÀY
+              </span>
+              <h2>
+                {admin ? 'Vận hành minh bạch. Kết nối bền vững.' : 'An tâm hơn khi luôn có nhau.'}
+              </h2>
+              <p>
+                {admin
+                  ? 'Quản lý tổ chức, theo dõi hiệu năng và kiểm soát thay đổi trong một không gian thống nhất.'
+                  : 'Theo dõi những cập nhật quan trọng, phản hồi kịp thời và giữ kết nối với người bạn quan tâm.'}
+              </p>
+              <Link className="btn" to={base + (admin ? '/metrics' : '/map')}>
+                {admin ? 'Xem hiệu năng AI' : 'Mở bản đồ theo dõi'}
+                <ArrowUpRight size={17} />
+              </Link>
+            </div>
+            <div className="hero-orbit" aria-hidden="true">
+              <div>
+                <HeartHandshake size={60} strokeWidth={1.2} />
+              </div>
+              <span className="orbit-dot one" />
+              <span className="orbit-dot two" />
+              <span className="orbit-dot three" />
+            </div>
+          </section>
+          <div className="grid dashboard-stats">
+            {cards.map((c) => (
+              <Link to={base + '/' + c.path} className="glass card stat-card" key={c.label}>
+                <div className="row between">
+                  <span className="muted">{c.label}</span>
+                  <span className="icon-tile">
+                    <c.icon size={19} />
+                  </span>
+                </div>
+                <strong className="stat">{c.value}</strong>
+                <span className="muted">
+                  {c.foot} <ArrowUpRight size={13} />
+                </span>
+              </Link>
+            ))}
+          </div>
+          <div className="dashboard-columns">
+            <section className="glass card stack">
+              <div className="row between">
+                <h2>{admin ? 'Tổ chức đồng hành' : 'Kết nối trong tầm tay'}</h2>
+                <Link to={base + (admin ? '/organizations' : '/map')} className="row">
+                  Xem tất cả <ArrowUpRight size={16} />
+                </Link>
+              </div>
+              {admin ? (
+                <div className="stack">
+                  {db?.entities.organizations.map((o) => (
+                    <div className="row between dashboard-person" key={o.id}>
+                      <div className="row">
+                        <span className="avatar">
+                          <Building2 size={20} />
+                        </span>
+                        <div>
+                          <strong>{o.name}</strong>
+                          <p className="muted">{String(o.fields.address)}</p>
+                        </div>
+                      </div>
+                      <Badge tone={o.active ? 'green' : 'amber'}>
+                        {o.active ? 'Hoạt động' : 'Ngừng hoạt động'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <MapPanel
+                    locations={db?.locations ?? []}
+                    people={db?.people ?? []}
+                    onSelect={setSelected}
+                  />
+                  <div className="row">
+                    <Badge tone="green">
+                      <ShieldCheck size={13} />
+                      Phạm vi được cấp quyền
+                    </Badge>
+                    <small>Sơ đồ mô phỏng · Không dùng để chỉ đường</small>
+                  </div>
+                </>
+              )}
+            </section>
+            <section className="glass card stack">
+              <div className="row between">
+                <h2>{admin ? 'Nhật ký gần đây' : 'Cần bạn quan tâm'}</h2>
+                <Activity size={20} color="#1856ff" />
+              </div>
+              {admin ? (
+                <div className="timeline">
+                  {db?.audit.slice(0, 4).map((a) => (
+                    <div key={a.id}>
+                      <strong>{a.action}</strong>
+                      <p className="muted">{a.target}</p>
+                      <small>{formatTime(a.at)}</small>
+                    </div>
+                  ))}
+                </div>
+              ) : activeAlerts.length ? (
+                <div className="stack">
+                  {activeAlerts.slice(0, 3).map((a) => (
+                    <Link
+                      className="alert-preview"
+                      to={base + (center ? '/reports' : '/alerts')}
+                      key={a.id}
+                    >
+                      <div className="row between">
+                        <Badge tone="red">{a.type === 'FALL' ? 'Té ngã' : 'SOS'}</Badge>
+                        <ArrowUpRight size={16} />
+                      </div>
+                      <h3>{db?.people.find((p) => p.id === a.viuId)?.name}</h3>
+                      <p>{statuses[a.status]}</p>
+                      <small>{formatTime(a.at)}</small>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty">
+                  <ShieldCheck size={36} />
+                  <p>Chưa có cảnh báo đang mở.</p>
+                </div>
+              )}
+              <Link
+                className="btn"
+                to={base + (admin ? '/audit' : center ? '/reports' : '/alerts')}
+              >
+                {admin ? 'Mở nhật ký kiểm toán' : 'Xem tất cả cảnh báo'}
+                <ArrowUpRight size={16} />
+              </Link>
+              <div className="notice">
+                {admin
+                  ? 'Số liệu demo chưa phản ánh sức khỏe máy chủ thật.'
+                  : 'Luôn kiểm tra thời gian ghi nhận. Vị trí cũ không phản ánh vị trí trực tiếp.'}
+              </div>
+            </section>
+          </div>
+          {!admin && (
+            <section className="glass card stack">
+              <div className="row between">
+                <h2>Những người đang đồng hành</h2>
+                <Link to={base + '/users'}>Quản lý danh sách →</Link>
+              </div>
+              <div className="grid">
+                {vius.map((p) => (
+                  <Link
+                    key={p.id}
+                    className="dashboard-person row"
+                    to={base + '/map'}
+                    onClick={() => setSelected(p.id)}
+                  >
+                    <span className="avatar">{p.name.split(' ').at(-1)?.slice(0, 1)}</span>
+                    <div>
+                      <strong>{p.name}</strong>
+                      <p className="muted">{p.phone || 'Chưa có số điện thoại'}</p>
+                    </div>
+                    <ArrowUpRight size={16} />
+                  </Link>
+                ))}
+              </div>
+              {!vius.length && (
+                <p className="empty">
+                  Chưa có người được chăm sóc. Thêm hoặc phân công ở trang người dùng.
+                </p>
+              )}
+            </section>
+          )}
+        </div>
+      </State>
+    </>
+  );
+}
