@@ -6,7 +6,14 @@ import { uiStore } from '../stores/ui';
 export const useSession = () =>
   useQuery({
     queryKey: ['session'],
-    queryFn: () => service.session(),
+    queryFn: async () => {
+      try {
+        return await service.session();
+      } catch (error) {
+        if (error instanceof ServiceError && [401, 403].includes(error.status)) return null;
+        throw error;
+      }
+    },
     retry: false,
     staleTime: 30000,
   });

@@ -48,12 +48,15 @@ export function createMockService(persistence?: DemoPersistence, delay = 180): V
   } catch {
     /* Damaged demo storage starts from seed. API mode never uses this implementation. */
   }
+  let checkpoint = structuredClone({ db, current, passwords, recovery, invitations });
   const save = () => {
     try {
       persistence?.write(
         JSON.stringify({ schema: 1, db, current, passwords, recovery, invitations }),
       );
+      checkpoint = structuredClone({ db, current, passwords, recovery, invitations });
     } catch {
+      ({ db, current, passwords, recovery, invitations } = structuredClone(checkpoint));
       fail('Bộ nhớ demo đã đầy. Giảm số ảnh hoặc reset dữ liệu.', 507);
     }
   };

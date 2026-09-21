@@ -15,6 +15,7 @@ export const queryClient = new QueryClient({
 });
 export function Guard({ role }: { role?: string }) {
   const q = useSession();
+  const auth = useAuth();
   if (q.isPending)
     return (
       <div className="empty" role="status">
@@ -31,8 +32,19 @@ export function Guard({ role }: { role?: string }) {
       </div>
     );
   if (!q.data) return <Navigate to="/auth/login" replace />;
-  if (q.data.role === 'VisuallyImpaired' || (role && q.data.role !== role))
-    return <Navigate to="/forbidden" replace />;
+  if (!['Caregiver', 'CenterAdmin', 'Admin'].includes(q.data.role))
+    return (
+      <main className="main">
+        <section className="glass card stack">
+          <h1>Không có quyền truy cập Web</h1>
+          <p>Vai trò này không được hỗ trợ trên Web Dashboard.</p>
+          <button className="btn" onClick={() => auth.logout()}>
+            Đăng xuất
+          </button>
+        </section>
+      </main>
+    );
+  if (role && q.data.role !== role) return <Navigate to="/forbidden" replace />;
   return <Outlet />;
 }
 export const roleBase = (role: string) =>
