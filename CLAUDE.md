@@ -1,8 +1,8 @@
 # CLAUDE.md — VisionAid Frontend Project Context
 
 > Phạm vi: Web Frontend của VisionAid, dành cho Caregiver, Center Admin và Super Admin.
-> Cập nhật: 2026-09-20. Khi soạn file này, repository chỉ có README.md, chưa có package.json hay mã nguồn ứng dụng.
-> Đây là hướng dẫn triển khai FE từ yêu cầu và thiết kế đã trao đổi; không phải xác nhận các tính năng đã được code.
+> Cập nhật: 2026-09-21. Web đã triển khai ở chế độ mock; chưa nối backend và dịch vụ bên ngoài thật.
+> Phân biệt yêu cầu đích với implementation hiện tại tại mục 3 và docs/BACKEND_INTEGRATION.md.
 
 ## 1. Cách sử dụng và nguồn tham chiếu
 
@@ -56,22 +56,26 @@ YOLOv8n offline, Whisper offline, TTS audio-first và cảm biến phát hiện 
 
 Không thêm các thành phần từ sơ đồ mẫu: Driver/Owner App, payOS, VietQR, Cloudinary, FPT.AI, Hangfire, Seq, Contabo hoặc Nginx. Tài liệu chỉ chốt VPS / Docker Compose ở mức hệ thống. Không có thanh toán, turn-by-turn navigation hay scene captioning tổng quát trong phạm vi hiện tại.
 
-## 3. Công nghệ: đã chốt và chưa chốt
+## 3. Công nghệ và trạng thái triển khai
 
 | Hạng mục | Trạng thái |
 |---|---|
-| React Web | Đã chốt trong tài liệu |
-| ASP.NET Core REST, SignalR, Mapbox, Firebase FCM | Đã xác định là các tích hợp FE cần dùng |
-| TypeScript, build tool, router | Chưa được chốt bởi mã nguồn hoặc tài liệu đã gửi |
-| HTTP client, server-state library, store library | Chưa chốt; không mặc định dự án đã có Axios, TanStack Query, Redux hoặc Zustand |
-| UI library, form/validation library, CSS framework | Chưa chốt; không mặc định Tailwind, Ant Design, shadcn hay glassmorphism |
-| Test runner, E2E tool, package manager | Chưa chốt; dùng công cụ phù hợp stack khi scaffold và ghi lại quyết định |
+| React Web | React 19, TypeScript 6, Vite 8, React Router 7 |
+| ASP.NET Core REST, SignalR, Mapbox, Firebase FCM | Tích hợp đích; hiện chưa nối thật |
+| HTTP và state | Fetch transport; TanStack Query 5; store nhỏ cho selection/notice |
+| Form và giao diện | React Hook Form 7, Zod 4, Tailwind 4, CSS tokens, lucide-react; glassmorphism theo yêu cầu |
+| Typography | Plus Jakarta Sans / JetBrains Mono bundle local |
+| Test và toolchain | Vitest, Playwright Edge headless, axe-core, ESLint, Prettier, npm/lockfile |
 
-Khi được giao khởi tạo FE, có thể đề xuất React + TypeScript + Vite làm nền tảng. Đây là đề xuất kỹ thuật, không phải stack đã được người dùng xác nhận. Không cài dependency chỉ để viết tài liệu. Khi chọn stack trong nhiệm vụ triển khai, ghi rõ lựa chọn và cập nhật mục này cùng package.json/lockfile. Không ghi phiên bản "latest" như một cam kết tương thích.
+Phiên bản chính xác theo package-lock.json. Các nhóm màn hình mục 6 đã có implementation mock, gồm QR bằng mã/ảnh, TTS và voice history theo WBS. `services/index.ts` chọn mock/api; API adapter báo 501 khi chưa có contract, không fallback mock. Model client không phải REST DTO.
+
+Bản đồ là sơ đồ tọa độ, realtime là timer mô phỏng. Chưa có Mapbox SDK, SignalR, FCM SDK/service worker, email thật, JWT refresh, MinIO/mã hóa ảnh hoặc đồng bộ Mobile. Mock lưu localStorage gồm demo credentials/ảnh, dành cho một tab và dữ liệu giả; giới hạn 2 MB/ảnh chỉ là giới hạn demo. Reset demo khôi phục seed và logout.
+
+Xem README.md để chạy; docs/IMPLEMENTATION_CHECKLIST.md cho phạm vi; docs/DESIGN_SYSTEM.md cho UX; docs/BACKEND_INTEGRATION.md cho phần cần nối BE; docs/DELIVERY_REPORT.md cho kiểm thử.
 
 ## 4. Cấu trúc package FE
 
-Cấu trúc đề xuất từ Package Diagram, chưa phải thư mục đã tồn tại:
+Cấu trúc đang dùng, phát triển từ Package Diagram:
 
 ```text
 src/
@@ -85,12 +89,13 @@ src/
   components/          # Reusable forms, tables, dialogs, map and alert components
   hooks/               # Data fetching, mutations, subscriptions, reusable UI logic
   services/
-    http/              # HTTP client, auth refresh, API error normalisation
-    api/               # Resource-specific calls based on the actual API contract
-    realtime/          # SignalR connection and event adapters
-    notifications/     # FCM browser integration
-    maps/              # Mapbox client integration
-  stores/              # Shared client state; no library assumed
+    http/              # Transport/error parsing; refresh chưa tích hợp
+    api/               # Fail-closed adapter, chờ contracts
+    mocks/             # Seed, persistence và business simulation
+    realtime/          # Lifecycle mô phỏng, chờ SignalR contract
+    notifications/     # Browser permission, chờ FCM integration
+    maps/              # Schematic projection/stale, chờ Mapbox
+  stores/              # UI state: selected VIU và notice
   models/              # API DTOs, client models, explicit mapping functions
   constants/           # Role labels, route identifiers, enum display mappings
   configs/             # Validated public runtime/build configuration
@@ -264,7 +269,7 @@ Giá trị nghiệp vụ trong DB: `DETECTED`, `DISMISSED`, `SENT`, `ACKNOWLEDGE
 
 ## 12. UX, accessibility và quy ước code
 
-- Giao diện dashboard đơn giản, nhất quán; chưa có visual theme được chốt. Không tự áp glassmorphism, icon mẫu hoặc framework UI vào sản phẩm khi không có yêu cầu.
+- Glassmorphism đã được người dùng chọn: glass nhẹ, nền form/table rõ, tokens dùng chung, bento dashboard. Theo docs/DESIGN_SYSTEM.md; ưu tiên contrast và keyboard hơn hiệu ứng.
 - Mọi trang có loading, empty, error, forbidden và pending states thích hợp; không dùng màn hình trắng khi lỗi.
 - Bảng có pagination/filter, trạng thái và action rõ ràng. Không ẩn dữ liệu bằng màu đơn thuần.
 - Theo yêu cầu WCAG 2.1 trong báo cáo: semantic HTML, labels, keyboard navigation, visible focus, contrast và text thay thế phù hợp. Đây là mục tiêu, không tự tuyên bố đạt chuẩn khi chưa kiểm tra.
@@ -292,7 +297,7 @@ Không tự xem các vấn đề sau là đã giải quyết:
 
 ## 14. Kiểm tra và điều kiện hoàn thành
 
-Chỉ chạy lệnh được định nghĩa trong package.json/toolchain thực tế. Hiện chưa có build/dev/test commands; không báo `npm run build` đã pass khi chưa scaffold.
+Scripts hiện có: `npm run dev`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e`, `npm run build`. Trên PowerShell dùng `npm.cmd` nếu npm.ps1 bị policy chặn. E2E dùng Edge cài sẵn, tự mở Vite port 5173. Bằng chứng và giới hạn kiểm thử tại docs/DELIVERY_REPORT.md; không suy ra API integration đã pass từ mock tests.
 
 Các kiểm tra quan trọng khi tính năng tương ứng đã tồn tại:
 
