@@ -24,7 +24,7 @@ export const PageHead = ({
       <h1>{title}</h1>
       <p>{description}</p>
     </div>
-    {actions && <div className="row">{actions}</div>}
+    {actions && <div className="row page-head-actions">{actions}</div>}
   </header>
 );
 export const Badge = ({ children, tone = 'blue' }: { children: ReactNode; tone?: string }) => (
