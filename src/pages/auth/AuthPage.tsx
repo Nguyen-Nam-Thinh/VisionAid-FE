@@ -12,7 +12,7 @@ export function AuthPage() {
   const nav = useNavigate();
   const [email, setEmail] = useState('caregiver@demo.vn');
   const [message, setMessage] = useState('');
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
   const titles: Record<string, string> = {
     login: 'Chào mừng trở lại.',
     register: 'Bắt đầu đồng hành.',
@@ -64,6 +64,7 @@ export function AuthPage() {
       </aside>
       <main className="auth-form">
         <div className="stack">
+          <Link to="/">← Về trang chủ</Link>
           <span className="badge blue">VISIONAID WEB DASHBOARD</span>
           <h1>{titles[action]}</h1>
           <p className="muted">
@@ -106,11 +107,11 @@ export function AuthPage() {
               setMessage('');
               if (action === 'login') {
                 await auth.login(String(v.email), String(v.password));
-                nav('/');
+                nav('/dashboard');
               }
               if (action === 'register') {
                 await auth.register(String(v.name), String(v.email), String(v.password));
-                nav('/');
+                nav('/dashboard');
               }
               if (action === 'recover') {
                 const code = await auth.recover(String(v.email));

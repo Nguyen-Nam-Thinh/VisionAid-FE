@@ -1,3 +1,4 @@
+import { Landing } from '../pages/public/Landing';
 import { Dashboard } from '../pages/shared/Dashboard';
 import { features } from './features';
 import { useState, useEffect, Suspense } from 'react';
@@ -133,7 +134,7 @@ function Shell() {
             Không gian của bạn
           </p>
           <nav className="nav" aria-label="Điều hướng chính">
-            <NavLink to="/" end onClick={() => setOpen(false)}>
+            <NavLink to="/dashboard" end onClick={() => setOpen(false)}>
               <LayoutDashboard size={18} />
               Tổng quan
             </NavLink>
@@ -239,10 +240,11 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/auth/:action" element={<AuthPage />} />
           <Route element={<Guard />}>
             <Route element={<Shell />}>
-              <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="profile" element={<Profile />} />
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>
@@ -257,7 +259,7 @@ export function App() {
                       title="Không có quyền truy cập"
                       description="Tài khoản của bạn không được cấp quyền cho màn hình này."
                     />
-                    <Link className="btn" to="/">
+                    <Link className="btn" to="/dashboard">
                       Về tổng quan
                     </Link>
                   </>
@@ -271,7 +273,7 @@ export function App() {
                       title="Không tìm thấy trang"
                       description="Đường dẫn không tồn tại hoặc đã được thay đổi."
                     />
-                    <Link className="btn" to="/">
+                    <Link className="btn" to="/dashboard">
                       Về tổng quan
                     </Link>
                   </>
