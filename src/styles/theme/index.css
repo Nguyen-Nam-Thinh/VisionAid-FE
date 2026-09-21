@@ -305,6 +305,9 @@ tbody tr:hover {
   gap: 16px;
   margin-bottom: 24px;
 }
+.page-head-actions {
+  align-items: flex-end;
+}
 .page-head p {
   margin-top: 8px;
   color: var(--muted);
