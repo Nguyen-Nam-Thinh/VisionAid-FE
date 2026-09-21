@@ -17,6 +17,10 @@ Ngày kiểm tra: 2026-09-21. Phạm vi: Web FE cho ba vai trò; không sửa BE
 
 Các lệnh: `npm.cmd run typecheck`, `npm.cmd run lint`, `npm.cmd test`, `npm.cmd run test:e2e`, `npm.cmd run build`. Node 24.14.1, npm 11.11.0. Build chính khoảng 480 kB / 151 kB gzip; QR decoder khoảng 131 kB tải khi cần. Không đặt mục tiêu coverage phần trăm hoặc tuyên bố đạt chứng nhận WCAG.
 
+Trên môi trường Windows này, lần chạy tự quản lý Vite bị kẹt ở teardown sau khi 11 test báo đạt. Chạy Vite ở terminal riêng khắc phục việc kết thúc/report. Lần chạy tiếp theo phát hiện bài smoke 25 routes vượt tổng timeout 45 giây; tăng riêng bài này lên 90 giây, giữ nguyên các assertion và timeout của các workflow khác. Nhánh sửa kiểm thử: `fix/route-smoke-timeout`.
+
+ESLint bỏ qua `playwright-report/` và `test-results/`: đây là output sinh tự động, gồm JavaScript của trình xem trace, không phải source của ứng dụng. Điều này cho phép chạy lint sau một lần E2E tạo trace lỗi.
+
 Đã sửa các lỗi phát hiện khi chạy luồng: session observer bị mất sau logout/reset; accessible name của form; restore focus; rollback khi lưu demo thất bại; guard vai trò không hỗ trợ; cleanup timer/reconnect. Tất cả đều nằm trong lịch sử Git và các test phù hợp.
 
 ## Git và tổ chức công việc

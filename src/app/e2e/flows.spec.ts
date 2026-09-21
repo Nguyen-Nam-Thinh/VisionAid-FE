@@ -179,6 +179,9 @@ test('notifications, TTS, geofence and form keyboard focus', async ({ page }) =>
 test('every role route renders on tablet without console errors or document overflow', async ({
   page,
 }) => {
+  // This single smoke test visits 25 routes and signs in as three roles.
+  // Keep ordinary workflow timeouts unchanged while allowing slower CI machines.
+  test.setTimeout(90000);
   await page.setViewportSize({ width: 1024, height: 900 });
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
