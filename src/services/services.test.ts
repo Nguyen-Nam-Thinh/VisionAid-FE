@@ -145,7 +145,7 @@ describe('mutations', () => {
 describe('integration boundary', () => {
   it('API mode fails closed instead of returning mock data', async () => {
     await expect(apiService.snapshot()).rejects.toMatchObject({ status: 501 });
-    await expect(apiService.login('a', 'b')).rejects.toMatchObject({ status: 501 });
+    await expect(apiService.register('test', 'a', 'b')).rejects.toMatchObject({ status: 501 });
   });
   it('accepts 204 without JSON and normalizes ProblemDetails', async () => {
     expect(

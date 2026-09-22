@@ -16,6 +16,7 @@ export const useSession = () =>
     },
     retry: false,
     staleTime: 30000,
+    refetchInterval: service.mode === 'api' ? 60000 : false,
   });
 export function useSnapshot() {
   const { data: user } = useSession();
@@ -60,11 +61,16 @@ export function useAuth() {
       await setSession(p);
     },
     logout: async () => {
+      let warning = '';
       try {
         await service.logout();
+      } catch {
+        warning =
+          'Đã thoát phiên trên trình duyệt, nhưng chưa xác nhận được thu hồi phiên trên máy chủ.';
       } finally {
         await setSession(null);
       }
+      if (warning) uiStore.set({ notice: warning });
     },
     resetDemo: async () => {
       await service.resetDemo();

@@ -1,4 +1,6 @@
 import { Landing } from '../pages/public/Landing';
+import { ApiSession, ApiPending } from '../pages/shared/ApiSession';
+import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
 import { features } from './features';
 import { useState, useEffect, Suspense } from 'react';
@@ -115,6 +117,7 @@ function Shell() {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
   const [reset, setReset] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const { notice } = useUI();
   useEffect(() => {
     if (!notice) return;
@@ -138,16 +141,17 @@ function Shell() {
               <LayoutDashboard size={18} />
               Tổng quan
             </NavLink>
-            {menu[user.role]?.map((item) => (
-              <NavLink
-                key={item.path}
-                to={roleBase(user.role) + '/' + item.path}
-                onClick={() => setOpen(false)}
-              >
-                <span aria-hidden="true">◦</span>
-                {item.label}
-              </NavLink>
-            ))}
+            {runtime.mode === 'mock' &&
+              menu[user.role]?.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={roleBase(user.role) + '/' + item.path}
+                  onClick={() => setOpen(false)}
+                >
+                  <span aria-hidden="true">◦</span>
+                  {item.label}
+                </NavLink>
+              ))}
           </nav>
         </div>
         <div className="sidebar-foot stack">
@@ -161,9 +165,12 @@ function Shell() {
               Hồ sơ của tôi
             </NavLink>
           </nav>
-          <button className="btn" onClick={() => auth.logout()}>
+          <button className="btn" disabled={signingOut} onClick={async () => {
+            setSigningOut(true);
+            try { await auth.logout(); } finally { setSigningOut(false); }
+          }}>
             <LogOut size={16} />
-            Đăng xuất
+            {signingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
           </button>
         </div>
       </aside>
@@ -244,11 +251,20 @@ export function App() {
           <Route path="/auth/:action" element={<AuthPage />} />
           <Route element={<Guard />}>
             <Route element={<Shell />}>
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="profile" element={<Profile />} />
+              <Route
+                path="dashboard"
+                element={runtime.mode === 'api' ? <ApiSession /> : <Dashboard />}
+              />
+              <Route
+                path="profile"
+                element={runtime.mode === 'api' ? <ApiSession /> : <Profile />}
+              />
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>
-                  <Route path={roleBase(f.role) + '/' + f.path} element={<f.component />} />
+                  <Route
+                    path={roleBase(f.role) + '/' + f.path}
+                    element={runtime.mode === 'api' ? <ApiPending /> : <f.component />}
+                  />
                 </Route>
               ))}
               <Route
