@@ -11,7 +11,7 @@ const unavailable = async (): Promise<never> => {
     501,
   );
 };
-/** Stages 1–3a implement auth, registration and profile. All later-stage operations fail closed. */
+/** Stages 1–3b implement auth, registration and profile. All later-stage operations fail closed. */
 export const apiService: VisionService = {
   mode: 'api',
   session: auth.session,
@@ -19,8 +19,8 @@ export const apiService: VisionService = {
   register: auth.register,
   logout: auth.logout,
   logoutAll: auth.logoutAll,
-  recover: unavailable,
-  resetPassword: unavailable,
+  recover: auth.recover,
+  resetPassword: auth.resetPassword,
   changePassword: auth.changePassword,
   profile: auth.profile,
   snapshot: unavailable,

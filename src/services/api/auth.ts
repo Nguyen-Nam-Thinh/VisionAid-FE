@@ -215,6 +215,59 @@ export function createApiAuth(
     }
   }
   return {
+    async recover(email: string) {
+      email = email.trim();
+      if (!z.string().email().max(255).safeParse(email).success)
+        throw new ServiceError('Email không hợp lệ hoặc quá dài.', 400);
+      await call('/api/auth/forgot-password', json({ email }));
+      return 'Nếu email này đã đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu. Kiểm tra hộp thư và thư rác; liên kết có hiệu lực 15 phút.';
+    },
+    async resetPassword(email: string, code: string, newPassword: string) {
+      email = email.trim();
+      let token = code.trim();
+      if (!z.string().email().safeParse(email).success)
+        throw new ServiceError('Email không hợp lệ.', 400);
+      if (token.includes('://')) {
+        let link: URL;
+        try {
+          link = new URL(token);
+        } catch {
+          throw new ServiceError('Liên kết khôi phục không hợp lệ.', 400);
+        }
+        if (
+          link.protocol !== 'visionaid:' ||
+          link.hostname !== 'reset-password' ||
+          link.searchParams.get('email') !== email ||
+          !link.searchParams.get('token')
+        )
+          throw new ServiceError('Liên kết không hợp lệ hoặc email không khớp với liên kết.', 400);
+        token = link.searchParams.get('token')!;
+      }
+      if (!token) throw new ServiceError('Vui lòng nhập mã hoặc liên kết trong email.', 400);
+      if (
+        newPassword.length < 8 ||
+        newPassword.length > 100 ||
+        !/[A-Z]/.test(newPassword) ||
+        !/[a-z]/.test(newPassword) ||
+        !/[0-9]/.test(newPassword) ||
+        !/[^a-zA-Z0-9]/.test(newPassword)
+      )
+        throw new ServiceError(
+          'Mật khẩu cần 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.',
+          400,
+        );
+      try {
+        await call('/api/auth/reset-password', json({ email, token, newPassword }));
+      } catch (error) {
+        if (error instanceof ServiceError && error.status === 403)
+          throw new ServiceError(
+            'Mã không hợp lệ, đã dùng hoặc hết hạn. Hãy yêu cầu email khôi phục mới.',
+            403,
+          );
+        throw error;
+      }
+      clear();
+    },
     async profile(values: Pick<Person, 'name' | 'phone' | 'avatar'>) {
       const fullName = values.name.trim();
       const phoneNumber = values.phone.trim();

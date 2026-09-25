@@ -3,12 +3,12 @@ Cập nhật: 2026-09-25. Nguồn: live OpenAPI, controller BE, code FE và ản
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 8 đã nối Web (DA_NOI): 6 ở đợt 0–2 và 2 ở checkpoint 3a.
+107 operations; 10 đã nối Web (DA_NOI): 6 ở đợt 0–2, 2 ở 3a, 2 ở 3b.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
 File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller đang hoạt động.
-Caller thật của cả 8 API: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
+Caller thật của cả 10 API: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
 Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE thật từ người dùng.
 Đợt triển khai/phụ thuộc/checklist đầy đủ ở PLAN.md; không tự làm tất cả roadmap.
 
@@ -64,20 +64,20 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Auth/Presentation/AuthController.cs
 
 006. POST /api/auth/forgot-password
-  Trạng thái: CHUA_NOI | Đợt: 3b
+  Trạng thái: DA_NOI | Đợt: 3b
   Màn/luồng: /auth/recover
   File FE: src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/app/App.tsx
-  Dùng để: Gửi email khôi phục, cần SMTP/inbox thử nghiệm; không hiển thị mã demo.
+  Dùng để: Gửi yêu cầu email khôi phục, thông báo chung không tiết lộ tài khoản tồn tại; cần test SMTP/inbox thật. Email BE dùng Mobile deep link, Web hỗ trợ sao chép/dán.
   Quyền controller: Anonymous; controller Auth public
   Query: Không có
   Body/schema: application/json: ForgotPasswordRequest; text/json: ForgotPasswordRequest; application/*+json: ForgotPasswordRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Auth/Presentation/AuthController.cs
 
 007. POST /api/auth/reset-password
-  Trạng thái: CHUA_NOI | Đợt: 3b
+  Trạng thái: DA_NOI | Đợt: 3b
   Màn/luồng: /auth/reset
   File FE: src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/app/App.tsx
-  Dùng để: email + token + newPassword. Interface mock reset(code,password) phải sửa vì thiếu email.
+  Dùng để: email + token + newPassword. Caller dùng resetPassword(email, code, password); code nhận token hoặc deep link visionaid://reset-password từ email. Thành công về login.
   Quyền controller: Anonymous; controller Auth public
   Query: Không có
   Body/schema: application/json: ResetPasswordRequest; text/json: ResetPasswordRequest; application/*+json: ResetPasswordRequest

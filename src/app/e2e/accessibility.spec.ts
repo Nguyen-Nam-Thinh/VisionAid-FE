@@ -41,6 +41,7 @@ test('registration, password recovery and session logout work without reload', a
   const message = await page.getByRole('status').innerText();
   const code = message.match(/DEMO-[a-f0-9]+/)![0];
   await page.getByRole('link', { name: 'Nhập mã khôi phục' }).click();
+  await page.getByLabel('Địa chỉ email').fill('family-new@demo.vn');
   await page.getByLabel('Mã khôi phục demo').fill(code);
   await page.getByLabel('Mật khẩu mới').fill('Password@2');
   await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();

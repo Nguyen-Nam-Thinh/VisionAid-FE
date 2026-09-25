@@ -225,3 +225,55 @@ test('failed logout all reports uncertainty and still clears local session', asy
   await expect(page.getByRole('status')).toContainText('chưa xác nhận');
   expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
 });
+
+test('recovery email, expired token, pasted link and login after reset', async ({ page }) => {
+  await stubApi(page);
+  let emails = 0;
+  let resets = 0;
+  let expired = true;
+  await page.route('**/api/auth/forgot-password', (route) => {
+    emails++;
+    expect(route.request().postDataJSON()).toEqual({ email: 'api@example.test' });
+    return route.fulfill({ json: { success: true } });
+  });
+  await page.route('**/api/auth/reset-password', (route) => {
+    resets++;
+    expect(route.request().postDataJSON()).toEqual({
+      email: 'api@example.test',
+      token: 'abc+def/ghi==',
+      newPassword: 'NewPassword@2',
+    });
+    return route.fulfill(
+      expired ? { status: 403, json: { detail: 'Expired' } } : { json: { success: true } },
+    );
+  });
+  await page.goto('/auth/login');
+  await page.getByRole('link', { name: 'Quên mật khẩu?' }).click();
+  await page.getByLabel('Địa chỉ email').fill('api@example.test');
+  await page.getByRole('button', { name: 'Tạo yêu cầu khôi phục' }).click();
+  await expect(page.getByRole('status')).toContainText('Nếu email này đã đăng ký');
+  expect(emails).toBe(1);
+  await expect(page.getByText('Mã demo', { exact: false })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Nhập mã khôi phục' }).click();
+  await page.getByLabel('Địa chỉ email').fill('api@example.test');
+  await page
+    .getByLabel('Mã hoặc liên kết khôi phục')
+    .fill('visionaid://reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test');
+  await page.getByLabel('Mật khẩu mới *', { exact: true }).fill('NewPassword@2');
+  await page.getByLabel('Nhập lại mật khẩu mới').fill('Different@2');
+  await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('không khớp');
+  expect(resets).toBe(0);
+  await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
+  await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('hết hạn');
+  expect(resets).toBe(1);
+  expired = false;
+  await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
+  await expect(page).toHaveURL(/auth\/login$/);
+  await expect(page.getByRole('status')).toContainText('Đã đặt lại mật khẩu');
+  await page.getByLabel('Địa chỉ email').fill('api@example.test');
+  await page.getByLabel('Mật khẩu *', { exact: true }).fill('NewPassword@2');
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  await expect(page).toHaveURL(/dashboard$/);
+});

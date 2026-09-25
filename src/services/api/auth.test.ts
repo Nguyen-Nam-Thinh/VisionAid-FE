@@ -230,3 +230,54 @@ it('tells the user to try login if registration succeeded but profile loading fa
   expect(transport).toHaveBeenCalledTimes(2);
   expect(storage.getItem(authSessionKey)).toBeNull();
 });
+
+it('recovers without revealing account existence and resets with decoded mobile email link', async () => {
+  const storage = memory();
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  const calls: { url: string; body: unknown }[] = [];
+  const auth = createApiAuth('http://example.test', storage, async (url, init) => {
+    calls.push({ url: String(url), body: JSON.parse(String(init?.body)) });
+    return ok(null);
+  });
+  expect(await auth.recover(' test@example.test ')).toContain('Nếu email này đã đăng ký');
+  const token = 'abc+def/ghi==';
+  await auth.resetPassword(
+    user.email,
+    'visionaid://reset-password?token=' +
+      encodeURIComponent(token) +
+      '&email=' +
+      encodeURIComponent(user.email),
+    'NewPassword@2',
+  );
+  expect(calls.map((c) => c.body)).toEqual([
+    { email: user.email },
+    { email: user.email, token, newPassword: 'NewPassword@2' },
+  ]);
+  expect(storage.getItem(authSessionKey)).toBeNull();
+});
+it('rejects invalid links locally, reports expired tokens and never retries reset or email requests', async () => {
+  const transport = vi.fn<typeof fetch>(async () =>
+    Response.json({ detail: 'Invalid token.' }, { status: 403 }),
+  );
+  const auth = createApiAuth('http://example.test', memory(), transport);
+  await expect(
+    auth.resetPassword(user.email, 'https://unknown.test/?token=abc', 'NewPassword@2'),
+  ).rejects.toMatchObject({ status: 400 });
+  await expect(
+    auth.resetPassword(
+      user.email,
+      'visionaid://reset-password?token=abc&email=other@example.test',
+      'NewPassword@2',
+    ),
+  ).rejects.toMatchObject({ status: 400 });
+  expect(transport).not.toHaveBeenCalled();
+  await expect(auth.resetPassword(user.email, 'expired-token', 'NewPassword@2')).rejects.toThrow(
+    'hết hạn',
+  );
+  expect(transport).toHaveBeenCalledTimes(1);
+  transport.mockImplementation(async () =>
+    Response.json({ detail: 'Too many requests.' }, { status: 429 }),
+  );
+  await expect(auth.recover(user.email)).rejects.toMatchObject({ status: 429 });
+  expect(transport).toHaveBeenCalledTimes(2);
+});
