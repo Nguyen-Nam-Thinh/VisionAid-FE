@@ -492,6 +492,9 @@ export function createMockService(persistence?: DemoPersistence, delay = 180): V
       save();
       return structuredClone(p);
     },
+    async logoutAll() {
+      throw new ServiceError('Đăng xuất mọi thiết bị chỉ hỗ trợ trong chế độ API.', 501);
+    },
     async logout() {
       current = null;
       save();

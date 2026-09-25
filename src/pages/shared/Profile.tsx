@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Form } from '../../components/Form';
-import { PageHead } from '../../components/UI';
+import { Confirm, PageHead } from '../../components/UI';
 import { useAuth, useSession } from '../../hooks/useService';
 export function Profile() {
   const { data: user } = useSession();
   const auth = useAuth();
   const [message, setMessage] = useState('');
+  const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
   if (!user) return null;
   return (
     <>
@@ -98,6 +99,26 @@ export function Profile() {
           )}
         </section>
       </div>
+      {auth.mode === 'api' && (
+        <section className="glass card stack">
+          <h2>Phiên đăng nhập</h2>
+          <p>
+            Thu hồi quyền gia hạn phiên và nhận thông báo trên mọi thiết bị. Phiên truy cập hiện có
+            trên thiết bị khác có thể còn hiệu lực đến khi hết hạn.
+          </p>
+          <button className="btn danger" onClick={() => setConfirmLogoutAll(true)}>
+            Đăng xuất tất cả thiết bị
+          </button>
+        </section>
+      )}
+      {confirmLogoutAll && (
+        <Confirm
+          title="Đăng xuất tất cả thiết bị?"
+          description="Tab này sẽ đăng xuất ngay. Các thiết bị khác sẽ cần đăng nhập lại khi gia hạn phiên."
+          onClose={() => setConfirmLogoutAll(false)}
+          onConfirm={auth.logoutAll}
+        />
+      )}
     </>
   );
 }

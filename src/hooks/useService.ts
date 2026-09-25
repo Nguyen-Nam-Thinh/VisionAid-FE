@@ -76,6 +76,18 @@ export function useAuth() {
       await service.resetDemo();
       await setSession(null);
     },
+    logoutAll: async () => {
+      let notice = 'Đã thu hồi phiên đăng nhập trên các thiết bị. Vui lòng đăng nhập lại.';
+      try {
+        await service.logoutAll();
+      } catch {
+        notice =
+          'Đã thoát trên tab này, nhưng chưa xác nhận thu hồi phiên trên các thiết bị khác. Đăng nhập lại để thử lại.';
+      } finally {
+        await setSession(null);
+      }
+      uiStore.set({ notice });
+    },
     recover: (email: string) => service.recover(email),
     resetPassword: (code: string, password: string) => service.resetPassword(code, password),
     changePassword: async (current: string, next: string) => {

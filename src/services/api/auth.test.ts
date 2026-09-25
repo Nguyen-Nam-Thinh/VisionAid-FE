@@ -169,3 +169,64 @@ it('updates only editable profile fields and clears session only after password 
   expect(bodies.at(-1)).toEqual({ currentPassword: 'OldPassword@1', newPassword: 'NewPassword@2' });
   expect(storage.getItem(authSessionKey)).toBeNull();
 });
+
+it('registers a caregiver with the tab device then loads profile and logs out all', async () => {
+  const storage = memory();
+  const calls: { path: string; body: unknown }[] = [];
+  const auth = createApiAuth('http://example.test', storage, async (url, init) => {
+    const path = new URL(String(url)).pathname;
+    calls.push({ path, body: init?.body ? JSON.parse(String(init.body)) : null });
+    return path.endsWith('/me') ? ok(user) : path.endsWith('/logout-all') ? ok(null) : ok(pair());
+  });
+  expect((await auth.register(' API Test ', ' test@example.test ', 'Password@1')).role).toBe(
+    'Caregiver',
+  );
+  expect(calls[0]).toMatchObject({
+    path: '/api/auth/register',
+    body: {
+      fullName: 'API Test',
+      email: user.email,
+      password: 'Password@1',
+      device: { deviceType: 'Web' },
+    },
+  });
+  expect(calls[1].path).toBe('/api/users/me');
+  expect(calls[0].body).not.toHaveProperty('role');
+  expect(calls[0].body).not.toHaveProperty('organizationId');
+  await auth.logoutAll();
+  expect(calls.at(-1)).toEqual({ path: '/api/auth/logout-all', body: null });
+  expect(storage.getItem(authSessionKey)).toBeNull();
+});
+it('does not retry conflicting registration or invalid input, and clears failed logout-all locally', async () => {
+  const storage = memory();
+  const transport = vi.fn<typeof fetch>(async () =>
+    Response.json({ detail: 'Email already registered.' }, { status: 409 }),
+  );
+  const auth = createApiAuth('http://example.test', storage, transport);
+  await expect(auth.register('Name', user.email, 'weak')).rejects.toMatchObject({ status: 400 });
+  expect(transport).not.toHaveBeenCalled();
+  await expect(auth.register('Name', user.email, 'Password@1')).rejects.toMatchObject({
+    status: 409,
+  });
+  expect(transport).toHaveBeenCalledTimes(1);
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  const offline = createApiAuth('http://example.test', storage, async () => {
+    throw Error('offline');
+  });
+  await expect(offline.logoutAll()).rejects.toMatchObject({ status: 503 });
+  expect(storage.getItem(authSessionKey)).toBeNull();
+});
+it('tells the user to try login if registration succeeded but profile loading failed', async () => {
+  const storage = memory();
+  const transport = vi.fn<typeof fetch>(async (url) =>
+    String(url).endsWith('/register')
+      ? ok(pair())
+      : Response.json({ detail: 'Unavailable' }, { status: 503 }),
+  );
+  const auth = createApiAuth('http://example.test', storage, transport);
+  await expect(auth.register('Name', user.email, 'Password@1')).rejects.toThrow(
+    'hãy thử đăng nhập',
+  );
+  expect(transport).toHaveBeenCalledTimes(2);
+  expect(storage.getItem(authSessionKey)).toBeNull();
+});

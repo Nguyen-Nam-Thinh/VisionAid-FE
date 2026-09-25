@@ -164,3 +164,64 @@ test('profile save, reload, password rejection and successful change', async ({ 
   await expect(page.getByRole('status')).toContainText('Đã đổi mật khẩu');
   expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
 });
+
+test('register caregiver, reject duplicate email, then confirm logout all', async ({ page }) => {
+  await stubApi(page);
+  let duplicate = true;
+  let registrations = 0;
+  let logouts = 0;
+  await page.route('**/api/auth/register', (route) => {
+    registrations++;
+    expect(route.request().postDataJSON()).toMatchObject({
+      fullName: 'Caregiver Test',
+      email: 'new@example.test',
+      device: { deviceType: 'Web' },
+    });
+    expect(route.request().postDataJSON()).not.toHaveProperty('role');
+    return route.fulfill(
+      duplicate
+        ? { status: 409, json: { detail: 'Email already registered.' } }
+        : { json: { success: true, data: { accessToken: token(), refreshToken: 'new-refresh' } } },
+    );
+  });
+  await page.route('**/api/auth/logout-all', (route) => {
+    logouts++;
+    return route.fulfill({ json: { success: true } });
+  });
+  await page.goto('/auth/register');
+  await page.getByLabel('Họ và tên').fill('Caregiver Test');
+  await page.getByLabel('Địa chỉ email').fill('new@example.test');
+  await page.getByLabel('Mật khẩu *', { exact: true }).fill('Password@1');
+  await page.getByLabel('Nhập lại mật khẩu').fill('Different@1');
+  await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('không khớp');
+  expect(registrations).toBe(0);
+  await page.getByLabel('Nhập lại mật khẩu').fill('Password@1');
+  await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Email already registered.');
+  expect(registrations).toBe(1);
+  duplicate = false;
+  await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
+  await expect(page).toHaveURL(/dashboard$/);
+  await page.goto('/profile');
+  await page.getByRole('button', { name: 'Đăng xuất tất cả thiết bị', exact: true }).click();
+  await page.getByRole('button', { name: 'Hủy', exact: true }).click();
+  expect(logouts).toBe(0);
+  await page.getByRole('button', { name: 'Đăng xuất tất cả thiết bị', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page).toHaveURL(/auth\/login$/);
+  expect(logouts).toBe(1);
+  expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
+});
+test('failed logout all reports uncertainty and still clears local session', async ({ page }) => {
+  await stubApi(page);
+  await login(page);
+  await expect(page).toHaveURL(/dashboard$/);
+  await page.route('**/api/auth/logout-all', (route) => route.abort('failed'));
+  await page.goto('/profile');
+  await page.getByRole('button', { name: 'Đăng xuất tất cả thiết bị', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page).toHaveURL(/auth\/login$/);
+  await expect(page.getByRole('status')).toContainText('chưa xác nhận');
+  expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
+});
