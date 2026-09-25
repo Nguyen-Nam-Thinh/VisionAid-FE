@@ -76,7 +76,7 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
           ? '/center-admin/staff'
           : '/caregiver/registry';
     await page.goto(path);
-    await expect(page.getByRole('heading', { name: 'Chưa tích hợp trong đợt 1' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Chưa tích hợp trong đợt này' })).toBeVisible();
     expect(
       calls.every((p) => ['/api/auth/login', '/api/users/me', '/api/auth/refresh'].includes(p)),
     ).toBe(true);
@@ -107,5 +107,60 @@ test('API login errors do not fall back to demo and failed logout still clears t
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
   await expect(page.getByRole('status')).toContainText('chưa xác nhận');
+  expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
+});
+
+test('profile save, reload, password rejection and successful change', async ({ page }) => {
+  await stubApi(page);
+  let fullName = 'Người dùng API';
+  await page.route('**/api/users/me', async (route) => {
+    if (route.request().method() === 'PUT') {
+      const body = route.request().postDataJSON();
+      expect(body).toEqual({ fullName: 'Tên mới', phoneNumber: '0901234567' });
+      fullName = body.fullName;
+    }
+    await route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          email: 'api@example.test',
+          fullName,
+          phoneNumber: '0901234567',
+          role: 'Caregiver',
+          isActive: true,
+          organizationId: null,
+        },
+      },
+    });
+  });
+  let accepted = false;
+  await page.route('**/api/auth/change-password', (route) =>
+    route.fulfill(
+      accepted
+        ? { json: { success: true } }
+        : { status: 403, json: { detail: 'Current password is incorrect.' } },
+    ),
+  );
+  await login(page);
+  await expect(page).toHaveURL(/dashboard$/);
+  await page.goto('/profile');
+  await page.getByLabel('Họ và tên').fill('Tên mới');
+  await page.getByLabel('Số điện thoại').fill('0901234567');
+  await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(page.getByRole('status')).toContainText('Đã cập nhật hồ sơ');
+  await page.reload();
+  await expect(page.getByLabel('Họ và tên')).toHaveValue('Tên mới');
+  await expect(page.locator('input[type=file]')).toHaveCount(0);
+  await page.getByLabel('Mật khẩu hiện tại').fill('WrongPassword@1');
+  await page.getByLabel('Mật khẩu mới', { exact: false }).first().fill('NewPassword@2');
+  await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
+  await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Current password is incorrect.');
+  await expect(page).toHaveURL(/profile$/);
+  accepted = true;
+  await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
+  await expect(page).toHaveURL(/auth\/login$/);
+  await expect(page.getByRole('status')).toContainText('Đã đổi mật khẩu');
   expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
 });

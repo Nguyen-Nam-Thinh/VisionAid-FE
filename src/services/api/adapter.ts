@@ -7,11 +7,11 @@ const auth = createApiAuth(
 );
 const unavailable = async (): Promise<never> => {
   throw new ServiceError(
-    'Chức năng này chưa tích hợp API trong đợt 1. Hiện chỉ mở đăng nhập, hồ sơ phiên và đăng xuất.',
+    'Chức năng này chưa tích hợp API. Hiện hỗ trợ đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
     501,
   );
 };
-/** Stage 1 implements auth only. All later-stage operations fail closed. */
+/** Stages 1–2 implement auth and profile. All later-stage operations fail closed. */
 export const apiService: VisionService = {
   mode: 'api',
   session: auth.session,
@@ -20,8 +20,8 @@ export const apiService: VisionService = {
   logout: auth.logout,
   recover: unavailable,
   resetPassword: unavailable,
-  changePassword: unavailable,
-  profile: unavailable,
+  changePassword: auth.changePassword,
+  profile: auth.profile,
   snapshot: unavailable,
   execute: unavailable,
   resetDemo: unavailable,

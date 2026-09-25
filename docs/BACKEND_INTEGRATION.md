@@ -1,3 +1,7 @@
+# Tiến độ tích hợp ngày 2026-09-25
+
+Đợt 0–1 đã nối login, GET hồ sơ, refresh và logout. Đợt 2 nối PUT hồ sơ và đổi mật khẩu, chờ người dùng kiểm thử BE thật. Các mục bên dưới mô tả nền mock và roadmap ban đầu; không áp dụng nhận định chưa có auth/refresh cho implementation hiện tại. Xem API_STAGE_02_TEST.md.
+
 # Backend integration handoff
 
 ## Trạng thái hiện tại

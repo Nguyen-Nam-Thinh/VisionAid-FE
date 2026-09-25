@@ -10,7 +10,7 @@ export function ApiSession() {
     <>
       <PageHead
         title="Kết nối tài khoản"
-        description="Đợt 1 · Đăng nhập và quản lý phiên với backend VisionAid."
+        description="Đợt 2 · Đăng nhập, hồ sơ và mật khẩu với backend VisionAid."
       />
       <section className="glass card stack">
         <h2>Đã đăng nhập bằng tài khoản BE</h2>
@@ -54,8 +54,8 @@ export function ApiSession() {
 export function ApiPending() {
   return (
     <section className="glass card stack">
-      <h1>Chưa tích hợp trong đợt 1</h1>
-      <p>Màn hình này sẽ được ghép API sau khi bạn kiểm thử và xác nhận đợt đăng nhập.</p>
+      <h1>Chưa tích hợp trong đợt này</h1>
+      <p>Màn hình này sẽ được ghép API ở đợt tiếp theo.</p>
       <Link className="btn" to="/dashboard">
         Về thông tin phiên
       </Link>

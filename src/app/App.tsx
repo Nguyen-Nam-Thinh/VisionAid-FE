@@ -257,7 +257,7 @@ export function App() {
               />
               <Route
                 path="profile"
-                element={runtime.mode === 'api' ? <ApiSession /> : <Profile />}
+                element={<Profile />}
               />
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>

@@ -78,7 +78,13 @@ export function useAuth() {
     },
     recover: (email: string) => service.recover(email),
     resetPassword: (code: string, password: string) => service.resetPassword(code, password),
-    changePassword: (current: string, next: string) => service.changePassword(current, next),
+    changePassword: async (current: string, next: string) => {
+      await service.changePassword(current, next);
+      if (service.mode === 'api') {
+        await setSession(null);
+        uiStore.set({ notice: 'Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.' });
+      }
+    },
     profile: async (values: Pick<Person, 'name' | 'phone' | 'avatar'>) => {
       const p = await service.profile(values);
       client.setQueryData(['session'], p);

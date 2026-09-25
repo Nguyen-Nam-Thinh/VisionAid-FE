@@ -142,3 +142,30 @@ it('rejects malformed success payloads and never retries wrong credentials or ra
   ).rejects.toMatchObject({ status: 502 });
   await expect(createApiAuth('', memory()).login('a', 'b')).rejects.toMatchObject({ status: 501 });
 });
+it('updates only editable profile fields and clears session only after password success', async () => {
+  const storage = memory();
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  let fail = true;
+  const bodies: unknown[] = [];
+  const auth = createApiAuth('http://example.test', storage, async (url, init) => {
+    if (init?.body) bodies.push(JSON.parse(String(init.body)));
+    if (String(url).endsWith('/change-password'))
+      return fail
+        ? Response.json({ detail: 'Current password is incorrect.' }, { status: 403 })
+        : ok(null);
+    return ok({ ...user, fullName: 'Updated' });
+  });
+  expect((await auth.profile({ name: ' Updated ', phone: '', avatar: 'ignored' })).name).toBe(
+    'Updated',
+  );
+  expect(bodies[0]).toEqual({ fullName: 'Updated', phoneNumber: '' });
+  await expect(auth.changePassword('Wrong@123', 'NewPassword@2')).rejects.toMatchObject({
+    status: 403,
+  });
+  expect(storage.getItem(authSessionKey)).not.toBeNull();
+  await expect(auth.changePassword('Wrong@123', 'weak')).rejects.toMatchObject({ status: 400 });
+  fail = false;
+  await auth.changePassword('OldPassword@1', 'NewPassword@2');
+  expect(bodies.at(-1)).toEqual({ currentPassword: 'OldPassword@1', newPassword: 'NewPassword@2' });
+  expect(storage.getItem(authSessionKey)).toBeNull();
+});

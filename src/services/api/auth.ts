@@ -169,8 +169,8 @@ export function createApiAuth(
       }
     }
   }
-  async function profile(): Promise<Person> {
-    const parsed = profileSchema.safeParse(await authorized('/api/users/me'));
+  function mapProfile(value: unknown): Person {
+    const parsed = profileSchema.safeParse(value);
     if (!parsed.success)
       throw new ServiceError('Hồ sơ từ máy chủ không hợp lệ hoặc vai trò chưa được hỗ trợ.', 502);
     const p = parsed.data;
@@ -187,7 +187,41 @@ export function createApiAuth(
       avatar: p.avatarUrl ?? undefined,
     };
   }
+  async function profile(): Promise<Person> {
+    return mapProfile(await authorized('/api/users/me'));
+  }
   return {
+    async profile(values: Pick<Person, 'name' | 'phone' | 'avatar'>) {
+      const fullName = values.name.trim();
+      const phoneNumber = values.phone.trim();
+      if (!fullName || fullName.length > 200)
+        throw new ServiceError('Họ tên phải có từ 1 đến 200 ký tự.', 400);
+      if (phoneNumber && !/^0[35789][0-9]{8}$/.test(phoneNumber))
+        throw new ServiceError('Số điện thoại Việt Nam phải có 10 số, ví dụ 0901234567.', 400);
+      return mapProfile(
+        await authorized('/api/users/me', {
+          ...json({ fullName, phoneNumber }),
+          method: 'PUT',
+        }),
+      );
+    },
+    async changePassword(currentPassword: string, newPassword: string) {
+      if (
+        newPassword.length < 8 ||
+        newPassword.length > 100 ||
+        !/[A-Z]/.test(newPassword) ||
+        !/[a-z]/.test(newPassword) ||
+        !/[0-9]/.test(newPassword) ||
+        !/[^a-zA-Z0-9]/.test(newPassword) ||
+        currentPassword === newPassword
+      )
+        throw new ServiceError(
+          'Mật khẩu mới cần 8–100 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt và khác mật khẩu cũ.',
+          400,
+        );
+      await authorized('/api/auth/change-password', json({ currentPassword, newPassword }));
+      clear();
+    },
     async login(email: string, password: string) {
       clear();
       const epoch = generation;
