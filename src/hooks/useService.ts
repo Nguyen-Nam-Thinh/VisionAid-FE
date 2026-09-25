@@ -16,6 +16,7 @@ export const useSession = () =>
     },
     retry: false,
     staleTime: 30000,
+    refetchInterval: service.mode === 'api' ? 60000 : false,
   });
 export function useSnapshot() {
   const { data: user } = useSession();
@@ -60,11 +61,16 @@ export function useAuth() {
       await setSession(p);
     },
     logout: async () => {
+      let warning = '';
       try {
         await service.logout();
+      } catch {
+        warning =
+          'Đã thoát phiên trên trình duyệt, nhưng chưa xác nhận được thu hồi phiên trên máy chủ.';
       } finally {
         await setSession(null);
       }
+      if (warning) uiStore.set({ notice: warning });
     },
     resetDemo: async () => {
       await service.resetDemo();
@@ -72,7 +78,13 @@ export function useAuth() {
     },
     recover: (email: string) => service.recover(email),
     resetPassword: (code: string, password: string) => service.resetPassword(code, password),
-    changePassword: (current: string, next: string) => service.changePassword(current, next),
+    changePassword: async (current: string, next: string) => {
+      await service.changePassword(current, next);
+      if (service.mode === 'api') {
+        await setSession(null);
+        uiStore.set({ notice: 'Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.' });
+      }
+    },
     profile: async (values: Pick<Person, 'name' | 'phone' | 'avatar'>) => {
       const p = await service.profile(values);
       client.setQueryData(['session'], p);

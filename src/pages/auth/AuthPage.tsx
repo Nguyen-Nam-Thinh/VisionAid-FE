@@ -4,13 +4,16 @@ import { Eye, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { Form, type FieldSpec } from '../../components/Form';
 import { useAuth, useDemoAccounts, useSession } from '../../hooks/useService';
 import { roles } from '../../constants/labels';
+import { useUI } from '../../stores/ui';
 export function AuthPage() {
   const { action = 'login' } = useParams();
   const auth = useAuth();
-  const { data: user } = useSession();
+  const session = useSession();
+  const user = session.data;
+  const { notice } = useUI();
   const { data: accounts = [] } = useDemoAccounts();
   const nav = useNavigate();
-  const [email, setEmail] = useState('caregiver@demo.vn');
+  const [email, setEmail] = useState(auth.mode === 'mock' ? 'caregiver@demo.vn' : '');
   const [message, setMessage] = useState('');
   if (user) return <Navigate to="/dashboard" replace />;
   const titles: Record<string, string> = {
@@ -20,6 +23,19 @@ export function AuthPage() {
     reset: 'Đặt mật khẩu mới',
   };
   if (!titles[action]) return <Navigate to="/not-found" replace />;
+  if (auth.mode === 'api' && action !== 'login')
+    return (
+      <main className="main">
+        <section className="glass card stack">
+          <h1>Chức năng sẽ mở ở đợt tiếp theo</h1>
+          <p>Đợt 1 chỉ tích hợp đăng nhập và phiên tài khoản đã có trên BE.</p>
+          <Link className="btn" to="/auth/login">
+            Đăng nhập
+          </Link>
+          <Link to="/">Về trang chủ</Link>
+        </section>
+      </main>
+    );
   const fields: FieldSpec[] =
     action === 'reset'
       ? [
@@ -65,6 +81,19 @@ export function AuthPage() {
       <main className="auth-form">
         <div className="stack">
           <Link to="/">← Về trang chủ</Link>
+          {notice && (
+            <p className="notice" role="status">
+              {notice}
+            </p>
+          )}
+          {auth.mode === 'api' && session.isPending && (
+            <p role="status">Đang kiểm tra phiên đã lưu…</p>
+          )}
+          {auth.mode === 'api' && session.isError && (
+            <p className="notice error" role="alert">
+              Không khôi phục được phiên. Bạn có thể đăng nhập lại. {session.error.message}
+            </p>
+          )}
           <span className="badge blue">VISIONAID WEB DASHBOARD</span>
           <h1>{titles[action]}</h1>
           <p className="muted">
@@ -90,57 +119,63 @@ export function AuthPage() {
               </select>
             </label>
           )}
-          <Form
-            key={action + email}
-            fields={fields}
-            initial={{ email, password: auth.mode === 'mock' ? 'Demo@123' : '' }}
-            submit={
-              action === 'login'
-                ? 'Đăng nhập'
-                : action === 'register'
-                  ? 'Tạo tài khoản'
-                  : action === 'recover'
-                    ? 'Tạo yêu cầu khôi phục'
-                    : 'Đặt mật khẩu'
-            }
-            onSubmit={async (v) => {
-              setMessage('');
-              if (action === 'login') {
-                await auth.login(String(v.email), String(v.password));
-                nav('/dashboard');
+          {!(auth.mode === 'api' && session.isPending) && (
+            <Form
+              key={action + email}
+              fields={fields}
+              initial={{ email, password: auth.mode === 'mock' ? 'Demo@123' : '' }}
+              submit={
+                action === 'login'
+                  ? 'Đăng nhập'
+                  : action === 'register'
+                    ? 'Tạo tài khoản'
+                    : action === 'recover'
+                      ? 'Tạo yêu cầu khôi phục'
+                      : 'Đặt mật khẩu'
               }
-              if (action === 'register') {
-                await auth.register(String(v.name), String(v.email), String(v.password));
-                nav('/dashboard');
-              }
-              if (action === 'recover') {
-                const code = await auth.recover(String(v.email));
-                setMessage(
-                  'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo (chỉ dùng với email tồn tại): ' +
-                    code,
-                );
-              }
-              if (action === 'reset') {
-                await auth.resetPassword(String(v.code), String(v.password));
-                setMessage('Đã đổi mật khẩu demo. Bạn có thể đăng nhập lại.');
-              }
-            }}
-          />
+              onSubmit={async (v) => {
+                setMessage('');
+                if (action === 'login') {
+                  await auth.login(String(v.email), String(v.password));
+                  nav('/dashboard');
+                }
+                if (action === 'register') {
+                  await auth.register(String(v.name), String(v.email), String(v.password));
+                  nav('/dashboard');
+                }
+                if (action === 'recover') {
+                  const code = await auth.recover(String(v.email));
+                  setMessage(
+                    'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo (chỉ dùng với email tồn tại): ' +
+                      code,
+                  );
+                }
+                if (action === 'reset') {
+                  await auth.resetPassword(String(v.code), String(v.password));
+                  setMessage('Đã đổi mật khẩu demo. Bạn có thể đăng nhập lại.');
+                }
+              }}
+            />
+          )}
           {message && (
             <p role="status" className="notice">
               {message}
             </p>
           )}
-          <div className="row between">
-            <Link to="/auth/login">Đăng nhập</Link>
-            <Link to="/auth/register">
-              Đăng ký <ArrowUpRight size={14} />
-            </Link>
-          </div>
-          <div className="row between">
-            <Link to="/auth/recover">Quên mật khẩu?</Link>
-            <Link to="/auth/reset">Nhập mã khôi phục</Link>
-          </div>
+          {auth.mode === 'mock' && (
+            <>
+              <div className="row between">
+                <Link to="/auth/login">Đăng nhập</Link>
+                <Link to="/auth/register">
+                  Đăng ký <ArrowUpRight size={14} />
+                </Link>
+              </div>
+              <div className="row between">
+                <Link to="/auth/recover">Quên mật khẩu?</Link>
+                <Link to="/auth/reset">Nhập mã khôi phục</Link>
+              </div>
+            </>
+          )}
           <small>Hệ thống hỗ trợ người khiếm thị · FA26SE013</small>
         </div>
       </main>

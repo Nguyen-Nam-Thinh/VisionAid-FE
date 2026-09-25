@@ -1,21 +1,27 @@
 import { ServiceError, type VisionService } from '../contracts';
+import { runtime } from '../../configs/runtime';
+import { createApiAuth } from './auth';
+const auth = createApiAuth(
+  runtime.apiBaseUrl,
+  typeof sessionStorage === 'undefined' ? undefined : sessionStorage,
+);
 const unavailable = async (): Promise<never> => {
   throw new ServiceError(
-    'Chưa cấu hình contract backend. Xem docs/BACKEND_INTEGRATION.md; không sử dụng dữ liệu mock trong chế độ API.',
+    'Chức năng này chưa tích hợp API. Hiện hỗ trợ đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
     501,
   );
 };
-/** Intentionally fails closed until verified OpenAPI/auth contracts are supplied. */
+/** Stages 1–2 implement auth and profile. All later-stage operations fail closed. */
 export const apiService: VisionService = {
   mode: 'api',
-  session: unavailable,
-  login: unavailable,
+  session: auth.session,
+  login: auth.login,
   register: unavailable,
-  logout: unavailable,
+  logout: auth.logout,
   recover: unavailable,
   resetPassword: unavailable,
-  changePassword: unavailable,
-  profile: unavailable,
+  changePassword: auth.changePassword,
+  profile: auth.profile,
   snapshot: unavailable,
   execute: unavailable,
   resetDemo: unavailable,
