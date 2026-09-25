@@ -23,12 +23,12 @@ export function AuthPage() {
     reset: 'Đặt mật khẩu mới',
   };
   if (!titles[action]) return <Navigate to="/not-found" replace />;
-  if (auth.mode === 'api' && action !== 'login')
+  if (auth.mode === 'api' && !['login', 'register'].includes(action))
     return (
       <main className="main">
         <section className="glass card stack">
           <h1>Chức năng sẽ mở ở đợt tiếp theo</h1>
-          <p>Đợt 1 chỉ tích hợp đăng nhập và phiên tài khoản đã có trên BE.</p>
+          <p>Khôi phục mật khẩu sẽ được tích hợp ở checkpoint 3b.</p>
           <Link className="btn" to="/auth/login">
             Đăng nhập
           </Link>
@@ -47,6 +47,16 @@ export function AuthPage() {
           ...(action === 'register' ? [{ key: 'name', label: 'Họ và tên', required: true }] : []),
           ...(action !== 'recover'
             ? [{ key: 'password', label: 'Mật khẩu', type: 'password' as const, required: true }]
+            : []),
+          ...(action === 'register' && auth.mode === 'api'
+            ? [
+                {
+                  key: 'confirm',
+                  label: 'Nhập lại mật khẩu',
+                  type: 'password' as const,
+                  required: true,
+                },
+              ]
             : []),
         ];
   return (
@@ -140,6 +150,8 @@ export function AuthPage() {
                   nav('/dashboard');
                 }
                 if (action === 'register') {
+                  if (auth.mode === 'api' && v.password !== v.confirm)
+                    throw Error('Mật khẩu xác nhận không khớp.');
                   await auth.register(String(v.name), String(v.email), String(v.password));
                   nav('/dashboard');
                 }
@@ -161,6 +173,21 @@ export function AuthPage() {
             <p role="status" className="notice">
               {message}
             </p>
+          )}
+          {auth.mode === 'api' && (
+            <>
+              {action === 'register' && (
+                <p className="muted">
+                  Mật khẩu cần 8–100 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.
+                </p>
+              )}
+              <div className="row between">
+                <Link to="/auth/login">Đăng nhập</Link>
+                <Link to="/auth/register">
+                  Đăng ký <ArrowUpRight size={14} />
+                </Link>
+              </div>
+            </>
           )}
           {auth.mode === 'mock' && (
             <>

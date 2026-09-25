@@ -190,6 +190,30 @@ export function createApiAuth(
   async function profile(): Promise<Person> {
     return mapProfile(await authorized('/api/users/me'));
   }
+  async function authenticate(path: string, credentials: Record<string, string>) {
+    clear();
+    const epoch = generation;
+    const result = await call(
+      path,
+      json({
+        ...credentials,
+        device: {
+          clientDeviceId: deviceId,
+          deviceType: 'Web',
+          deviceModel: 'VisionAid Web',
+          appVersion: '0.1.0',
+        },
+      }),
+    );
+    if (generation !== epoch) throw new ServiceError('Yêu cầu đăng nhập đã bị hủy.', 401);
+    try {
+      save(result);
+      return await profile();
+    } catch (error) {
+      if (generation === epoch) clear();
+      throw error;
+    }
+  }
   return {
     async profile(values: Pick<Person, 'name' | 'phone' | 'avatar'>) {
       const fullName = values.name.trim();
@@ -222,29 +246,46 @@ export function createApiAuth(
       await authorized('/api/auth/change-password', json({ currentPassword, newPassword }));
       clear();
     },
-    async login(email: string, password: string) {
-      clear();
-      const epoch = generation;
-      const result = await call(
-        '/api/auth/login',
-        json({
+    login(email: string, password: string) {
+      return authenticate('/api/auth/login', { email: email.trim(), password });
+    },
+    async register(name: string, email: string, password: string) {
+      if (!name.trim() || name.trim().length > 200)
+        throw new ServiceError('Họ tên phải có từ 1 đến 200 ký tự.', 400);
+      if (!z.string().email().max(255).safeParse(email.trim()).success)
+        throw new ServiceError('Email không hợp lệ hoặc quá dài.', 400);
+      if (
+        password.length < 8 ||
+        password.length > 100 ||
+        !/[A-Z]/.test(password) ||
+        !/[a-z]/.test(password) ||
+        !/[0-9]/.test(password) ||
+        !/[^a-zA-Z0-9]/.test(password)
+      )
+        throw new ServiceError(
+          'Mật khẩu cần 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.',
+          400,
+        );
+      try {
+        return await authenticate('/api/auth/register', {
+          fullName: name.trim(),
           email: email.trim(),
           password,
-          device: {
-            clientDeviceId: deviceId,
-            deviceType: 'Web',
-            deviceModel: 'VisionAid Web',
-            appVersion: '0.1.0',
-          },
-        }),
-      );
-      if (generation !== epoch) throw new ServiceError('Yêu cầu đăng nhập đã bị hủy.', 401);
-      try {
-        save(result);
-        return await profile();
+        });
       } catch (error) {
-        if (generation === epoch) clear();
-        throw error;
+        if (error instanceof ServiceError && error.status === 409) throw error;
+        throw new ServiceError(
+          (error instanceof Error ? error.message : 'Không thể hoàn tất đăng ký.') +
+            ' Nếu tài khoản đã được tạo, hãy thử đăng nhập; không gửi lại đăng ký liên tục.',
+          error instanceof ServiceError ? error.status : 503,
+        );
+      }
+    },
+    async logoutAll() {
+      try {
+        await authorized('/api/auth/logout-all', { method: 'POST' });
+      } finally {
+        clear();
       }
     },
     async session(): Promise<Person | null> {

@@ -10,7 +10,7 @@ export function ApiSession() {
     <>
       <PageHead
         title="Kết nối tài khoản"
-        description="Đợt 2 · Đăng nhập, hồ sơ và mật khẩu với backend VisionAid."
+        description="Đợt 3a · Tài khoản và phiên đăng nhập với backend VisionAid."
       />
       <section className="glass card stack">
         <h2>Đã đăng nhập bằng tài khoản BE</h2>

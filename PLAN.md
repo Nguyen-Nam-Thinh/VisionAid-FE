@@ -6,7 +6,7 @@ Cập nhật: 2026-09-25. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md (file này), api.txt và docs/API_STAGE_02_TEST.md.
 2. Kiểm tra git status/branch/log và fetch origin. Mốc code đã merge: dev tại bec1a1f; đợt 1: 700d748; đợt 2: 1441d10. Không reset về các mốc này nếu có code mới hơn.
-3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 6 API được đánh dấu DA_NOI trong api.txt.
+3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 8 API được đánh dấu DA_NOI trong api.txt.
 4. Chỉ làm đợt người dùng yêu cầu. Sau mỗi đợt đưa checklist test, báo các API phụ thuộc nhau, rồi DỪNG chờ người dùng xác nhận trước khi làm đợt tiếp theo. Không coi roadmap này là lệnh thực hiện toàn bộ.
 5. Yêu cầu merge/push không tự chứng minh người dùng đã test BE thật. Hiện chưa có báo cáo nghiệm thu từng bước từ người dùng; không ghi “live E2E passed”.
 
@@ -17,11 +17,12 @@ Cập nhật: 2026-09-25. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 | 0 | Base URL, CORS localhost, transport, API mode | Đã làm, merge dev | Đã đọc Swagger và gọi GET /users/me không token nhận 401; chưa chứng minh login |
 | 1 | Login, GET hồ sơ, refresh, logout, guards | Đã làm, merge dev | Chờ người dùng xác nhận |
 | 2 | PUT hồ sơ, đổi mật khẩu và đăng nhập lại | Đã làm, merge dev | Chờ người dùng xác nhận |
-| 3–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
+| 3a | Đăng ký Caregiver + logout-all | Đã nối, nhánh feat/api-registration-session-control | Chờ người dùng test; consent hoãn theo yêu cầu |
+| 3b–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
 
 Đã có bằng chứng tự động: 36 unit tests; 5 kịch bản Playwright dùng response giả theo contract; build và lint pass. Playwright Windows có lần treo dọn webServer sau khi cả 5 case đã báo OK và phải dừng tiến trình; không ghi cả test runner exit 0 cho lần đó. Build có cảnh báo chunk khoảng 500 kB, không phải lỗi build.
 
-API mode chỉ mở landing, login, dashboard thông tin phiên và /profile. Các route nghiệp vụ vẫn hiển thị ApiPending; menu nghiệp vụ bị ẩn. Các màn mock có sẵn không có nghĩa đã tích hợp BE. Không fallback seed khi API lỗi.
+API mode mở landing, login, register, dashboard thông tin phiên và /profile (có logout-all). Các route nghiệp vụ vẫn hiển thị ApiPending; menu nghiệp vụ bị ẩn. Các màn mock có sẵn không có nghĩa đã tích hợp BE. Không fallback seed khi API lỗi.
 
 ## Môi trường và file cần biết
 
@@ -31,7 +32,7 @@ API mode chỉ mở landing, login, dashboard thông tin phiên và /profile. C�
 - .env local: VITE_SERVICE_MODE=api; VITE_API_BASE_URL=http://51.210.176.94:5002. Không commit .env, password hoặc token.
 - Chạy npm.cmd run dev; mở http://localhost:5173. CORS đã kiểm tra trước đây cho phép origin này, không cho http://127.0.0.1:5173; xác minh lại khi đổi môi trường. FE HTTPS cần BE HTTPS để tránh mixed content.
 - src/services/api/auth.ts: token/session, single-flight refresh, unwrap response, profile mapping. expiresAt của BE là hạn refresh; access expiry đọc JWT exp. Token lưu sessionStorage theo tab; không remember-me, không lưu password, chưa đồng bộ refresh giữa nhiều tab.
-- src/services/http/client.ts: transport và lỗi; src/services/api/adapter.ts: 6 API đã nối, hàm khác fail 501.
+- src/services/http/client.ts: transport và lỗi; src/services/api/adapter.ts: 8 API đã nối, hàm khác fail 501.
 - src/hooks/useService.ts: session/cache/logout; src/app/App.tsx: route guards/menu/API stage gate; src/app/features.tsx: danh mục route nghiệp vụ.
 - src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/pages/shared/ApiSession.tsx: màn đã nối.
 - src/services/contracts.ts và models/domain.ts là model nội bộ FE, không gửi nguyên lên BE. Snapshot toàn bộ chỉ là kiến trúc mock; mỗi resource thật cần query key gồm user/org/VIU/filter/page.
@@ -134,13 +135,13 @@ API mode chỉ mở landing, login, dashboard thông tin phiên và /profile. C�
 
 ### Đợt 14 — Dashboard tổng hợp và nghiệm thu
 
-- Thay dashboard phiên bằng dữ liệu thực từ API đã nối theo từng role. Không có dashboard endpoint chuyên biệt trong 106 API: không bịa /api/dashboard hoặc số liệu thống kê từ trang đầu của danh sách.
+- Thay dashboard phiên bằng dữ liệu thực từ API đã nối theo từng role. Không có dashboard endpoint chuyên biệt trong 108 API: không bịa /api/dashboard hoặc số liệu thống kê từ trang đầu của danh sách.
 - Kiểm tra toàn bộ enabled routes, HTTP errors, refresh, đổi account/VIU, org isolation, responsive/accessibility, realtime/FCM và deployment HTTPS/SPA fallback.
 - Chỉ bỏ stage gates cho phần đã được nghiệm thu. Ghi mọi chức năng thiếu contract riêng; “UI có sẵn” không phải tiêu chí hoàn thành.
 
 ## Việc bắt đầu tiếp theo
 
-Khi người dùng yêu cầu tiếp tục: xác nhận nhanh kết quả đợt 2 nếu còn lỗi, rồi thực hiện checkpoint 3a theo scope được giao. Nếu người dùng ưu tiên người được chăm sóc, có thể chuyển 4a vì không phụ thuộc register/mail; ghi lại thay đổi thứ tự. Không tự gửi mail hay thay mật khẩu tài khoản thật để tạo bằng chứng test.
+Khi người dùng yêu cầu tiếp tục: xử lý lỗi test 3a nếu có, rồi làm 3b (forgot/reset) theo scope được giao. Người dùng đã yêu cầu để consent chờ do chưa có nội dung/phiên bản; không tự đặt policyVersion hoặc gửi consent. Nếu người dùng ưu tiên người được chăm sóc, có thể chuyển 4a vì không phụ thuộc register/mail; ghi lại thay đổi thứ tự. Không tự gửi mail hay thay mật khẩu tài khoản thật để tạo bằng chứng test.
 
 ## Nhật ký để AI tiếp theo cập nhật
 
@@ -148,6 +149,12 @@ Khi người dùng yêu cầu tiếp tục: xác nhận nhanh kết quả đợt
 |---|---|---|---|---|---|
 | 0–1 | Merge dev | Đạt | Chưa có xác nhận chi tiết | 700d748 / bec1a1f | Theo dõi lỗi login thực tế nếu người dùng báo |
 | 2 | Merge dev | Đạt | Chưa có xác nhận chi tiết | 1441d10 / bec1a1f | Checklist docs/API_STAGE_02_TEST.md |
-| 3a | Chưa bắt đầu | Chưa | Chưa | — | Đọc register/consent/logout-all contracts |
+| 3a | Đã nối register/logout-all | Xem docs/API_STAGE_03A_TEST.md | Chờ người dùng | Nhánh feat/api-registration-session-control | Consent hoãn: chưa có nội dung/phiên bản chính thức |
 
 Không đánh dấu một đợt hoàn thành chỉ vì đã commit hoặc push. Sau mỗi thay đổi, cập nhật từng API ở api.txt và bảng này để AI khác không làm lại hoặc bỏ sót.
+
+### Checkpoint 3a
+
+Đã nối POST register và POST logout-all; tổng 8 operations Web. Đăng ký -> GET me dùng cùng deviceId với login/refresh. Logout-all luôn xóa local session/cache, kể cả lỗi, và báo chưa xác nhận server khi cần. BE chỉ revoke refresh/FCM; access token thiết bị khác có thể còn hiệu lực tới hạn. Consent chưa triển khai theo câu trả lời người dùng; không chặn test register/logout-all. Checklist: docs/API_STAGE_03A_TEST.md.
+
+Kiểm tra checkpoint 3a: 39 unit tests, 7 Playwright fixture tests exit 0, build/lint đạt. Chưa có nghiệm thu BE thật. Chờ người dùng test trước 3b.

@@ -14,6 +14,7 @@ export interface VisionService {
   login(email: string, password: string): Promise<Person>;
   register(name: string, email: string, password: string): Promise<Person>;
   logout(): Promise<void>;
+  logoutAll(): Promise<void>;
   recover(email: string): Promise<string>;
   resetPassword(code: string, password: string): Promise<void>;
   changePassword(current: string, next: string): Promise<void>;

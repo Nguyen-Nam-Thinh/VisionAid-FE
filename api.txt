@@ -3,12 +3,12 @@ Cập nhật: 2026-09-25. Nguồn: live OpenAPI, controller BE, code FE và ản
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 6 đã nối Web (DA_NOI). Số 7 nêu trước đó là đếm nhầm.
+107 operations; 8 đã nối Web (DA_NOI): 6 ở đợt 0–2 và 2 ở checkpoint 3a.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
 File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller đang hoạt động.
-Caller thật của cả 6 API: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
+Caller thật của cả 8 API: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
 Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE thật từ người dùng.
 Đợt triển khai/phụ thuộc/checklist đầy đủ ở PLAN.md; không tự làm tất cả roadmap.
 
@@ -34,7 +34,7 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/AuditLogsController.cs
 
 003. POST /api/auth/register
-  Trạng thái: CHUA_NOI | Đợt: 3a
+  Trạng thái: DA_NOI | Đợt: 3a
   Màn/luồng: /auth/register
   File FE: src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/app/App.tsx
   Dùng để: Đăng ký Caregiver; RegisterCaregiverRequest và device; không tự tạo Admin/CenterAdmin.
@@ -97,7 +97,7 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Trạng thái: CHUA_NOI | Đợt: 3a
   Màn/luồng: Luồng đồng ý chính sách — chưa có UI API
   File FE: src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/app/App.tsx
-  Dùng để: Gửi policyVersion sau khi người dùng đồng ý nội dung chính sách; UI chưa nối.
+  Dùng để: Gửi policyVersion sau khi người dùng đồng ý nội dung chính sách; UI chưa nối; người dùng yêu cầu hoãn vì chưa có nội dung/phiên bản chính thức.
   Quyền controller: Đã đăng nhập (Authorize)
   Query: Không có
   Body/schema: application/json: AcceptPrivacyPolicyRequest; text/json: AcceptPrivacyPolicyRequest; application/*+json: AcceptPrivacyPolicyRequest
@@ -114,10 +114,10 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Auth/Presentation/AuthController.cs
 
 011. POST /api/auth/logout-all
-  Trạng thái: CHUA_NOI | Đợt: 3a
+  Trạng thái: DA_NOI | Đợt: 3a
   Màn/luồng: /profile hoặc nút đăng xuất trong layout
   File FE: src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/app/App.tsx
-  Dùng để: Nút dự kiến tại /profile: xác nhận, revoke tất cả phiên, xóa session/cache.
+  Dùng để: Nút tại /profile: xác nhận, revoke refresh/FCM mọi thiết bị, xóa session/cache local; access token khác còn tới hạn. Lỗi server phải báo chưa xác nhận.
   Quyền controller: Đã đăng nhập (Authorize)
   Query: Không có
   Body/schema: Không khai báo request body
