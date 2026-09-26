@@ -968,3 +968,113 @@ test('5c Caregiver: own Personal permissions only, Organization read-only and no
   );
   await expect(page.getByRole('button', { name: 'Gỡ liên kết', exact: true })).toHaveCount(0);
 });
+
+for (const role of ['Caregiver', 'CenterAdmin']) {
+  test(`API ${role}: GPS history, missing live data and revoked access`, async ({ page }) => {
+    const org = '01900000-0000-7000-8000-000000000009';
+    const viu = '01900000-0000-7000-8000-000000000002';
+    await stubApi(page, role, role === 'CenterAdmin' ? org : null);
+    const historyCalls: URL[] = [];
+    let forbidden = false;
+    const gpsWrites: string[] = [];
+    page.on('request', (r) => {
+      if (r.url().includes('/api/locations/') && r.method() !== 'GET') gpsWrites.push(r.url());
+    });
+    await page.route('http://localhost:5176/api/users?*', async (route) => {
+      const q = new URL(route.request().url()).searchParams;
+      expect(q.get('role')).toBe('VisuallyImpaired');
+      if (role === 'CenterAdmin') expect(q.get('organizationId')).toBe(org);
+      return route.fulfill({
+        json: {
+          success: true,
+          data: organizationPage([
+            {
+              id: viu,
+              fullName: 'GPS Test VIU',
+              email: 'viu@test.test',
+              phoneNumber: null,
+              role: 'VisuallyImpaired',
+              organizationId: role === 'CenterAdmin' ? org : null,
+              isActive: true,
+              avatarUrl: null,
+              deletedAt: null,
+              lastLoginAt: null,
+              createdAt: '2026-09-26',
+              updatedAt: '2026-09-26',
+            },
+          ]),
+        },
+      });
+    });
+    await page.route('http://localhost:5176/api/locations/live?*', (route) =>
+      route.fulfill({
+        status: forbidden ? 403 : 404,
+        json: { detail: forbidden ? 'GPS access denied' : 'No GPS cache' },
+      }),
+    );
+    await page.route('http://localhost:5176/api/locations/history?*', (route) => {
+      const url = new URL(route.request().url());
+      historyCalls.push(url);
+      expect(url.searchParams.get('viuId')).toBe(viu);
+      expect(url.searchParams.get('pageSize')).toBe('20');
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            items: [
+              {
+                id: viu,
+                latitude: 0,
+                longitude: 0,
+                accuracyMeters: null,
+                altitude: -2,
+                speedMps: 0,
+                heading: null,
+                batteryLevel: 0,
+                networkStatus: null,
+                recordedAt: '2026-09-26T00:00:00Z',
+                sessionId: null,
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            totalCount: 1,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        },
+      });
+    });
+    await login(page);
+    await page.goto(role === 'Caregiver' ? '/caregiver/map' : '/center-admin/map');
+    await expect(page.getByText('Chưa có vị trí khả dụng', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Xem GPS của GPS Test VIU', exact: true }).click();
+    await expect(page.getByRole('cell', { name: '0 %', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: '0.000000 / 0.000000', exact: true }),
+    ).toBeVisible();
+    await page.getByLabel('Từ thời gian').fill('2026-09-26T08:00');
+    await page.getByLabel('Đến thời gian').fill('2026-09-25T08:00');
+    await page.getByRole('button', { name: 'Lọc lịch sử', exact: true }).click();
+    await expect(page.getByRole('alert')).toContainText('Thời gian kết thúc');
+    expect(historyCalls.every((url) => !url.searchParams.has('dateFrom'))).toBe(true);
+    await page.getByLabel('Đến thời gian').fill('2026-09-27T08:00');
+    await page.getByRole('button', { name: 'Lọc lịch sử', exact: true }).click();
+    await expect
+      .poll(() => historyCalls.some((url) => url.searchParams.has('dateFrom')))
+      .toBe(true);
+    expect(
+      historyCalls.find((url) => url.searchParams.has('dateFrom'))!.searchParams.get('dateFrom'),
+    ).toMatch(/Z$/);
+    forbidden = true;
+    await page.getByRole('button', { name: 'Tải lại vị trí', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Lịch sử di chuyển', exact: true })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole('cell', { name: '0.000000 / 0.000000', exact: true })).toHaveCount(
+      0,
+    );
+    expect(gpsWrites).toEqual([]);
+  });
+}

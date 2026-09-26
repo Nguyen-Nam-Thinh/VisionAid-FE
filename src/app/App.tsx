@@ -1,3 +1,4 @@
+import { ApiTracking } from '../pages/shared/ApiTracking';
 import { ApiLinks } from '../pages/shared/ApiLinks';
 import { ApiAccounts } from '../pages/shared/ApiAccounts';
 import { ApiOrganizations } from '../pages/shared/ApiOrganizations';
@@ -149,11 +150,12 @@ function Shell() {
               ?.filter(
                 (item) =>
                   runtime.mode === 'mock' ||
-                  (user.role === 'Caregiver' && ['users', 'caregivers'].includes(item.path)) ||
+                  (user.role === 'Caregiver' &&
+                    ['users', 'caregivers', 'map'].includes(item.path)) ||
                   (user.role === 'Admin' &&
                     ['organizations', 'accounts', 'links'].includes(item.path)) ||
                   (user.role === 'CenterAdmin' &&
-                    ['organization', 'staff', 'users', 'assignments'].includes(item.path)),
+                    ['organization', 'staff', 'users', 'assignments', 'map'].includes(item.path)),
               )
               .map((item) => (
                 <NavLink
@@ -300,6 +302,8 @@ export function App() {
                           (f.role === 'CenterAdmin' && f.path === 'assignments') ||
                           (f.role === 'Caregiver' && f.path === 'caregivers') ? (
                           <ApiLinks />
+                        ) : ['Caregiver', 'CenterAdmin'].includes(f.role) && f.path === 'map' ? (
+                          <ApiTracking />
                         ) : (
                           <ApiPending />
                         )
