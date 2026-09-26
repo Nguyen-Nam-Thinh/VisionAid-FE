@@ -89,7 +89,12 @@ export function useAuth() {
       uiStore.set({ notice });
     },
     recover: (email: string) => service.recover(email),
-    resetPassword: (code: string, password: string) => service.resetPassword(code, password),
+    resetPassword: async (email: string, code: string, password: string) => {
+      await service.resetPassword(email, code, password);
+      await setSession(null);
+      if (service.mode === 'api')
+        uiStore.set({ notice: 'Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.' });
+    },
     changePassword: async (current: string, next: string) => {
       await service.changePassword(current, next);
       if (service.mode === 'api') {

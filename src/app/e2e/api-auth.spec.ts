@@ -225,3 +225,147 @@ test('failed logout all reports uncertainty and still clears local session', asy
   await expect(page.getByRole('status')).toContainText('chưa xác nhận');
   expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
 });
+
+test('recovery email, expired token, pasted link and login after reset', async ({ page }) => {
+  await stubApi(page);
+  let emails = 0;
+  let resets = 0;
+  let expired = true;
+  await page.route('**/api/auth/forgot-password', (route) => {
+    emails++;
+    expect(route.request().postDataJSON()).toEqual({ email: 'api@example.test' });
+    return route.fulfill({ json: { success: true } });
+  });
+  await page.route('**/api/auth/reset-password', (route) => {
+    resets++;
+    expect(route.request().postDataJSON()).toEqual({
+      email: 'api@example.test',
+      token: 'abc+def/ghi==',
+      newPassword: 'NewPassword@2',
+    });
+    return route.fulfill(
+      expired ? { status: 403, json: { detail: 'Expired' } } : { json: { success: true } },
+    );
+  });
+  await page.goto('/auth/login');
+  await page.getByRole('link', { name: 'Quên mật khẩu?' }).click();
+  await page.getByLabel('Địa chỉ email').fill('api@example.test');
+  await page.getByRole('button', { name: 'Tạo yêu cầu khôi phục' }).click();
+  await expect(page.getByRole('status')).toContainText('Nếu email này đã đăng ký');
+  expect(emails).toBe(1);
+  await expect(page.getByText('Mã demo', { exact: false })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Nhập mã khôi phục' }).click();
+  await page.getByLabel('Địa chỉ email').fill('api@example.test');
+  await page
+    .getByLabel('Mã hoặc liên kết khôi phục')
+    .fill('visionaid://reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test');
+  await page.getByLabel('Mật khẩu mới *', { exact: true }).fill('NewPassword@2');
+  await page.getByLabel('Nhập lại mật khẩu mới').fill('Different@2');
+  await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('không khớp');
+  expect(resets).toBe(0);
+  await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
+  await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('hết hạn');
+  expect(resets).toBe(1);
+  expired = false;
+  await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
+  await expect(page).toHaveURL(/auth\/login$/);
+  await expect(page.getByRole('status')).toContainText('Đã đặt lại mật khẩu');
+  await page.getByLabel('Địa chỉ email').fill('api@example.test');
+  await page.getByLabel('Mật khẩu *', { exact: true }).fill('NewPassword@2');
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  await expect(page).toHaveURL(/dashboard$/);
+});
+
+test('caregiver reads paginated users, link permissions, search and revoked access without mutations', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const viuId = '01900000-0000-7000-8000-000000000002';
+  const linkId = '01900000-0000-7000-8000-000000000003';
+  const person = {
+    id: viuId,
+    fullName: 'Người thân BE',
+    email: 'viu@example.test',
+    phoneNumber: null,
+    role: 'VisuallyImpaired',
+    organizationId: null,
+    isActive: true,
+  };
+  const link = {
+    id: linkId,
+    caregiverId: id,
+    visuallyImpairedUserId: viuId,
+    viuFullName: person.fullName,
+    isPrimary: false,
+    linkType: 'Personal',
+    canReceiveAlerts: true,
+    canManageRegistry: false,
+    canManageLocations: true,
+    linkedAt: '2026-09-26T00:00:00Z',
+    unlinkedAt: null,
+  };
+  let revoked = false;
+  const data = (items: unknown[], totalCount = items.length) => ({
+    items,
+    page: 1,
+    pageSize: 10,
+    totalCount,
+    totalPages: Math.ceil(totalCount / 10),
+    hasNextPage: totalCount > 10,
+    hasPreviousPage: false,
+  });
+  await page.route('**/api/users?*', (route) => {
+    expect(route.request().method()).toBe('GET');
+    const query = new URL(route.request().url()).searchParams;
+    expect(query.get('role')).toBe('VisuallyImpaired');
+    const empty = revoked || query.get('search') === 'Không tìm thấy' || query.get('page') === '2';
+    return route.fulfill({
+      json: {
+        success: true,
+        data: { ...data(empty ? [] : [person], empty ? 0 : 11), page: Number(query.get('page')) },
+      },
+    });
+  });
+  await page.route('**/api/caregiver-links?*', (route) => {
+    expect(new URL(route.request().url()).searchParams.get('viuId')).toBe(viuId);
+    return route.fulfill({ json: { success: true, data: data([link]) } });
+  });
+  await page.route('**/api/caregiver-links/' + linkId, (route) =>
+    route.fulfill({ json: { success: true, data: link } }),
+  );
+  await login(page);
+  await expect(page).toHaveURL(/dashboard$/);
+  await page.getByRole('link', { name: 'Người được chăm sóc', exact: true }).click();
+  await expect(page.getByRole('cell', { name: 'Người thân BE', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Thêm người thân' })).toHaveCount(0);
+  await page.getByLabel('Người được chăm sóc trên trang này').selectOption(viuId);
+  await page.getByRole('button', { name: 'Xem quyền liên kết' }).click();
+  await expect(page.getByRole('heading', { name: 'Quyền liên kết', exact: true })).toBeVisible();
+  await expect(page.locator('dl')).toContainText('Quản lý gương mặtKhông');
+  await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Quyền liên kết', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('status')).toContainText('Không có người dùng phù hợp');
+  await page.getByLabel('Tìm người được chăm sóc').fill('Không tìm thấy');
+  await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Không có người dùng phù hợp');
+  await page.getByLabel('Tìm người được chăm sóc').fill('');
+  await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
+  await page.getByLabel('Người được chăm sóc trên trang này').selectOption(viuId);
+  revoked = true;
+  await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Liên kết với Người thân BE' })).toHaveCount(0);
+});
+test('caregiver users 403 is visible with retry and no demo fallback', async ({ page }) => {
+  await stubApi(page);
+  await page.route('**/api/users?*', (route) =>
+    route.fulfill({ status: 403, json: { detail: 'Access denied.' } }),
+  );
+  await login(page);
+  await expect(page).toHaveURL(/dashboard$/);
+  await page.goto('/caregiver/users');
+  await expect(page.getByRole('alert')).toContainText('Access denied.');
+  await expect(page.getByRole('button', { name: 'Thử lại', exact: true })).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(0);
+});

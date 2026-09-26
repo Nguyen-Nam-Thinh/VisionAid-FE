@@ -23,24 +23,27 @@ export function AuthPage() {
     reset: 'Đặt mật khẩu mới',
   };
   if (!titles[action]) return <Navigate to="/not-found" replace />;
-  if (auth.mode === 'api' && !['login', 'register'].includes(action))
-    return (
-      <main className="main">
-        <section className="glass card stack">
-          <h1>Chức năng sẽ mở ở đợt tiếp theo</h1>
-          <p>Khôi phục mật khẩu sẽ được tích hợp ở checkpoint 3b.</p>
-          <Link className="btn" to="/auth/login">
-            Đăng nhập
-          </Link>
-          <Link to="/">Về trang chủ</Link>
-        </section>
-      </main>
-    );
   const fields: FieldSpec[] =
     action === 'reset'
       ? [
-          { key: 'code', label: 'Mã khôi phục demo', required: true },
+          { key: 'email', label: 'Địa chỉ email', type: 'email', required: true },
+          {
+            key: 'code',
+            label: auth.mode === 'api' ? 'Mã hoặc liên kết khôi phục' : 'Mã khôi phục demo',
+            type: auth.mode === 'api' ? 'password' : 'text',
+            required: true,
+          },
           { key: 'password', label: 'Mật khẩu mới', type: 'password', required: true },
+          ...(auth.mode === 'api'
+            ? [
+                {
+                  key: 'confirm',
+                  label: 'Nhập lại mật khẩu mới',
+                  type: 'password' as const,
+                  required: true,
+                },
+              ]
+            : []),
         ]
       : [
           { key: 'email', label: 'Địa chỉ email', type: 'email', required: true },
@@ -158,13 +161,18 @@ export function AuthPage() {
                 if (action === 'recover') {
                   const code = await auth.recover(String(v.email));
                   setMessage(
-                    'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo (chỉ dùng với email tồn tại): ' +
-                      code,
+                    auth.mode === 'api'
+                      ? code
+                      : 'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo (chỉ dùng với email tồn tại): ' +
+                          code,
                   );
                 }
                 if (action === 'reset') {
-                  await auth.resetPassword(String(v.code), String(v.password));
-                  setMessage('Đã đổi mật khẩu demo. Bạn có thể đăng nhập lại.');
+                  if (auth.mode === 'api' && v.password !== v.confirm)
+                    throw Error('Mật khẩu xác nhận không khớp.');
+                  await auth.resetPassword(String(v.email), String(v.code), String(v.password));
+                  if (auth.mode === 'api') nav('/auth/login', { replace: true });
+                  else setMessage('Đã đổi mật khẩu demo. Bạn có thể đăng nhập lại.');
                 }
               }}
             />
@@ -176,7 +184,17 @@ export function AuthPage() {
           )}
           {auth.mode === 'api' && (
             <>
-              {action === 'register' && (
+              {action === 'reset' && (
+                <p className="muted">
+                  Nhập email đã yêu cầu khôi phục. Trong email, sao chép địa chỉ liên kết “Reset
+                  Password” rồi dán vào ô mã bên trên. Bạn cũng có thể nhập token trực tiếp.
+                </p>
+              )}
+              <div className="row between">
+                <Link to="/auth/recover">Quên mật khẩu?</Link>
+                <Link to="/auth/reset">Nhập mã khôi phục</Link>
+              </div>
+              {['register', 'reset'].includes(action) && (
                 <p className="muted">
                   Mật khẩu cần 8–100 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.
                 </p>

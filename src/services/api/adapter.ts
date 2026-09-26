@@ -5,13 +5,14 @@ const auth = createApiAuth(
   runtime.apiBaseUrl,
   typeof sessionStorage === 'undefined' ? undefined : sessionStorage,
 );
+export const apiGet = auth.get;
 const unavailable = async (): Promise<never> => {
   throw new ServiceError(
     'Chức năng này chưa tích hợp API. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
     501,
   );
 };
-/** Stages 1–3a implement auth, registration and profile. All later-stage operations fail closed. */
+/** Stages 1–3b implement auth, registration and profile. All later-stage operations fail closed. */
 export const apiService: VisionService = {
   mode: 'api',
   session: auth.session,
@@ -19,8 +20,8 @@ export const apiService: VisionService = {
   register: auth.register,
   logout: auth.logout,
   logoutAll: auth.logoutAll,
-  recover: unavailable,
-  resetPassword: unavailable,
+  recover: auth.recover,
+  resetPassword: auth.resetPassword,
   changePassword: auth.changePassword,
   profile: auth.profile,
   snapshot: unavailable,

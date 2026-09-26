@@ -16,7 +16,7 @@ export interface VisionService {
   logout(): Promise<void>;
   logoutAll(): Promise<void>;
   recover(email: string): Promise<string>;
-  resetPassword(code: string, password: string): Promise<void>;
+  resetPassword(email: string, code: string, password: string): Promise<void>;
   changePassword(current: string, next: string): Promise<void>;
   profile(values: Pick<Person, 'name' | 'phone' | 'avatar'>): Promise<Person>;
   snapshot(signal?: AbortSignal): Promise<Snapshot>;

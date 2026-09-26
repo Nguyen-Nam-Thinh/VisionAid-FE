@@ -145,7 +145,7 @@ describe('mutations', () => {
 describe('integration boundary', () => {
   it('API mode fails closed instead of returning mock data', async () => {
     await expect(apiService.snapshot()).rejects.toMatchObject({ status: 501 });
-    await expect(apiService.recover('test@example.test')).rejects.toMatchObject({ status: 501 });
+    await expect(apiService.generateLink('test')).rejects.toMatchObject({ status: 501 });
   });
   it('accepts 204 without JSON and normalizes ProblemDetails', async () => {
     expect(
@@ -168,4 +168,14 @@ describe('integration boundary', () => {
     expect(await s.session()).toBeNull();
     await expect(s.snapshot()).rejects.toMatchObject({ status: 401 });
   });
+});
+
+it('mock recovery requires matching email and consumes a code once', async () => {
+  const service = createMockService(undefined, 0);
+  const email = 'caregiver@demo.vn';
+  const code = await service.recover(email);
+  await expect(service.resetPassword('other@demo.vn', code, 'Changed@123')).rejects.toThrow();
+  await service.resetPassword(email, code, 'Changed@123');
+  await expect(service.resetPassword(email, code, 'Again@123')).rejects.toThrow();
+  expect((await service.login(email, 'Changed@123')).email).toBe(email);
 });

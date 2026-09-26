@@ -508,11 +508,17 @@ export function createMockService(persistence?: DemoPersistence, delay = 180): V
       save();
       return code;
     },
-    async resetPassword(code, password) {
+    async resetPassword(email, code, password) {
       await pause();
       z.string().min(8).parse(password);
       const user = recovery[code];
-      if (!user) fail('Mã demo không hợp lệ hoặc đã dùng.');
+      if (
+        !user ||
+        !db.people.some(
+          (p) => p.id === user && p.email.toLowerCase() === email.trim().toLowerCase(),
+        )
+      )
+        fail('Email hoặc mã demo không hợp lệ hoặc đã dùng.');
       passwords[user] = password;
       delete recovery[code];
       save();
