@@ -3,13 +3,13 @@ Cập nhật: 2026-09-26. Nguồn: live OpenAPI, controller BE, code FE và ản
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 13 đã nối Web (DA_NOI): 10 auth/profile và 3 GET users/links ở 4a.
+107 operations; 16 đã nối Web (DA_NOI): 10 auth/profile, 3 GET users/links ở 4a, 3 mutation ở 4b.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
 File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller đang hoạt động.
 10 API auth/profile: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
-3 API users/links: src/services/api/caregiving.ts -> apiGet/auth.get; UI ApiLinkedUsers.tsx.
+6 API users/links: src/services/api/caregiving.ts -> apiGet/apiWrite/auth; UI ApiLinkedUsers.tsx và ApiCreateLinkedUser.tsx.
 Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE thật từ người dùng.
 Đợt triển khai/phụ thuộc/checklist đầy đủ ở PLAN.md; không tự làm tất cả roadmap.
 
@@ -135,14 +135,15 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Caregiving/Presentation/CaregiverLinksController.cs
 
 013. POST /api/caregiver-links
-  Trạng thái: CHUA_NOI | Đợt: 4/5c
+  Trạng thái: DA_NOI | Đợt: 4b (Caregiver); Admin/CenterAdmin vẫn chờ 5
   Màn/luồng: /caregiver/users; /caregiver/caregivers; /center-admin/assignments; /admin/links
-  File FE: src/pages/caregiver/LinkedUsers.tsx; src/pages/caregiver/Secondary.tsx; src/pages/center-admin/Assignments.tsx; src/pages/super-admin/Linkage.tsx
+  File FE: src/services/api/caregiving.ts -> src/pages/caregiver/ApiLinkedUsers.tsx; ApiCreateLinkedUser.tsx
   Dùng để: Liên kết chăm sóc. Tạo VIU không tự tạo link; Caregiver chỉ own links; promote-primary chỉ Admin/CenterAdmin.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: application/json: CreateCaregiverLinkRequest; text/json: CreateCaregiverLinkRequest; application/*+json: CreateCaregiverLinkRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Caregiving/Presentation/CaregiverLinksController.cs
+  Phạm vi đã nối: /caregiver/users; tạo VIU B2C và liên kết cá nhân, gỡ own Personal link. Các màn quản trị khác chưa nối.
 
 014. GET /api/caregiver-links/{id}
   Trạng thái: DA_NOI | Đợt: 4/5c
@@ -155,14 +156,15 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Caregiving/Presentation/CaregiverLinksController.cs
 
 015. DELETE /api/caregiver-links/{id}
-  Trạng thái: CHUA_NOI | Đợt: 4/5c
+  Trạng thái: DA_NOI | Đợt: 4b (Caregiver); Admin/CenterAdmin vẫn chờ 5
   Màn/luồng: /caregiver/users; /caregiver/caregivers; /center-admin/assignments; /admin/links
-  File FE: src/pages/caregiver/LinkedUsers.tsx; src/pages/caregiver/Secondary.tsx; src/pages/center-admin/Assignments.tsx; src/pages/super-admin/Linkage.tsx
+  File FE: src/services/api/caregiving.ts -> src/pages/caregiver/ApiLinkedUsers.tsx; ApiCreateLinkedUser.tsx
   Dùng để: Liên kết chăm sóc. Tạo VIU không tự tạo link; Caregiver chỉ own links; promote-primary chỉ Admin/CenterAdmin.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Caregiving/Presentation/CaregiverLinksController.cs
+  Phạm vi đã nối: /caregiver/users; tạo VIU B2C và liên kết cá nhân, gỡ own Personal link. Các màn quản trị khác chưa nối.
 
 016. PUT /api/caregiver-links/{id}/permissions
   Trạng thái: CHUA_NOI | Đợt: 4/5c
@@ -995,14 +997,15 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/UsersController.cs
 
 099. POST /api/users
-  Trạng thái: CHUA_NOI | Đợt: 4/5b
+  Trạng thái: DA_NOI | Đợt: 4b (Caregiver); Admin/CenterAdmin vẫn chờ 5
   Màn/luồng: /caregiver/users; /center-admin/staff; /center-admin/users; /admin/accounts
-  File FE: src/pages/caregiver/LinkedUsers.tsx; src/pages/center-admin/Staff.tsx; src/pages/center-admin/Vius.tsx; src/pages/super-admin/Accounts.tsx
+  File FE: src/services/api/caregiving.ts -> src/pages/caregiver/ApiLinkedUsers.tsx; ApiCreateLinkedUser.tsx
   Dùng để: Quản lý user theo role/org. Tạo VIU rồi tạo caregiver-link riêng; Caregiver không được GET /users/{id}.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: application/json: CreateUserRequest; text/json: CreateUserRequest; application/*+json: CreateUserRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/UsersController.cs
+  Phạm vi đã nối: /caregiver/users; tạo VIU B2C và liên kết cá nhân, gỡ own Personal link. Các màn quản trị khác chưa nối.
 
 100. GET /api/users/{id}
   Trạng thái: CHUA_NOI | Đợt: 4/5b

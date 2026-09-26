@@ -142,7 +142,7 @@ export function createApiAuth(
     })();
     return refreshFlight;
   }
-  async function authorized(path: string, init: RequestInit = {}) {
+  async function authorized(path: string, init: RequestInit = {}, retry401 = true) {
     if (!tokens) throw new ServiceError('Vui lòng đăng nhập.', 401);
     const epoch = generation;
     if (expiresSoon()) await refresh();
@@ -158,7 +158,12 @@ export function createApiAuth(
     try {
       return await send();
     } catch (error) {
-      if (!(error instanceof ServiceError) || error.status !== 401 || generation !== epoch)
+      if (
+        !retry401 ||
+        !(error instanceof ServiceError) ||
+        error.status !== 401 ||
+        generation !== epoch
+      )
         throw error;
       if (tokens?.accessToken === usedToken) await refresh();
       try {
@@ -216,6 +221,7 @@ export function createApiAuth(
   }
   return {
     get: (path: string, signal?: AbortSignal) => authorized(path, { signal }),
+    write: (path: string, init: RequestInit) => authorized(path, init, false),
     async recover(email: string) {
       email = email.trim();
       if (!z.string().email().max(255).safeParse(email).success)

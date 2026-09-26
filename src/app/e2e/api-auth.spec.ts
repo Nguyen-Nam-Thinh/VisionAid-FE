@@ -369,3 +369,103 @@ test('caregiver users 403 is visible with retry and no demo fallback', async ({ 
   await expect(page.getByRole('button', { name: 'Thử lại', exact: true })).toBeVisible();
   await expect(page.locator('tbody tr')).toHaveCount(0);
 });
+
+test('4b: partial link failure survives reload; unlink requires confirmation and preserves errors', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const viuId = '01900000-0000-7000-8000-000000000002';
+  const linkId = '01900000-0000-7000-8000-000000000003';
+  const person = {
+    id: viuId,
+    fullName: 'VIU mới',
+    email: 'new@example.test',
+    phoneNumber: '',
+    role: 'VisuallyImpaired',
+    organizationId: null,
+    isActive: true,
+  };
+  const link = {
+    id: linkId,
+    caregiverId: id,
+    visuallyImpairedUserId: viuId,
+    viuFullName: person.fullName,
+    isPrimary: true,
+    linkType: 'Personal',
+    canReceiveAlerts: true,
+    canManageRegistry: false,
+    canManageLocations: false,
+    linkedAt: '2026-09-26',
+    unlinkedAt: null,
+  };
+  let creates = 0,
+    links = 0,
+    deletes = 0,
+    linked = false;
+  const paged = (items: unknown[]) => ({
+    items,
+    page: 1,
+    pageSize: 10,
+    totalCount: items.length,
+    totalPages: items.length ? 1 : 0,
+    hasPreviousPage: false,
+    hasNextPage: false,
+  });
+  await page.route('**/api/users?*', (route) =>
+    route.fulfill({ json: { success: true, data: paged(linked ? [person] : []) } }),
+  );
+  await page.route('**/api/users', (route) => {
+    creates++;
+    return route.fulfill({ status: 201, json: { success: true, data: person } });
+  });
+  await page.route('**/api/caregiver-links**', (route) => {
+    const method = route.request().method();
+    if (method === 'POST') {
+      links++;
+      if (links === 1) return route.fulfill({ status: 503, json: { detail: 'Liên kết tạm lỗi' } });
+      linked = true;
+      return route.fulfill({ status: 201, json: { success: true, data: link } });
+    }
+    if (method === 'DELETE') {
+      deletes++;
+      if (deletes === 1) return route.fulfill({ status: 403, json: { detail: 'Chưa thể gỡ' } });
+      linked = false;
+      return route.fulfill({ status: 204 });
+    }
+    return route.fulfill({
+      json: {
+        success: true,
+        data: new URL(route.request().url()).pathname.endsWith(linkId)
+          ? link
+          : paged(linked ? [link] : []),
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/caregiver/users');
+  await page.getByLabel('Họ và tên', { exact: false }).fill(person.fullName);
+  await page.getByLabel('Email *', { exact: true }).fill(person.email);
+  await page.getByLabel('Mật khẩu *', { exact: true }).fill('Test123!');
+  await page.getByLabel('Nhập lại mật khẩu').fill('Test123!');
+  await page.getByRole('button', { name: 'Bước 1: Tạo tài khoản VIU' }).click();
+  await expect(page.getByText(viuId, { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(viuId, { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => JSON.stringify(sessionStorage))).not.toContain('Test123!');
+  await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
+  await page.getByRole('button', { name: 'Xem liên kết của VIU mới' }).click();
+  await page.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
+  await page.getByRole('button', { name: 'Hủy', exact: true }).click();
+  expect(deletes).toBe(0);
+  await page.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible();
+  await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Xem liên kết của VIU mới' })).toHaveCount(0);
+  expect(creates).toBe(1);
+  expect(links).toBe(2);
+  expect(deletes).toBe(2);
+});

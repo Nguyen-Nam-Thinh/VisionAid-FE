@@ -281,3 +281,16 @@ it('rejects invalid links locally, reports expired tokens and never retries rese
   await expect(auth.recover(user.email)).rejects.toMatchObject({ status: 429 });
   expect(transport).toHaveBeenCalledTimes(2);
 });
+
+it('never automatically replays a resource write on 401', async () => {
+  const storage = memory();
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  const fetcher = vi.fn<typeof fetch>(async () =>
+    Response.json({ detail: 'Unauthorized' }, { status: 401 }),
+  );
+  const auth = createApiAuth('http://example.test', storage, fetcher);
+  await expect(auth.write('/api/users', { method: 'POST', body: '{}' })).rejects.toMatchObject({
+    status: 401,
+  });
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});

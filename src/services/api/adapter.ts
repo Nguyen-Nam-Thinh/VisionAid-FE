@@ -6,6 +6,7 @@ const auth = createApiAuth(
   typeof sessionStorage === 'undefined' ? undefined : sessionStorage,
 );
 export const apiGet = auth.get;
+export const apiWrite = auth.write;
 const unavailable = async (): Promise<never> => {
   throw new ServiceError(
     'Chức năng này chưa tích hợp API. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
