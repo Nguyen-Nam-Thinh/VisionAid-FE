@@ -1,3 +1,4 @@
+import { ApiAccounts } from '../pages/shared/ApiAccounts';
 import { ApiOrganizations } from '../pages/shared/ApiOrganizations';
 import { Landing } from '../pages/public/Landing';
 import { ApiSession, ApiPending } from '../pages/shared/ApiSession';
@@ -148,8 +149,9 @@ function Shell() {
                 (item) =>
                   runtime.mode === 'mock' ||
                   (user.role === 'Caregiver' && item.path === 'users') ||
-                  (user.role === 'Admin' && item.path === 'organizations') ||
-                  (user.role === 'CenterAdmin' && item.path === 'organization'),
+                  (user.role === 'Admin' && ['organizations', 'accounts'].includes(item.path)) ||
+                  (user.role === 'CenterAdmin' &&
+                    ['organization', 'staff', 'users'].includes(item.path)),
               )
               .map((item) => (
                 <NavLink
@@ -284,6 +286,12 @@ export function App() {
                         ) : (f.role === 'Admin' && f.path === 'organizations') ||
                           (f.role === 'CenterAdmin' && f.path === 'organization') ? (
                           <ApiOrganizations />
+                        ) : f.role === 'Admin' && f.path === 'accounts' ? (
+                          <ApiAccounts />
+                        ) : f.role === 'CenterAdmin' && ['staff', 'users'].includes(f.path) ? (
+                          <ApiAccounts
+                            fixedRole={f.path === 'staff' ? 'Caregiver' : 'VisuallyImpaired'}
+                          />
                         ) : (
                           <ApiPending />
                         )
