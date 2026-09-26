@@ -71,9 +71,9 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
     expect(calls.filter((p) => p === '/api/auth/refresh')).toHaveLength(1);
     const path =
       role === 'Admin'
-        ? '/admin/accounts'
+        ? '/admin/metrics'
         : role === 'CenterAdmin'
-          ? '/center-admin/staff'
+          ? '/center-admin/assignments'
           : '/caregiver/registry';
     await page.goto(path);
     await expect(page.getByRole('heading', { name: 'Chưa tích hợp trong đợt này' })).toBeVisible();
@@ -646,4 +646,181 @@ test('5a CenterAdmin rejects a response from another organization', async ({ pag
   await page.goto('/center-admin/organization');
   await expect(page.getByRole('alert')).toContainText('không thuộc phiên');
   await expect(page.getByRole('button', { name: 'Sửa tổ chức', exact: true })).toHaveCount(0);
+});
+
+test('5b Admin: create/edit/status/reset/delete accounts without changing identity fields', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  const targetId = '01900000-0000-7000-8000-000000000031';
+  let account = {
+    id: targetId,
+    fullName: 'Tài khoản mới',
+    email: 'managed@example.test',
+    role: 'Caregiver',
+    organizationId,
+    phoneNumber: '',
+    avatarUrl: '',
+    isActive: true,
+    deletedAt: null as string | null,
+    lastLoginAt: null,
+    createdAt: '2026-09-26',
+    updatedAt: '2026-09-26',
+  };
+  let created = false,
+    resets = 0,
+    deletes = 0;
+  const writes: { method: string; path: string; body: Record<string, unknown> | null }[] = [];
+  await page.route('http://localhost:5176/api/organizations/' + organizationId, (route) =>
+    route.fulfill({ json: { success: true, data: organizationFixture } }),
+  );
+  await page.route('http://localhost:5176/api/users**', (route) => {
+    const req = route.request(),
+      url = new URL(req.url()),
+      method = req.method();
+    if (url.pathname === '/api/users/me') return route.fallback();
+    if (method !== 'GET') writes.push({ method, path: url.pathname, body: req.postDataJSON() });
+    if (method === 'POST') {
+      created = true;
+      const body = req.postDataJSON();
+      account = {
+        ...account,
+        fullName: body.fullName,
+        email: body.email,
+        role: body.role,
+        organizationId: body.organizationId,
+      };
+    }
+    if (method === 'PUT') account = { ...account, ...req.postDataJSON() };
+    if (url.pathname.endsWith('/reset-password')) {
+      resets++;
+      return route.fulfill({ json: { success: true, data: null } });
+    }
+    if (url.pathname.endsWith('/status'))
+      account = { ...account, isActive: req.postDataJSON().isActive };
+    if (method === 'DELETE') {
+      deletes++;
+      if (deletes === 1)
+        return route.fulfill({ status: 403, json: { detail: 'Không cho phép xóa' } });
+      account = { ...account, isActive: false, deletedAt: '2026-09-26' };
+      return route.fulfill({ status: 204 });
+    }
+    const isList = method === 'GET' && url.pathname === '/api/users';
+    return route.fulfill({
+      status: method === 'POST' ? 201 : 200,
+      json: {
+        success: true,
+        data: isList ? organizationPage(created && !account.deletedAt ? [account] : []) : account,
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/admin/accounts');
+  await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Họ và tên').fill(account.fullName);
+  await dialog.getByLabel('Email', { exact: false }).fill(account.email);
+  await dialog.getByLabel('Mật khẩu mới').fill('Password@1');
+  await dialog.getByLabel('Nhập lại mật khẩu').fill('Password@1');
+  await dialog.getByLabel('Vai trò tài khoản').selectOption('Caregiver');
+  await dialog.getByLabel('Mã tổ chức', { exact: true }).fill(organizationId);
+  await dialog.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: 'Sửa hồ sơ tài khoản', exact: true }).click();
+  await expect(dialog.getByLabel('Vai trò tài khoản')).toHaveCount(0);
+  await dialog.getByLabel('Họ và tên').fill('Tài khoản đã sửa');
+  await dialog.getByRole('button', { name: 'Lưu hồ sơ' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(writes.find((w) => w.method === 'PUT')?.body).toEqual({
+    fullName: 'Tài khoản đã sửa',
+    phoneNumber: '',
+    avatarUrl: '',
+  });
+  await page.getByRole('button', { name: 'Vô hiệu hóa tài khoản', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: 'Kích hoạt tài khoản', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: 'Đặt lại mật khẩu', exact: true }).click();
+  await dialog.getByLabel('Mật khẩu mới').fill('Another@123');
+  await dialog.getByLabel('Nhập lại mật khẩu').fill('Another@123');
+  await dialog.getByRole('button', { name: 'Xác nhận đặt lại mật khẩu' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('xác nhận');
+  expect(resets).toBe(0);
+  await dialog.getByRole('checkbox').check();
+  await dialog.getByRole('button', { name: 'Xác nhận đặt lại mật khẩu' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(resets).toBe(1);
+  expect(await page.evaluate(() => JSON.stringify(sessionStorage))).not.toContain('Another@123');
+  await page.getByRole('button', { name: 'Xóa tài khoản', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
+  expect(deletes).toBe(0);
+  await page.getByRole('button', { name: 'Xóa tài khoản', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Không cho phép');
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Xem tài khoản ' + account.email })).toHaveCount(0);
+});
+test('5b CenterAdmin: fixed role and own organization, no delete; cross-org response is hidden', async ({
+  page,
+}) => {
+  await stubApi(page, 'CenterAdmin', organizationId);
+  let wrongOrg = false;
+  const account = {
+    id: '01900000-0000-7000-8000-000000000031',
+    fullName: 'Nhân viên trung tâm',
+    email: 'staff@example.test',
+    role: 'Caregiver',
+    organizationId,
+    phoneNumber: null,
+    avatarUrl: null,
+    isActive: true,
+    deletedAt: null,
+    lastLoginAt: null,
+    createdAt: '2026-09-26',
+    updatedAt: '2026-09-26',
+  };
+  const queries: URL[] = [];
+  await page.route('http://localhost:5176/api/users**', (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === '/api/users/me') return route.fallback();
+    queries.push(url);
+    return route.fulfill({
+      json: {
+        success: true,
+        data:
+          url.pathname === '/api/users'
+            ? organizationPage([
+                {
+                  ...account,
+                  role: url.searchParams.get('role'),
+                  organizationId: wrongOrg ? id : organizationId,
+                },
+              ])
+            : account,
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/center-admin/staff');
+  await page.getByRole('button', { name: 'Xem tài khoản ' + account.email }).click();
+  await expect(
+    page.getByRole('button', { name: 'Sửa hồ sơ tài khoản', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Xóa tài khoản', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
+  await expect(page.getByRole('dialog').getByLabel('Vai trò tài khoản')).toHaveCount(0);
+  await expect(page.getByRole('dialog').getByLabel('Mã tổ chức', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  expect(queries[0].searchParams.get('role')).toBe('Caregiver');
+  expect(queries[0].searchParams.get('organizationId')).toBe(organizationId);
+  await page.goto('/center-admin/users');
+  await expect(page.getByRole('button', { name: 'Xem tài khoản ' + account.email })).toBeVisible();
+  expect(queries.at(-1)?.searchParams.get('role')).toBe('VisuallyImpaired');
+  wrongOrg = true;
+  await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Không có quyền');
+  await expect(page.getByRole('button', { name: 'Xem tài khoản ' + account.email })).toHaveCount(0);
 });
