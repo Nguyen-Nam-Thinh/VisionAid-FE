@@ -39,13 +39,14 @@ async function stubApi(page: Page, role = 'Caregiver', organizationId: string | 
   });
   return calls;
 }
-async function login(page: Page) {
+async function login(page: Page, succeeds = true) {
   await page.goto('/auth/login');
   await expect(page.getByLabel('Địa chỉ email')).toHaveValue('');
   await expect(page.getByLabel('Chọn tài khoản demo')).toHaveCount(0);
   await page.getByLabel('Địa chỉ email').fill('api@example.test');
   await page.getByLabel('Mật khẩu *', { exact: true }).fill('Password@1');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  if (succeeds) await expect(page).toHaveURL(/\/dashboard$/);
 }
 for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
   test(`API ${role}: login, reload, refresh, stage boundary and logout`, async ({ page }) => {
@@ -73,7 +74,7 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
       role === 'Admin'
         ? '/admin/metrics'
         : role === 'CenterAdmin'
-          ? '/center-admin/assignments'
+          ? '/center-admin/reports'
           : '/caregiver/registry';
     await page.goto(path);
     await expect(page.getByRole('heading', { name: 'Chưa tích hợp trong đợt này' })).toBeVisible();
@@ -97,7 +98,7 @@ test('API login errors do not fall back to demo and failed logout still clears t
   await page.route('**/api/auth/login', (route) =>
     route.fulfill({ status: 401, json: { detail: 'Invalid email or password.' } }),
   );
-  await login(page);
+  await login(page, false);
   await expect(page.getByRole('alert')).toContainText('Invalid email or password.');
   await expect(page).toHaveURL(/\/auth\/login$/);
   await page.unroute('**/api/auth/login');
@@ -823,4 +824,147 @@ test('5b CenterAdmin: fixed role and own organization, no delete; cross-org resp
   await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Không có quyền');
   await expect(page.getByRole('button', { name: 'Xem tài khoản ' + account.email })).toHaveCount(0);
+});
+
+const cgLinkId = '01900000-0000-7000-8000-000000000041';
+const linkedViuId = '01900000-0000-7000-8000-000000000042';
+const managedLink = {
+  id: cgLinkId,
+  caregiverId: id,
+  caregiverFullName: 'Nhân viên',
+  caregiverEmail: 'cg@example.test',
+  visuallyImpairedUserId: linkedViuId,
+  viuFullName: 'VIU test',
+  viuEmail: 'viu@example.test',
+  linkType: 'Organization',
+  isPrimary: false,
+  canReceiveAlerts: true,
+  canManageRegistry: false,
+  canManageLocations: false,
+  linkedAt: '2026-09-26',
+  unlinkedAt: null as string | null,
+};
+for (const actorRole of ['Admin', 'CenterAdmin']) {
+  test(
+    '5c ' + actorRole + ': create, permission errors, primary promotion and unlink',
+    async ({ page }) => {
+      await stubApi(page, actorRole, actorRole === 'CenterAdmin' ? organizationId : null);
+      let current = { ...managedLink },
+        exists = false,
+        failPermission = true,
+        writes = 0;
+      await page.route('http://localhost:5176/api/users/*', (route) => {
+        const path = new URL(route.request().url()).pathname;
+        if (path.endsWith('/me')) return route.fallback();
+        const cg = path.endsWith(id);
+        return route.fulfill({
+          json: {
+            success: true,
+            data: {
+              id: cg ? id : linkedViuId,
+              role: cg ? 'Caregiver' : 'VisuallyImpaired',
+              organizationId,
+              isActive: true,
+              deletedAt: null,
+            },
+          },
+        });
+      });
+      await page.route('http://localhost:5176/api/caregiver-links**', (route) => {
+        const req = route.request(),
+          url = new URL(req.url()),
+          method = req.method();
+        if (method !== 'GET') writes++;
+        if (method === 'POST') {
+          exists = true;
+          current = { ...current, ...req.postDataJSON() };
+        }
+        if (method === 'PUT') {
+          if (failPermission) {
+            failPermission = false;
+            return route.fulfill({ status: 403, json: { detail: 'Quyền đã thay đổi' } });
+          }
+          current = { ...current, ...req.postDataJSON() };
+        }
+        if (method === 'PATCH') current = { ...current, isPrimary: true };
+        if (method === 'DELETE') {
+          current = { ...current, unlinkedAt: '2026-09-26', isPrimary: false };
+          return route.fulfill({ status: 204 });
+        }
+        return route.fulfill({
+          status: method === 'POST' ? 201 : 200,
+          json: {
+            success: true,
+            data:
+              method === 'GET' && url.pathname === '/api/caregiver-links'
+                ? organizationPage(exists && !current.unlinkedAt ? [current] : [])
+                : current,
+          },
+        });
+      });
+      await login(page);
+      await page.goto(actorRole === 'Admin' ? '/admin/links' : '/center-admin/assignments');
+      await page.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();
+      const dialog = page.getByRole('dialog');
+      await dialog.getByLabel('Mã Caregiver').fill(id);
+      await dialog.getByLabel('Mã VIU').fill(linkedViuId);
+      await dialog.getByLabel('Tôi xác nhận tạo liên kết giữa các tài khoản trên').check();
+      await dialog.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Chi tiết liên kết' })).toBeVisible();
+      await page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true }).click();
+      await dialog.getByLabel('Quản lý gương mặt').check();
+      await dialog.getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
+      await dialog.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
+      await expect(dialog.getByRole('alert')).toContainText('Quyền đã thay đổi');
+      await dialog.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
+      await expect(dialog).toHaveCount(0);
+      await page.getByRole('button', { name: 'Chuyển thành chăm sóc chính' }).click();
+      await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
+      expect(writes).toBe(3);
+      await page.getByRole('button', { name: 'Chuyển thành chăm sóc chính' }).click();
+      await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Chuyển thành chăm sóc chính' })).toHaveCount(
+        0,
+      );
+      await page.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Chi tiết liên kết' })).toHaveCount(0);
+      expect(writes).toBe(5);
+    },
+  );
+}
+test('5c Caregiver: own Personal permissions only, Organization read-only and no promote', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let link = { ...managedLink, linkType: 'Personal' };
+  await page.route('http://localhost:5176/api/caregiver-links**', (route) => {
+    const url = new URL(route.request().url());
+    if (route.request().method() === 'PUT') link = { ...link, ...route.request().postDataJSON() };
+    return route.fulfill({
+      json: {
+        success: true,
+        data: url.pathname === '/api/caregiver-links' ? organizationPage([link]) : link,
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/caregiver/caregivers');
+  await page.getByRole('button', { name: 'Xem liên kết ' + cgLinkId }).click();
+  await expect(page.getByRole('button', { name: 'Chuyển thành chăm sóc chính' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true }).click();
+  await page.getByRole('dialog').getByLabel('Nhận cảnh báo').uncheck();
+  await page.getByRole('dialog').getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
+  await page.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(link.canReceiveAlerts).toBe(false);
+  link = { ...link, linkType: 'Organization' };
+  await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole('button', { name: 'Gỡ liên kết', exact: true })).toHaveCount(0);
 });

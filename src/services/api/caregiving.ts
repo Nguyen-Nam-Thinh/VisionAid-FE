@@ -11,7 +11,7 @@ const userSchema = z.object({
   organizationId: z.string().uuid().nullable(),
   isActive: z.boolean(),
 });
-const linkSchema = z.object({
+export const linkSchema = z.object({
   id: z.string().uuid(),
   caregiverId: z.string().uuid(),
   visuallyImpairedUserId: z.string().uuid(),
