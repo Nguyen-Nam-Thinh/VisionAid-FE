@@ -5,8 +5,8 @@ Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 ## Đọc trước khi làm tiếp
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md (file này), api.txt và docs/API_STAGE_02_TEST.md.
-2. Kiểm tra git status/branch/log và fetch origin. Mốc code đã merge mới nhất: dev tại 94a2ef6 (đợt 5b); lịch sử: bec1a1f; đợt 1: 700d748; đợt 2: 1441d10. Không reset về các mốc này nếu có code mới hơn.
-3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 31 API được đánh dấu DA_NOI trong api.txt.
+2. Kiểm tra git status/branch/log và fetch origin. Mốc code đã merge mới nhất: dev tại 632043a (đợt 5c), đợt 6 trên feat/api-location-tracking; lịch sử: bec1a1f; đợt 1: 700d748; đợt 2: 1441d10. Không reset về các mốc này nếu có code mới hơn.
+3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 33 API được đánh dấu DA_NOI trong api.txt.
 4. Chỉ làm đợt người dùng yêu cầu. Sau mỗi đợt đưa checklist test, báo các API phụ thuộc nhau, rồi DỪNG chờ người dùng xác nhận trước khi làm đợt tiếp theo. Không coi roadmap này là lệnh thực hiện toàn bộ.
 5. Yêu cầu merge/push không tự chứng minh người dùng đã test BE thật. Hiện chưa có báo cáo nghiệm thu từng bước từ người dùng; không ghi “live E2E passed”.
 
@@ -23,12 +23,13 @@ Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 | 4b | Tạo VIU, tạo/gỡ liên kết cá nhân | Merge dev 68bbbc5 | Chờ người dùng test |
 | 5a | Tổ chức và thành viên theo scope | Đã nối, tích hợp dev từ feat/api-organization-management | Chờ test BE thật |
 | 5b | Quản lý tài khoản Admin/CenterAdmin | Merge dev 94a2ef6 | Chờ test BE thật |
-| 5c | Phân công và quyền liên kết | Đã nối, feat/api-caregiver-assignments | Chờ test BE thật |
-| 6–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
+| 5c | Phân công và quyền liên kết | Merge dev 632043a | Chờ test BE thật |
+| 6 | GPS live và history | Đã nối; bản đồ nền chờ Mapbox token | Chờ test BE thật |
+| 7–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
 
-Đã có bằng chứng tự động: 36 unit tests; 5 kịch bản Playwright dùng response giả theo contract; build và lint pass. Playwright Windows có lần treo dọn webServer sau khi cả 5 case đã báo OK và phải dừng tiến trình; không ghi cả test runner exit 0 cho lần đó. Build có cảnh báo chunk khoảng 500 kB, không phải lỗi build.
+Bằng chứng mới nhất đợt 6: 64 unit tests / 13 files pass; 19 kịch bản Playwright cũ pass và 2 kịch bản GPS pass sau khi sửa assertion để chấp nhận refetch hợp lệ. Build/lint pass; chunk khoảng 576 kB còn cảnh báo. Đây là test fixture, chưa nghiệm thu BE thật.
 
-API mode mở landing, login, register, recover/reset, dashboard thông tin phiên và /profile (có logout-all). Đã mở /caregiver/users cho Caregiver, /admin/organizations cho Admin và /center-admin/organization cho CenterAdmin; đợt 5b mở thêm /admin/accounts, /center-admin/staff, /center-admin/users; 5c mở thêm /admin/links, /center-admin/assignments, /caregiver/caregivers; các route nghiệp vụ còn lại vẫn ApiPending. Các màn mock có sẵn không có nghĩa đã tích hợp BE. Không fallback seed khi API lỗi.
+API mode mở landing, login, register, recover/reset, dashboard thông tin phiên và /profile (có logout-all). Đã mở /caregiver/users cho Caregiver, /admin/organizations cho Admin và /center-admin/organization cho CenterAdmin; đợt 5b mở thêm /admin/accounts, /center-admin/staff, /center-admin/users; 5c mở thêm /admin/links, /center-admin/assignments, /caregiver/caregivers; đợt 6 mở /caregiver/map và /center-admin/map; các route nghiệp vụ còn lại vẫn ApiPending. Các màn mock có sẵn không có nghĩa đã tích hợp BE. Không fallback seed khi API lỗi.
 
 ## Môi trường và file cần biết
 
@@ -38,7 +39,7 @@ API mode mở landing, login, register, recover/reset, dashboard thông tin phi�
 - .env local: VITE_SERVICE_MODE=api; VITE_API_BASE_URL=http://51.210.176.94:5002. Không commit .env, password hoặc token.
 - Chạy npm.cmd run dev; mở http://localhost:5173. CORS đã kiểm tra trước đây cho phép origin này, không cho http://127.0.0.1:5173; xác minh lại khi đổi môi trường. FE HTTPS cần BE HTTPS để tránh mixed content.
 - src/services/api/auth.ts: token/session, single-flight refresh, unwrap response, profile mapping. expiresAt của BE là hạn refresh; access expiry đọc JWT exp. Token lưu sessionStorage theo tab; không remember-me, không lưu password, chưa đồng bộ refresh giữa nhiều tab.
-- src/services/http/client.ts: transport và lỗi; src/services/api/auth.ts, caregiving.ts, organizations.ts, accounts.ts, links.ts: tổng 31 API đã nối qua apiGet/apiWrite trong adapter.ts; hàm snapshot/mock nghiệp vụ chưa hỗ trợ vẫn fail 501.
+- src/services/http/client.ts: transport và lỗi; src/services/api/auth.ts, caregiving.ts, organizations.ts, accounts.ts, links.ts, locations.ts: tổng 33 API đã nối qua apiGet/apiWrite trong adapter.ts; hàm snapshot/mock nghiệp vụ chưa hỗ trợ vẫn fail 501.
 - src/hooks/useService.ts: session/cache/logout; src/app/App.tsx: route guards/menu/API stage gate; src/app/features.tsx: danh mục route nghiệp vụ.
 - src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/pages/shared/ApiSession.tsx: màn đã nối.
 - src/services/contracts.ts và models/domain.ts là model nội bộ FE, không gửi nguyên lên BE. Snapshot toàn bộ chỉ là kiến trúc mock; mỗi resource thật cần query key gồm user/org/VIU/filter/page.
@@ -87,7 +88,7 @@ API mode mở landing, login, register, recover/reset, dashboard thông tin phi�
 
 ### Đợt 6 — GPS và bản đồ đọc dữ liệu
 
-- GET /locations/live + /locations/history -> /caregiver/map và /center-admin/map; history còn dùng ở /caregiver/activity.
+- GET /locations/live + /locations/history -> /caregiver/map và /center-admin/map; history hiện nằm trong trang map; /caregiver/activity dự kiến ở đợt sau.
 - Phụ thuộc: 4 (Caregiver), 5 (fleet tổ chức), Mobile gửi POST /locations/gps, public Mapbox token. POST GPS không do Web giả gửi.
 - Test: VIU đang có GPS, VIU mất kết nối, không có dữ liệu, timestamp/lat-lng/accuracy nullable, đổi VIU, scope org. Không gọi vị trí cũ là realtime. Chưa có Mapbox token thì báo rõ giới hạn bản đồ, không tuyên bố đã nối SDK.
 
@@ -261,3 +262,16 @@ Kiểm tra 5b: 55 unit tests và 16 Playwright API fixture tests pass (exit 0); 
 - Checklist docs/API_STAGE_05C_TEST.md; chờ test người dùng. Tiếp theo 6: GPS live/history đọc, cần Mobile có dữ liệu và Mapbox token trước SDK. 3b HTTP500, consent vẫn chờ.
 
 Kiểm tra 5c: 60 unit tests, 19 Playwright API fixture tests pass (exit 0), build/lint pass. Helper E2E chờ login hoàn tất trước navigation để bỏ race. Build còn cảnh báo chunk chính ~562 kB. Chưa nghiệm thu BE thật.
+
+## Bàn giao đợt 6 — GPS đọc dữ liệu
+
+- Nhánh feat/api-location-tracking từ dev 632043a. Merge dev sau khi kiểm tra. Không coi push/merge là nghiệm thu BE thật.
+- 33/107 operation đã nối. Mới: GET /api/locations/live và GET /api/locations/history trong locations.ts / ApiTracking.tsx; mở menu map cho Caregiver và CenterAdmin.
+- Danh sách VIU lấy từ users (scope BE; CenterAdmin ép organizationId và role). Live lấy từng VIU trên trang hiện tại, tối đa 10, polling 30 giây khi tab hoạt động; không SignalR. History 20 bản ghi/trang, lọc datetime theo múi giờ trình duyệt rồi gửi ISO UTC.
+- Live cachedAt là thời điểm thiết bị ghi nhận; updatedAt là thời gian máy chủ cập nhật. Upload offline có thể làm cache mang điểm cũ. Ngưỡng 2 phút chỉ là nhãn độ mới UI, không kết luận thiết bị online/offline.
+- 404 live không chặn lịch sử; 401/403 live ẩn lịch sử. Lỗi không fallback mock. Live kiểm tra userId trả về và tọa độ bắt buộc; history giữ null và số 0 đúng nghĩa.
+- Caregiver chỉ cần active link để đọc; canManageLocations không phải điều kiện quyền xem. Admin không có quyền endpoint này. CenterAdmin chỉ VIU cùng tổ chức.
+- Không POST GPS từ Web; không gửi dữ liệu mô phỏng lên BE. Lịch sử /caregiver/activity chưa mở ở đợt này.
+- Mapbox token chưa được cung cấp; bản đồ nền để chờ, UI báo rõ và hiển thị tọa độ thật. Không thêm dependency Mapbox khi chưa cấu hình.
+- Test unit/build/lint đã pass; 19 case Playwright cũ và 2 case GPS mới pass (fixture). Chưa test tài khoản BE thật.
+- Người dùng test theo docs/API_STAGE_06_TEST.md. Đợt tiếp theo là 7 (emergency list/detail và xử lý), chỉ triển khai khi người dùng yêu cầu. Consent và lỗi mail 3b vẫn hoãn.

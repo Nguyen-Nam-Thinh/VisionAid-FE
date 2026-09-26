@@ -3,7 +3,7 @@ Cập nhật: 2026-09-26. Nguồn: live OpenAPI, controller BE, code FE và ản
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 31 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c.
+107 operations; 33 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -13,6 +13,7 @@ File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller
 8 API organizations: src/services/api/organizations.ts -> apiGet/apiWrite; UI src/pages/shared/ApiOrganizations.tsx. Activity-summary chưa nối.
 7 operation quản lý users: src/services/api/accounts.ts -> apiGet/apiWrite; UI src/pages/shared/ApiAccounts.tsx.
 6 operation caregiver-links: src/services/api/links.ts -> apiGet/apiWrite; UI src/pages/shared/ApiLinks.tsx (5c).
+2 operation locations: locations.ts -> ApiTracking.tsx; GET live polling 30 giây, history phân trang 20; POST GPS chỉ Mobile. Bản đồ nền chờ Mapbox token, chưa SignalR.
 Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE thật từ người dùng.
 Đợt triển khai/phụ thuộc/checklist đầy đủ ở PLAN.md; không tự làm tất cả roadmap.
 
@@ -508,9 +509,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/LocationController.cs
 
 050. GET /api/locations/live
-  Trạng thái: CHUA_NOI | Đợt: 6
-  Màn/luồng: /caregiver/map; /center-admin/map; /caregiver/activity (history)
-  File FE: src/pages/caregiver/LiveMap.tsx; src/pages/center-admin/Fleet.tsx; src/pages/caregiver/Activity.tsx
+  Trạng thái: DA_NOI | Đợt: 6
+  Màn/luồng: /caregiver/map và /center-admin/map; activity chưa mở
+  File FE: src/services/api/locations.ts -> apiGet; src/pages/shared/ApiTracking.tsx
   Dùng để: GPS từ Mobile; Web đọc live/history và hiển thị timestamp/stale. Không tự gửi GPS bằng Web.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: viuId
@@ -518,9 +519,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/LocationController.cs
 
 051. GET /api/locations/history
-  Trạng thái: CHUA_NOI | Đợt: 6
-  Màn/luồng: /caregiver/map; /center-admin/map; /caregiver/activity (history)
-  File FE: src/pages/caregiver/LiveMap.tsx; src/pages/center-admin/Fleet.tsx; src/pages/caregiver/Activity.tsx
+  Trạng thái: DA_NOI | Đợt: 6
+  Màn/luồng: /caregiver/map và /center-admin/map; activity chưa mở
+  File FE: src/services/api/locations.ts -> apiGet; src/pages/shared/ApiTracking.tsx
   Dùng để: GPS từ Mobile; Web đọc live/history và hiển thị timestamp/stale. Không tự gửi GPS bằng Web.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: viuId, dateFrom, dateTo, page, pageSize
