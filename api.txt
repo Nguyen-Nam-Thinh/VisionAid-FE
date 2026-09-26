@@ -1,14 +1,15 @@
 VISIONAID WEB — API DÙNG Ở ĐÂU
-Cập nhật: 2026-09-25. Nguồn: live OpenAPI, controller BE, code FE và ảnh Swagger.
+Cập nhật: 2026-09-26. Nguồn: live OpenAPI, controller BE, code FE và ảnh Swagger.
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 10 đã nối Web (DA_NOI): 6 ở đợt 0–2, 2 ở 3a, 2 ở 3b.
+107 operations; 13 đã nối Web (DA_NOI): 10 auth/profile và 3 GET users/links ở 4a.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
 File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller đang hoạt động.
-Caller thật của cả 10 API: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
+10 API auth/profile: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
+3 API users/links: src/services/api/caregiving.ts -> apiGet/auth.get; UI ApiLinkedUsers.tsx.
 Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE thật từ người dùng.
 Đợt triển khai/phụ thuộc/checklist đầy đủ ở PLAN.md; không tự làm tất cả roadmap.
 
@@ -124,9 +125,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Auth/Presentation/AuthController.cs
 
 012. GET /api/caregiver-links
-  Trạng thái: CHUA_NOI | Đợt: 4/5c
-  Màn/luồng: /caregiver/users; /caregiver/caregivers; /center-admin/assignments; /admin/links
-  File FE: src/pages/caregiver/LinkedUsers.tsx; src/pages/caregiver/Secondary.tsx; src/pages/center-admin/Assignments.tsx; src/pages/super-admin/Linkage.tsx
+  Trạng thái: DA_NOI | Đợt: 4/5c
+  Màn/luồng: /caregiver/users — đã nối 4a; màn Admin/CenterAdmin dự kiến đợt 5, chưa nối
+  File FE: src/pages/caregiver/ApiLinkedUsers.tsx; src/services/api/caregiving.ts
   Dùng để: Liên kết chăm sóc. Tạo VIU không tự tạo link; Caregiver chỉ own links; promote-primary chỉ Admin/CenterAdmin.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: page, pageSize, caregiverId, viuId, linkType, isActive
@@ -144,9 +145,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Caregiving/Presentation/CaregiverLinksController.cs
 
 014. GET /api/caregiver-links/{id}
-  Trạng thái: CHUA_NOI | Đợt: 4/5c
-  Màn/luồng: /caregiver/users; /caregiver/caregivers; /center-admin/assignments; /admin/links
-  File FE: src/pages/caregiver/LinkedUsers.tsx; src/pages/caregiver/Secondary.tsx; src/pages/center-admin/Assignments.tsx; src/pages/super-admin/Linkage.tsx
+  Trạng thái: DA_NOI | Đợt: 4/5c
+  Màn/luồng: /caregiver/users — đã nối 4a; màn Admin/CenterAdmin dự kiến đợt 5, chưa nối
+  File FE: src/pages/caregiver/ApiLinkedUsers.tsx; src/services/api/caregiving.ts
   Dùng để: Liên kết chăm sóc. Tạo VIU không tự tạo link; Caregiver chỉ own links; promote-primary chỉ Admin/CenterAdmin.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
@@ -984,9 +985,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/UsersController.cs
 
 098. GET /api/users
-  Trạng thái: CHUA_NOI | Đợt: 4/5b
-  Màn/luồng: /caregiver/users; /center-admin/staff; /center-admin/users; /admin/accounts
-  File FE: src/pages/caregiver/LinkedUsers.tsx; src/pages/center-admin/Staff.tsx; src/pages/center-admin/Vius.tsx; src/pages/super-admin/Accounts.tsx
+  Trạng thái: DA_NOI | Đợt: 4/5b
+  Màn/luồng: /caregiver/users — đã nối 4a; màn Admin/CenterAdmin dự kiến đợt 5, chưa nối
+  File FE: src/pages/caregiver/ApiLinkedUsers.tsx; src/services/api/caregiving.ts
   Dùng để: Quản lý user theo role/org. Tạo VIU rồi tạo caregiver-link riêng; Caregiver không được GET /users/{id}.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: page, pageSize, search, role, isActive, isDeleted, organizationId
@@ -1106,3 +1107,5 @@ NGOÀI DANH SÁCH REST / CONTRACT CÒN THIẾU
 CẬP NHẬT SAU MỖI ĐỢT
 Ghi trạng thái từng method/path, caller FE thật, commit, kết quả test thật và blocker
 vào file này cùng PLAN.md. Không đánh dấu API Mobile là phần Web chưa hoàn thành.
+
+TRẠNG THÁI TEST: 3b đang lỗi 500 forgot-password trên BE, chờ log; người dùng hoãn test và cho phép làm 4a. DA_NOI không đồng nghĩa BE thật đã đạt.

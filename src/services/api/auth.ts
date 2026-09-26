@@ -215,6 +215,7 @@ export function createApiAuth(
     }
   }
   return {
+    get: (path: string, signal?: AbortSignal) => authorized(path, { signal }),
     async recover(email: string) {
       email = email.trim();
       if (!z.string().email().max(255).safeParse(email).success)

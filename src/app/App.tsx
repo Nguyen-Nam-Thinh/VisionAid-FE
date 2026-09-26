@@ -1,5 +1,6 @@
 import { Landing } from '../pages/public/Landing';
 import { ApiSession, ApiPending } from '../pages/shared/ApiSession';
+import { ApiLinkedUsers } from '../pages/caregiver/ApiLinkedUsers';
 import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
 import { features } from './features';
@@ -141,8 +142,12 @@ function Shell() {
               <LayoutDashboard size={18} />
               Tổng quan
             </NavLink>
-            {runtime.mode === 'mock' &&
-              menu[user.role]?.map((item) => (
+            {menu[user.role]
+              ?.filter(
+                (item) =>
+                  runtime.mode === 'mock' || (user.role === 'Caregiver' && item.path === 'users'),
+              )
+              .map((item) => (
                 <NavLink
                   key={item.path}
                   to={roleBase(user.role) + '/' + item.path}
@@ -165,10 +170,18 @@ function Shell() {
               Hồ sơ của tôi
             </NavLink>
           </nav>
-          <button className="btn" disabled={signingOut} onClick={async () => {
-            setSigningOut(true);
-            try { await auth.logout(); } finally { setSigningOut(false); }
-          }}>
+          <button
+            className="btn"
+            disabled={signingOut}
+            onClick={async () => {
+              setSigningOut(true);
+              try {
+                await auth.logout();
+              } finally {
+                setSigningOut(false);
+              }
+            }}
+          >
             <LogOut size={16} />
             {signingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
           </button>
@@ -255,15 +268,22 @@ export function App() {
                 path="dashboard"
                 element={runtime.mode === 'api' ? <ApiSession /> : <Dashboard />}
               />
-              <Route
-                path="profile"
-                element={<Profile />}
-              />
+              <Route path="profile" element={<Profile />} />
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>
                   <Route
                     path={roleBase(f.role) + '/' + f.path}
-                    element={runtime.mode === 'api' ? <ApiPending /> : <f.component />}
+                    element={
+                      runtime.mode === 'api' ? (
+                        f.role === 'Caregiver' && f.path === 'users' ? (
+                          <ApiLinkedUsers />
+                        ) : (
+                          <ApiPending />
+                        )
+                      ) : (
+                        <f.component />
+                      )
+                    }
                   />
                 </Route>
               ))}
