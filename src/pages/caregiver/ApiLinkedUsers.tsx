@@ -1,11 +1,22 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { caregivingApi, type LinkedUser } from '../../services/api/caregiving';
-import { PageHead, State, Badge } from '../../components/UI';
+import { PageHead, State, Badge, Confirm } from '../../components/UI';
+
+import { ApiCreateLinkedUser } from './ApiCreateLinkedUser';
 
 export function ApiLinkedUsers() {
   const { data: user } = useSession();
+  const cache = useQueryClient();
+  const refresh = () => {
+    setSelected('');
+    void cache.invalidateQueries({
+      predicate: (q) =>
+        ['api-users', 'api-links', 'api-link-detail'].includes(String(q.queryKey[0])) &&
+        q.queryKey[1] === user?.id,
+    });
+  };
   const [page, setPage] = useState(1);
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
@@ -145,12 +156,25 @@ export function ApiLinkedUsers() {
           )}
         </State>
       </section>
+      {user?.role === 'Caregiver' && !user.orgId && (
+        <ApiCreateLinkedUser
+          key={user.id}
+          caregiverId={user.id}
+          onLinked={() => {
+            setPage(1);
+            setInput('');
+            setSearch('');
+            refresh();
+          }}
+        />
+      )}
       {selectedUser && user && (
         <UserLinks
           key={user.id + selectedUser.id}
           person={selectedUser}
           caregiverId={user.id}
           orgId={user.orgId}
+          onUnlinked={refresh}
         />
       )}
     </>
@@ -161,13 +185,16 @@ function UserLinks({
   person,
   caregiverId,
   orgId,
+  onUnlinked,
 }: {
   person: LinkedUser;
   caregiverId: string;
   orgId: string;
+  onUnlinked: () => void;
 }) {
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState('');
+  const [unlinkId, setUnlinkId] = useState('');
   const links = useQuery({
     queryKey: ['api-links', caregiverId, orgId, person.id, page],
     queryFn: ({ signal }) => caregivingApi.links(caregiverId, person.id, page, signal),
@@ -188,6 +215,21 @@ function UserLinks({
   return (
     <section className="glass card stack">
       <h2>Liên kết với {person.fullName}</h2>
+      {unlinkId && (
+        <Confirm
+          title="Gỡ liên kết chăm sóc"
+          description={
+            'Gỡ liên kết với ' +
+            person.fullName +
+            '? Bạn sẽ mất quyền truy cập qua liên kết này. Tài khoản người dùng không bị xóa.'
+          }
+          onClose={() => setUnlinkId('')}
+          onConfirm={async () => {
+            await caregivingApi.unlink(unlinkId, caregiverId, person.id);
+            onUnlinked();
+          }}
+        />
+      )}
       <State loading={links.isPending} error={links.error} retry={() => links.refetch()}>
         {links.data?.items.length === 0 && (
           <p role="status">Không còn liên kết hoạt động với người dùng này.</p>
@@ -198,6 +240,11 @@ function UserLinks({
               {link.isPrimary ? 'Chăm sóc chính' : 'Chăm sóc phụ'} ·{' '}
               {link.linkType === 'Personal' ? 'Gia đình' : 'Tổ chức'}
             </span>
+            {link.linkType === 'Personal' && !link.unlinkedAt && (
+              <button className="btn danger" onClick={() => setUnlinkId(link.id)}>
+                Gỡ liên kết
+              </button>
+            )}
             <button className="btn" onClick={() => setDetailId(link.id)}>
               Xem quyền liên kết
             </button>

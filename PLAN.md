@@ -6,7 +6,7 @@ Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md (file này), api.txt và docs/API_STAGE_02_TEST.md.
 2. Kiểm tra git status/branch/log và fetch origin. Mốc code đã merge: dev tại bec1a1f; đợt 1: 700d748; đợt 2: 1441d10. Không reset về các mốc này nếu có code mới hơn.
-3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 13 API được đánh dấu DA_NOI trong api.txt.
+3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 16 API được đánh dấu DA_NOI trong api.txt.
 4. Chỉ làm đợt người dùng yêu cầu. Sau mỗi đợt đưa checklist test, báo các API phụ thuộc nhau, rồi DỪNG chờ người dùng xác nhận trước khi làm đợt tiếp theo. Không coi roadmap này là lệnh thực hiện toàn bộ.
 5. Yêu cầu merge/push không tự chứng minh người dùng đã test BE thật. Hiện chưa có báo cáo nghiệm thu từng bước từ người dùng; không ghi “live E2E passed”.
 
@@ -18,9 +18,10 @@ Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 | 1 | Login, GET hồ sơ, refresh, logout, guards | Đã làm, merge dev | Chờ người dùng xác nhận |
 | 2 | PUT hồ sơ, đổi mật khẩu và đăng nhập lại | Đã làm, merge dev | Chờ người dùng xác nhận |
 | 3a | Đăng ký Caregiver + logout-all | Merge dev b008a59 | Chờ người dùng test; consent hoãn theo yêu cầu |
-| 3b | Quên/reset mật khẩu | Đã nối, nhánh feat/api-password-recovery | Có lỗi 500 forgot-password, chờ log BE; người dùng hoãn test |
-| 4a | Đọc users/links cho Caregiver | Đã nối, nhánh feat/api-linked-users-read | Chờ người dùng test |
-| 4b–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
+| 3b | Quên/reset mật khẩu | Merge dev dc22c5c | Có lỗi 500 forgot-password, chờ log BE; người dùng hoãn test |
+| 4a | Đọc users/links cho Caregiver | Merge dev dc22c5c | Chờ người dùng test |
+| 4b | Tạo VIU, tạo/gỡ liên kết cá nhân | Đã nối, feat/api-caregiver-link-management | Chờ người dùng test |
+| 5–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
 
 Đã có bằng chứng tự động: 36 unit tests; 5 kịch bản Playwright dùng response giả theo contract; build và lint pass. Playwright Windows có lần treo dọn webServer sau khi cả 5 case đã báo OK và phải dừng tiến trình; không ghi cả test runner exit 0 cho lần đó. Build có cảnh báo chunk khoảng 500 kB, không phải lỗi build.
 
@@ -34,7 +35,7 @@ API mode mở landing, login, register, recover/reset, dashboard thông tin phi�
 - .env local: VITE_SERVICE_MODE=api; VITE_API_BASE_URL=http://51.210.176.94:5002. Không commit .env, password hoặc token.
 - Chạy npm.cmd run dev; mở http://localhost:5173. CORS đã kiểm tra trước đây cho phép origin này, không cho http://127.0.0.1:5173; xác minh lại khi đổi môi trường. FE HTTPS cần BE HTTPS để tránh mixed content.
 - src/services/api/auth.ts: token/session, single-flight refresh, unwrap response, profile mapping. expiresAt của BE là hạn refresh; access expiry đọc JWT exp. Token lưu sessionStorage theo tab; không remember-me, không lưu password, chưa đồng bộ refresh giữa nhiều tab.
-- src/services/http/client.ts: transport và lỗi; src/services/api/adapter.ts: 13 API đã nối, hàm khác fail 501.
+- src/services/http/client.ts: transport và lỗi; src/services/api/adapter.ts: 16 API đã nối, hàm khác fail 501.
 - src/hooks/useService.ts: session/cache/logout; src/app/App.tsx: route guards/menu/API stage gate; src/app/features.tsx: danh mục route nghiệp vụ.
 - src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/pages/shared/ApiSession.tsx: màn đã nối.
 - src/services/contracts.ts và models/domain.ts là model nội bộ FE, không gửi nguyên lên BE. Snapshot toàn bộ chỉ là kiến trúc mock; mỗi resource thật cần query key gồm user/org/VIU/filter/page.
@@ -143,7 +144,7 @@ API mode mở landing, login, register, recover/reset, dashboard thông tin phi�
 
 ## Việc bắt đầu tiếp theo
 
-Khi người dùng yêu cầu tiếp tục: xử lý lỗi test 4a nếu có, rồi làm checkpoint 4b khi người dùng yêu cầu. Người dùng đã chủ động hoãn test 3b để tiến hành 4a; lỗi 500 forgot-password vẫn chưa được giải quyết, cần log BE. Người dùng đã yêu cầu để consent chờ do chưa có nội dung/phiên bản; không tự đặt policyVersion hoặc gửi consent. Nếu người dùng ưu tiên người được chăm sóc, có thể chuyển 4a vì không phụ thuộc register/mail; ghi lại thay đổi thứ tự. Không tự gửi mail hay thay mật khẩu tài khoản thật để tạo bằng chứng test.
+Khi người dùng yêu cầu tiếp tục: xử lý lỗi test 4a nếu có, rồi làm checkpoint 5a khi người dùng yêu cầu. Người dùng đã chủ động hoãn test 3b để tiến hành 4a; lỗi 500 forgot-password vẫn chưa được giải quyết, cần log BE. Người dùng đã yêu cầu để consent chờ do chưa có nội dung/phiên bản; không tự đặt policyVersion hoặc gửi consent. Nếu người dùng ưu tiên người được chăm sóc, có thể chuyển 4a vì không phụ thuộc register/mail; ghi lại thay đổi thứ tự. Không tự gửi mail hay thay mật khẩu tài khoản thật để tạo bằng chứng test.
 
 ## Nhật ký để AI tiếp theo cập nhật
 
@@ -187,6 +188,21 @@ Query key gồm account/org/page/search/VIU/link, có AbortSignal; refetch mỗi
 Selection giữ trong component của màn 4a, chưa tích hợp selector nghiệp vụ toàn ứng dụng. Xóa lựa chọn khi đổi trang/tìm kiếm; ẩn detail khi người/link không còn trong kết quả hoặc query lỗi.
 Không dùng GET /users/{id}, không gọi snapshot mock, không mở create/link/unlink/QR/Map. Quyền BE là authoritative; FE kiểm tra link trả về khớp caregiverId và VIU để tránh hiển thị response sai scope.
 Tổng 13 operations đã có caller Web; các operation Users/Links mới chỉ được mở cho màn Caregiver, chưa có quản trị đợt 5.
-Checklist: docs/API_STAGE_04A_TEST.md. Dừng để người dùng test trước 4b.
+Checklist: docs/API_STAGE_04A_TEST.md. 4a đã merge dev dc22c5c theo yêu cầu; tiếp tục 4b.
 
 Kiểm tra 4a: 44 unit tests, 10 Playwright API fixture tests exit 0, build và lint đạt. Chưa nghiệm thu BE thật; build còn cảnh báo chunk >500 kB.
+
+
+## Bàn giao đợt 4b — tạo VIU và quản lý liên kết cá nhân
+
+- Dev đã merge/push 3b + 4a tại dc22c5c. Nhánh 4b: feat/api-caregiver-link-management; chờ test BE thật.
+- /caregiver/users: Caregiver không thuộc tổ chức có form hai bước POST /users -> POST /caregiver-links. Role cố định VisuallyImpaired, organizationId null; không tạo tài khoản Admin/CenterAdmin.
+- src/pages/caregiver/ApiCreateLinkedUser.tsx giữ UUID chờ liên kết trong sessionStorage theo caregiverId; không lưu mật khẩu. F5 tiếp tục bước liên kết; tiến độ tồn tại trong tab theo tài khoản để phục hồi. Bỏ tiến độ có xác nhận và không xóa tài khoản BE.
+- Tạo tài khoản bị lỗi 5xx/kết quả không rõ: dừng tạo lại, yêu cầu quản trị viên xác minh email và mã VIU. Có ô nhập UUID đã có để tiếp tục. Lỗi preflight 5xx cũng được xử lý thận trọng theo cách này.
+- POST link trả 409: đọc lại link hoạt động đúng caregiver/VIU để xác minh, không tự lặp POST. Phân quyền trả về BE là nguồn quyết định.
+- Gỡ link cá nhân có xác nhận, đọc lại scope/type trước DELETE, 204 mới làm mới cache và bỏ lựa chọn; lỗi giữ nguyên UI. Link tổ chức không có nút gỡ.
+- apiWrite dùng transport auth nhưng không tự replay mutation khi 401. GET vẫn có refresh/retry theo luồng cũ.
+- Checklist: docs/API_STAGE_04B_TEST.md. Đợt tiếp theo là 5a (Users quản trị), chỉ bắt đầu sau yêu cầu người dùng.
+- 3b HTTP500 chưa sửa; privacy consent tiếp tục chờ nội dung/version chính thức.
+
+Kiểm tra 4b: 48 unit tests pass; build và lint pass (chunk chính ~520 kB cảnh báo). API Playwright: 10/11 pass lần đầu, một case Edge crash trước newPage; chạy lại riêng case đó pass (exit 0). Tất cả 11 kịch bản có kết quả pass, không phải live BE E2E.
