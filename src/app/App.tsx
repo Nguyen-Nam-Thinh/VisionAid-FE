@@ -1,3 +1,4 @@
+import { ApiLinks } from '../pages/shared/ApiLinks';
 import { ApiAccounts } from '../pages/shared/ApiAccounts';
 import { ApiOrganizations } from '../pages/shared/ApiOrganizations';
 import { Landing } from '../pages/public/Landing';
@@ -148,10 +149,11 @@ function Shell() {
               ?.filter(
                 (item) =>
                   runtime.mode === 'mock' ||
-                  (user.role === 'Caregiver' && item.path === 'users') ||
-                  (user.role === 'Admin' && ['organizations', 'accounts'].includes(item.path)) ||
+                  (user.role === 'Caregiver' && ['users', 'caregivers'].includes(item.path)) ||
+                  (user.role === 'Admin' &&
+                    ['organizations', 'accounts', 'links'].includes(item.path)) ||
                   (user.role === 'CenterAdmin' &&
-                    ['organization', 'staff', 'users'].includes(item.path)),
+                    ['organization', 'staff', 'users', 'assignments'].includes(item.path)),
               )
               .map((item) => (
                 <NavLink
@@ -160,7 +162,9 @@ function Shell() {
                   onClick={() => setOpen(false)}
                 >
                   <span aria-hidden="true">◦</span>
-                  {item.label}
+                  {runtime.mode === 'api' && user.role === 'Caregiver' && item.path === 'caregivers'
+                    ? 'Liên kết của tôi'
+                    : item.label}
                 </NavLink>
               ))}
           </nav>
@@ -292,6 +296,10 @@ export function App() {
                           <ApiAccounts
                             fixedRole={f.path === 'staff' ? 'Caregiver' : 'VisuallyImpaired'}
                           />
+                        ) : (f.role === 'Admin' && f.path === 'links') ||
+                          (f.role === 'CenterAdmin' && f.path === 'assignments') ||
+                          (f.role === 'Caregiver' && f.path === 'caregivers') ? (
+                          <ApiLinks />
                         ) : (
                           <ApiPending />
                         )
