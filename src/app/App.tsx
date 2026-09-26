@@ -1,3 +1,4 @@
+import { ApiOrganizations } from '../pages/shared/ApiOrganizations';
 import { Landing } from '../pages/public/Landing';
 import { ApiSession, ApiPending } from '../pages/shared/ApiSession';
 import { ApiLinkedUsers } from '../pages/caregiver/ApiLinkedUsers';
@@ -145,7 +146,10 @@ function Shell() {
             {menu[user.role]
               ?.filter(
                 (item) =>
-                  runtime.mode === 'mock' || (user.role === 'Caregiver' && item.path === 'users'),
+                  runtime.mode === 'mock' ||
+                  (user.role === 'Caregiver' && item.path === 'users') ||
+                  (user.role === 'Admin' && item.path === 'organizations') ||
+                  (user.role === 'CenterAdmin' && item.path === 'organization'),
               )
               .map((item) => (
                 <NavLink
@@ -277,6 +281,9 @@ export function App() {
                       runtime.mode === 'api' ? (
                         f.role === 'Caregiver' && f.path === 'users' ? (
                           <ApiLinkedUsers />
+                        ) : (f.role === 'Admin' && f.path === 'organizations') ||
+                          (f.role === 'CenterAdmin' && f.path === 'organization') ? (
+                          <ApiOrganizations />
                         ) : (
                           <ApiPending />
                         )

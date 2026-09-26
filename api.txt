@@ -3,13 +3,14 @@ Cập nhật: 2026-09-26. Nguồn: live OpenAPI, controller BE, code FE và ản
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 16 đã nối Web (DA_NOI): 10 auth/profile, 3 GET users/links ở 4a, 3 mutation ở 4b.
+107 operations; 24 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
 File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller đang hoạt động.
 10 API auth/profile: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
 6 API users/links: src/services/api/caregiving.ts -> apiGet/apiWrite/auth; UI ApiLinkedUsers.tsx và ApiCreateLinkedUser.tsx.
+8 API organizations: src/services/api/organizations.ts -> apiGet/apiWrite; UI src/pages/shared/ApiOrganizations.tsx. Activity-summary chưa nối.
 Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE thật từ người dùng.
 Đợt triển khai/phụ thuộc/checklist đầy đủ ở PLAN.md; không tự làm tất cả roadmap.
 
@@ -737,70 +738,70 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Ocr/Presentation/OcrController.cs
 
 073. GET /api/organizations
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
+  Trạng thái: DA_NOI | Đợt: 5a
+  Màn/luồng: /admin/organizations
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Dùng để: Danh sách toàn cục, tìm theo tên/mã thuế/email, lọc trạng thái/xóa, phân trang.
   Quyền controller: Roles = "Admin"
   Query: page, pageSize, search, isActive, isDeleted
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 074. POST /api/organizations
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
+  Trạng thái: DA_NOI | Đợt: 5a
+  Màn/luồng: /admin/organizations
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Dùng để: Tạo tổ chức; không tự tạo CenterAdmin. TaxCode chỉ ở bước tạo.
   Quyền controller: Roles = "Admin"
   Query: Không có
   Body/schema: application/json: CreateOrganizationRequest; text/json: CreateOrganizationRequest; application/*+json: CreateOrganizationRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 075. GET /api/organizations/me
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
+  Trạng thái: DA_NOI | Đợt: 5a
+  Màn/luồng: /center-admin/organization
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Dùng để: Đọc tổ chức của CenterAdmin; kiểm tra ID khớp orgId phiên.
   Quyền controller: Roles = "CenterAdmin"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 076. GET /api/organizations/{id}
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
+  Trạng thái: DA_NOI | Đợt: 5a
+  Màn/luồng: /admin/organizations
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Dùng để: Đọc chi tiết và số thành viên của tổ chức được chọn.
   Quyền controller: Roles = "Admin,CenterAdmin"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 077. PUT /api/organizations/{id}
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
+  Trạng thái: DA_NOI | Đợt: 5a
+  Màn/luồng: /admin/organizations; /center-admin/organization
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Dùng để: Sửa tên/địa chỉ/phoneNumber/contactEmail; không gửi taxCode.
   Quyền controller: Roles = "Admin,CenterAdmin"
   Query: Không có
   Body/schema: application/json: UpdateOrganizationRequest; text/json: UpdateOrganizationRequest; application/*+json: UpdateOrganizationRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 078. DELETE /api/organizations/{id}
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
+  Trạng thái: DA_NOI | Đợt: 5a
+  Màn/luồng: /admin/organizations
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Dùng để: Xóa mềm có xác nhận, 204 rồi refetch; thành viên bị vô hiệu hóa.
   Quyền controller: Roles = "Admin"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 079. GET /api/organizations/{id}/members
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
+  Trạng thái: DA_NOI | Đợt: 5a
+  Màn/luồng: /admin/organizations; /center-admin/organization
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Dùng để: Danh sách thành viên theo org, phân trang/search/role/isActive; chỉ đọc ở 5a.
   Quyền controller: Roles = "Admin,CenterAdmin"
   Query: page, pageSize, search, isActive, role
   Body/schema: Không khai báo request body
@@ -817,10 +818,10 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 081. PATCH /api/organizations/{id}/status
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
+  Trạng thái: DA_NOI | Đợt: 5a
+  Màn/luồng: /admin/organizations
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Dùng để: Admin đặt isActive rõ ràng; kích hoạt org không kích hoạt thành viên, có thể khôi phục org đã xóa.
   Quyền controller: Roles = "Admin"
   Query: Không có
   Body/schema: application/json: UpdateOrganizationStatusRequest; text/json: UpdateOrganizationStatusRequest; application/*+json: UpdateOrganizationStatusRequest

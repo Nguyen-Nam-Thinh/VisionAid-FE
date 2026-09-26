@@ -4,7 +4,7 @@ const token = () =>
   'header.' +
   Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 600 })).toString('base64url') +
   '.signature';
-async function stubApi(page: Page, role = 'Caregiver') {
+async function stubApi(page: Page, role = 'Caregiver', organizationId: string | null = null) {
   const calls: string[] = [];
   await page.route('http://localhost:5176/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -30,7 +30,7 @@ async function stubApi(page: Page, role = 'Caregiver') {
             fullName: 'Người dùng API',
             role,
             isActive: true,
-            organizationId: null,
+            organizationId,
           },
         },
       });
@@ -468,4 +468,182 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   expect(creates).toBe(1);
   expect(links).toBe(2);
   expect(deletes).toBe(2);
+});
+
+const organizationId = '01900000-0000-7000-8000-000000000021';
+const organizationFixture = {
+  id: organizationId,
+  name: 'Trung tâm thử nghiệm',
+  taxCode: 'TEST-123',
+  address: 'Địa chỉ test',
+  phoneNumber: null,
+  contactEmail: null,
+  isActive: true,
+  deletedAt: null as string | null,
+  createdAt: '2026-09-26',
+  updatedAt: '2026-09-26',
+  staffCount: 0,
+  viuCount: 0,
+  centerAdminName: null,
+};
+const organizationPage = (items: unknown[], page = 1, totalCount = items.length) => ({
+  items,
+  page,
+  pageSize: 10,
+  totalCount,
+  totalPages: Math.ceil(totalCount / 10),
+  hasPreviousPage: page > 1,
+  hasNextPage: page * 10 < totalCount,
+});
+test('5a Admin: create, detail, update, status, delete and restore with confirmations', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  let org = { ...organizationFixture };
+  let exists = false,
+    writes = 0,
+    failStatus = true;
+  const bodies: { method: string; body: Record<string, unknown> | null }[] = [];
+  await page.route('http://localhost:5176/api/organizations**', (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const method = request.method();
+    if (method !== 'GET') {
+      writes++;
+      bodies.push({ method, body: request.postDataJSON() });
+    }
+    if (method === 'POST') {
+      exists = true;
+      org = { ...org, ...request.postDataJSON() };
+    }
+    if (method === 'PUT') org = { ...org, ...request.postDataJSON() };
+    if (method === 'PATCH') {
+      if (failStatus) {
+        failStatus = false;
+        return route.fulfill({
+          status: 403,
+          json: { detail: 'Không đủ quyền thay đổi trạng thái' },
+        });
+      }
+      org = { ...org, isActive: request.postDataJSON().isActive, deletedAt: null };
+      return route.fulfill({ json: { success: true, data: null } });
+    }
+    if (method === 'DELETE') {
+      org = { ...org, isActive: false, deletedAt: '2026-09-26' };
+      return route.fulfill({ status: 204 });
+    }
+    if (url.pathname.endsWith('/members'))
+      return route.fulfill({ json: { success: true, data: organizationPage([]) } });
+    if (method === 'GET' && url.pathname === '/api/organizations') {
+      const filter = url.searchParams.get('isDeleted');
+      return route.fulfill({
+        json: {
+          success: true,
+          data: organizationPage(
+            exists && (filter === null || (filter === 'true') === !!org.deletedAt) ? [org] : [],
+          ),
+        },
+      });
+    }
+    return route.fulfill({
+      status: method === 'POST' ? 201 : 200,
+      json: { success: true, data: org },
+    });
+  });
+  await login(page);
+  await page.goto('/admin/organizations');
+  await page.getByRole('button', { name: 'Tạo tổ chức', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Tên tổ chức').fill(org.name);
+  await dialog.getByLabel('Mã số thuế / giấy phép').fill('TEST-123');
+  await dialog.getByRole('button', { name: 'Tạo tổ chức', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: org.name, exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Sửa tổ chức', exact: true }).click();
+  await expect(dialog.getByLabel('Mã số thuế / giấy phép')).toHaveCount(0);
+  await dialog.getByLabel('Địa chỉ', { exact: true }).fill('Địa chỉ mới');
+  await dialog.getByRole('button', { name: 'Lưu tổ chức' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(bodies.find((b) => b.method === 'PUT')?.body).not.toHaveProperty('taxCode');
+  await page.getByRole('button', { name: 'Vô hiệu hóa tổ chức', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
+  expect(writes).toBe(2);
+  await page.getByRole('button', { name: 'Vô hiệu hóa tổ chức', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Không đủ quyền');
+  await dialog.getByRole('button', { name: 'Xác nhận' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Kích hoạt tổ chức', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Xóa tổ chức', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByLabel('Dữ liệu xóa').selectOption('true');
+  await page.getByRole('button', { name: 'Xem tổ chức ' + org.name }).click();
+  await expect(page.getByRole('button', { name: 'Sửa tổ chức', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Kích hoạt tổ chức', exact: true }).click();
+  await expect(dialog).toContainText('thành viên vẫn cần được kích hoạt riêng');
+  await dialog.getByRole('button', { name: 'Xác nhận' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Sửa tổ chức', exact: true })).toBeVisible();
+});
+test('5a CenterAdmin: own profile, member paging/filter and no platform mutations', async ({
+  page,
+}) => {
+  await stubApi(page, 'CenterAdmin', organizationId);
+  let org = { ...organizationFixture };
+  const calls: string[] = [];
+  await page.route('http://localhost:5176/api/organizations**', (route) => {
+    const request = route.request(),
+      url = new URL(request.url());
+    calls.push(request.method() + ' ' + url.pathname + url.search);
+    if (url.pathname.endsWith('/members')) {
+      const pageNumber = Number(url.searchParams.get('page'));
+      const member = {
+        id,
+        fullName: 'Nhân viên trang ' + pageNumber,
+        email: 'staff@example.test',
+        phoneNumber: null,
+        role: 'Caregiver',
+        isActive: true,
+        lastLoginAt: null,
+        createdAt: '2026-09-26',
+      };
+      return route.fulfill({
+        json: { success: true, data: organizationPage([member], pageNumber, 11) },
+      });
+    }
+    if (request.method() === 'PUT') org = { ...org, ...request.postDataJSON() };
+    return route.fulfill({ json: { success: true, data: org } });
+  });
+  await login(page);
+  await page.goto('/center-admin/organization');
+  await expect(page.getByRole('heading', { name: org.name, exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tạo tổ chức', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Xóa tổ chức', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Vô hiệu hóa tổ chức', exact: true })).toHaveCount(
+    0,
+  );
+  await page.getByRole('button', { name: 'Trang sau' }).click();
+  await expect(page.getByText('Nhân viên trang 2', { exact: true })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Vai trò', exact: true }).selectOption('Caregiver');
+  await expect(page.getByText('Nhân viên trang 1', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Sửa tổ chức', exact: true }).click();
+  await page.getByRole('dialog').getByLabel('Email liên hệ').fill('center@example.test');
+  await page.getByRole('button', { name: 'Lưu tổ chức' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(calls.some((c) => c === 'GET /api/organizations/me')).toBe(true);
+  expect(calls.some((c) => c.startsWith('GET /api/organizations?'))).toBe(false);
+  expect(calls.some((c) => c.includes('role=Caregiver'))).toBe(true);
+  await page.goto('/admin/organizations');
+  await expect(page).toHaveURL(/forbidden$/);
+});
+test('5a CenterAdmin rejects a response from another organization', async ({ page }) => {
+  await stubApi(page, 'CenterAdmin', organizationId);
+  await page.route('**/api/organizations/me', (route) =>
+    route.fulfill({ json: { success: true, data: { ...organizationFixture, id } } }),
+  );
+  await login(page);
+  await page.goto('/center-admin/organization');
+  await expect(page.getByRole('alert')).toContainText('không thuộc phiên');
+  await expect(page.getByRole('button', { name: 'Sửa tổ chức', exact: true })).toHaveCount(0);
 });
