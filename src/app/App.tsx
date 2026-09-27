@@ -1,4 +1,11 @@
+import { ApiTracking } from '../pages/shared/ApiTracking';
+import { ApiLinks } from '../pages/shared/ApiLinks';
+import { ApiAccounts } from '../pages/shared/ApiAccounts';
+import { ApiOrganizations } from '../pages/shared/ApiOrganizations';
 import { Landing } from '../pages/public/Landing';
+import { ApiSession, ApiPending } from '../pages/shared/ApiSession';
+import { ApiLinkedUsers } from '../pages/caregiver/ApiLinkedUsers';
+import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
 import { features } from './features';
 import { useState, useEffect, Suspense } from 'react';
@@ -115,6 +122,7 @@ function Shell() {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
   const [reset, setReset] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const { notice } = useUI();
   useEffect(() => {
     if (!notice) return;
@@ -138,16 +146,29 @@ function Shell() {
               <LayoutDashboard size={18} />
               Tổng quan
             </NavLink>
-            {menu[user.role]?.map((item) => (
-              <NavLink
-                key={item.path}
-                to={roleBase(user.role) + '/' + item.path}
-                onClick={() => setOpen(false)}
-              >
-                <span aria-hidden="true">◦</span>
-                {item.label}
-              </NavLink>
-            ))}
+            {menu[user.role]
+              ?.filter(
+                (item) =>
+                  runtime.mode === 'mock' ||
+                  (user.role === 'Caregiver' &&
+                    ['users', 'caregivers', 'map'].includes(item.path)) ||
+                  (user.role === 'Admin' &&
+                    ['organizations', 'accounts', 'links'].includes(item.path)) ||
+                  (user.role === 'CenterAdmin' &&
+                    ['organization', 'staff', 'users', 'assignments', 'map'].includes(item.path)),
+              )
+              .map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={roleBase(user.role) + '/' + item.path}
+                  onClick={() => setOpen(false)}
+                >
+                  <span aria-hidden="true">◦</span>
+                  {runtime.mode === 'api' && user.role === 'Caregiver' && item.path === 'caregivers'
+                    ? 'Liên kết của tôi'
+                    : item.label}
+                </NavLink>
+              ))}
           </nav>
         </div>
         <div className="sidebar-foot stack">
@@ -161,9 +182,20 @@ function Shell() {
               Hồ sơ của tôi
             </NavLink>
           </nav>
-          <button className="btn" onClick={() => auth.logout()}>
+          <button
+            className="btn"
+            disabled={signingOut}
+            onClick={async () => {
+              setSigningOut(true);
+              try {
+                await auth.logout();
+              } finally {
+                setSigningOut(false);
+              }
+            }}
+          >
             <LogOut size={16} />
-            Đăng xuất
+            {signingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
           </button>
         </div>
       </aside>
@@ -244,11 +276,42 @@ export function App() {
           <Route path="/auth/:action" element={<AuthPage />} />
           <Route element={<Guard />}>
             <Route element={<Shell />}>
-              <Route path="dashboard" element={<Dashboard />} />
+              <Route
+                path="dashboard"
+                element={runtime.mode === 'api' ? <ApiSession /> : <Dashboard />}
+              />
               <Route path="profile" element={<Profile />} />
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>
-                  <Route path={roleBase(f.role) + '/' + f.path} element={<f.component />} />
+                  <Route
+                    path={roleBase(f.role) + '/' + f.path}
+                    element={
+                      runtime.mode === 'api' ? (
+                        f.role === 'Caregiver' && f.path === 'users' ? (
+                          <ApiLinkedUsers />
+                        ) : (f.role === 'Admin' && f.path === 'organizations') ||
+                          (f.role === 'CenterAdmin' && f.path === 'organization') ? (
+                          <ApiOrganizations />
+                        ) : f.role === 'Admin' && f.path === 'accounts' ? (
+                          <ApiAccounts />
+                        ) : f.role === 'CenterAdmin' && ['staff', 'users'].includes(f.path) ? (
+                          <ApiAccounts
+                            fixedRole={f.path === 'staff' ? 'Caregiver' : 'VisuallyImpaired'}
+                          />
+                        ) : (f.role === 'Admin' && f.path === 'links') ||
+                          (f.role === 'CenterAdmin' && f.path === 'assignments') ||
+                          (f.role === 'Caregiver' && f.path === 'caregivers') ? (
+                          <ApiLinks />
+                        ) : ['Caregiver', 'CenterAdmin'].includes(f.role) && f.path === 'map' ? (
+                          <ApiTracking />
+                        ) : (
+                          <ApiPending />
+                        )
+                      ) : (
+                        <f.component />
+                      )
+                    }
+                  />
                 </Route>
               ))}
               <Route

@@ -16,6 +16,7 @@ export const useSession = () =>
     },
     retry: false,
     staleTime: 30000,
+    refetchInterval: service.mode === 'api' ? 60000 : false,
   });
 export function useSnapshot() {
   const { data: user } = useSession();
@@ -60,19 +61,47 @@ export function useAuth() {
       await setSession(p);
     },
     logout: async () => {
+      let warning = '';
       try {
         await service.logout();
+      } catch {
+        warning =
+          'Đã thoát phiên trên trình duyệt, nhưng chưa xác nhận được thu hồi phiên trên máy chủ.';
       } finally {
         await setSession(null);
       }
+      if (warning) uiStore.set({ notice: warning });
     },
     resetDemo: async () => {
       await service.resetDemo();
       await setSession(null);
     },
+    logoutAll: async () => {
+      let notice = 'Đã thu hồi phiên đăng nhập trên các thiết bị. Vui lòng đăng nhập lại.';
+      try {
+        await service.logoutAll();
+      } catch {
+        notice =
+          'Đã thoát trên tab này, nhưng chưa xác nhận thu hồi phiên trên các thiết bị khác. Đăng nhập lại để thử lại.';
+      } finally {
+        await setSession(null);
+      }
+      uiStore.set({ notice });
+    },
     recover: (email: string) => service.recover(email),
-    resetPassword: (code: string, password: string) => service.resetPassword(code, password),
-    changePassword: (current: string, next: string) => service.changePassword(current, next),
+    resetPassword: async (email: string, code: string, password: string) => {
+      await service.resetPassword(email, code, password);
+      await setSession(null);
+      if (service.mode === 'api')
+        uiStore.set({ notice: 'Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.' });
+    },
+    changePassword: async (current: string, next: string) => {
+      await service.changePassword(current, next);
+      if (service.mode === 'api') {
+        await setSession(null);
+        uiStore.set({ notice: 'Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.' });
+      }
+    },
     profile: async (values: Pick<Person, 'name' | 'phone' | 'avatar'>) => {
       const p = await service.profile(values);
       client.setQueryData(['session'], p);
