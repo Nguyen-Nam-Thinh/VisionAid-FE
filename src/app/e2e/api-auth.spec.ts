@@ -259,7 +259,9 @@ test('recovery email, expired token, pasted link and login after reset', async (
   await page.getByLabel('Địa chỉ email').fill('api@example.test');
   await page
     .getByLabel('Mã hoặc liên kết khôi phục')
-    .fill('visionaid://reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test');
+    .fill(
+      'https://visionaid.net/reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test',
+    );
   await page.getByLabel('Mật khẩu mới *', { exact: true }).fill('NewPassword@2');
   await page.getByLabel('Nhập lại mật khẩu mới').fill('Different@2');
   await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
@@ -1078,3 +1080,28 @@ for (const role of ['Caregiver', 'CenterAdmin']) {
     expect(gpsWrites).toEqual([]);
   });
 }
+
+test('email reset URL is public and preserves encoded token on reload', async ({ page }) => {
+  await stubApi(page);
+  let resets = 0;
+  await page.route('**/api/auth/reset-password', (route) => {
+    resets++;
+    expect(route.request().postDataJSON()).toEqual({
+      email: 'api@example.test',
+      token: 'abc+def/ghi==',
+      newPassword: 'NewPassword@2',
+    });
+    return route.fulfill({ json: { success: true } });
+  });
+  await page.goto('/reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test');
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Đặt mật khẩu mới', exact: true })).toBeVisible();
+  await expect(page.getByLabel('Địa chỉ email')).toHaveValue('api@example.test');
+  await expect(page.getByLabel('Mã hoặc liên kết khôi phục')).toHaveValue('abc+def/ghi==');
+  expect(resets).toBe(0);
+  await page.getByLabel('Mật khẩu mới *', { exact: true }).fill('NewPassword@2');
+  await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
+  await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
+  await expect(page).toHaveURL(/auth\/login$/);
+  expect(resets).toBe(1);
+});
