@@ -274,6 +274,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth/:action" element={<AuthPage />} />
+          <Route path="/reset-password" element={<AuthPage action="reset" />} />
           <Route element={<Guard />}>
             <Route element={<Shell />}>
               <Route

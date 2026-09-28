@@ -241,9 +241,13 @@ export function createApiAuth(
         } catch {
           throw new ServiceError('Liên kết khôi phục không hợp lệ.', 400);
         }
+        const resetLink =
+          (link.protocol === 'visionaid:' && link.hostname === 'reset-password') ||
+          (link.protocol === 'https:' &&
+            ['visionaid.net', 'www.visionaid.net'].includes(link.hostname) &&
+            ['/reset-password', '/auth/reset'].includes(link.pathname));
         if (
-          link.protocol !== 'visionaid:' ||
-          link.hostname !== 'reset-password' ||
+          !resetLink ||
           link.searchParams.get('email') !== email ||
           !link.searchParams.get('token')
         )

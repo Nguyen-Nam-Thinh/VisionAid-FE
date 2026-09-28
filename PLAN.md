@@ -275,3 +275,9 @@ Kiểm tra 5c: 60 unit tests, 19 Playwright API fixture tests pass (exit 0), bui
 - Mapbox token chưa được cung cấp; bản đồ nền để chờ, UI báo rõ và hiển thị tọa độ thật. Không thêm dependency Mapbox khi chưa cấu hình.
 - Test unit/build/lint đã pass; 19 case Playwright cũ và 2 case GPS mới pass (fixture). Chưa test tài khoản BE thật.
 - Người dùng test theo docs/API_STAGE_06_TEST.md. Đợt tiếp theo là 7 (emergency list/detail và xử lý), chỉ triển khai khi người dùng yêu cầu. Consent và lỗi mail 3b vẫn hoãn.
+
+## Deployment và sửa link email — 2026-09-28
+
+- Production Vercel theo nhánh main. Chỉ push/merge dev; người dùng tự đưa dev sang main để deploy.
+- Link email thực tế /reset-password?token=...&email=... được mở công khai, tự điền token/email; /auth/reset vẫn hoạt động. Trước đây route thiếu nên Guard đưa người chưa đăng nhập về login.
+- Hỗ trợ dán link HTTPS visionaid.net/www.visionaid.net và deep link visionaid:// cũ. Không dùng token thật từ ảnh để test; fixture kiểm tra ký tự + / = và reload.
