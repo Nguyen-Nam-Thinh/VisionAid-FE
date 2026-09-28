@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Eye, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { Form, type FieldSpec } from '../../components/Form';
 import { useAuth, useDemoAccounts, useSession } from '../../hooks/useService';
 import { roles } from '../../constants/labels';
 import { useUI } from '../../stores/ui';
-export function AuthPage() {
-  const { action = 'login' } = useParams();
+export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
+  const { action: routeAction = 'login' } = useParams();
+  const action = fixedAction ?? routeAction;
+  const [search] = useSearchParams();
+  const resetEmail = action === 'reset' ? (search.get('email') ?? '') : '';
+  const resetToken = action === 'reset' ? (search.get('token') ?? '') : '';
   const auth = useAuth();
   const session = useSession();
   const user = session.data;
@@ -15,7 +19,7 @@ export function AuthPage() {
   const nav = useNavigate();
   const [email, setEmail] = useState(auth.mode === 'mock' ? 'caregiver@demo.vn' : '');
   const [message, setMessage] = useState('');
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user && action !== 'reset') return <Navigate to="/dashboard" replace />;
   const titles: Record<string, string> = {
     login: 'Chào mừng trở lại.',
     register: 'Bắt đầu đồng hành.',
@@ -134,9 +138,13 @@ export function AuthPage() {
           )}
           {!(auth.mode === 'api' && session.isPending) && (
             <Form
-              key={action + email}
+              key={action + email + resetEmail + resetToken}
               fields={fields}
-              initial={{ email, password: auth.mode === 'mock' ? 'Demo@123' : '' }}
+              initial={{
+                email: resetEmail || email,
+                code: resetToken,
+                password: auth.mode === 'mock' ? 'Demo@123' : '',
+              }}
               submit={
                 action === 'login'
                   ? 'Đăng nhập'
