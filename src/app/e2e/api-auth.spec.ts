@@ -1105,3 +1105,158 @@ test('email reset URL is public and preserves encoded token on reload', async ({
   await expect(page).toHaveURL(/auth\/login$/);
   expect(resets).toBe(1);
 });
+
+for (const simulateConflict of [false, true]) {
+  test(`7 alerts: confirm, conflict=${simulateConflict}, escalation, resolve and revoked permission`, async ({
+    page,
+  }) => {
+    await stubApi(page);
+    const viu = '01900000-0000-7000-8000-000000000002';
+    let state = 'Sent';
+    let writes = 0;
+    let conflict = false;
+    let denied = false;
+    const history: {
+      id: string;
+      fromStatus: string;
+      toStatus: string;
+      changedBy: string;
+      changedAt: string;
+      reason: string | null;
+    }[] = [];
+    const event = () => ({
+      id,
+      visuallyImpairedUserId: viu,
+      viuFullName: 'VIU test',
+      detectionMethod: 'Manual',
+      currentStatus: state,
+      latitude: null,
+      longitude: null,
+      notes: null,
+      snapshotPath: null,
+      detectedAt: '2026-10-01T00:00:00Z',
+      gracePeriodEndsAt: null,
+      sentAt: null,
+      acknowledgedAt: null,
+      acknowledgedBy: null,
+      escalatedAt: null,
+      resolvedAt: null,
+      resolvedBy: null,
+      dismissedAt: null,
+    });
+    await page.route('http://localhost:5176/api/caregiver-links?*', (route) =>
+      route.fulfill({
+        json: {
+          success: true,
+          data: organizationPage([
+            {
+              id,
+              caregiverId: id,
+              visuallyImpairedUserId: viu,
+              viuFullName: 'VIU test',
+              linkType: 'Personal',
+              isPrimary: false,
+              canReceiveAlerts: !denied,
+              canManageLocations: false,
+              canManageRegistry: false,
+              linkedAt: '2026-10-01',
+              unlinkedAt: null,
+            },
+          ]),
+        },
+      }),
+    );
+    await page.route('http://localhost:5176/api/emergency-events**', (route) => {
+      const req = route.request();
+      const url = new URL(req.url());
+      if (req.method() === 'GET')
+        return route.fulfill({
+          json: {
+            success: true,
+            data:
+              url.pathname === '/api/emergency-events'
+                ? { ...organizationPage([event()]), pageSize: 20 }
+                : { ...event(), statusHistory: history },
+          },
+        });
+      expect(req.method()).toBe('PUT');
+      writes++;
+      if (conflict) {
+        conflict = false;
+        state = 'Acknowledged';
+        return route.fulfill({ status: 409, json: { detail: 'Already acknowledged' } });
+      }
+      const from = state;
+      state = url.pathname.endsWith('/escalate')
+        ? 'Escalated'
+        : url.pathname.endsWith('/resolve')
+          ? 'Resolved'
+          : 'Acknowledged';
+      history.push({
+        id: viu,
+        fromStatus: from,
+        toStatus: state,
+        changedBy: id,
+        changedAt: '2026-10-01T01:00:00Z',
+        reason: req.postDataJSON().notes,
+      });
+      return route.fulfill({
+        json: {
+          success: true,
+          data:
+            state === 'Escalated'
+              ? {
+                  eventId: id,
+                  currentStatus: state,
+                  escalatedAt: '2026-10-01T01:00:00Z',
+                  emergencyContacts: [
+                    {
+                      id: viu,
+                      contactName: 'Test contact',
+                      contactType: 'Phone',
+                      phoneNumber: '0900000000',
+                      zaloDeepLink: null,
+                      priorityOrder: 1,
+                    },
+                  ],
+                }
+              : null,
+        },
+      });
+    });
+    await login(page);
+    await page.goto('/caregiver/alerts');
+    await page.getByRole('button', { name: 'Xem chi tiết' }).click();
+    await expect(page.getByText('Không có ảnh chụp sự kiện.', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Tiếp nhận cảnh báo', exact: true }).click();
+    expect(writes).toBe(0);
+    conflict = simulateConflict;
+    await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText(
+      simulateConflict ? 'Chưa xác nhận thành công' : 'Máy chủ đã xác nhận cập nhật.',
+    );
+    await expect(page.getByRole('button', { name: 'Tiếp nhận cảnh báo', exact: true })).toHaveCount(
+      0,
+    );
+    await page.getByLabel('Ghi chú xử lý').fill('Need assistance');
+    await page.getByRole('button', { name: 'Chuyển cấp hỗ trợ', exact: true }).click();
+    await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+    await expect(page.getByText(/Test contact/)).toBeVisible();
+    await page.getByRole('button', { name: 'Đánh dấu đã giải quyết', exact: true }).click();
+    await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Đánh dấu đã giải quyết', exact: true }),
+    ).toHaveCount(0);
+    expect(writes).toBe(3);
+    denied = true;
+    state = 'Sent';
+    await page.reload();
+    await page.getByRole('button', { name: 'Xem chi tiết' }).click();
+    await expect(
+      page.getByText('Bạn có quyền xem nhưng không có quyền xử lý cảnh báo.'),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Tiếp nhận cảnh báo', exact: true })).toHaveCount(
+      0,
+    );
+  });
+}

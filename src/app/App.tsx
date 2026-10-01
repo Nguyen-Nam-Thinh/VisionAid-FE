@@ -1,3 +1,4 @@
+import { ApiAlerts } from '../pages/shared/ApiAlerts';
 import { ApiTracking } from '../pages/shared/ApiTracking';
 import { ApiLinks } from '../pages/shared/ApiLinks';
 import { ApiAccounts } from '../pages/shared/ApiAccounts';
@@ -151,7 +152,7 @@ function Shell() {
                 (item) =>
                   runtime.mode === 'mock' ||
                   (user.role === 'Caregiver' &&
-                    ['users', 'caregivers', 'map'].includes(item.path)) ||
+                    ['users', 'caregivers', 'map', 'alerts'].includes(item.path)) ||
                   (user.role === 'Admin' &&
                     ['organizations', 'accounts', 'links'].includes(item.path)) ||
                   (user.role === 'CenterAdmin' &&
@@ -305,6 +306,8 @@ export function App() {
                           <ApiLinks />
                         ) : ['Caregiver', 'CenterAdmin'].includes(f.role) && f.path === 'map' ? (
                           <ApiTracking />
+                        ) : f.role === 'Caregiver' && f.path === 'alerts' ? (
+                          <ApiAlerts />
                         ) : (
                           <ApiPending />
                         )

@@ -6,7 +6,7 @@ Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md (file này), api.txt và docs/API_STAGE_02_TEST.md.
 2. Kiểm tra git status/branch/log và fetch origin. Mốc code đã merge mới nhất: dev tại 632043a (đợt 5c), đợt 6 trên feat/api-location-tracking; lịch sử: bec1a1f; đợt 1: 700d748; đợt 2: 1441d10. Không reset về các mốc này nếu có code mới hơn.
-3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 33 API được đánh dấu DA_NOI trong api.txt.
+3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 38 API được đánh dấu DA_NOI trong api.txt.
 4. Chỉ làm đợt người dùng yêu cầu. Sau mỗi đợt đưa checklist test, báo các API phụ thuộc nhau, rồi DỪNG chờ người dùng xác nhận trước khi làm đợt tiếp theo. Không coi roadmap này là lệnh thực hiện toàn bộ.
 5. Yêu cầu merge/push không tự chứng minh người dùng đã test BE thật. Hiện chưa có báo cáo nghiệm thu từng bước từ người dùng; không ghi “live E2E passed”.
 
@@ -25,7 +25,8 @@ Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 | 5b | Quản lý tài khoản Admin/CenterAdmin | Merge dev 94a2ef6 | Chờ test BE thật |
 | 5c | Phân công và quyền liên kết | Merge dev 632043a | Chờ test BE thật |
 | 6 | GPS live và history | Đã nối; bản đồ nền chờ Mapbox token | Chờ test BE thật |
-| 7–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
+| 7 | Cảnh báo Caregiver: list/detail/acknowledge/escalate/resolve | Đã nối, feat/api-emergency-alerts | Chờ test BE thật |
+| 8–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
 
 Bằng chứng mới nhất đợt 6: 64 unit tests / 13 files pass; 19 kịch bản Playwright cũ pass và 2 kịch bản GPS pass sau khi sửa assertion để chấp nhận refetch hợp lệ. Build/lint pass; chunk khoảng 576 kB còn cảnh báo. Đây là test fixture, chưa nghiệm thu BE thật.
 
@@ -39,7 +40,7 @@ API mode mở landing, login, register, recover/reset, dashboard thông tin phi�
 - .env local: VITE_SERVICE_MODE=api; VITE_API_BASE_URL=http://51.210.176.94:5002. Không commit .env, password hoặc token.
 - Chạy npm.cmd run dev; mở http://localhost:5173. CORS đã kiểm tra trước đây cho phép origin này, không cho http://127.0.0.1:5173; xác minh lại khi đổi môi trường. FE HTTPS cần BE HTTPS để tránh mixed content.
 - src/services/api/auth.ts: token/session, single-flight refresh, unwrap response, profile mapping. expiresAt của BE là hạn refresh; access expiry đọc JWT exp. Token lưu sessionStorage theo tab; không remember-me, không lưu password, chưa đồng bộ refresh giữa nhiều tab.
-- src/services/http/client.ts: transport và lỗi; src/services/api/auth.ts, caregiving.ts, organizations.ts, accounts.ts, links.ts, locations.ts: tổng 33 API đã nối qua apiGet/apiWrite trong adapter.ts; hàm snapshot/mock nghiệp vụ chưa hỗ trợ vẫn fail 501.
+- src/services/http/client.ts: transport và lỗi; src/services/api/auth.ts, caregiving.ts, organizations.ts, accounts.ts, links.ts, locations.ts, emergencies.ts: tổng 38 API đã nối qua apiGet/apiWrite trong adapter.ts; hàm snapshot/mock nghiệp vụ chưa hỗ trợ vẫn fail 501.
 - src/hooks/useService.ts: session/cache/logout; src/app/App.tsx: route guards/menu/API stage gate; src/app/features.tsx: danh mục route nghiệp vụ.
 - src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/pages/shared/ApiSession.tsx: màn đã nối.
 - src/services/contracts.ts và models/domain.ts là model nội bộ FE, không gửi nguyên lên BE. Snapshot toàn bộ chỉ là kiến trúc mock; mỗi resource thật cần query key gồm user/org/VIU/filter/page.
@@ -281,3 +282,14 @@ Kiểm tra 5c: 60 unit tests, 19 Playwright API fixture tests pass (exit 0), bui
 - Production Vercel theo nhánh main. Chỉ push/merge dev; người dùng tự đưa dev sang main để deploy.
 - Link email thực tế /reset-password?token=...&email=... được mở công khai, tự điền token/email; /auth/reset vẫn hoạt động. Trước đây route thiếu nên Guard đưa người chưa đăng nhập về login.
 - Hỗ trợ dán link HTTPS visionaid.net/www.visionaid.net và deep link visionaid:// cũ. Không dùng token thật từ ảnh để test; fixture kiểm tra ký tự + / = và reload.
+
+## Bàn giao đợt 7 — 2026-10-01
+
+- feat/api-emergency-alerts mở /caregiver/alerts: 5 API mới, 38/107 đã nối. Xem docs/API_STAGE_07_TEST.md để test và phụ thuộc.
+- Dùng trạng thái PascalCase từ BE, không chuyển theo mock. GET detail và link trước mỗi PUT để phát hiện đổi trạng thái/quyền; không auto-replay mutation. BE vẫn phải bảo vệ concurrency, pre-read FE không bảo đảm atomic.
+- Escalate trả liên hệ; không tự gọi điện/đặt Called. SnapshotPath là objectName, chưa có contract tải ảnh; placeholder thay vì URL đoán. Lịch sử lấy trong detail.
+- Chỉ mở UI Caregiver trong checkpoint này, CenterAdmin để phần fleet/report. 30 giây polling, chưa realtime. Admin không được BE cho phép endpoint.
+- CORS VPS đang có lỗi với localhost cần nhóm BE sửa trước test live. Không đánh dấu live passed. Thay đổi có sẵn src/services/api/auth.ts của người dùng giữ nguyên, không stage trong đợt 7.
+- Chỉ merge/push dev, người dùng tự phát hành main. Đợt tiếp theo 8a sau khi người dùng yêu cầu.
+
+Kiểm tra đợt 7: 66 unit tests / 14 files pass; 2 Playwright API fixture (chuỗi thành công và conflict) pass; build/lint pass. Build còn cảnh báo chunk >500 kB. Chưa test BE thật.
