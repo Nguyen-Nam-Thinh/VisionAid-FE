@@ -3,7 +3,7 @@ Cập nhật: 2026-09-26. Nguồn: live OpenAPI, controller BE, code FE và ản
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 33 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6.
+107 operations; 38 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -199,9 +199,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Emergency/Presentation/EmergencyController.cs
 
 019. GET /api/emergency-events
-  Trạng thái: CHUA_NOI | Đợt: 7
-  Màn/luồng: /caregiver/alerts; /center-admin/map và /center-admin/reports (dự kiến)
-  File FE: src/pages/caregiver/Alerts.tsx; src/pages/center-admin/Fleet.tsx
+  Trạng thái: DA_NOI | Đợt: 7
+  Màn/luồng: /caregiver/alerts; UI CenterAdmin chưa mở
+  File FE: src/services/api/emergencies.ts -> apiGet/apiWrite; src/pages/shared/ApiAlerts.tsx
   Dùng để: Đọc và xử lý cảnh báo theo state BE; list -> detail -> acknowledge/escalate/resolve. POST và dismiss thuộc Mobile.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: viuId, status, dateFrom, dateTo, page, pageSize
@@ -219,9 +219,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Emergency/Presentation/EmergencyController.cs
 
 021. PUT /api/emergency-events/{id}/acknowledge
-  Trạng thái: CHUA_NOI | Đợt: 7
-  Màn/luồng: /caregiver/alerts; /center-admin/map và /center-admin/reports (dự kiến)
-  File FE: src/pages/caregiver/Alerts.tsx; src/pages/center-admin/Fleet.tsx
+  Trạng thái: DA_NOI | Đợt: 7
+  Màn/luồng: /caregiver/alerts; UI CenterAdmin chưa mở
+  File FE: src/services/api/emergencies.ts -> apiGet/apiWrite; src/pages/shared/ApiAlerts.tsx
   Dùng để: Đọc và xử lý cảnh báo theo state BE; list -> detail -> acknowledge/escalate/resolve. POST và dismiss thuộc Mobile.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -229,9 +229,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Emergency/Presentation/EmergencyController.cs
 
 022. PUT /api/emergency-events/{id}/escalate
-  Trạng thái: CHUA_NOI | Đợt: 7
-  Màn/luồng: /caregiver/alerts; /center-admin/map và /center-admin/reports (dự kiến)
-  File FE: src/pages/caregiver/Alerts.tsx; src/pages/center-admin/Fleet.tsx
+  Trạng thái: DA_NOI | Đợt: 7
+  Màn/luồng: /caregiver/alerts; UI CenterAdmin chưa mở
+  File FE: src/services/api/emergencies.ts -> apiGet/apiWrite; src/pages/shared/ApiAlerts.tsx
   Dùng để: Đọc và xử lý cảnh báo theo state BE; list -> detail -> acknowledge/escalate/resolve. POST và dismiss thuộc Mobile.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -239,9 +239,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Emergency/Presentation/EmergencyController.cs
 
 023. PUT /api/emergency-events/{id}/resolve
-  Trạng thái: CHUA_NOI | Đợt: 7
-  Màn/luồng: /caregiver/alerts; /center-admin/map và /center-admin/reports (dự kiến)
-  File FE: src/pages/caregiver/Alerts.tsx; src/pages/center-admin/Fleet.tsx
+  Trạng thái: DA_NOI | Đợt: 7
+  Màn/luồng: /caregiver/alerts; UI CenterAdmin chưa mở
+  File FE: src/services/api/emergencies.ts -> apiGet/apiWrite; src/pages/shared/ApiAlerts.tsx
   Dùng để: Đọc và xử lý cảnh báo theo state BE; list -> detail -> acknowledge/escalate/resolve. POST và dismiss thuộc Mobile.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -249,9 +249,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Emergency/Presentation/EmergencyController.cs
 
 024. GET /api/emergency-events/{id}
-  Trạng thái: CHUA_NOI | Đợt: 7
-  Màn/luồng: /caregiver/alerts; /center-admin/map và /center-admin/reports (dự kiến)
-  File FE: src/pages/caregiver/Alerts.tsx; src/pages/center-admin/Fleet.tsx
+  Trạng thái: DA_NOI | Đợt: 7
+  Màn/luồng: /caregiver/alerts; UI CenterAdmin chưa mở
+  File FE: src/services/api/emergencies.ts -> apiGet/apiWrite; src/pages/shared/ApiAlerts.tsx
   Dùng để: Đọc và xử lý cảnh báo theo state BE; list -> detail -> acknowledge/escalate/resolve. POST và dismiss thuộc Mobile.
   Quyền controller: Roles = "Caregiver,CenterAdmin,VisuallyImpaired"
   Query: Không có
