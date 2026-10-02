@@ -1319,3 +1319,135 @@ test('8a SignalR: receives event, refreshes REST and stops after logout', async 
   await expect(page).toHaveURL(/auth\/login$/);
   await expect.poll(() => closed).toBe(true);
 });
+
+test('stage 8b preferences save false, reload and surface failure without success', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let enabled = true;
+  let fail = false;
+  await page.route('**/api/notifications/preferences', async (route) => {
+    if (route.request().method() === 'PUT') {
+      if (fail) return route.fulfill({ status: 403, json: { detail: 'Preference denied' } });
+      expect(route.request().postDataJSON()).toEqual({
+        preferences: [{ notificationType: 'SystemAlert', channel: 'Email', isEnabled: false }],
+      });
+      enabled = false;
+    }
+    return route.fulfill({
+      json: {
+        success: true,
+        data: [
+          {
+            id,
+            userId: id,
+            notificationType: 'SystemAlert',
+            channel: 'Email',
+            isEnabled: enabled,
+            updatedAt: '2026-10-02T00:00:00Z',
+          },
+        ],
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/caregiver/notifications');
+  await expect(page.getByText('Thông báo bắt buộc vẫn được gửi', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await page.getByLabel('Bật nhận khi không bắt buộc').uncheck();
+  await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole('cell', { name: 'Tắt nếu không bắt buộc' })).toBeVisible();
+  fail = true;
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('alert')).toHaveText('Preference denied');
+});
+for (const role of ['Admin', 'CenterAdmin']) {
+  test('stage 8b ' + role + ' rule scope, create conflict, flags and delete', async ({ page }) => {
+    const org = '01900000-0000-7000-8000-000000000002';
+    const ruleId = '01900000-0000-7000-8000-000000000003';
+    await stubApi(page, role, role === 'CenterAdmin' ? org : null);
+    const base = {
+      id,
+      organizationId: null as string | null,
+      notificationType: 'FallDetected',
+      channel: 'Email',
+      targetRole: 'Caregiver',
+      isMandatory: true,
+      isActive: true,
+      createdAt: '',
+      updatedAt: '',
+      updatedBy: null,
+    };
+    let items = [base];
+    let conflict = true;
+    await page.route('**/api/notifications/rules**', async (route) => {
+      const req = route.request();
+      if (req.method() === 'POST') {
+        if (conflict)
+          return route.fulfill({ status: 409, json: { detail: 'Rule already exists' } });
+        expect(req.postDataJSON().organizationId).toBe(role === 'CenterAdmin' ? org : null);
+        const item = { ...base, ...req.postDataJSON(), id: ruleId };
+        items.push(item);
+        return route.fulfill({ status: 201, json: { success: true, data: item } });
+      }
+      if (req.method() === 'PUT') {
+        expect(req.postDataJSON()).toEqual({ isMandatory: true, isActive: false });
+        items = items.map((i) => (i.id === ruleId ? { ...i, ...req.postDataJSON() } : i));
+        return route.fulfill({ json: { success: true, data: items.find((i) => i.id === ruleId) } });
+      }
+      if (req.method() === 'DELETE') {
+        expect(new URL(req.url()).pathname).toBe('/api/notifications/rules/' + ruleId);
+        items = items.filter((i) => i.id !== ruleId);
+        return route.fulfill({ status: 204 });
+      }
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            items,
+            page: 1,
+            pageSize: 10,
+            totalCount: items.length,
+            totalPages: 1,
+            hasPreviousPage: false,
+            hasNextPage: false,
+          },
+        },
+      });
+    });
+    await login(page);
+    await page.goto(role === 'Admin' ? '/admin/rules' : '/center-admin/routing');
+    const global = page
+      .getByRole('row')
+      .filter({ has: page.getByRole('cell', { name: 'Toàn hệ thống', exact: true }) });
+    if (role === 'CenterAdmin') {
+      await expect(global.getByText('Chỉ xem')).toBeVisible();
+      await expect(global.getByRole('button')).toHaveCount(0);
+    }
+    await page.getByRole('button', { name: 'Thêm quy tắc', exact: true }).click();
+    let dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Loại thông báo').selectOption('SystemAlert');
+    await dialog.getByLabel('Kênh thông báo').selectOption('Email');
+    await dialog.getByLabel('Vai trò nhận').selectOption('Caregiver');
+    await dialog.getByLabel('Tôi xác nhận').check();
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(dialog.getByRole('alert')).toHaveText('Rule already exists');
+    conflict = false;
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(dialog).toHaveCount(0);
+    const row = page.getByRole('row').filter({ hasText: 'Thông báo hệ thống' });
+    await row.getByRole('button', { name: 'Chỉnh sửa' }).click();
+    dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Bắt buộc nhận').check();
+    await dialog.getByLabel('Đang áp dụng').uncheck();
+    await dialog.getByLabel('Tôi xác nhận').check();
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(row).toContainText('Ngừng áp dụng');
+    await row.getByRole('button', { name: 'Xóa', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();
+    await expect(row).toHaveCount(0);
+  });
+}

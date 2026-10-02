@@ -1,3 +1,4 @@
+import { ApiNotifications } from '../pages/shared/ApiNotifications';
 import { ApiRealtime } from '../components/ApiRealtime';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
 import { ApiTracking } from '../pages/shared/ApiTracking';
@@ -153,11 +154,15 @@ function Shell() {
                 (item) =>
                   runtime.mode === 'mock' ||
                   (user.role === 'Caregiver' &&
-                    ['users', 'caregivers', 'map', 'alerts'].includes(item.path)) ||
+                    ['users', 'caregivers', 'map', 'alerts', 'notifications'].includes(
+                      item.path,
+                    )) ||
                   (user.role === 'Admin' &&
-                    ['organizations', 'accounts', 'links'].includes(item.path)) ||
+                    ['organizations', 'accounts', 'links', 'rules'].includes(item.path)) ||
                   (user.role === 'CenterAdmin' &&
-                    ['organization', 'staff', 'users', 'assignments', 'map'].includes(item.path)),
+                    ['organization', 'staff', 'users', 'assignments', 'map', 'routing'].includes(
+                      item.path,
+                    )),
               )
               .map((item) => (
                 <NavLink
@@ -314,6 +319,10 @@ export function App() {
                           <ApiTracking />
                         ) : f.role === 'Caregiver' && f.path === 'alerts' ? (
                           <ApiAlerts />
+                        ) : (f.role === 'Caregiver' && f.path === 'notifications') ||
+                          (f.role === 'Admin' && f.path === 'rules') ||
+                          (f.role === 'CenterAdmin' && f.path === 'routing') ? (
+                          <ApiNotifications />
                         ) : (
                           <ApiPending />
                         )
