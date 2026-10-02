@@ -1,9 +1,9 @@
 VISIONAID WEB — API DÙNG Ở ĐÂU
-Cập nhật: 2026-09-26. Nguồn: live OpenAPI, controller BE, code FE và ảnh Swagger.
+Cập nhật: 2026-10-02. Nguồn: live OpenAPI, controller BE, code FE và ảnh Swagger.
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 38 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7.
+107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -14,6 +14,7 @@ File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller
 7 operation quản lý users: src/services/api/accounts.ts -> apiGet/apiWrite; UI src/pages/shared/ApiAccounts.tsx.
 6 operation caregiver-links: src/services/api/links.ts -> apiGet/apiWrite; UI src/pages/shared/ApiLinks.tsx (5c).
 2 operation locations: locations.ts -> ApiTracking.tsx; GET live polling 30 giây, history phân trang 20; POST GPS chỉ Mobile. Bản đồ nền chờ Mapbox token. Đợt 8a SignalR kích hoạt REST refetch; polling vẫn dự phòng.
+6 operation notifications: notifications.ts -> ApiNotifications.tsx; GET/PUT preferences tại /caregiver/notifications; rules CRUD tại /admin/rules và /center-admin/routing. Không phải inbox hoặc đăng ký FCM.
 Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE thật từ người dùng.
 Đợt triển khai/phụ thuộc/checklist đầy đủ ở PLAN.md; không tự làm tất cả roadmap.
 
@@ -589,9 +590,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Navigation/Presentation/NavigationController.cs
 
 058. GET /api/notifications/rules
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /admin/rules; /center-admin/routing
-  File FE: src/pages/super-admin/Rules.tsx; src/pages/center-admin/Routing.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOrCenterAdmin
   Query: page, pageSize, notificationType, channel, targetRole, isActive
@@ -599,9 +600,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 059. POST /api/notifications/rules
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /admin/rules; /center-admin/routing
-  File FE: src/pages/super-admin/Rules.tsx; src/pages/center-admin/Routing.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOrCenterAdmin
   Query: Không có
@@ -609,9 +610,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 060. PUT /api/notifications/rules/{id}
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /admin/rules; /center-admin/routing
-  File FE: src/pages/super-admin/Rules.tsx; src/pages/center-admin/Routing.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOrCenterAdmin
   Query: Không có
@@ -619,9 +620,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 061. DELETE /api/notifications/rules/{id}
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /admin/rules; /center-admin/routing
-  File FE: src/pages/super-admin/Rules.tsx; src/pages/center-admin/Routing.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOrCenterAdmin
   Query: Không có
@@ -629,9 +630,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 062. GET /api/notifications/preferences
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /caregiver/notifications
-  File FE: src/pages/caregiver/Notifications.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -639,9 +640,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 063. PUT /api/notifications/preferences
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /caregiver/notifications
-  File FE: src/pages/caregiver/Notifications.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -649,7 +650,7 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 064. GET /api/notifications/preferences/{userId}
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: CHUA_NOI | Đợt: Bổ sung quản trị sau 8b
   Màn/luồng: Chi tiết tài khoản quản trị — UI dự kiến, chưa mở
   File FE: src/pages/super-admin/Accounts.tsx; src/pages/center-admin/Staff.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.

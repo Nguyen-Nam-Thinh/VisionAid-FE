@@ -1,12 +1,12 @@
 # VisionAid Web — Kế hoạch tích hợp API và bàn giao cho AI tiếp theo
 
-Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong nhiệm vụ FE.
+Cập nhật: 2026-10-02. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong nhiệm vụ FE.
 
 ## Đọc trước khi làm tiếp
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md (file này), api.txt và docs/API_STAGE_02_TEST.md.
-2. Kiểm tra git status/branch/log và fetch origin. Mốc code đã merge mới nhất: dev tại 632043a (đợt 5c), đợt 6 trên feat/api-location-tracking; lịch sử: bec1a1f; đợt 1: 700d748; đợt 2: 1441d10. Không reset về các mốc này nếu có code mới hơn.
-3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 38 API được đánh dấu DA_NOI trong api.txt.
+2. Kiểm tra git status/branch/log và fetch origin. Mốc dev trước đợt 8b: 70f6099 (8a); 8b trên feat/api-notification-settings; lịch sử: bec1a1f; đợt 1: 700d748; đợt 2: 1441d10. Không reset về các mốc này nếu có code mới hơn.
+3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 44 API được đánh dấu DA_NOI trong api.txt.
 4. Chỉ làm đợt người dùng yêu cầu. Sau mỗi đợt đưa checklist test, báo các API phụ thuộc nhau, rồi DỪNG chờ người dùng xác nhận trước khi làm đợt tiếp theo. Không coi roadmap này là lệnh thực hiện toàn bộ.
 5. Yêu cầu merge/push không tự chứng minh người dùng đã test BE thật. Hiện chưa có báo cáo nghiệm thu từng bước từ người dùng; không ghi “live E2E passed”.
 
@@ -27,11 +27,12 @@ Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 | 6 | GPS live và history | Đã nối; bản đồ nền chờ Mapbox token | Chờ test BE thật |
 | 7 | Cảnh báo Caregiver: list/detail/acknowledge/escalate/resolve | Đã nối, feat/api-emergency-alerts | Chờ test BE thật |
 | 8a | SignalR vị trí/cảnh báo | Đã nối, feat/api-signalr-realtime | Chờ test Hub thật |
-| 8b–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
+| 8b | Preferences Caregiver, rules Admin/CenterAdmin | Đã nối 6 API; feat/api-notification-settings | Chờ test BE thật |
+| 8c–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
 
 Bằng chứng mới nhất đợt 6: 64 unit tests / 13 files pass; 19 kịch bản Playwright cũ pass và 2 kịch bản GPS pass sau khi sửa assertion để chấp nhận refetch hợp lệ. Build/lint pass; chunk khoảng 576 kB còn cảnh báo. Đây là test fixture, chưa nghiệm thu BE thật.
 
-API mode mở landing, login, register, recover/reset, dashboard thông tin phiên và /profile (có logout-all). Đã mở /caregiver/users cho Caregiver, /admin/organizations cho Admin và /center-admin/organization cho CenterAdmin; đợt 5b mở thêm /admin/accounts, /center-admin/staff, /center-admin/users; 5c mở thêm /admin/links, /center-admin/assignments, /caregiver/caregivers; đợt 6 mở /caregiver/map và /center-admin/map; các route nghiệp vụ còn lại vẫn ApiPending. Các màn mock có sẵn không có nghĩa đã tích hợp BE. Không fallback seed khi API lỗi.
+API mode mở landing, login, register, recover/reset, dashboard thông tin phiên và /profile (có logout-all). Đã mở /caregiver/users cho Caregiver, /admin/organizations cho Admin và /center-admin/organization cho CenterAdmin; đợt 5b mở thêm /admin/accounts, /center-admin/staff, /center-admin/users; 5c mở thêm /admin/links, /center-admin/assignments, /caregiver/caregivers; đợt 6 mở /caregiver/map và /center-admin/map; đợt 7 mở /caregiver/alerts; 8b mở /caregiver/notifications, /admin/rules, /center-admin/routing; các route nghiệp vụ còn lại vẫn ApiPending. Các màn mock có sẵn không có nghĩa đã tích hợp BE. Không fallback seed khi API lỗi.
 
 ## Môi trường và file cần biết
 
@@ -41,7 +42,7 @@ API mode mở landing, login, register, recover/reset, dashboard thông tin phi�
 - .env local: VITE_SERVICE_MODE=api; VITE_API_BASE_URL=http://51.210.176.94:5002. Không commit .env, password hoặc token.
 - Chạy npm.cmd run dev; mở http://localhost:5173. CORS đã kiểm tra trước đây cho phép origin này, không cho http://127.0.0.1:5173; xác minh lại khi đổi môi trường. FE HTTPS cần BE HTTPS để tránh mixed content.
 - src/services/api/auth.ts: token/session, single-flight refresh, unwrap response, profile mapping. expiresAt của BE là hạn refresh; access expiry đọc JWT exp. Token lưu sessionStorage theo tab; không remember-me, không lưu password, chưa đồng bộ refresh giữa nhiều tab.
-- src/services/http/client.ts: transport và lỗi; src/services/api/auth.ts, caregiving.ts, organizations.ts, accounts.ts, links.ts, locations.ts, emergencies.ts: tổng 38 API đã nối qua apiGet/apiWrite trong adapter.ts; hàm snapshot/mock nghiệp vụ chưa hỗ trợ vẫn fail 501.
+- src/services/http/client.ts: transport và lỗi; src/services/api/auth.ts, caregiving.ts, organizations.ts, accounts.ts, links.ts, locations.ts, emergencies.ts, notifications.ts: tổng 44 API đã nối qua apiGet/apiWrite trong adapter.ts; hàm snapshot/mock nghiệp vụ chưa hỗ trợ vẫn fail 501.
 - src/hooks/useService.ts: session/cache/logout; src/app/App.tsx: route guards/menu/API stage gate; src/app/features.tsx: danh mục route nghiệp vụ.
 - src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/pages/shared/ApiSession.tsx: màn đã nối.
 - src/services/contracts.ts và models/domain.ts là model nội bộ FE, không gửi nguyên lên BE. Snapshot toàn bộ chỉ là kiến trúc mock; mỗi resource thật cần query key gồm user/org/VIU/filter/page.
@@ -306,3 +307,18 @@ Kiểm tra đợt 7: 66 unit tests / 14 files pass; 2 Playwright API fixture (ch
 - Chỉ push dev; main do người dùng phát hành. Giữ thay đổi riêng thông báo lỗi auth.ts ngoài commit (chỉ stage hunk accessToken của đợt này).
 
 Kiểm tra đợt 8a: 71 unit tests / 15 files; 5 Playwright fixture GPS/cảnh báo/SignalR pass; build/lint pass. Build có cảnh báo chunk khoảng 647 kB; chưa kiểm chứng Hub thật.
+
+## Bàn giao đợt 8b — 2026-10-02
+
+- Base dev 70f6099. Nhánh feat/api-notification-settings. 6 REST mới -> 44/107 có caller Web.
+- notifications.ts dùng apiGet/apiWrite có sẵn; ApiNotifications.tsx phục vụ /caregiver/notifications, /admin/rules, /center-admin/routing.
+- Caregiver GET preferences của chính mình; PUT gửi một cặp notificationType/channel/isEnabled mỗi lần, response kiểm tra userId. Không tạo default giả khi chưa có preference. DTO thiếu mandatory: ghi rõ tùy chọn chỉ áp dụng khi không bắt buộc, không hứa tắt mọi thông báo; không gọi GET rules bằng Caregiver.
+- Admin rules toàn bộ; CenterAdmin chỉ đọc global + own org, chặn response org khác; global chỉ xem. Create ép own org với CenterAdmin; Admin nhập UUID hoặc trống global. POST chọn type/channel/role; PUT chỉ isMandatory/isActive; DELETE có xác nhận.
+- List phân trang server 10, lọc loại/kênh/role/active. Query keys gồm actor/org/filter/page, AbortSignal; polling 30s, lỗi ẩn dữ liệu/actions. Không tự replay mutation, không optimistic update. Không có GET rule detail/version nên chưa có phát hiện concurrent update; BE vẫn phải kiểm tra scope tại mutation.
+- GET preferences/{userId} chưa nối vì chưa có luồng xem tùy chọn người khác trong checkpoint này; giữ CHUA_NOI, chuyển sang phần bổ sung quản trị. Monitoring status/failed chờ đợt 13; FCM chờ 8c.
+- BE local: EmergencyEventDispatcher.cs truy vấn global_notification_rules.is_enabled, còn GlobalNotificationRuleConfiguration.cs map is_active; worker đẩy SignalR trực tiếp trước rules và SQL chưa lọc target_role. Cần nhóm BE xác minh, không sửa BE trong nhiệm vụ FE. Lưu rule/preference không chứng minh delivery đúng.
+- Checklist docs/API_STAGE_08B_TEST.md. CORS VPS/HTTPS cần hoạt động để test thật. Không dùng tài khoản thật hay gửi thông báo thật trong kiểm thử tự động.
+- Tiếp theo 8c cần Firebase public config + VAPID và cách cập nhật/xóa FCM token; không tự thêm endpoint. Privacy consent vẫn chờ.
+- Chỉ merge/push dev, main do người dùng phát hành. Giữ thay đổi riêng auth.ts ngoài commit.
+
+Kiểm tra: 74 unit tests / 16 files pass; 3 kịch bản Playwright 8b pass (fixture); build/lint pass. Build cảnh báo chunk khoảng 658 kB. Chưa nghiệm thu BE thật.
