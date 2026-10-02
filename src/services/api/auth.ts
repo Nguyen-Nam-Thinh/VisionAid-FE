@@ -222,6 +222,13 @@ export function createApiAuth(
   return {
     get: (path: string, signal?: AbortSignal) => authorized(path, { signal }),
     write: (path: string, init: RequestInit) => authorized(path, init, false),
+    async accessToken() {
+      if (!tokens) throw new ServiceError('Vui lòng đăng nhập.', 401);
+      const epoch = generation;
+      if (expiresSoon()) await refresh();
+      if (!tokens || generation !== epoch) throw new ServiceError('Phiên đã kết thúc.', 401);
+      return tokens.accessToken;
+    },
     async recover(email: string) {
       email = email.trim();
       if (!z.string().email().max(255).safeParse(email).success)
