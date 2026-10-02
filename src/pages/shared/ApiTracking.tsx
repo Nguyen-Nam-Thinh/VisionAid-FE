@@ -51,8 +51,9 @@ function Tracking({ actor }: { actor: Person }) {
         description="Vị trí ghi nhận và lịch sử di chuyển của người được phép theo dõi."
       />
       <p className="notice">
-        Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. Chưa có kết nối realtime. Bản đồ nền đang
-        chờ cấu hình Mapbox; bên dưới là dữ liệu tọa độ từ máy chủ.
+        Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật;
+        trạng thái kết nối hiển thị phía trên. Bản đồ nền đang chờ cấu hình Mapbox; bên dưới là dữ
+        liệu tọa độ từ máy chủ.
       </p>
       <section className="glass card stack">
         <form

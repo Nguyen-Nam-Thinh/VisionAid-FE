@@ -44,7 +44,7 @@ function Alerts({ actor }: { actor: Person }) {
     <>
       <PageHead
         title="Trung tâm cảnh báo"
-        description="Cảnh báo trong phạm vi liên kết được phép xem. Tự tải lại mỗi 30 giây, chưa có realtime."
+        description="Cảnh báo trong phạm vi liên kết được phép xem. Cập nhật qua SignalR và tải lại dự phòng mỗi 30 giây."
       />
       <section className="glass card stack">
         <form

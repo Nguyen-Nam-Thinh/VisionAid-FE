@@ -13,7 +13,7 @@ File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller
 8 API organizations: src/services/api/organizations.ts -> apiGet/apiWrite; UI src/pages/shared/ApiOrganizations.tsx. Activity-summary chưa nối.
 7 operation quản lý users: src/services/api/accounts.ts -> apiGet/apiWrite; UI src/pages/shared/ApiAccounts.tsx.
 6 operation caregiver-links: src/services/api/links.ts -> apiGet/apiWrite; UI src/pages/shared/ApiLinks.tsx (5c).
-2 operation locations: locations.ts -> ApiTracking.tsx; GET live polling 30 giây, history phân trang 20; POST GPS chỉ Mobile. Bản đồ nền chờ Mapbox token, chưa SignalR.
+2 operation locations: locations.ts -> ApiTracking.tsx; GET live polling 30 giây, history phân trang 20; POST GPS chỉ Mobile. Bản đồ nền chờ Mapbox token. Đợt 8a SignalR kích hoạt REST refetch; polling vẫn dự phòng.
 Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE thật từ người dùng.
 Đợt triển khai/phụ thuộc/checklist đầy đủ ở PLAN.md; không tự làm tất cả roadmap.
 
@@ -1101,7 +1101,7 @@ PHỤ THUỘC PHẢI TEST CHUNG
 9. TTS PUT -> GET -> Mobile đọc lại; không tự kết luận đã đồng bộ thiết bị từ HTTP 200.
 
 NGOÀI DANH SÁCH REST / CONTRACT CÒN THIẾU
-- SignalR /hubs/location: xem LocationHub và nơi phát event; không phải REST operation.
+- SignalR /hubs/location: DA_NOI đợt 8a; components/ApiRealtime.tsx -> services/realtime/signalr.ts; JWT qua apiAccessToken. LocationUpdated/EmergencyAlert/EscalationSuggestion/GeofenceBreach kích hoạt refetch REST có kiểm tra quyền, không ghép payload vào cache. Hub tự join group theo JWT; không có client JoinGroup. Không tăng số REST operations.
 - Mapbox, Firebase, Google STT là dịch vụ ngoài; không suy ra endpoint BE từ tên dịch vụ.
 - Chưa tìm thấy QR invitation/generate/accept link; OCR QR không dùng thay.
 - Chưa xác nhận API upload avatar, đọc/giải mã ảnh .enc, cập nhật FCM token độc lập,

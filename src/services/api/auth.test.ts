@@ -294,3 +294,18 @@ it('never automatically replays a resource write on 401', async () => {
   });
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
+
+it('SignalR token and REST share one refresh and reject tokens after logout', async () => {
+  const storage = memory();
+  storage.setItem(authSessionKey, JSON.stringify(pair(-1)));
+  const fresh = pair();
+  const fetcher = vi.fn<typeof fetch>(async (url) =>
+    String(url).endsWith('/refresh') ? ok(fresh) : ok(null),
+  );
+  const auth = createApiAuth('http://example.test', storage, fetcher);
+  const [token] = await Promise.all([auth.accessToken(), auth.get('/api/test')]);
+  expect(token).toBe(fresh.accessToken);
+  expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith('/refresh'))).toHaveLength(1);
+  await auth.logout();
+  await expect(auth.accessToken()).rejects.toMatchObject({ status: 401 });
+});

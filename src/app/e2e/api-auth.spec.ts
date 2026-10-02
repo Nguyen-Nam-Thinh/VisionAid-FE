@@ -1260,3 +1260,62 @@ for (const simulateConflict of [false, true]) {
     );
   });
 }
+
+test('8a SignalR: receives event, refreshes REST and stops after logout', async ({ page }) => {
+  await stubApi(page);
+  let send: ((data: string) => void) | undefined;
+  let closed = false;
+  let reads = 0;
+  await page.route('http://localhost:5176/hubs/location/negotiate?*', (route) =>
+    route.fulfill({
+      json: {
+        negotiateVersion: 1,
+        connectionId: 'fixture',
+        connectionToken: 'fixture',
+        availableTransports: [{ transport: 'WebSockets', transferFormats: ['Text', 'Binary'] }],
+      },
+    }),
+  );
+  await page.routeWebSocket(/\/hubs\/location\?/, (ws) => {
+    send = (data) => ws.send(data);
+    ws.onMessage((data) => {
+      if (String(data).includes('"protocol"')) ws.send('{}\x1e');
+    });
+    ws.onClose(() => {
+      closed = true;
+    });
+  });
+  await page.route('http://localhost:5176/api/emergency-events?*', (route) => {
+    reads++;
+    return route.fulfill({ json: { success: true, data: organizationPage([]) } });
+  });
+  await login(page);
+  await expect(page.getByText(/Đã kết nối realtime/)).toBeVisible();
+  await page.goto('/caregiver/alerts');
+  await expect(page.getByText(/Đã kết nối realtime/)).toBeVisible();
+  await expect(page.getByText('Không có cảnh báo phù hợp.')).toBeVisible();
+  await page.waitForTimeout(400);
+  const before = reads;
+  send!(
+    JSON.stringify({
+      type: 1,
+      target: 'EmergencyAlert',
+      arguments: [{ viuId: id, eventId: id, sentAt: '2026-10-01T12:00:00Z' }],
+    }) + '\x1e',
+  );
+  await expect.poll(() => reads).toBeGreaterThan(before);
+  const after = reads;
+  send!(
+    JSON.stringify({
+      type: 1,
+      target: 'EmergencyAlert',
+      arguments: [{ viuId: id, eventId: id, sentAt: '2026-10-01T12:00:00Z' }],
+    }) + '\x1e',
+  );
+  await page.waitForTimeout(400);
+  expect(reads).toBe(after);
+  closed = false;
+  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await expect(page).toHaveURL(/auth\/login$/);
+  await expect.poll(() => closed).toBe(true);
+});

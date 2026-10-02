@@ -26,7 +26,8 @@ Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong 
 | 5c | Phân công và quyền liên kết | Merge dev 632043a | Chờ test BE thật |
 | 6 | GPS live và history | Đã nối; bản đồ nền chờ Mapbox token | Chờ test BE thật |
 | 7 | Cảnh báo Caregiver: list/detail/acknowledge/escalate/resolve | Đã nối, feat/api-emergency-alerts | Chờ test BE thật |
-| 8–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
+| 8a | SignalR vị trí/cảnh báo | Đã nối, feat/api-signalr-realtime | Chờ test Hub thật |
+| 8b–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
 
 Bằng chứng mới nhất đợt 6: 64 unit tests / 13 files pass; 19 kịch bản Playwright cũ pass và 2 kịch bản GPS pass sau khi sửa assertion để chấp nhận refetch hợp lệ. Build/lint pass; chunk khoảng 576 kB còn cảnh báo. Đây là test fixture, chưa nghiệm thu BE thật.
 
@@ -293,3 +294,15 @@ Kiểm tra 5c: 60 unit tests, 19 Playwright API fixture tests pass (exit 0), bui
 - Chỉ merge/push dev, người dùng tự phát hành main. Đợt tiếp theo 8a sau khi người dùng yêu cầu.
 
 Kiểm tra đợt 7: 66 unit tests / 14 files pass; 2 Playwright API fixture (chuỗi thành công và conflict) pass; build/lint pass. Build còn cảnh báo chunk >500 kB. Chưa test BE thật.
+
+## Bàn giao đợt 8a — SignalR (2026-10-01)
+
+- Một kết nối /hubs/location trong Shell của Caregiver/CenterAdmin có org, không Admin/mock. Hub tự join caregiver_{id}/org_{id} từ JWT. SDK @microsoft/signalr, accessTokenFactory dùng token/refresh single-flight có sẵn.
+- VITE_SIGNALR_URL là full HTTP(S) URL tùy chọn; trống dùng API base + /hubs/location. HTTPS page từ chối HTTP hub. Không lưu/log token trong app; SDK logging None.
+- LocationUpdated, EmergencyAlert, EscalationSuggestion, GeofenceBreach -> lọc identifier/timestamp, bỏ duplicate/out-of-order trong 512 key, gom refetch mỗi 250ms. Payload chỉ là tín hiệu cập nhật; lấy lại REST authoritative có scope, không hiển thị tọa độ/event payload trực tiếp. ArrivalNotification là Mobile, không subscribe.
+- Reconnect dùng SDK; sau connected/reconnected refresh session + REST để bù missed events. Initial start failure hoặc hết lượt reconnect có nút thử lại, không vòng retry vô hạn. Dọn handler/timer/stop khi logout/unmount/đổi scope; giữ polling 30s. JWT/role không được Hub liên tục revalidate; FE refetch REST và session, BE vẫn cần bảo vệ/thu hồi connection nếu cần tức thì.
+- Không có event BE cho mọi acknowledge/resolve/link change; không tuyên bố tất cả trạng thái luôn realtime. Group membership và dữ liệu gửi phải do BE kiểm tra; FE không thay thế bảo mật Hub.
+- 38/107 REST không tăng. Checklist docs/API_STAGE_08A_TEST.md. 8b notification preferences/rules là đợt tiếp theo; FCM vẫn chờ config.
+- Chỉ push dev; main do người dùng phát hành. Giữ thay đổi riêng thông báo lỗi auth.ts ngoài commit (chỉ stage hunk accessToken của đợt này).
+
+Kiểm tra đợt 8a: 71 unit tests / 15 files; 5 Playwright fixture GPS/cảnh báo/SignalR pass; build/lint pass. Build có cảnh báo chunk khoảng 647 kB; chưa kiểm chứng Hub thật.

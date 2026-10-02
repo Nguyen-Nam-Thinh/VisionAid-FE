@@ -1,3 +1,4 @@
+import { ApiRealtime } from '../components/ApiRealtime';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
 import { ApiTracking } from '../pages/shared/ApiTracking';
 import { ApiLinks } from '../pages/shared/ApiLinks';
@@ -224,6 +225,11 @@ function Shell() {
             </span>
           </Link>
         </header>
+        {auth.mode === 'api' &&
+          !signingOut &&
+          (user.role === 'Caregiver' || (user.role === 'CenterAdmin' && user.orgId)) && (
+            <ApiRealtime key={user.id + ':' + user.role + ':' + user.orgId} actor={user} />
+          )}
         {auth.mode === 'mock' && (
           <div className="demo-strip">
             <span>● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối backend</span>
