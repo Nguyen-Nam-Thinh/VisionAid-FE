@@ -88,7 +88,9 @@ it('keeps false preferences, validates account scope and sends one upsert withou
     isEnabled: false,
     updatedAt: '',
   };
-  const write = vi.fn(async () => [pref]);
+  const write = vi.fn<NonNullable<Parameters<typeof createNotificationsApi>[1]>>(async () => [
+    pref,
+  ]);
   const api = createNotificationsApi(async () => [{ ...pref, userId: other }], write);
   await expect(api.preferences(actor)).rejects.toMatchObject({ status: 403 });
   expect((await api.savePreference(actor, { ...pref, userId: other }))[0].isEnabled).toBe(false);

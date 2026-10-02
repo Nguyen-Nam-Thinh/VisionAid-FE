@@ -216,22 +216,24 @@ function Links({ actor }: { actor: Person }) {
         </State>
       </section>
       {selected && (
-        <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
-          {detail.data && (
-            <LinkDetails
-              key={detail.data.id}
-              actor={actor}
-              link={detail.data}
-              refresh={refresh}
-              removed={() => {
-                setSelected('');
-                setNotice(
-                  'Đã gỡ liên kết. BE sẽ chọn lại người chăm sóc chính nếu cần và còn liên kết hoạt động.',
-                );
-              }}
-            />
-          )}
-        </State>
+        <Dialog title="Thông tin liên kết" onClose={() => setSelected('')}>
+          <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
+            {detail.data && (
+              <LinkDetails
+                key={detail.data.id}
+                actor={actor}
+                link={detail.data}
+                refresh={refresh}
+                removed={() => {
+                  setSelected('');
+                  setNotice(
+                    'Đã gỡ liên kết. BE sẽ chọn lại người chăm sóc chính nếu cần và còn liên kết hoạt động.',
+                  );
+                }}
+              />
+            )}
+          </State>
+        </Dialog>
       )}
     </>
   );

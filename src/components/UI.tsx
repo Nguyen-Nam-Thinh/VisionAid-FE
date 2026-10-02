@@ -71,6 +71,9 @@ export function Dialog({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const label = useId();
+  const close = () => {
+    if (!ref.current?.querySelector('form[aria-busy="true"]')) onClose();
+  };
   useEffect(() => {
     const trigger = document.activeElement as HTMLElement | null;
     const dialog = ref.current;
@@ -87,12 +90,12 @@ export function Dialog({
       aria-labelledby={label}
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        close();
       }}
     >
       <header className="dialog-header row between">
         <h2 id={label}>{title}</h2>
-        <button className="btn small" aria-label="Đóng hộp thoại" onClick={onClose}>
+        <button className="btn small" aria-label="Đóng hộp thoại" onClick={close}>
           <X size={18} />
         </button>
       </header>

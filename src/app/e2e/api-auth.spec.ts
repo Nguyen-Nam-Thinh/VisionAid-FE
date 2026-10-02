@@ -1,4 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
+const actionDialog = (page: Page) =>
+  page.getByRole('dialog').filter({
+    hasNot: page.locator(':scope > header > h2').filter({
+      hasText:
+        /^(Chi tiết tổ chức|Chi tiết tài khoản|Thông tin liên kết|Chi tiết người được chăm sóc)$/,
+    }),
+  });
 const id = '01900000-0000-7000-8000-000000000001';
 const token = () =>
   'header.' +
@@ -146,21 +153,23 @@ test('profile save, reload, password rejection and successful change', async ({ 
   await login(page);
   await expect(page).toHaveURL(/dashboard$/);
   await page.goto('/profile');
+  await page.getByRole('button', { name: 'Chỉnh sửa hồ sơ', exact: true }).click();
   await page.getByLabel('Họ và tên').fill('Tên mới');
   await page.getByLabel('Số điện thoại').fill('0901234567');
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
   await expect(page.getByRole('status')).toContainText('Đã cập nhật hồ sơ');
   await page.reload();
-  await expect(page.getByLabel('Họ và tên')).toHaveValue('Tên mới');
+  await expect(page.getByText('Tên mới · 0901234567', { exact: true })).toBeVisible();
   await expect(page.locator('input[type=file]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
   await page.getByLabel('Mật khẩu hiện tại').fill('WrongPassword@1');
   await page.getByLabel('Mật khẩu mới', { exact: false }).first().fill('NewPassword@2');
   await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
-  await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
+  await actionDialog(page).getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Current password is incorrect.');
   await expect(page).toHaveURL(/profile$/);
   accepted = true;
-  await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
+  await actionDialog(page).getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
   await expect(page).toHaveURL(/auth\/login$/);
   await expect(page.getByRole('status')).toContainText('Đã đổi mật khẩu');
   expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
@@ -342,6 +351,10 @@ test('caregiver reads paginated users, link permissions, search and revoked acce
   await page.getByRole('button', { name: 'Xem quyền liên kết' }).click();
   await expect(page.getByRole('heading', { name: 'Quyền liên kết', exact: true })).toBeVisible();
   await expect(page.locator('dl')).toContainText('Quản lý gương mặtKhông');
+  await page
+    .getByRole('dialog', { name: 'Chi tiết người được chăm sóc', exact: true })
+    .getByRole('button', { name: 'Đóng hộp thoại' })
+    .click();
   await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Quyền liên kết', exact: true })).toHaveCount(0);
   await expect(page.getByRole('status')).toContainText('Không có người dùng phù hợp');
@@ -352,6 +365,10 @@ test('caregiver reads paginated users, link permissions, search and revoked acce
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
   await page.getByLabel('Người được chăm sóc trên trang này').selectOption(viuId);
   revoked = true;
+  await page
+    .getByRole('dialog', { name: 'Chi tiết người được chăm sóc', exact: true })
+    .getByRole('button', { name: 'Đóng hộp thoại' })
+    .click();
   await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Liên kết với Người thân BE' })).toHaveCount(0);
 });
@@ -441,6 +458,7 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   });
   await login(page);
   await page.goto('/caregiver/users');
+  await page.getByRole('button', { name: 'Thêm người được chăm sóc', exact: true }).click();
   await page.getByLabel('Họ và tên', { exact: false }).fill(person.fullName);
   await page.getByLabel('Email *', { exact: true }).fill(person.email);
   await page.getByLabel('Mật khẩu *', { exact: true }).fill('Test123!');
@@ -450,18 +468,20 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
   await expect(page.getByRole('alert')).toBeVisible();
   await page.reload();
+  await page.getByRole('button', { name: 'Tiếp tục liên kết người được chăm sóc' }).click();
   await expect(page.getByText(viuId, { exact: true })).toBeVisible();
   expect(await page.evaluate(() => JSON.stringify(sessionStorage))).not.toContain('Test123!');
   await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
+  await actionDialog(page).getByRole('button', { name: 'Đóng hộp thoại' }).click();
   await page.getByRole('button', { name: 'Xem liên kết của VIU mới' }).click();
   await page.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
   await page.getByRole('button', { name: 'Hủy', exact: true }).click();
   expect(deletes).toBe(0);
   await page.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
   await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
-  await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible();
+  await expect(actionDialog(page).getByRole('alert')).toBeVisible();
   await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(actionDialog(page)).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Xem liên kết của VIU mới' })).toHaveCount(0);
   expect(creates).toBe(1);
   expect(links).toBe(2);
@@ -551,7 +571,7 @@ test('5a Admin: create, detail, update, status, delete and restore with confirma
   await login(page);
   await page.goto('/admin/organizations');
   await page.getByRole('button', { name: 'Tạo tổ chức', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = actionDialog(page);
   await dialog.getByLabel('Tên tổ chức').fill(org.name);
   await dialog.getByLabel('Mã số thuế / giấy phép').fill('TEST-123');
   await dialog.getByRole('button', { name: 'Tạo tổ chức', exact: true }).click();
@@ -626,9 +646,9 @@ test('5a CenterAdmin: own profile, member paging/filter and no platform mutation
   await page.getByRole('combobox', { name: 'Vai trò', exact: true }).selectOption('Caregiver');
   await expect(page.getByText('Nhân viên trang 1', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sửa tổ chức', exact: true }).click();
-  await page.getByRole('dialog').getByLabel('Email liên hệ').fill('center@example.test');
+  await actionDialog(page).getByLabel('Email liên hệ').fill('center@example.test');
   await page.getByRole('button', { name: 'Lưu tổ chức' }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(actionDialog(page)).toHaveCount(0);
   expect(calls.some((c) => c === 'GET /api/organizations/me')).toBe(true);
   expect(calls.some((c) => c.startsWith('GET /api/organizations?'))).toBe(false);
   expect(calls.some((c) => c.includes('role=Caregiver'))).toBe(true);
@@ -715,7 +735,7 @@ test('5b Admin: create/edit/status/reset/delete accounts without changing identi
   await login(page);
   await page.goto('/admin/accounts');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = actionDialog(page);
   await dialog.getByLabel('Họ và tên').fill(account.fullName);
   await dialog.getByLabel('Email', { exact: false }).fill(account.email);
   await dialog.getByLabel('Mật khẩu mới').fill('Password@1');
@@ -808,9 +828,13 @@ test('5b CenterAdmin: fixed role and own organization, no delete; cross-org resp
     page.getByRole('button', { name: 'Sửa hồ sơ tài khoản', exact: true }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Xóa tài khoản', exact: true })).toHaveCount(0);
+  await page
+    .getByRole('dialog', { name: 'Chi tiết tài khoản', exact: true })
+    .getByRole('button', { name: 'Đóng hộp thoại' })
+    .click();
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
-  await expect(page.getByRole('dialog').getByLabel('Vai trò tài khoản')).toHaveCount(0);
-  await expect(page.getByRole('dialog').getByLabel('Mã tổ chức', { exact: true })).toHaveCount(0);
+  await expect(actionDialog(page).getByLabel('Vai trò tài khoản')).toHaveCount(0);
+  await expect(actionDialog(page).getByLabel('Mã tổ chức', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
   expect(queries[0].searchParams.get('role')).toBe('Caregiver');
   expect(queries[0].searchParams.get('organizationId')).toBe(organizationId);
@@ -902,7 +926,7 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
       await login(page);
       await page.goto(actorRole === 'Admin' ? '/admin/links' : '/center-admin/assignments');
       await page.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();
-      const dialog = page.getByRole('dialog');
+      const dialog = actionDialog(page);
       await dialog.getByLabel('Mã Caregiver').fill(id);
       await dialog.getByLabel('Mã VIU').fill(linkedViuId);
       await dialog.getByLabel('Tôi xác nhận tạo liên kết giữa các tài khoản trên').check();
@@ -953,12 +977,16 @@ test('5c Caregiver: own Personal permissions only, Organization read-only and no
   await page.getByRole('button', { name: 'Xem liên kết ' + cgLinkId }).click();
   await expect(page.getByRole('button', { name: 'Chuyển thành chăm sóc chính' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true }).click();
-  await page.getByRole('dialog').getByLabel('Nhận cảnh báo').uncheck();
-  await page.getByRole('dialog').getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
+  await actionDialog(page).getByLabel('Nhận cảnh báo').uncheck();
+  await actionDialog(page).getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
   await page.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(actionDialog(page)).toHaveCount(0);
   expect(link.canReceiveAlerts).toBe(false);
   link = { ...link, linkType: 'Organization' };
+  await page
+    .getByRole('dialog', { name: 'Thông tin liên kết', exact: true })
+    .getByRole('button', { name: 'Đóng hộp thoại' })
+    .click();
   await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true })).toHaveCount(
     0,
@@ -1351,13 +1379,13 @@ test('stage 8b preferences save false, reload and surface failure without succes
   await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
   await page.getByLabel('Bật nhận khi không bắt buộc').uncheck();
   await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(actionDialog(page)).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole('cell', { name: 'Tắt nếu không bắt buộc' })).toBeVisible();
   fail = true;
   await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
   await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
-  await expect(page.getByRole('dialog').getByRole('alert')).toHaveText('Preference denied');
+  await expect(actionDialog(page).getByRole('alert')).toHaveText('Preference denied');
 });
 for (const role of ['Admin', 'CenterAdmin']) {
   test('stage 8b ' + role + ' rule scope, create conflict, flags and delete', async ({ page }) => {
@@ -1423,7 +1451,7 @@ for (const role of ['Admin', 'CenterAdmin']) {
       await expect(global.getByRole('button')).toHaveCount(0);
     }
     await page.getByRole('button', { name: 'Thêm quy tắc', exact: true }).click();
-    let dialog = page.getByRole('dialog');
+    let dialog = actionDialog(page);
     await dialog.getByLabel('Loại thông báo').selectOption('SystemAlert');
     await dialog.getByLabel('Kênh thông báo').selectOption('Email');
     await dialog.getByLabel('Vai trò nhận').selectOption('Caregiver');
@@ -1435,14 +1463,14 @@ for (const role of ['Admin', 'CenterAdmin']) {
     await expect(dialog).toHaveCount(0);
     const row = page.getByRole('row').filter({ hasText: 'Thông báo hệ thống' });
     await row.getByRole('button', { name: 'Chỉnh sửa' }).click();
-    dialog = page.getByRole('dialog');
+    dialog = actionDialog(page);
     await dialog.getByLabel('Bắt buộc nhận').check();
     await dialog.getByLabel('Đang áp dụng').uncheck();
     await dialog.getByLabel('Tôi xác nhận').check();
     await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
     await expect(row).toContainText('Ngừng áp dụng');
     await row.getByRole('button', { name: 'Xóa', exact: true }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();
+    await actionDialog(page).getByRole('button', { name: 'Xác nhận', exact: true }).click();
     await expect(row).toHaveCount(0);
   });
 }
@@ -1452,4 +1480,41 @@ test('reset without email link cannot submit a password', async ({ page }) => {
   await page.goto('/auth/reset');
   await expect(page.getByRole('alert')).toContainText('Liên kết khôi phục thiếu');
   await expect(page.getByRole('button', { name: 'Đặt mật khẩu', exact: true })).toHaveCount(0);
+});
+
+test('layout: filter control baseline and centered organization popup on desktop and tablet', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  await page.route('http://localhost:5176/api/organizations**', (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const data = path.endsWith('/members')
+      ? organizationPage([])
+      : path.endsWith(organizationId)
+        ? organizationFixture
+        : organizationPage([organizationFixture]);
+    return route.fulfill({ json: { success: true, data } });
+  });
+  await login(page);
+  await page.goto('/admin/organizations');
+  for (const width of [1440, 768]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const input = await page.getByLabel('Tìm tổ chức').boundingBox();
+    const search = await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).boundingBox();
+    if (width === 1440)
+      expect(Math.abs(input!.y + input!.height - search!.y - search!.height)).toBeLessThan(2);
+    await page.getByRole('button', { name: 'Xem tổ chức ' + organizationFixture.name }).click();
+    const dialog = page.getByRole('dialog', { name: 'Chi tiết tổ chức', exact: true });
+    await expect(dialog).toBeVisible();
+    const box = await dialog.boundingBox();
+    expect(Math.abs(box!.x + box!.width / 2 - width / 2)).toBeLessThan(2);
+    expect(Math.abs(box!.y + box!.height / 2 - 500)).toBeLessThan(2);
+    expect(box!.height).toBeLessThanOrEqual(900);
+    await page.screenshot({ path: 'test-results/organization-popup-' + width + '.png' });
+    await dialog.getByRole('button', { name: 'Đóng hộp thoại', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Xem tổ chức ' + organizationFixture.name }),
+    ).toBeFocused();
+  }
 });
