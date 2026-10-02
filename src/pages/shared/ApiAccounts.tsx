@@ -245,20 +245,22 @@ function Accounts({
         </State>
       </section>
       {selected && (
-        <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
-          {detail.data && (
-            <AccountDetails
-              key={detail.data.id}
-              actor={actor}
-              account={detail.data}
-              refresh={refresh}
-              removed={() => {
-                setSelected('');
-                setNotice('Đã xóa mềm tài khoản.');
-              }}
-            />
-          )}
-        </State>
+        <Dialog title="Chi tiết tài khoản" onClose={() => setSelected('')}>
+          <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
+            {detail.data && (
+              <AccountDetails
+                key={detail.data.id}
+                actor={actor}
+                account={detail.data}
+                refresh={refresh}
+                removed={() => {
+                  setSelected('');
+                  setNotice('Đã xóa mềm tài khoản.');
+                }}
+              />
+            )}
+          </State>
+        </Dialog>
       )}
     </>
   );

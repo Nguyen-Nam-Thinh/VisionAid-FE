@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Form } from '../../components/Form';
-import { Confirm, PageHead } from '../../components/UI';
+import { Confirm, Dialog, PageHead } from '../../components/UI';
 import { useAuth, useSession } from '../../hooks/useService';
 export function Profile() {
   const { data: user } = useSession();
   const auth = useAuth();
+  const [editor, setEditor] = useState<'profile' | 'password' | null>(null);
   const [message, setMessage] = useState('');
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
   if (!user) return null;
@@ -20,22 +21,33 @@ export function Profile() {
         <section className="glass card stack">
           <h2>Thông tin cá nhân</h2>
           <p>{user.email}</p>
-          <Form
-            fields={[
-              { key: 'name', label: 'Họ và tên', required: true, max: 200 },
-              { key: 'phone', label: 'Số điện thoại' },
-            ]}
-            initial={{ name: user.name, phone: user.phone }}
-            onSubmit={async (v) => {
-              setMessage('');
-              await auth.profile({
-                name: String(v.name),
-                phone: String(v.phone),
-                avatar: user.avatar,
-              });
-              setMessage('Đã cập nhật hồ sơ.');
-            }}
-          />
+          <p>
+            {user.name} · {user.phone || 'Chưa có số điện thoại'}
+          </p>
+          <button className="btn" onClick={() => setEditor('profile')}>
+            Chỉnh sửa hồ sơ
+          </button>
+          {editor === 'profile' && (
+            <Dialog title="Chỉnh sửa hồ sơ" onClose={() => setEditor(null)}>
+              <Form
+                fields={[
+                  { key: 'name', label: 'Họ và tên', required: true, max: 200 },
+                  { key: 'phone', label: 'Số điện thoại' },
+                ]}
+                initial={{ name: user.name, phone: user.phone }}
+                onSubmit={async (v) => {
+                  setMessage('');
+                  await auth.profile({
+                    name: String(v.name),
+                    phone: String(v.phone),
+                    avatar: user.avatar,
+                  });
+                  setMessage('Đã cập nhật hồ sơ.');
+                  setEditor(null);
+                }}
+              />
+            </Dialog>
+          )}
           {auth.mode === 'mock' && (
             <label className="field">
               Ảnh đại diện JPG/PNG (demo tối đa 2 MB)
@@ -77,20 +89,33 @@ export function Profile() {
         </section>
         <section className="glass card stack">
           <h2>Đổi mật khẩu</h2>
-          <Form
-            fields={[
-              { key: 'current', label: 'Mật khẩu hiện tại', type: 'password', required: true },
-              { key: 'next', label: 'Mật khẩu mới', type: 'password', required: true },
-              { key: 'confirm', label: 'Nhập lại mật khẩu mới', type: 'password', required: true },
-            ]}
-            submit="Đổi mật khẩu"
-            onSubmit={async (v) => {
-              setMessage('');
-              if (v.next !== v.confirm) throw Error('Mật khẩu xác nhận không khớp.');
-              await auth.changePassword(String(v.current), String(v.next));
-              if (auth.mode === 'mock') setMessage('Đã đổi mật khẩu demo.');
-            }}
-          />
+          <button className="btn" onClick={() => setEditor('password')}>
+            Đổi mật khẩu
+          </button>
+          {editor === 'password' && (
+            <Dialog title="Đổi mật khẩu" onClose={() => setEditor(null)}>
+              <Form
+                fields={[
+                  { key: 'current', label: 'Mật khẩu hiện tại', type: 'password', required: true },
+                  { key: 'next', label: 'Mật khẩu mới', type: 'password', required: true },
+                  {
+                    key: 'confirm',
+                    label: 'Nhập lại mật khẩu mới',
+                    type: 'password',
+                    required: true,
+                  },
+                ]}
+                submit="Đổi mật khẩu"
+                onSubmit={async (v) => {
+                  setMessage('');
+                  if (v.next !== v.confirm) throw Error('Mật khẩu xác nhận không khớp.');
+                  await auth.changePassword(String(v.current), String(v.next));
+                  setEditor(null);
+                  if (auth.mode === 'mock') setMessage('Đã đổi mật khẩu demo.');
+                }}
+              />
+            </Dialog>
+          )}
           {auth.mode === 'api' && (
             <p className="muted">
               Mật khẩu mới: 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt. Sau khi đổi

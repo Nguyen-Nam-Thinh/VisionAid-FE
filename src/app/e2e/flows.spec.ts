@@ -155,9 +155,11 @@ test('admin configuration history rollback and no GPS access', async ({ page }) 
 test('notifications, TTS, geofence and form keyboard focus', async ({ page }) => {
   await login(page);
   await screen(page, '/caregiver/notifications', 'Tùy chọn thông báo');
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).first().click();
   await expect(page.getByLabel('Thông báo đẩy').first()).toBeDisabled();
   await page.getByRole('button', { name: 'Lưu thay đổi' }).first().click();
   await expect(page.getByRole('status').filter({ hasText: 'Đã lưu thay đổi' })).toBeVisible();
+  await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
   await screen(page, '/caregiver/tts', 'Giọng đọc hỗ trợ');
   await page.getByRole('button', { name: 'Chỉnh sửa' }).click();
   await dialog(page).getByLabel('Tốc độ đọc').fill('1.4');

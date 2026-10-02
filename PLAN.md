@@ -330,3 +330,11 @@ Kiểm tra: 74 unit tests / 16 files pass; 3 kịch bản Playwright 8b pass (fi
 - BE chỉ lưu token qua login/register; refresh không nhận token, chưa có API authenticated upsert/revoke riêng. Logout có deactivate theo user/device. Cần chốt login lại khi bật/đổi token hoặc BE bổ sung contract; không tự bịa endpoint.
 - Hướng dẫn lấy cấu hình và các điều kiện chuyển tài khoản/nhiều tab/background: docs/API_STAGE_08C_SETUP.md.
 - Nhánh docs/fcm-web-prerequisites chỉ bàn giao phần chuẩn bị. Không đánh dấu 8c hoàn tất; không tự chuyển sang 9.
+
+## Bàn giao sửa giao diện — 2026-10-03
+
+- fix/email-reset-flow (51c0a2b): chế độ API bỏ nhập mã thủ công; link email cung cấp email/token, form chỉ nhập mật khẩu mới và xác nhận. Link thiếu dữ liệu hướng dẫn yêu cầu email mới.
+- fix/dashboard-dialog-layout nối tiếp nhánh reset: căn đáy field/button trên các hàng lọc; chi tiết tài khoản/tổ chức/liên kết/người được chăm sóc, tạo người được chăm sóc, sửa hồ sơ/mật khẩu mở Dialog dùng chung. Không đóng dialog khi Form đang gửi.
+- Kiểm tra: 74 unit tests, lint/build pass; 30 kịch bản API fixture có kết quả pass qua các lượt chạy (các lỗi fixture đã sửa và chạy lại); thêm kiểm tra tâm popup và căn hàng ở 1440/768px. Mock notifications/TTS/geofence/keyboard pass. Chưa nghiệm thu dữ liệu BE thật.
+- Playwright API đặt SignalR URL local rõ ràng để không kế thừa URL production từ .env. Giữ thay đổi riêng src/services/api/auth.ts ngoài commit. Chỉ phát hành dev; main do người dùng quyết định.
+- 8c vẫn chờ chốt vòng đời FCM token; Firebase config người dùng đã cung cấp, chưa triển khai push.

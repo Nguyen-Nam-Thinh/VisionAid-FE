@@ -872,3 +872,37 @@ h3 {
 .dashboard-person > svg {
   margin-left: auto;
 }
+
+/* Keep buttons aligned with controls, not the label + control block. */
+.row:has(> .field) {
+  align-items: flex-end;
+}
+.row > .field {
+  min-width: 0;
+}
+.row:has(> .field) > .btn {
+  flex-shrink: 0;
+}
+.dialog {
+  background: #fff;
+}
+.dialog:has(table) {
+  max-width: 1000px;
+}
+.dialog-body {
+  overflow-wrap: anywhere;
+}
+.dialog-body > .card {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+@media (max-width: 640px) {
+  .row:has(> .field) > .field {
+    flex: 1 1 100%;
+  }
+  .dialog-body {
+    padding: 16px;
+  }
+}

@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import { useCommand } from '../../hooks/useService';
 import { useNotifications } from '../../hooks/useNotifications';
-import { PageHead, State, Badge } from '../../components/UI';
+import { PageHead, State, Badge, Dialog } from '../../components/UI';
 import { Form } from '../../components/Form';
 export function Notifications() {
   const { query, db, user } = useWorkspace();
   const cmd = useCommand();
+  const [editing, setEditing] = useState('');
   const notifications = useNotifications();
   const events = [
     ...new Set(db?.entities.rules.filter((r) => r.active).map((r) => String(r.fields.event)) ?? []),
@@ -46,55 +48,64 @@ export function Notifications() {
                     {rule.fields.mandatory ? 'Bắt buộc' : 'Tùy chọn'}
                   </Badge>
                 </div>
-                <Form
-                  key={pref?.version ?? 0}
-                  fields={[
-                    {
-                      key: 'push',
-                      label: 'Thông báo đẩy',
-                      type: 'checkbox',
-                      disabled: !!rule.fields.mandatory && !!rule.fields.push,
-                    },
-                    {
-                      key: 'email',
-                      label: 'Email',
-                      type: 'checkbox',
-                      disabled: !!rule.fields.mandatory && !!rule.fields.email,
-                    },
-                  ]}
-                  initial={{
-                    push: Boolean(
-                      rule.fields.mandatory
-                        ? rule.fields.push
-                        : (pref?.fields.push ?? rule.fields.push),
-                    ),
-                    email: Boolean(
-                      rule.fields.mandatory
-                        ? rule.fields.email
-                        : (pref?.fields.email ?? rule.fields.email),
-                    ),
-                  }}
-                  onSubmit={(v) =>
-                    cmd.mutateAsync({
-                      type: 'save',
-                      kind: 'preferences',
-                      entity: {
-                        id: pref?.id ?? crypto.randomUUID(),
-                        name: rule.name,
-                        active: true,
-                        ownerId: user.id,
-                        orgId: '',
-                        viuId: '',
-                        version: pref?.version ?? 0,
-                        fields: {
-                          event,
-                          push: Boolean((rule.fields.mandatory && rule.fields.push) || v.push),
-                          email: Boolean((rule.fields.mandatory && rule.fields.email) || v.email),
+                <button className="btn" onClick={() => setEditing(event)}>
+                  Chỉnh sửa
+                </button>
+                {editing === event && (
+                  <Dialog title={rule.name} onClose={() => setEditing('')}>
+                    <Form
+                      key={pref?.version ?? 0}
+                      fields={[
+                        {
+                          key: 'push',
+                          label: 'Thông báo đẩy',
+                          type: 'checkbox',
+                          disabled: !!rule.fields.mandatory && !!rule.fields.push,
                         },
-                      },
-                    })
-                  }
-                />
+                        {
+                          key: 'email',
+                          label: 'Email',
+                          type: 'checkbox',
+                          disabled: !!rule.fields.mandatory && !!rule.fields.email,
+                        },
+                      ]}
+                      initial={{
+                        push: Boolean(
+                          rule.fields.mandatory
+                            ? rule.fields.push
+                            : (pref?.fields.push ?? rule.fields.push),
+                        ),
+                        email: Boolean(
+                          rule.fields.mandatory
+                            ? rule.fields.email
+                            : (pref?.fields.email ?? rule.fields.email),
+                        ),
+                      }}
+                      onSubmit={(v) =>
+                        cmd.mutateAsync({
+                          type: 'save',
+                          kind: 'preferences',
+                          entity: {
+                            id: pref?.id ?? crypto.randomUUID(),
+                            name: rule.name,
+                            active: true,
+                            ownerId: user.id,
+                            orgId: '',
+                            viuId: '',
+                            version: pref?.version ?? 0,
+                            fields: {
+                              event,
+                              push: Boolean((rule.fields.mandatory && rule.fields.push) || v.push),
+                              email: Boolean(
+                                (rule.fields.mandatory && rule.fields.email) || v.email,
+                              ),
+                            },
+                          },
+                        })
+                      }
+                    />
+                  </Dialog>
+                )}
               </section>
             );
           })}
