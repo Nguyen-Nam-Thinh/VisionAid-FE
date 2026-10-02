@@ -322,3 +322,11 @@ Kiểm tra đợt 8a: 71 unit tests / 15 files; 5 Playwright fixture GPS/cảnh 
 - Chỉ merge/push dev, main do người dùng phát hành. Giữ thay đổi riêng auth.ts ngoài commit.
 
 Kiểm tra: 74 unit tests / 16 files pass; 3 kịch bản Playwright 8b pass (fixture); build/lint pass. Build cảnh báo chunk khoảng 658 kB. Chưa nghiệm thu BE thật.
+
+## Chuẩn bị đợt 8c — 2026-10-02
+
+- Đã đọc AuthController, Login/Register/Logout handlers, FcmService và cấu hình FE. Chưa có Firebase Web config/VAPID trong env hiện tại; đã hỏi người dùng cung cấp.
+- Chưa triển khai runtime/SDK/service worker, chưa test push. 44/107 REST không đổi.
+- BE chỉ lưu token qua login/register; refresh không nhận token, chưa có API authenticated upsert/revoke riêng. Logout có deactivate theo user/device. Cần chốt login lại khi bật/đổi token hoặc BE bổ sung contract; không tự bịa endpoint.
+- Hướng dẫn lấy cấu hình và các điều kiện chuyển tài khoản/nhiều tab/background: docs/API_STAGE_08C_SETUP.md.
+- Nhánh docs/fcm-web-prerequisites chỉ bàn giao phần chuẩn bị. Không đánh dấu 8c hoàn tất; không tự chuyển sang 9.
