@@ -1,6 +1,8 @@
 # VisionAid Web — Plan cập nhật B2C, B2B, License, PayOS và WebRTC
 
-Cập nhật 2026-10-03. Base FE: dev `88ab163`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. Nhiệm vụ lần này chỉ sửa tài liệu; chưa triển khai các chức năng mới.
+Cập nhật 2026-10-03. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. Chưa triển khai các chức năng mới.
+
+**Kết quả U0 mới nhất:** đã đọc BE mới và OpenAPI deploy có 140 operations (33 mới, 107 cũ giữ nguyên). Đọc [docs/U0_BACKEND_FINDINGS.md](docs/U0_BACKEND_FINDINGS.md) trước các câu hỏi dự kiến bên dưới; tài liệu đó thay thế những giả định đã được xác minh. U0 mới hoàn tất kiểm kê/khảo sát, còn policy và test thật. Có FCM upsert; còn blocker billing allowlist, quota và Staff. Không còn cần người dùng gửi lại vị trí BE/Swagger.
 
 ## 1. AI tiếp theo bắt đầu ở đâu
 
@@ -14,9 +16,9 @@ Cập nhật 2026-10-03. Base FE: dev `88ab163`. Đây là kế hoạch triển 
 
 - Nghiệp vụ mới: `C:/Users/thinh/Downloads/VisionAid_Update_Report.docx`, báo cáo đề ngày 28/9/2026; và `C:/Users/thinh/Downloads/Luồng B2C - B2B.txt` do người dùng gửi 03/10/2026. Nội dung cần thiết để tiếp tục được tổng hợp ngay trong plan này, không phụ thuộc việc AI sau còn truy cập Downloads.
 - Code FE: src/app/App.tsx, src/services/api/*, src/models/domain.ts, src/pages/*; đã đối chiếu route đang mở và DTO hiện tại.
-- BE local tham khảo: ../VisionAid-BE/src. Khi rà soát ngày 03/10 chưa tìm thấy module/controller License, Payment, WebRTC hoặc Hybrid Guidance. Đây chỉ là kết luận về bản local đã đọc, không khẳng định server hoặc nhánh BE khác chưa có.
-- Các path mới trong file TXT là **tài liệu mô tả, chưa xác minh implementation/Swagger đang triển khai**. Chưa biết response, query, quyền và lỗi đầy đủ. Không suy ra API từ tên bảng DB.
-- api.txt có snapshot cũ 107 REST operations, 44 có caller Web. Chưa kiểm kê Swagger mới nên 107 không còn được coi là tổng API của phiên bản mới. SignalR không tính như REST.
+- BE local ../VisionAid-BE/src đã cập nhật e56c545, có License/Payment/WebRTC. Chưa thấy API/pipeline Hybrid Guidance tương ứng trong phạm vi rà soát. Có entity không chứng minh tính năng chạy đầy đủ.
+- Swagger deploy: https://api.visionaid.net/swagger/index.html; đã GET schema public /swagger/v1/swagger.json. Source và endpoint đã đối chiếu trong báo cáo U0, chưa test authenticated runtime.
+- api.txt giữ snapshot 107 REST cũ và 44 caller Web; [snapshot U0](docs/U0_OPENAPI_2026-10-03.md) kiểm kê 140 operations. SignalR không tính như REST. Không suy ra DTO/quyền chỉ từ tên bảng DB.
 - Lịch sử triển khai và checklist cũ được giữ tại [docs/PLAN_LEGACY_2026-10-03.md](docs/PLAN_LEGACY_2026-10-03.md). File đó chỉ tra cứu lịch sử; thứ tự thực hiện hiện hành là plan này.
 
 ## 3. Phần đã làm và phần cần điều chỉnh
@@ -32,7 +34,7 @@ Cập nhật 2026-10-03. Base FE: dev `88ab163`. Đây là kế hoạch triển 
 | 7 | Cảnh báo đọc/acknowledge/escalate/resolve đã nối | Kiểm tra safety exception của license và liên kết WebRTC |
 | 8a–8b | SignalR vị trí/cảnh báo, preferences/rules đã nối | Bổ sung delivery cho license/payment khi BE có; không dùng rules UI để suy ra push đã gửi |
 | Sửa UI | Merge dev 88ab163: reset link, căn hàng, popup chi tiết/form | Giữ Dialog/Confirm dùng chung, focus và pending guard khi thêm màn mới |
-| 8c | FCM mới chuẩn bị; config/VAPID đã nhận | Chờ contract cập nhật/revoke token hoặc chốt phải đăng nhập lại; không thiếu config nữa |
+| 8c | FCM mới chuẩn bị; config/VAPID đã nhận | BE có PUT /api/auth/fcm-token; gỡ blocker upsert, còn test logout/revoke/nhiều tab |
 | 9–14 | Các route nghiệp vụ tương ứng còn ApiPending trong API mode | Giữ backlog, sắp lại thứ tự bên dưới; mock không phải API đã nối |
 | License/PayOS/WebRTC/Hybrid | Chưa có implementation FE | Các đợt U0–U9 dưới đây |
 
@@ -70,13 +72,13 @@ Ba trigger: CAREGIVER_INITIATED, VIU_VOICE_COMMAND, SOS_AUTO. Caregiver xem vide
 
 | Vấn đề | Nguồn/chênh lệch | Cách xử lý trong plan |
 |---|---|---|
-| BE mới nằm đâu | Bản local chưa có module mới | Cần nhánh/thư mục hoặc OpenAPI phiên bản mới; chưa gọi API tự đoán |
+| BE mới nằm đâu | ĐÃ XÁC MINH local e56c545 + Swagger HTTPS 140 operations | Không hỏi lại; xem báo cáo U0 cho các chênh lệch contract cụ thể |
 | Quota | FE caregiving.ts đang chặn >=3 active links; gói Personal mới 1 VIU | Phân biệt quota license với giới hạn primary/secondary links; cần entitlement/usage authoritative, không thay mọi số 3 thành 1 |
 | Dashboard sau grace | Word: read-only; TXT: middleware trả 402 dashboard/features | Chốt GET nào còn được phép, payload 402, allowlist billing/auth/SOS/navigation; FE không thể giữ read-only nếu BE chặn mọi GET |
 | NONE và Navigation | Bảng Word chặn Navigation khi NONE; kết luận “không bao giờ block” | Chốt riêng NONE so với EXPIRED. Giữ SOS; không tự chốt policy thay BE |
-| Trial và tạo VIU | Word tạo sau mua; TXT tạo trong trial | Đề xuất theo flow TXT để test trial đầy đủ, phải xác nhận bằng contract |
+| Trial và tạo VIU | ĐÃ ĐỌC: RegisterCaregiver gọi ActivateTrial; CreateUser cho kế thừa license caregiver | Có thể tạo trong trial theo source; chờ test thật, cần PERSONAL active seed |
 | Chủ license/quyền staff | Subscription Caregiver, license cache VIU; CenterAdmin NONE | Làm rõ kế thừa, secondary, Staff Caregiver org và account cũ không có license; không mua subscription cho mọi role |
-| Key distribution | Word có key sau payment; TXT auto-activate webhook + activate-key cho phân phối | Chốt người nhận, trạng thái chờ, consume/return pool, hết hạn, idempotency; enum Word chưa có PENDING cho subscription |
+| Key distribution | ĐÃ ĐỌC: trừ pool ngay khi phát key, Suspended/subscriber null, hạn theo pool | Activate gắn subscriber; còn kiểm tra cạnh tranh, reclaim/quản lý key và middleware allowlist |
 | Phân công B2B | Ví dụ POST link TXT thiếu caregiverId | Theo DTO/handler thực tế để chọn đúng staff, không dùng CenterAdmin làm caregiver mặc định |
 | Gia hạn/topup | TXT có now+30 ngày và cộng 50; Word có yearly/auto_renew | Chốt kỳ, còn hạn mua thêm, tháng vs 30 ngày, số lượng, cancel/refund; không tạo toggle auto-renew chỉ từ cột DB |
 | Hybrid NEAR | Mô tả NEAR luôn offline; config near_threshold_ms nói fallback sau chờ | NEAR không chờ cloud; hỏi BE ý nghĩa config trước khi mở editor |
@@ -89,7 +91,7 @@ Các blocker chỉ dừng phần phụ thuộc; vẫn có thể làm các đợt
 
 Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 cho scope cập nhật. Đề xuất: **U0 -> U1 -> U2 -> U3a -> U3b -> U4 -> U5 -> 11a -> 8c -> U6a -> U6b -> 9 -> 10 -> 11b -> 12 -> 13/U7 -> U8 -> U9**. Sau từng checkpoint phải bàn giao và dừng. 8c có thể làm sớm hơn nếu contract token đã đủ; không cần FCM để nghiệm thu core license/payment qua REST.
 
-### U0 — Kiểm kê contract và dữ liệu test [CHỜ BE MỚI]
+### U0 — Kiểm kê contract và dữ liệu test [ĐÃ KHẢO SÁT; CHỜ CHỐT POLICY/TEST]
 
 - Đối chiếu OpenAPI/controller/DTO/validator/handler/authorization/middleware/jobs và deployment đang dùng. Kiểm kê thêm packages, subscriptions, pools, assignments, transactions, keys, WebRTC, ICE, guidance.
 - Cập nhật api.txt: method/path, role, query/body/response/error, màn FE, source, trạng thái. Xác định đường đọc trạng thái license và thanh toán; bảng DB không thay API.
@@ -153,14 +155,16 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 - Test CRUD/priority/type/phone, gỡ link mất quyền, ngoài org; số ngắn 112/115 cần validator BE hỗ trợ, không ép regex số di động cho mọi contact.
 - Điểm dừng: phối hợp Mobile/BE; không tạo sự kiện SOS thật để test.
 
-### 8c — FCM web push [CHƯA LÀM; config đã có]
+### 8c — FCM web push [CHƯA LÀM; config và API upsert đã có]
 
-- Xác minh BE cập nhật có upsert/revoke token không. Bản đã đọc trước đây chỉ gắn FCM token qua login/register; chưa chốt đăng nhập lại khi bật push. Nếu chưa đủ, tiếp tục giữ blocker, không bịa endpoint.
+- Đã xác minh PUT /api/auth/fcm-token upsert theo user/device; không cần đăng nhập lại chỉ để cập nhật token. Đối chiếu logout và xử lý tắt push/nhiều tab; chưa có revoke riêng trong Swagger. Không gửi token rỗng để giả deactivate.
 - Permission sau click rõ ràng, denied/unsupported vẫn dùng Web; service worker, foreground/background, click qua guards; tránh trùng với SignalR.
 - Test token/device lifecycle, logout/đổi account/nhiều tab, permission revoked, offline/reconnect. License/payment reminder cần BE jobs và payload thật; API preferences không chứng minh notification đến thiết bị.
 - Điểm dừng: người dùng test HTTPS trên domain và thiết bị được phép.
 
 ### U6a — Cuộc gọi chủ động và lịch sử [CHƯA LÀM; U0/U1/U4 + Mobile/TURN]
+
+Đã có REST session + ICE và RelayOffer/RelayAnswer/RelayIceCandidate ở /hubs/location; xem U0_BACKEND_FINDINGS.md. Chưa kiểm thử Mobile/media/TURN, không còn giả định chưa có signaling code.
 
 - Nút gọi người đang được liên kết; UI cuộc gọi/modal hoặc panel riêng đủ video/audio/status, accept/reject/end theo contract. Không chỉ tạo một POST “call” rồi báo kết nối.
 - Dùng RTCPeerConnection/getUserMedia và SignalR đã có nếu đáp ứng contract; không thêm peer library khi native đủ. Hub signaling không thay media transport.
@@ -217,9 +221,9 @@ Ghi trong bảng dưới: commit FE + BE/OpenAPI version đã dùng; route/API �
 
 | Checkpoint | Code | Contract | Fixture | Người dùng test thật | Việc tiếp |
 |---|---|---|---|---|---|
-| U0 | Chưa triển khai | Chờ BE cập nhật và giải đáp mục 5 | Chưa chạy | Chưa test | Xác minh BE/Swagger mới |
+| U0 | Đã khảo sát source/OpenAPI, chưa runtime | Đã có 140 endpoints; báo cáo U0 ghi chênh lệch | Chỉ kiểm tra tài liệu | Chưa test authenticated | Chốt billing/quota/Staff, dữ liệu test |
 | U1–U5 | Chưa làm | Chờ U0 | Chưa chạy | Chưa test | Theo thứ tự mục 6 |
-| 8c | Chuẩn bị config, chưa runtime | Token lifecycle chưa chốt | Chưa chạy push | Chưa test | Xác minh contract |
+| 8c | Chuẩn bị config, chưa runtime | Có upsert mới; revoke/logout/nhiều tab cần test | Chưa chạy push | Chưa test | Dùng PUT auth/fcm-token, kiểm tra lifecycle |
 | U6a/U6b | Chưa làm | Chờ WebRTC + Mobile + TURN | Chưa chạy | Chưa test | Sau U4 và hợp đồng signaling |
 | 9–13, U7–U9 | Chưa nối theo phạm vi trên | API cũ cần đối chiếu lại; API mới chờ U0 | Chưa chạy phạm vi mới | Chưa test | Thực hiện từng checkpoint |
 
