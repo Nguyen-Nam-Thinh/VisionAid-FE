@@ -255,13 +255,8 @@ test('recovery email, expired token, pasted link and login after reset', async (
   await expect(page.getByRole('status')).toContainText('Nếu email này đã đăng ký');
   expect(emails).toBe(1);
   await expect(page.getByText('Mã demo', { exact: false })).toHaveCount(0);
-  await page.getByRole('link', { name: 'Nhập mã khôi phục' }).click();
-  await page.getByLabel('Địa chỉ email').fill('api@example.test');
-  await page
-    .getByLabel('Mã hoặc liên kết khôi phục')
-    .fill(
-      'https://visionaid.net/reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test',
-    );
+  await expect(page.getByRole('link', { name: 'Nhập mã khôi phục' })).toHaveCount(0);
+  await page.goto('/reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test');
   await page.getByLabel('Mật khẩu mới *', { exact: true }).fill('NewPassword@2');
   await page.getByLabel('Nhập lại mật khẩu mới').fill('Different@2');
   await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
@@ -1096,8 +1091,8 @@ test('email reset URL is public and preserves encoded token on reload', async ({
   await page.goto('/reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test');
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Đặt mật khẩu mới', exact: true })).toBeVisible();
-  await expect(page.getByLabel('Địa chỉ email')).toHaveValue('api@example.test');
-  await expect(page.getByLabel('Mã hoặc liên kết khôi phục')).toHaveValue('abc+def/ghi==');
+  await expect(page.getByLabel('Địa chỉ email')).toHaveCount(0);
+  await expect(page.getByLabel('Mã hoặc liên kết khôi phục')).toHaveCount(0);
   expect(resets).toBe(0);
   await page.getByLabel('Mật khẩu mới *', { exact: true }).fill('NewPassword@2');
   await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
@@ -1451,3 +1446,10 @@ for (const role of ['Admin', 'CenterAdmin']) {
     await expect(row).toHaveCount(0);
   });
 }
+
+test('reset without email link cannot submit a password', async ({ page }) => {
+  await stubApi(page);
+  await page.goto('/auth/reset');
+  await expect(page.getByRole('alert')).toContainText('Liên kết khôi phục thiếu');
+  await expect(page.getByRole('button', { name: 'Đặt mật khẩu', exact: true })).toHaveCount(0);
+});
