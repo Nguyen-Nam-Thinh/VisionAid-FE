@@ -1,9 +1,9 @@
 VISIONAID WEB — API DÙNG Ở ĐÂU
-Cập nhật: 2026-10-02. Nguồn: live OpenAPI, controller BE, code FE và ảnh Swagger.
+Cập nhật kế hoạch: 2026-10-03. Danh sách 001–107 là snapshot OpenAPI cũ (2026-09-25), controller BE/code FE và ảnh Swagger; chưa kiểm kê server phiên bản nghiệp vụ mới. Tổng API mới CHƯA XÁC ĐỊNH.
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. Các API License/Payment/WebRTC/Hybrid mới chưa cộng vào số này, chưa có caller FE.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -73,7 +73,7 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Trạng thái: DA_NOI | Đợt: 3b
   Màn/luồng: /auth/recover
   File FE: src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/app/App.tsx
-  Dùng để: Gửi yêu cầu email khôi phục, thông báo chung không tiết lộ tài khoản tồn tại; cần test SMTP/inbox thật. Email BE dùng Mobile deep link, Web hỗ trợ sao chép/dán.
+  Dùng để: Gửi yêu cầu email khôi phục, thông báo chung không tiết lộ tài khoản tồn tại; người dùng mở link email tới /reset-password?token=...&email=... trên Web. Cần nghiệm thu đầy đủ inbox/reset/login, không nhập mã thủ công trong API mode.
   Quyền controller: Anonymous; controller Auth public
   Query: Không có
   Body/schema: application/json: ForgotPasswordRequest; text/json: ForgotPasswordRequest; application/*+json: ForgotPasswordRequest
@@ -81,9 +81,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
 
 007. POST /api/auth/reset-password
   Trạng thái: DA_NOI | Đợt: 3b
-  Màn/luồng: /auth/reset
+  Màn/luồng: /reset-password (link email); /auth/reset cũng nhận tham số URL
   File FE: src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/app/App.tsx
-  Dùng để: email + token + newPassword. Caller dùng resetPassword(email, code, password); code nhận token hoặc deep link visionaid://reset-password từ email. Thành công về login.
+  Dùng để: email + token + newPassword. API mode lấy email/token từ URL email, chỉ hiện mật khẩu mới và xác nhận; link thiếu dữ liệu yêu cầu gửi email mới. Thành công về login. Không hiển thị mã/token cho người dùng nhập thủ công.
   Quyền controller: Anonymous; controller Auth public
   Query: Không có
   Body/schema: application/json: ResetPasswordRequest; text/json: ResetPasswordRequest; application/*+json: ResetPasswordRequest
@@ -1114,3 +1114,51 @@ Ghi trạng thái từng method/path, caller FE thật, commit, kết quả test
 vào file này cùng PLAN.md. Không đánh dấu API Mobile là phần Web chưa hoàn thành.
 
 TRẠNG THÁI TEST: 3b đang lỗi 500 forgot-password trên BE, chờ log; người dùng hoãn test và cho phép làm 4a. DA_NOI không đồng nghĩa BE thật đã đạt.
+
+PHỤ LỤC SCOPE MỚI 2026-10-03 — CHỜ XÁC MINH CONTRACT, CHƯA NỐI WEB
+Nguồn: VisionAid_Update_Report.docx (28/9/2026) và Luồng B2C - B2B.txt do người dùng cung cấp.
+Đã rà BE local ../VisionAid-BE/src: chưa thấy module mới; không khẳng định bản deploy cũng thiếu. Đợt U0 cần BE cập nhật/OpenAPI rồi mới đánh số vào danh mục chính.
+
+A. POST /api/payments/create-link
+  Trạng thái: TAI_LIEU_CHUA_XAC_MINH | Đợt: U3a/U3b
+  Màn dự kiến: /caregiver/subscription và /center-admin/licenses.
+  Body theo TXT: { packageId }; checkoutUrl theo mô tả. Response wrapper, transaction ID, quyền, return/cancel URLs và lỗi chưa xác minh.
+  Phụ thuộc: đọc gói, đọc transaction/status, đọc entitlement/subscription/pool. Chỉ mở checkout; không tự đánh dấu thanh toán hoặc activate license.
+
+B. POST /api/payments/payos-webhook
+  Trạng thái: TAI_LIEU_CHUA_XAC_MINH — SERVER-TO-SERVER, KHÔNG PHẢI WEB CALLER.
+  PayOS gọi BE, BE verify signature/idempotency/atomic activate. Không gọi endpoint này từ FE và không đưa checksum secret vào VITE_*.
+
+C. POST /api/licenses/distribute
+  Trạng thái: TAI_LIEU_CHUA_XAC_MINH | Đợt: U5
+  Màn dự kiến: /center-admin/license-distribution.
+  Body/response/permission, pool consumption và expiry chưa xác minh; cần API list/detail để quản lý key đã phát. Không suy ra đầy đủ CRUD từ tên bảng.
+
+D. POST /api/licenses/activate-key
+  Trạng thái: TAI_LIEU_CHUA_XAC_MINH | Đợt: U5
+  Màn dự kiến: /caregiver/activate-license nếu BE cấp quyền Web.
+  Body theo TXT: { licenseKey }; sau thành công refetch subscription/entitlement. Key không tự cấp quyền org/GPS cho trung tâm.
+
+E. DELETE /api/licenses/assignments/{id}/revoke
+  Trạng thái: TAI_LIEU_CHUA_XAC_MINH | Đợt: U4
+  Màn dự kiến: /center-admin/licenses, danh sách assignments.
+  Method/path theo TXT, chưa kiểm chứng controller. Cần assignment ID và role/org scope; confirm, refetch pool/user sau thành công. Không thay bằng DELETE user/link.
+
+F. Nhóm cần contract, CHƯA CÓ method/path xác nhận
+  - U1: entitlement/license status, expiry/grace, feature flags, quota/usage cho các role; response 402 và allowlist.
+  - U2: license packages list/detail/create/update/active theo quyền; catalog dành cho người mua.
+  - U3a/U3b: subscriptions/current license, transaction list/detail/status, organization pool; cancelled/refund/auto-renew chỉ nối nếu có API và scope được chốt.
+  - U4/U5: assignments list/detail/reassign (nếu có), distributed keys list/detail/status và vòng đời key.
+  - U6a/U6b: WebRTC session create/read/transition/history, runtime ICE, SignalR methods/events. Signaling không tính là REST và không mặc định dùng được location Hub hiện tại.
+  - U7: ICE admin operations, guidance logs/metrics; system-configs/ai-metrics cũ cần kiểm tra schema mới.
+  - 8c: FCM authenticated upsert/revoke nếu BE đã bổ sung; bản cũ chỉ gắn token qua login/register.
+
+G. API đã nối cần regression theo scope mới
+  - POST auth/register -> trial/token -> GET users/me hoặc entitlement theo contract: U1.
+  - POST users (B2C): quota Trial/Personal 1 VIU khác rule 3 links trong FE cũ: U4.
+  - POST users (B2B): staff không consume, VIU consume pool; hết pool 422 theo TXT: U4.
+  - POST caregiver-links: B2B cần chỉ định đúng Staff, không dùng ví dụ thiếu caregiverId làm DTO: U4.
+  - Emergency/navigation/GET dashboard: quyền khi expired/NONE, read-only vs 402 phải chốt: U0/U1/U9.
+  - GET/PUT system-configs: keys License/PayOS/WebRTC/Hybrid từ API, không hardcode enum/secret: 13/U7.
+
+Các route trên là đề xuất FE, không khẳng định đã tồn tại. Mã đợt 0–14 trong 001–107 được giữ; PLAN.md sắp thứ tự lại và bổ sung U0–U9. Không coi CHUA_NOI/MOBILE/webhook là mọi endpoint đều phải được Web gọi.

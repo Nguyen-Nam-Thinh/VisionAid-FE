@@ -1,8 +1,8 @@
 # CLAUDE.md — VisionAid Frontend Project Context
 
 > Phạm vi: Web Frontend của VisionAid, dành cho Caregiver, Center Admin và Super Admin.
-> Cập nhật: 2026-09-21. Web đã triển khai ở chế độ mock; chưa nối backend và dịch vụ bên ngoài thật.
-> Phân biệt yêu cầu đích với implementation hiện tại tại mục 3 và docs/BACKEND_INTEGRATION.md.
+> Cập nhật scope: 2026-10-03 theo VisionAid_Update_Report.docx và Luồng B2C - B2B.txt do người dùng cung cấp. Plan hiện hành là PLAN.md; lịch sử ở docs/PLAN_LEGACY_2026-10-03.md.
+> Web có 44 REST callers trong snapshot 107 API cũ, SignalR vị trí/cảnh báo và UI mock cho phần chưa nối. License, PayOS, WebRTC, Hybrid management chưa triển khai FE. Test fixture không thay nghiệm thu BE thật. Các mô tả snapshot 2026-09-21 bên dưới không được dùng để ghi đè trạng thái mới trong PLAN.md/api.txt.
 
 ## 1. Cách sử dụng và nguồn tham chiếu
 
@@ -52,16 +52,20 @@ FE gọi ASP.NET Core qua HTTPS REST API, nhận GPS/cảnh báo qua SignalR, nh
 
 Backend phụ trách PostgreSQL/PostGIS/pgvector, Redis, MinIO, mã hóa AES-256, VietOCR/FaceNet, gửi email qua MailKit và các hosted background jobs. FE không kết nối trực tiếp DB/Redis, không giữ credentials MinIO, không chạy job retention hoặc mã hóa/giải mã ảnh khuôn mặt bằng khóa backend.
 
-YOLOv8n offline, Whisper offline, TTS audio-first và cảm biến phát hiện té ngã thuộc Mobile. Web chỉ cấu hình/theo dõi theo quyền và API được cung cấp.
+YOLOv8n xử lý NEAR ngay trên Mobile; MEDIUM/FAR dùng Hybrid Pipeline qua BE với JEV/Groq/rule-based và template TTS. Whisper offline, TTS audio-first và cảm biến té ngã vẫn thuộc Mobile. Web chỉ quản trị/theo dõi theo quyền và API; không chuyển safety-critical response sang Web/cloud.
 
-Không thêm các thành phần từ sơ đồ mẫu: Driver/Owner App, payOS, VietQR, Cloudinary, FPT.AI, Hangfire, Seq, Contabo hoặc Nginx. Tài liệu chỉ chốt VPS / Docker Compose ở mức hệ thống. Không có thanh toán, turn-by-turn navigation hay scene captioning tổng quát trong phạm vi hiện tại.
+Scope mới có License Management, PayOS checkout, WebRTC audio/video, Standalone và quản trị Hybrid AI. PayOS là gateway duy nhất theo báo cáo mới; không tự thêm cổng khác hoặc scene captioning tổng quát. Không suy ra hạ tầng triển khai từ logo/sơ đồ mẫu. Backend quản lý webhook/signature, entitlement, license pool và TURN credential; FE không giữ PayOS secret hoặc tự cấp license.
+
+Mặc định nghiệp vụ mới: trial 7 ngày/1 VIU, Personal 99.000 VND/tháng/1 VIU, Business 4.500.000 VND/tháng/50 VIUs, grace 3 ngày. Lấy giá/quota/feature flags từ API. Staff không consume pool, VIU tổ chức có consume; CenterAdmin không cần subscription cá nhân. Standalone dùng VIU tổ chức + Staff Caregiver và contacts flexible, không phải role mới. Policy NONE/EXPIRED, read-only so với 402 và quota link so với quota license còn điểm chưa thống nhất: xử lý ở U0 trong PLAN.md, không tự quyết định bằng UI.
+
+WebRTC có CAREGIVER_INITIATED, VIU_VOICE_COMMAND, SOS_AUTO; signaling dự kiến SignalR, media WebRTC/STUN/TURN. Chỉ triển khai sau xác minh contract, quyền, consent và Mobile; không tự bật mic/camera vượt permission. Return URL PayOS không chứng minh thanh toán: chỉ unlock sau đọc trạng thái authoritative của BE. Roadmap mới không phải yêu cầu tự triển khai tất cả khi đọc tài liệu.
 
 ## 3. Công nghệ và trạng thái triển khai
 
 | Hạng mục | Trạng thái |
 |---|---|
 | React Web | React 19, TypeScript 6, Vite 8, React Router 7 |
-| ASP.NET Core REST, SignalR, Mapbox, Firebase FCM | Tích hợp đích; hiện chưa nối thật |
+| ASP.NET Core REST, SignalR, Mapbox, Firebase FCM | REST/SignalR có implementation theo PLAN.md; Mapbox/FCM chưa nghiệm thu, FCM chưa có runtime |
 | HTTP và state | Fetch transport; TanStack Query 5; store nhỏ cho selection/notice |
 | Form và giao diện | React Hook Form 7, Zod 4, Tailwind 4, CSS tokens, lucide-react; glassmorphism theo yêu cầu |
 | Typography | Plus Jakarta Sans / JetBrains Mono bundle local |
@@ -69,7 +73,7 @@ Không thêm các thành phần từ sơ đồ mẫu: Driver/Owner App, payOS, V
 
 Phiên bản chính xác theo package-lock.json. Các nhóm màn hình mục 6 đã có implementation mock, gồm QR bằng mã/ảnh, TTS và voice history theo WBS. `services/index.ts` chọn mock/api; API adapter báo 501 khi chưa có contract, không fallback mock. Model client không phải REST DTO.
 
-Bản đồ là sơ đồ tọa độ, realtime là timer mô phỏng. Chưa có Mapbox SDK, SignalR, FCM SDK/service worker, email thật, JWT refresh, MinIO/mã hóa ảnh hoặc đồng bộ Mobile. Mock lưu localStorage gồm demo credentials/ảnh, dành cho một tab và dữ liệu giả; giới hạn 2 MB/ảnh chỉ là giới hạn demo. Reset demo khôi phục seed và logout.
+Bản đồ nền còn chờ xác minh Mapbox. API mode đã có JWT refresh, email reset flow và SignalR vị trí/cảnh báo với REST refetch/polling dự phòng. FCM runtime/service worker, license/payment/WebRTC và media registry vẫn chưa nối. Mock lưu localStorage gồm demo credentials/ảnh, dành cho một tab và dữ liệu giả; giới hạn 2 MB/ảnh chỉ là giới hạn demo. Reset demo khôi phục seed và logout.
 
 Xem README.md để chạy; docs/IMPLEMENTATION_CHECKLIST.md cho phạm vi; docs/DESIGN_SYSTEM.md cho UX; docs/BACKEND_INTEGRATION.md cho phần cần nối BE; docs/DELIVERY_REPORT.md cho kiểm thử.
 
@@ -181,7 +185,7 @@ Các số dưới đây là mặc định trong tài liệu; lấy cấu hình/l
 
 | Quy tắc | Mặc định / hành vi |
 |---|---|
-| VIUs trên một Caregiver | Tối đa 3 active links |
+| VIUs trên một Caregiver | Rule cũ 3 active links; scope mới Trial/Personal 1 VIU. U0 phải tách quota subscription khỏi giới hạn link, lấy entitlement/usage theo BE; không thay mọi số 3 bằng 1 |
 | Caregivers trên một VIU | Tối đa 3: 1 primary + 2 secondary |
 | Primary Caregiver | Một primary active; quy trình gỡ/chuyển không để UI giả tạo hoàn thành khi backend từ chối |
 | Face registry | Tối đa 20 người/VIU; ít nhất 3 ảnh để active |
@@ -209,7 +213,7 @@ Tài liệu mô tả success wrapper `ApiResponse<T>` với Success, Message, Da
 
 - Có một HTTP adapter chung: base URL, auth, cancellation, parsing và chuẩn hóa lỗi.
 - 204 không parse JSON. Kiểm tra response trước khi hiển thị toast thành công.
-- 400 map validation vào field; 401 xử lý phiên; 403 hiện không có quyền; 404 không tìm thấy; 409 conflict/refetch; 422 business rule; 429 tôn trọng thời gian retry; 5xx thông báo lỗi và cho thử lại hợp lý.
+- 400 map validation vào field; 401 xử lý phiên; 402 xử lý license/billing theo contract, không logout/refresh lặp hoặc chặn safety bằng guard toàn cục; 403 hiện không có quyền; 404 không tìm thấy; 409 conflict/refetch; 422 business rule (gồm hết pool khi BE xác nhận); 429 tôn trọng thời gian retry; 5xx thông báo lỗi và cho thử lại hợp lý.
 - Không retry vô hạn; không tự replay thao tác ghi không idempotent hoặc hành động khẩn cấp.
 - Hủy/loại bỏ response cũ khi đổi VIU, filter hoặc unmount. Debounce search; paginate ở server khi API hỗ trợ.
 - Không mock endpoint thành "đã triển khai". Đặt mock riêng, dữ liệu giả được nhận diện rõ, production không tự fallback sang mock khi API lỗi.
@@ -312,6 +316,8 @@ Các kiểm tra quan trọng khi tính năng tương ứng đã tồn tại:
 Ưu tiên unit/integration tests cho permission mapping, API adapter và state logic; component/E2E cho luồng chính theo công cụ đã chọn. Kiểm tra build/typecheck/lint khi có scripts. Không áp số coverage backend 70% thành cam kết FE chưa được thống nhất.
 
 ## 15. Thứ tự triển khai đề xuất
+
+Danh sách dưới đây là roadmap nền ban đầu. Từ 2026-10-03, thứ tự hiện hành là PLAN.md mục 6, bắt đầu U0 xác minh contract mới trước License/PayOS; giữ các mã đợt cũ để tra cứu. Không dùng danh sách này để tự bỏ qua checkpoint hoặc triển khai mọi đợt.
 
 1. Chốt toolchain và API contract cơ bản; scaffold packages, routing, layouts, configs.
 2. Auth/profile, role/resource guards, HTTP adapter và session lifecycle.
