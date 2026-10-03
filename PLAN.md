@@ -2,7 +2,7 @@
 
 Cập nhật 2026-10-03. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. Chưa triển khai các chức năng mới.
 
-**Kết quả U0 mới nhất:** đã đọc BE mới và OpenAPI deploy có 140 operations (33 mới, 107 cũ giữ nguyên). Đọc [docs/U0_BACKEND_FINDINGS.md](docs/U0_BACKEND_FINDINGS.md) trước các câu hỏi dự kiến bên dưới; tài liệu đó thay thế những giả định đã được xác minh. U0 mới hoàn tất kiểm kê/khảo sát, còn policy và test thật. Có FCM upsert; còn blocker billing allowlist, quota và Staff. Không còn cần người dùng gửi lại vị trí BE/Swagger.
+**Kết quả U0 mới nhất:** đã đọc BE mới và OpenAPI deploy có 140 operations (33 mới, 107 cũ giữ nguyên). Đọc [docs/U0_BACKEND_FINDINGS.md](docs/U0_BACKEND_FINDINGS.md) trước các câu hỏi dự kiến bên dưới; tài liệu đó thay thế những giả định đã được xác minh. U0 mới hoàn tất kiểm kê/khảo sát, còn policy và test thật. Có FCM upsert. Người dùng xác nhận BE đã sửa billing allowlist, Staff exemption và kế thừa license khi first Personal link; local chưa có bản sửa để đối chiếu. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforcement quota theo gói. Không còn cần người dùng gửi lại vị trí BE/Swagger.
 
 ## 1. AI tiếp theo bắt đầu ở đâu
 
@@ -28,7 +28,7 @@ Cập nhật 2026-10-03. Base FE khảo sát U0: dev `5692a87`; BE local mới `
 | 0–2 | Transport, auth/refresh/guards, hồ sơ, đổi mật khẩu đã nối | Bổ sung entitlement/license vào DTO theo contract; xử lý 402 riêng |
 | 3a | Đăng ký Caregiver, logout-all đã nối | Kiểm tra trial tự kích hoạt và login sau đăng ký; consent vẫn chờ nội dung/version |
 | 3b | Forgot/reset đã nối; email reset flow sửa ở 51c0a2b | Test email -> /reset-password -> mật khẩu mới -> login. Không còn form nhập mã thủ công trong API mode |
-| 4a–4b | Danh sách VIU, tạo VIU + link, gỡ link cá nhân đã nối | Giữ phục hồi bước link; sửa giới hạn cứng 3 link theo quota đã chốt, kiểm tra Personal 1 VIU |
+| 4a–4b | Danh sách VIU, tạo VIU + link, gỡ link cá nhân đã nối | Giữ phục hồi bước link; giữ giới hạn tối đa 3 VIU; kiểm tra kế thừa license khi tạo và first Personal link |
 | 5a–5c | Tổ chức, tài khoản, staff, VIU, phân công đã nối | Tạo VIU B2B consume pool; tạo staff không consume; quyền Staff vẫn theo link/org |
 | 6 | GPS live/history đã nối | Bản đồ nền/Mapbox chưa được xác nhận hoàn tất; không gọi dữ liệu cũ là trực tiếp |
 | 7 | Cảnh báo đọc/acknowledge/escalate/resolve đã nối | Kiểm tra safety exception của license và liên kết WebRTC |
@@ -44,7 +44,7 @@ Bằng chứng gần nhất: 74 unit tests; lint/build đạt; 30 kịch bản A
 
 ### B2C cá nhân
 
-Caregiver tự đăng ký -> BE cấp token và trial 7 ngày -> tạo VIU -> tạo personal primary link. TXT cho phép tạo trong trial; Word mô tả tạo sau thanh toán, cần U0 xác nhận luồng chính thức. Trial/Personal mặc định 1 VIU. Hết hạn có grace 3 ngày; sau grace cần mua/gia hạn để dùng các tính năng bị giới hạn. Personal mặc định 99.000 VND/tháng. Giá, số lượng và feature flags phải lấy từ API gói; không hardcode quyền theo tên Personal.
+Caregiver tự đăng ký -> BE cấp token và trial 7 ngày -> tạo VIU -> tạo personal primary link. TXT cho phép tạo trong trial; Word mô tả tạo sau thanh toán, cần U0 xác nhận luồng chính thức. Trial/Personal quản lý tối đa 3 VIU theo MaxViusPerCaregiver; đây là quyết định nghiệp vụ, không enforce quota B2C theo gói. Hết hạn có grace 3 ngày; sau grace cần mua/gia hạn để dùng các tính năng bị giới hạn. Personal mặc định 99.000 VND/tháng. Giá và feature flags lấy từ API gói; giới hạn B2C theo MaxViusPerCaregiver = 3, không suy ra quota từ maxViuPerLicense trong package.
 
 Chuỗi thanh toán: chọn packageId -> BE tạo giao dịch PENDING và checkoutUrl -> người dùng thanh toán PayOS -> BE xác minh webhook và kích hoạt/gia hạn -> Web đọc lại transaction và license. Return URL, query success hoặc đóng tab PayOS không chứng minh đã thanh toán.
 
@@ -73,11 +73,11 @@ Ba trigger: CAREGIVER_INITIATED, VIU_VOICE_COMMAND, SOS_AUTO. Caregiver xem vide
 | Vấn đề | Nguồn/chênh lệch | Cách xử lý trong plan |
 |---|---|---|
 | BE mới nằm đâu | ĐÃ XÁC MINH local e56c545 + Swagger HTTPS 140 operations | Không hỏi lại; xem báo cáo U0 cho các chênh lệch contract cụ thể |
-| Quota | FE caregiving.ts đang chặn >=3 active links; gói Personal mới 1 VIU | Phân biệt quota license với giới hạn primary/secondary links; cần entitlement/usage authoritative, không thay mọi số 3 thành 1 |
+| Giới hạn B2C | ĐÃ CHỐT: Trial/Personal tối đa 3 VIU, không quota enforcement theo gói | Giữ MaxViusPerCaregiver=3; test đủ 3 và từ chối link thứ 4 |
 | Dashboard sau grace | Word: read-only; TXT: middleware trả 402 dashboard/features | Chốt GET nào còn được phép, payload 402, allowlist billing/auth/SOS/navigation; FE không thể giữ read-only nếu BE chặn mọi GET |
 | NONE và Navigation | Bảng Word chặn Navigation khi NONE; kết luận “không bao giờ block” | Chốt riêng NONE so với EXPIRED. Giữ SOS; không tự chốt policy thay BE |
 | Trial và tạo VIU | ĐÃ ĐỌC: RegisterCaregiver gọi ActivateTrial; CreateUser cho kế thừa license caregiver | Có thể tạo trong trial theo source; chờ test thật, cần PERSONAL active seed |
-| Chủ license/quyền staff | Subscription Caregiver, license cache VIU; CenterAdmin NONE | Làm rõ kế thừa, secondary, Staff Caregiver org và account cũ không có license; không mua subscription cho mọi role |
+| Chủ license/quyền staff | BE xác nhận Staff Caregiver có organization_id hợp lệ bypass license cá nhân | Kế thừa lúc tạo VIU đã có; first Personal link chỉ inherit khi VIU chưa có license. Chờ đối chiếu source/deploy mới |
 | Key distribution | ĐÃ ĐỌC: trừ pool ngay khi phát key, Suspended/subscriber null, hạn theo pool | Activate gắn subscriber; còn kiểm tra cạnh tranh, reclaim/quản lý key và middleware allowlist |
 | Phân công B2B | Ví dụ POST link TXT thiếu caregiverId | Theo DTO/handler thực tế để chọn đúng staff, không dùng CenterAdmin làm caregiver mặc định |
 | Gia hạn/topup | TXT có now+30 ngày và cộng 50; Word có yearly/auto_renew | Chốt kỳ, còn hạn mua thêm, tháng vs 30 ngày, số lượng, cancel/refund; không tạo toggle auto-renew chỉ từ cột DB |
@@ -134,10 +134,10 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 
 ### U4 — Sửa tạo VIU, assignment và thu hồi [CHƯA LÀM; U1/U3b]
 
-- ApiCreateLinkedUser.tsx/caregiving.ts: quota Personal authoritative; giữ UUID khi create thành công nhưng link lỗi, không tạo trùng. Account cũ vượt quota phải có trạng thái xử lý, không tự xóa.
+- ApiCreateLinkedUser.tsx/caregiving.ts: giữ giới hạn 3 VIU cho Trial/Personal; không thêm quota theo gói. Giữ UUID khi create thành công nhưng link lỗi, không tạo trùng. Test inherit lúc tạo và first Personal link khi VIU chưa có license; không ghi đè license sẵn có.
 - ApiAccounts.tsx/ApiLinks.tsx: staff org không consume; VIU org consume tại BE; refetch pool sau create/revoke. Hết quota 422/402 giữ form, chỉ dẫn mua thêm; không client-side giảm số pool.
 - Danh sách assignments + thu hồi có Confirm, mô tả ảnh hưởng quyền. Không unlink/delete account thay revoke. Khả năng gán lại phải có API đã xác minh.
-- Test B2C: trial -> VIU -> primary link -> reload; VIU thứ hai theo quota; link failure recovery. Test B2B: tạo staff -> quota không đổi -> tạo VIU -> used+1 -> phân công -> revoke -> available+1; hai tab cạnh tranh suất cuối, cross-org, hết hạn và lỗi giữa chừng.
+- Test B2C: trial -> VIU -> primary link -> reload; VIU thứ hai/thứ ba được link, thứ tư bị từ chối; link failure recovery và license inheritance. Test B2B: tạo staff -> quota không đổi -> tạo VIU -> used+1 -> phân công -> revoke -> available+1; hai tab cạnh tranh suất cuối, cross-org, hết hạn và lỗi giữa chừng.
 - Điểm dừng: người dùng test cả gia đình lẫn trung tâm, không chỉ test form tạo user.
 
 ### U5 — Phân phối và kích hoạt key [CHƯA LÀM; U3b/U4]
@@ -221,10 +221,20 @@ Ghi trong bảng dưới: commit FE + BE/OpenAPI version đã dùng; route/API �
 
 | Checkpoint | Code | Contract | Fixture | Người dùng test thật | Việc tiếp |
 |---|---|---|---|---|---|
-| U0 | Đã khảo sát source/OpenAPI, chưa runtime | Đã có 140 endpoints; báo cáo U0 ghi chênh lệch | Chỉ kiểm tra tài liệu | Chưa test authenticated | Chốt billing/quota/Staff, dữ liệu test |
+| U0 | Đã khảo sát source/OpenAPI, chưa runtime | Đã có 140 endpoints; báo cáo U0 ghi chênh lệch | Chỉ kiểm tra tài liệu | Chưa test authenticated | Ba quyết định đã chốt; chờ source/deploy fixes và regression; đã được phép tạo/sửa dữ liệu test |
 | U1–U5 | Chưa làm | Chờ U0 | Chưa chạy | Chưa test | Theo thứ tự mục 6 |
 | 8c | Chuẩn bị config, chưa runtime | Có upsert mới; revoke/logout/nhiều tab cần test | Chưa chạy push | Chưa test | Dùng PUT auth/fcm-token, kiểm tra lifecycle |
 | U6a/U6b | Chưa làm | Chờ WebRTC + Mobile + TURN | Chưa chạy | Chưa test | Sau U4 và hợp đồng signaling |
 | 9–13, U7–U9 | Chưa nối theo phạm vi trên | API cũ cần đối chiếu lại; API mới chờ U0 | Chưa chạy phạm vi mới | Chưa test | Thực hiện từng checkpoint |
 
 Riêng consent chính sách vẫn CHỜ theo yêu cầu trước đó. Không tự đặt version, tự tick đồng ý hoặc giả định tài liệu nghiệp vụ là nội dung chính sách đã được chấp thuận.
+
+## Xác nhận nghiệp vụ và fixes từ nhóm BE — 2026-10-03
+
+- Trial/Personal: ≤3 VIU (MaxViusPerCaregiver=3). Không triển khai enforcement theo package.maxViuPerLicense cho B2C. Business vẫn theo pool.
+- Nhóm BE xác nhận /api/licenses pass-through khi None/Expired ngoài grace; Caregiver có organization_id hợp lệ bypass license cá nhân. Đây không phải bypass authorization/link/org.
+- Tạo VIU kế thừa license đã có; bổ sung first Personal link kế thừa nếu VIU chưa có license. Không tự áp dụng cho mọi link/ghi đè license khác.
+- Bản local đọc trong lượt này chưa có các đoạn fixes; trạng thái là BE xác nhận, chưa source/runtime verified. U1 có thể bắt đầu; test các đường đã sửa sau khi source/deploy cập nhật.
+- Người dùng đã cho phép tạo/sửa dữ liệu bằng tài khoản test. Không hỏi lại quyền này; không lưu credentials vào repo. PayOS/media test vẫn theo phạm vi từng checkpoint.
+
+Tài liệu Word: docs/VisionAid_Update_Report_Revised.docx là bản sửa nội dung từ file người dùng gửi, giữ nguyên bản gốc ở Downloads. Đã thay 4 đoạn (Trial/Personal và mô tả giới hạn) sang ≤3 VIU/MaxViusPerCaregiver. Kiểm tra XML đạt; chưa kiểm tra bố cục qua render vì môi trường không có LibreOffice/soffice. VisionAid.docx ở thư mục SEP409 đã được rà, không có mô tả Personal/Trial 1 VIU cần thay. BE CLAUDE.md §21 đã sửa đúng 2 dòng Plans tại local, chưa commit/push repository BE.
