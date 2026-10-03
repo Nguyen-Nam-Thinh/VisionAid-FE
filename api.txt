@@ -1154,3 +1154,20 @@ U1 — TRIỂN KHAI FE 2026-10-03 (chờ user test live)
 - Chưa có caller checkout/activate-key/pool/package ở U1. Trial/Personal tối đa 3 VIU là policy đã chốt.
 - Kiểm thử: 77 unit + 5 U1 E2E fixture đạt; chưa kiểm thử authenticated BE runtime cho U1.
   Checklist: docs/API_STAGE_U1_TEST.md. Tổng caller hiện tại: 45/140; không yêu cầu mọi API phải dùng trên Web.
+
+U2 — TRIỂN KHAI FE 2026-10-03 (chờ user test live)
+Tổng hiện tại: 49/140 operations có caller Web (45 sau U1 + 4 ở U2).
+Service: src/services/api/packages.ts. UI: src/pages/shared/ApiPackages.tsx.
+- GET /api/licenses/packages: DA_NOI. /admin/packages và /packages.
+  Query page/pageSize=20, isActive chỉ Admin. BE phân trang; FE lọc loại gói phù hợp trong từng trang cho non-admin.
+  Caregiver cá nhân -> Personal active; CenterAdmin -> Business active. Staff không có catalog mua cá nhân.
+- GET /api/licenses/packages/{id}: DA_NOI. Admin mở popup chi tiết/sửa; xác minh ID response.
+- POST /api/licenses/packages: DA_NOI. Admin popup tạo; body name, code, packageType, priceMonthly,
+  priceYearly|null, currency, maxViuPerLicense, includedLicenses, trialDays, durationDays, featureFlags.
+  Không gửi isActive khi tạo; BE mặc định true.
+- PUT /api/licenses/packages/{id}: DA_NOI. Admin popup sửa, gồm isActive; bỏ code và packageType immutable.
+  priceYearly=null không xóa giá trong BE; FE chặn thao tác xóa giá năm đã tồn tại.
+- FeatureFlags chỉ JSON object<string, boolean>; không secret, không tự bật toàn bộ UI từ cờ.
+- Sau lưu refetch danh mục/subscription; không optimistic success. HTTP lỗi giữ form.
+- Giá/thời hạn/currency đọc server. Chưa gọi payment/checkout; U3a phải kiểm tra lại giá và active trước thanh toán.
+- Không có DELETE package. Checklist: docs/API_STAGE_U2_TEST.md.

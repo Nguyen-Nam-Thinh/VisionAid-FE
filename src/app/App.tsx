@@ -1,4 +1,5 @@
 import { ApiNotifications } from '../pages/shared/ApiNotifications';
+import { ApiPackages } from '../pages/shared/ApiPackages';
 import { ApiLicense, LicenseNotice } from '../pages/shared/ApiLicense';
 import { ApiRealtime } from '../components/ApiRealtime';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
@@ -186,6 +187,17 @@ function Shell() {
           </div>
           <nav className="nav">
             {runtime.mode === 'api' && <NavLink to="/license">License</NavLink>}
+            {runtime.mode === 'api' &&
+              (user.role === 'Admin' ||
+                user.role === 'CenterAdmin' ||
+                (user.role === 'Caregiver' && !user.orgId)) && (
+                <NavLink
+                  to={user.role === 'Admin' ? '/admin/packages' : '/packages'}
+                  onClick={() => setOpen(false)}
+                >
+                  Gói dịch vụ
+                </NavLink>
+              )}
             <NavLink to="/profile">
               <UserRound size={18} />
               Hồ sơ của tôi
@@ -297,6 +309,12 @@ export function App() {
                 element={runtime.mode === 'api' ? <ApiSession /> : <Dashboard />}
               />
               <Route path="profile" element={<Profile />} />
+              {runtime.mode === 'api' && <Route path="packages" element={<ApiPackages />} />}
+              {runtime.mode === 'api' && (
+                <Route element={<Guard role="Admin" />}>
+                  <Route path="admin/packages" element={<ApiPackages admin />} />
+                </Route>
+              )}
               {runtime.mode === 'api' && <Route path="license" element={<ApiLicense />} />}
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>

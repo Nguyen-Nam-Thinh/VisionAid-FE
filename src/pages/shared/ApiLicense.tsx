@@ -11,6 +11,7 @@ import {
 } from '../../services/api/licenses';
 import { ServiceError } from '../../services/contracts';
 import type { Person } from '../../models/domain';
+import { canBrowsePackages } from '../../services/api/packages';
 
 export function LicenseNotice({ user }: { user: Person }) {
   const [now, setNow] = useState(Date.now);
@@ -50,6 +51,9 @@ export function ApiLicense() {
       <section className="glass card stack">
         <h2>Trạng thái tài khoản</h2>
         <p>{licenseSummary(user)}</p>
+        {canBrowsePackages(user) && (
+          <Link to={user.role === 'Admin' ? '/admin/packages' : '/packages'}>Xem danh mục gói</Link>
+        )}
         {personal && <p>Thời hạn hồ sơ: {dateLabel(user.licenseExpiresAt)}</p>}
         <button
           className="btn"
