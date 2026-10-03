@@ -1518,3 +1518,132 @@ test('layout: filter control baseline and centered organization popup on desktop
     ).toBeFocused();
   }
 });
+
+test('U1: trial, 402 keeps session, subscription recovery and refreshed status', async ({
+  page,
+}) => {
+  const calls = await stubApi(page);
+  let status = 'Trial';
+  let expiry = new Date(Date.now() + 2 * 86400000).toISOString();
+  let subscriptionBlocked = true;
+  await page.route('**/api/users/me', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          email: 'api@example.test',
+          fullName: 'Người dùng API',
+          role: 'Caregiver',
+          isActive: true,
+          organizationId: null,
+          licenseStatus: status,
+          licenseExpiresAt: expiry,
+        },
+      },
+    }),
+  );
+  await page.route('**/api/licenses/subscription', (route) =>
+    subscriptionBlocked
+      ? route.fulfill({ status: 402, json: { detail: 'License required' } })
+      : route.fulfill({
+          json: {
+            success: true,
+            data: {
+              id,
+              status: 'Active',
+              package: { id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+              startedAt: '2026-10-01T00:00:00Z',
+              trialEndsAt: null,
+              currentPeriodStart: '2026-10-01T00:00:00Z',
+              currentPeriodEnd: expiry,
+              autoRenew: false,
+              daysRemaining: 30,
+            },
+          },
+        }),
+  );
+  await login(page);
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+    'Đang dùng thử',
+  );
+  await page.getByRole('link', { name: 'Xem license', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Phiên đăng nhập vẫn được giữ');
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1')),
+  ).not.toBeNull();
+  expect(calls).not.toContain('/api/auth/refresh');
+  status = 'Active';
+  expiry = new Date(Date.now() + 30 * 86400000).toISOString();
+  subscriptionBlocked = false;
+  await page.getByRole('button', { name: 'Tải lại thông tin license' }).click();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+    'License đang hoạt động',
+  );
+  await expect(page.getByText('Personal', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await expect(page).toHaveURL(/\/auth\/login$/);
+  await expect(page.getByText('Personal', { exact: true })).toHaveCount(0);
+});
+
+for (const role of ['Staff', 'Admin', 'CenterAdmin']) {
+  test(`U1: ${role} does not request a personal subscription or require a purchase`, async ({
+    page,
+  }) => {
+    const calls = await stubApi(page, role === 'Staff' ? 'Caregiver' : role, id);
+    await login(page);
+    await page.getByRole('link', { name: 'Xem license', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Trạng thái tài khoản' })).toBeVisible();
+    await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+      'không yêu cầu license cá nhân',
+    );
+    await expect(page.getByRole('heading', { name: 'Subscription cá nhân' })).toHaveCount(0);
+    expect(calls).not.toContain('/api/licenses/subscription');
+  });
+}
+
+test('U1: missing license, expired grace and failed subscription never display fake Active data', async ({
+  page,
+}) => {
+  await stubApi(page);
+  await login(page);
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+    'Chưa xác định',
+  );
+  await page.route('**/api/users/me', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          email: 'api@example.test',
+          fullName: 'Người dùng API',
+          role: 'Caregiver',
+          isActive: true,
+          organizationId: null,
+          licenseStatus: 'Expired',
+          licenseExpiresAt: new Date(Date.now() - 86400000).toISOString(),
+        },
+      },
+    }),
+  );
+  await page.route('**/api/licenses/subscription', (route) =>
+    route.fulfill({ status: 404, json: { detail: 'Not found' } }),
+  );
+  await page.goto('/license');
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+    'gia hạn 3 ngày',
+  );
+  await expect(
+    page.getByText('Máy chủ chưa tìm thấy subscription cho tài khoản này.'),
+  ).toBeVisible();
+  await page.route('**/api/licenses/subscription', (route) =>
+    route.fulfill({ status: 503, json: { detail: 'Server unavailable' } }),
+  );
+  await page.getByRole('button', { name: 'Tải lại thông tin license' }).click();
+  await expect(page.getByRole('alert')).toContainText('Server unavailable');
+  await expect(page.getByText('Đang hoạt động', { exact: true })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Hồ sơ của tôi' }).click();
+  await expect(page).toHaveURL(/\/profile$/);
+});

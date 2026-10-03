@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { X, Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ServiceError } from '../services/contracts';
 export const Brand = () => (
   <Link className="brand" to="/">
     <Eye size={32} />
@@ -51,6 +52,9 @@ export function State({
     return (
       <div className="notice error stack" role="alert">
         <strong>{error.message}</strong>
+        {error instanceof ServiceError && error.status === 402 && (
+          <Link to="/license">Xem trạng thái license</Link>
+        )}
         {retry && (
           <button className="btn" onClick={retry}>
             Thử lại
