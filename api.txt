@@ -1135,3 +1135,5 @@ Mapping mới:
 - U7a: GET/POST /api/webrtc/ice-servers; PUT/DELETE /api/webrtc/ice-servers/{id}.
 - SIGNALR /hubs/location: RelayOffer -> WebRtcOffer; RelayAnswer -> WebRtcAnswer; RelayIceCandidate -> WebRtcIceCandidate. Không tính là REST.
 - Các API mới khác trong snapshot (called, public configs, faces me/identify, GPS me/batch, navigation batch) cần đối chiếu role/handler trước khi phân loại Web/Mobile chính thức; không tự mở UI chỉ vì Swagger có path.
+
+XÁC NHẬN BE 2026-10-03: /api/licenses được pass-through cho None/Expired; Staff có organization_id hợp lệ bypass license cá nhân; first Personal link inherit nếu VIU chưa có license. Chờ source/deploy verification vì local chưa thấy fixes. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforce 1 VIU theo gói. Không thay giới hạn FE hiện có thành 1.

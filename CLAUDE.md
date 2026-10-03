@@ -56,7 +56,7 @@ YOLOv8n xử lý NEAR ngay trên Mobile; MEDIUM/FAR dùng Hybrid Pipeline qua BE
 
 Scope mới có License Management, PayOS checkout, WebRTC audio/video, Standalone và quản trị Hybrid AI. PayOS là gateway duy nhất theo báo cáo mới; không tự thêm cổng khác hoặc scene captioning tổng quát. Không suy ra hạ tầng triển khai từ logo/sơ đồ mẫu. Backend quản lý webhook/signature, entitlement, license pool và TURN credential; FE không giữ PayOS secret hoặc tự cấp license.
 
-Mặc định nghiệp vụ mới: trial 7 ngày/1 VIU, Personal 99.000 VND/tháng/1 VIU, Business 4.500.000 VND/tháng/50 VIUs, grace 3 ngày. Lấy giá/quota/feature flags từ API. Staff không consume pool, VIU tổ chức có consume; CenterAdmin không cần subscription cá nhân. Standalone dùng VIU tổ chức + Staff Caregiver và contacts flexible, không phải role mới. Policy NONE/EXPIRED, read-only so với 402 và quota link so với quota license còn điểm chưa thống nhất: xử lý ở U0 trong PLAN.md, không tự quyết định bằng UI.
+Mặc định nghiệp vụ mới: trial 7 ngày/≤3 VIU, Personal 99.000 VND/tháng/≤3 VIU, Business 4.500.000 VND/tháng/50 VIUs, grace 3 ngày. Lấy giá/feature flags từ API; B2C dùng MaxViusPerCaregiver=3, không enforce quota theo gói. Staff không consume pool, VIU tổ chức có consume; CenterAdmin không cần subscription cá nhân. Standalone dùng VIU tổ chức + Staff Caregiver và contacts flexible, không phải role mới. Policy NONE/EXPIRED, read-only so với 402 còn cần đối chiếu runtime; giới hạn B2C 3 VIU đã được chốt: xử lý ở U0 trong PLAN.md, không tự quyết định bằng UI.
 
 WebRTC có CAREGIVER_INITIATED, VIU_VOICE_COMMAND, SOS_AUTO; signaling dự kiến SignalR, media WebRTC/STUN/TURN. Chỉ triển khai sau xác minh contract, quyền, consent và Mobile; không tự bật mic/camera vượt permission. Return URL PayOS không chứng minh thanh toán: chỉ unlock sau đọc trạng thái authoritative của BE. Roadmap mới không phải yêu cầu tự triển khai tất cả khi đọc tài liệu.
 
@@ -185,7 +185,7 @@ Các số dưới đây là mặc định trong tài liệu; lấy cấu hình/l
 
 | Quy tắc | Mặc định / hành vi |
 |---|---|
-| VIUs trên một Caregiver | Rule cũ 3 active links; scope mới Trial/Personal 1 VIU. U0 phải tách quota subscription khỏi giới hạn link, lấy entitlement/usage theo BE; không thay mọi số 3 bằng 1 |
+| VIUs trên một Caregiver | Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver=3; không quota enforcement B2C theo gói |
 | Caregivers trên một VIU | Tối đa 3: 1 primary + 2 secondary |
 | Primary Caregiver | Một primary active; quy trình gỡ/chuyển không để UI giả tạo hoàn thành khi backend từ chối |
 | Face registry | Tối đa 20 người/VIU; ít nhất 3 ảnh để active |

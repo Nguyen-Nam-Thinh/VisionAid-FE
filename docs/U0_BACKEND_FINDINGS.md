@@ -2,6 +2,10 @@
 
 Ngày 2026-10-03. BE local commit e56c545 (merge WebRTC); FE base 5692a87. Đã đọc source và GET OpenAPI công khai https://api.visionaid.net/swagger/v1/swagger.json. Chưa đăng nhập, chưa tạo/sửa dữ liệu, chưa tạo payment/link/call hoặc test Mobile. Không lưu mật khẩu người dùng vào tài liệu.
 
+## Cập nhật sau xác nhận của người dùng 2026-10-03
+
+Các nhận xét source bên dưới là lịch sử tại e56c545, không phải các lỗi vẫn đang chờ quyết định. Nhóm BE xác nhận đã sửa pass-through /api/licenses và exemption Staff Caregiver có organization_id hợp lệ, bổ sung inherit ở first Personal link khi VIU chưa có license. B2C Trial/Personal tối đa 3 VIU, không enforce quota theo gói; nhận định “cần enforce 1 VIU” được rút lại. Local hiện chưa có các fixes nên chưa xác minh source/runtime. Người dùng đã cho phép tạo/sửa dữ liệu test.
+
 ## Kết quả kiểm kê
 
 Swagger hiện có **140 operations: giữ 107 cũ, thêm 33, không mất method/path cũ**. Response/behavior của API cũ vẫn cần regression. Danh mục và schema request công khai ở [U0_OPENAPI_2026-10-03.md](U0_OPENAPI_2026-10-03.md). 44 callers FE hiện tại không tăng vì nhiệm vụ này chỉ khảo sát.
@@ -45,7 +49,7 @@ Nguồn: Shared/VisionAid.Shared/Middleware/LicenseValidationMiddleware.cs; API/
 ## Những điểm nhóm BE cần xác nhận hoặc sửa trước checkpoint phụ thuộc
 
 1. **Billing và activate-key khi hết hạn (U1/U3/U5):** allowlist đúng endpoint đọc gói/subscription/kích hoạt nếu đó là luồng khôi phục quyền dự kiến. FE không nên gọi ẩn danh hoặc hardcode packageId để lách middleware. Cần thống nhất read-only hay 402 cho dashboard; source hiện là 402.
-2. **Personal 1 VIU (U4):** CreateUserHandler chưa kiểm quota gói; CreateCaregiverLinkHandler dùng BusinessRules.MaxViusPerCaregiver=3. MaxViuPerLicense có trong package CRUD nhưng chưa thấy enforcement ở create/link. Cần BE xác định primary/secondary nào consume quota và expose usage; FE không tự thay mọi giới hạn 3 thành 1.
+2. **ĐÃ CHỐT — không phải lỗi quota (U4):** Mô tả 1 VIU trong tài liệu sai; Trial/Personal tối đa 3 VIU. Nhận xét khảo sát ban đầu: CreateUserHandler chưa kiểm quota gói; CreateCaregiverLinkHandler dùng BusinessRules.MaxViusPerCaregiver=3. MaxViuPerLicense có trong package CRUD nhưng chưa thấy enforcement ở create/link. Cần BE xác định primary/secondary nào consume quota và expose usage; FE không tự thay mọi giới hạn 3 thành 1.
 3. **Staff Caregiver và org chưa có pool (U1/U4):** tạo staff không set license; null được reader coi None, middleware có thể chặn staff. ViuLicenseService trả về không gán khi không tìm thấy active pool nên có thể tạo VIU chưa có license thay vì từ chối. Cần chốt hành vi này; chỉ pool full khi đã có active pool mới đi vào handler gán.
 4. **Gia hạn trước hạn (U3):** now + DurationDays có thể làm mất ngày còn lại nếu mua sớm; topup cũng đặt expiry theo now. Đề nghị BE xác nhận có chủ ý hay đổi công thức. Không hứa “cộng thêm tháng còn lại” trên Web hiện tại.
 5. **Payment status và key management (U3/U5):** chưa có GET payment theo ID/filter ID, chỉ history page/pageSize; chưa thấy API list distributed keys theo org. Web có thể đọc lịch sử nhưng không suy ra một payment mất khỏi trang đầu là failed/success. Chốt bổ sung contract hoặc giới hạn chức năng rõ ràng trước triển khai màn tương ứng.
@@ -57,7 +61,7 @@ Phạm vi này là các điểm ảnh hưởng plan, chưa phải audit toàn b�
 
 ## Việc còn cần người dùng cung cấp
 
-- Xác nhận các tài khoản đã gửi là tài khoản test và phạm vi được tạo/sửa dữ liệu; tới test cách ly cần thêm một tổ chức + Staff/VIU khác org. Chưa lưu hoặc sử dụng credentials trong khảo sát này.
+- ĐÃ ĐƯỢC PHÉP tạo/sửa dữ liệu bằng tài khoản test; tới test cách ly cần thêm một tổ chức + Staff/VIU khác org. Chưa lưu hoặc sử dụng credentials trong khảo sát này.
 - Trước U3: PayOS đã cấu hình tạo-link/webhook chưa, cách test không chuyển tiền thật hoặc giao dịch test được phê duyệt; chỉ cần tình trạng, không gửi secret keys.
 - Trước U6: Mobile đã có WebRTC chưa, có thiết bị thử và TURN endpoint được cấu hình chưa; không cần gửi TURN secret qua chat.
 - Chính sách read-only/NONE/quota/gia hạn ở trên cần người dùng hoặc nhóm BE quyết định. Có thể bắt đầu phần U1 đọc profile license + xử lý 402, nhưng chưa nghiệm thu flow billing/activation/quota hoàn chỉnh trước khi chốt các điểm liên quan.
