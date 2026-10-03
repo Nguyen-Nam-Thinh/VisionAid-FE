@@ -2,7 +2,7 @@
 
 > Phạm vi: Web Frontend của VisionAid, dành cho Caregiver, Center Admin và Super Admin.
 > Cập nhật scope: 2026-10-03 theo VisionAid_Update_Report.docx và Luồng B2C - B2B.txt do người dùng cung cấp. Plan hiện hành là PLAN.md; lịch sử ở docs/PLAN_LEGACY_2026-10-03.md.
-> Web có 45 REST callers trên 140 operations đã kiểm kê (44 cũ + GET license subscription ở U1), SignalR vị trí/cảnh báo và UI mock cho phần chưa nối. U1 đã có trạng thái license, trang /license chỉ đọc, UX 402 giữ phiên; chờ user test live. PayOS, quản trị license/package/pool/key, WebRTC, Hybrid management chưa triển khai FE. Test fixture không thay nghiệm thu BE thật. Các mô tả snapshot 2026-09-21 bên dưới không được dùng để ghi đè trạng thái mới trong PLAN.md/api.txt.
+> Web có 49 REST callers trên 140 operations đã kiểm kê (44 cũ + subscription U1 + 4 API packages U2), SignalR vị trí/cảnh báo và UI mock cho phần chưa nối. U1 đã có trạng thái license, trang /license chỉ đọc, UX 402 giữ phiên; chờ user test live. U2 đã có quản trị gói Admin và danh mục theo role; chờ test live. PayOS, quản trị pool/key, WebRTC, Hybrid management chưa triển khai FE. Test fixture không thay nghiệm thu BE thật. Các mô tả snapshot 2026-09-21 bên dưới không được dùng để ghi đè trạng thái mới trong PLAN.md/api.txt.
 
 ## 1. Cách sử dụng và nguồn tham chiếu
 

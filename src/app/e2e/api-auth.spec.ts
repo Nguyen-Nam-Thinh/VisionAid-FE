@@ -1647,3 +1647,163 @@ test('U1: missing license, expired grace and failed subscription never display f
   await page.getByRole('link', { name: 'Hồ sơ của tôi' }).click();
   await expect(page).toHaveURL(/\/profile$/);
 });
+
+const u2Package = (packageType = 'Personal', isActive = true) => ({
+  id: packageType === 'Personal' ? id : '01900000-0000-7000-8000-000000000002',
+  name: packageType + ' test',
+  code: packageType.toUpperCase(),
+  packageType,
+  priceMonthly: 123000,
+  priceYearly: null,
+  currency: 'VND',
+  maxViuPerLicense: 1,
+  includedLicenses: 1,
+  trialDays: 7,
+  durationDays: 30,
+  isActive,
+  featureFlags: { webrtc: true },
+  createdAt: '2026-10-03T00:00:00Z',
+  updatedAt: '2026-10-03T00:00:00Z',
+});
+test('U2 Admin: create, detail popup, immutable fields, server errors and deactivate', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  let items = [u2Package()];
+  let fail = false;
+  let writes = 0;
+  await page.route('http://localhost:5176/api/licenses/packages**', (route) => {
+    const req = route.request();
+    const url = new URL(req.url());
+    if (req.method() === 'GET') {
+      const data = url.pathname.endsWith('/packages')
+        ? {
+            ...organizationPage(
+              items.filter(
+                (p) =>
+                  !url.searchParams.has('isActive') ||
+                  String(p.isActive) === url.searchParams.get('isActive'),
+              ),
+            ),
+            pageSize: 20,
+          }
+        : items.find((p) => url.pathname.endsWith(p.id));
+      return route.fulfill({ json: { success: true, data } });
+    }
+    writes++;
+    if (fail) return route.fulfill({ status: 409, json: { detail: 'Package conflict test' } });
+    const body = req.postDataJSON();
+    if (req.method() === 'POST') {
+      expect(body).not.toHaveProperty('isActive');
+      const created = { ...u2Package(), ...body, id: '01900000-0000-7000-8000-000000000003' };
+      items.push(created);
+      return route.fulfill({ status: 201, json: { success: true, data: created } });
+    }
+    expect(req.method()).toBe('PUT');
+    expect(body).not.toHaveProperty('code');
+    expect(body).not.toHaveProperty('packageType');
+    items = items.map((p) => (url.pathname.endsWith(p.id) ? { ...p, ...body } : p));
+    return route.fulfill({
+      json: { success: true, data: items.find((p) => url.pathname.endsWith(p.id)) },
+    });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Gói dịch vụ', exact: true }).click();
+  await expect(page).toHaveURL(/admin\/packages$/);
+  await page.getByRole('button', { name: 'Thêm gói', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Mã gói').fill('NEW_TEST');
+  await dialog.getByLabel('Loại gói').selectOption('Personal');
+  await dialog.getByLabel('Tên gói').fill('New package test');
+  await dialog.getByLabel('Giá tháng *', { exact: true }).fill('99000');
+  await dialog.getByLabel('Đơn vị tiền tệ').fill('VND');
+  await dialog.getByRole('button', { name: 'Tạo gói', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByText('New package test', { exact: true })).toBeVisible();
+  expect(writes).toBe(1);
+  await page.getByRole('button', { name: 'Chi tiết Personal test', exact: true }).click();
+  await expect(dialog.getByText(/PERSONAL.*Personal.*không thể thay đổi/)).toBeVisible();
+  await expect(dialog.getByLabel('Mã gói')).toHaveCount(0);
+  await dialog.getByLabel('Giá tháng *', { exact: true }).fill('234000');
+  await dialog.getByLabel('Đang mở bán').uncheck();
+  fail = true;
+  await dialog.getByRole('button', { name: 'Lưu gói', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Package conflict test');
+  await expect(dialog.getByLabel('Giá tháng *', { exact: true })).toHaveValue('234000');
+  fail = false;
+  await dialog.getByRole('button', { name: 'Lưu gói', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByLabel('Trạng thái gói').selectOption('false');
+  await expect(page.getByText('Personal test', { exact: true })).toBeVisible();
+  await expect(page.getByText('New package test', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Chi tiết Personal test', exact: true }).click();
+  await expect(dialog.getByLabel('Đang mở bán')).not.toBeChecked();
+  for (const width of [1440, 768]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const box = await dialog.boundingBox();
+    expect(box).not.toBeNull();
+    expect(Math.abs(box!.x + box!.width / 2 - width / 2)).toBeLessThan(3);
+    await page.screenshot({ path: 'test-results/u2-editor-' + width + '.png', fullPage: true });
+  }
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+});
+for (const role of ['Caregiver', 'CenterAdmin']) {
+  test('U2 catalog scope and forbidden admin: ' + role, async ({ page }) => {
+    await stubApi(page, role, role === 'CenterAdmin' ? id : null);
+    let available = true;
+    let calls = 0;
+    await page.route('http://localhost:5176/api/licenses/packages**', (route) => {
+      calls++;
+      expect(route.request().method()).toBe('GET');
+      expect(new URL(route.request().url()).pathname).toBe('/api/licenses/packages');
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            ...organizationPage(
+              available
+                ? [
+                    u2Package(),
+                    u2Package('Business'),
+                    {
+                      ...u2Package(),
+                      id: '01900000-0000-7000-8000-000000000003',
+                      name: 'Hidden inactive',
+                      isActive: false,
+                    },
+                  ]
+                : [],
+            ),
+            pageSize: 20,
+          },
+        },
+      });
+    });
+    await login(page);
+    await page.getByRole('link', { name: 'Gói dịch vụ', exact: true }).click();
+    const name = role === 'Caregiver' ? 'Personal test' : 'Business test';
+    await expect(page.getByText(name, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(role === 'Caregiver' ? 'Business test' : 'Personal test', { exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByText('Hidden inactive')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Thêm gói' })).toHaveCount(0);
+    available = false;
+    await page.getByRole('button', { name: 'Tải lại danh mục' }).click();
+    await expect(page.getByText(name, { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Chưa có gói phù hợp trên trang này.')).toBeVisible();
+    const count = calls;
+    await page.goto('/admin/packages');
+    await expect(page).toHaveURL(/forbidden$/);
+    expect(calls).toBe(count);
+  });
+}
+test('U2 Staff has no personal catalog and makes no package request', async ({ page }) => {
+  const calls = await stubApi(page, 'Caregiver', id);
+  await login(page);
+  await expect(page.getByRole('link', { name: 'Gói dịch vụ' })).toHaveCount(0);
+  await page.goto('/packages');
+  await expect(page.getByText(/License do tổ chức quản lý/)).toBeVisible();
+  expect(calls.some((c) => c.includes('/licenses/packages'))).toBe(false);
+});
