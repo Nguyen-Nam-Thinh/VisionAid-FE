@@ -1,4 +1,5 @@
 import { ApiNotifications } from '../pages/shared/ApiNotifications';
+import { ApiLicense, LicenseNotice } from '../pages/shared/ApiLicense';
 import { ApiRealtime } from '../components/ApiRealtime';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
 import { ApiTracking } from '../pages/shared/ApiTracking';
@@ -184,6 +185,7 @@ function Shell() {
             <p>Mỗi kết nối là một sự an tâm.</p>
           </div>
           <nav className="nav">
+            {runtime.mode === 'api' && <NavLink to="/license">License</NavLink>}
             <NavLink to="/profile">
               <UserRound size={18} />
               Hồ sơ của tôi
@@ -230,6 +232,7 @@ function Shell() {
             </span>
           </Link>
         </header>
+        {auth.mode === 'api' && <LicenseNotice user={user} />}
         {auth.mode === 'api' &&
           !signingOut &&
           (user.role === 'Caregiver' || (user.role === 'CenterAdmin' && user.orgId)) && (
@@ -294,6 +297,7 @@ export function App() {
                 element={runtime.mode === 'api' ? <ApiSession /> : <Dashboard />}
               />
               <Route path="profile" element={<Profile />} />
+              {runtime.mode === 'api' && <Route path="license" element={<ApiLicense />} />}
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>
                   <Route

@@ -3,7 +3,7 @@ Cập nhật kế hoạch: 2026-10-03. Danh sách 001–107 là snapshot OpenAPI
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. Các API License/Payment/WebRTC/Hybrid mới chưa cộng vào số này, chưa có caller FE.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng hiện tại 45/140 operations có caller Web. Payment/WebRTC/Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -1137,3 +1137,20 @@ Mapping mới:
 - Các API mới khác trong snapshot (called, public configs, faces me/identify, GPS me/batch, navigation batch) cần đối chiếu role/handler trước khi phân loại Web/Mobile chính thức; không tự mở UI chỉ vì Swagger có path.
 
 XÁC NHẬN BE 2026-10-03: /api/licenses được pass-through cho None/Expired; Staff có organization_id hợp lệ bypass license cá nhân; first Personal link inherit nếu VIU chưa có license. Chờ source/deploy verification vì local chưa thấy fixes. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforce 1 VIU theo gói. Không thay giới hạn FE hiện có thành 1.
+
+U1 — TRIỂN KHAI FE 2026-10-03 (chờ user test live)
+- GET /api/users/me: DA_NOI; src/services/api/auth.ts đọc licenseStatus/licenseExpiresAt.
+  Dùng: banner trong Shell trên các trang đã đăng nhập, /license, profile/session.
+  Thiếu/null/unknown status: hiển thị chưa xác định, không tự gán Active/None.
+- GET /api/licenses/subscription: DA_NOI; src/services/api/licenses.ts -> src/pages/shared/ApiLicense.tsx.
+  Route /license, mở từ banner “Xem license” hoặc sidebar “License”.
+  Chỉ gọi cho Caregiver không có organizationId. Staff/Admin/CenterAdmin không gọi subscription cá nhân.
+  DTO: id, status (Trial/Active/Expired/Cancelled/Suspended), package {id,name,code,packageType},
+  startedAt, trialEndsAt, currentPeriodStart, currentPeriodEnd, autoRenew, daysRemaining.
+  Hiển thị tên gói/trạng thái/thời hạn; query key theo user và org; refresh mỗi 60 giây/nút tải lại.
+  404: chưa tìm thấy subscription. 402: thông báo license và giữ phiên. 5xx/DTO sai: lỗi, không fallback Active.
+- HTTP adapter chung: 402 không logout/refresh token/retry mutation; State cung cấp link xem license.
+  Không thêm guard toàn cục; các luồng safety và quyền truy cập vẫn do BE kiểm soát.
+- Chưa có caller checkout/activate-key/pool/package ở U1. Trial/Personal tối đa 3 VIU là policy đã chốt.
+- Kiểm thử: 77 unit + 5 U1 E2E fixture đạt; chưa kiểm thử authenticated BE runtime cho U1.
+  Checklist: docs/API_STAGE_U1_TEST.md. Tổng caller hiện tại: 45/140; không yêu cầu mọi API phải dùng trên Web.

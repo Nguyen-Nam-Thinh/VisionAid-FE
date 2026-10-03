@@ -13,6 +13,8 @@ const profileSchema = z.object({
   organizationId: z.string().uuid().nullable(),
   isActive: z.boolean(),
   avatarUrl: z.string().nullable().optional(),
+  licenseStatus: z.string().nullable().optional(),
+  licenseExpiresAt: z.iso.datetime({ offset: true }).nullable().optional(),
 });
 type Tokens = z.infer<typeof tokensSchema>;
 export interface AuthStorage {
@@ -190,6 +192,8 @@ export function createApiAuth(
       orgId: p.organizationId ?? '',
       active: p.isActive,
       avatar: p.avatarUrl ?? undefined,
+      licenseStatus: p.licenseStatus,
+      licenseExpiresAt: p.licenseExpiresAt,
     };
   }
   async function profile(): Promise<Person> {

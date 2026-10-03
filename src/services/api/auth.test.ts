@@ -16,6 +16,31 @@ const user = {
   isActive: true,
 };
 const ok = (data: unknown) => Response.json({ success: true, data });
+
+it('maps nullable license fields and preserves session without refresh/replay on 402 reads and writes', async () => {
+  const storage = memory();
+  const calls: string[] = [];
+  const auth = createApiAuth('http://example.test', storage, async (url) => {
+    const path = new URL(String(url)).pathname;
+    calls.push(path);
+    if (path === '/api/auth/login') return ok(pair());
+    if (path === '/api/users/me')
+      return ok({ ...user, licenseStatus: 'Expired', licenseExpiresAt: '2026-10-01T00:00:00Z' });
+    return Response.json({ detail: 'Payment Required' }, { status: 402 });
+  });
+  expect(await auth.login(user.email, 'Password@1')).toMatchObject({
+    licenseStatus: 'Expired',
+    licenseExpiresAt: '2026-10-01T00:00:00Z',
+  });
+  await expect(auth.get('/api/blocked')).rejects.toMatchObject({ status: 402 });
+  await expect(auth.write('/api/blocked', { method: 'POST' })).rejects.toMatchObject({
+    status: 402,
+  });
+  expect(calls.filter((p) => p === '/api/blocked')).toHaveLength(2);
+  expect(calls).not.toContain('/api/auth/refresh');
+  expect(storage.getItem(authSessionKey)).not.toBeNull();
+  expect((await auth.session())?.id).toBe(user.id);
+});
 function memory() {
   const data = new Map<string, string>();
   const storage: AuthStorage = {

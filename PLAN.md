@@ -1,13 +1,13 @@
 # VisionAid Web — Plan cập nhật B2C, B2B, License, PayOS và WebRTC
 
-Cập nhật 2026-10-03. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. Chưa triển khai các chức năng mới.
+Cập nhật 2026-10-03. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1 đã triển khai FE; các đợt U2 trở đi chưa triển khai.
 
 **Kết quả U0 mới nhất:** đã đọc BE mới và OpenAPI deploy có 140 operations (33 mới, 107 cũ giữ nguyên). Đọc [docs/U0_BACKEND_FINDINGS.md](docs/U0_BACKEND_FINDINGS.md) trước các câu hỏi dự kiến bên dưới; tài liệu đó thay thế những giả định đã được xác minh. U0 mới hoàn tất kiểm kê/khảo sát, còn policy và test thật. Có FCM upsert. Người dùng xác nhận BE đã sửa billing allowlist, Staff exemption và kế thừa license khi first Personal link; local chưa có bản sửa để đối chiếu. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforcement quota theo gói. Không còn cần người dùng gửi lại vị trí BE/Swagger.
 
 ## 1. AI tiếp theo bắt đầu ở đâu
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
-2. Đợt tiếp theo được đề xuất là **U0 — đối chiếu BE cập nhật và chốt contract**. Chỉ bắt đầu khi người dùng yêu cầu triển khai. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+2. U1 đã triển khai và chờ người dùng test theo docs/API_STAGE_U1_TEST.md. Đợt kế tiếp là **U2 — danh mục gói và quản trị package**, chỉ bắt đầu khi người dùng yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
 3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
 4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
 5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
@@ -18,7 +18,7 @@ Cập nhật 2026-10-03. Base FE khảo sát U0: dev `5692a87`; BE local mới `
 - Code FE: src/app/App.tsx, src/services/api/*, src/models/domain.ts, src/pages/*; đã đối chiếu route đang mở và DTO hiện tại.
 - BE local ../VisionAid-BE/src đã cập nhật e56c545, có License/Payment/WebRTC. Chưa thấy API/pipeline Hybrid Guidance tương ứng trong phạm vi rà soát. Có entity không chứng minh tính năng chạy đầy đủ.
 - Swagger deploy: https://api.visionaid.net/swagger/index.html; đã GET schema public /swagger/v1/swagger.json. Source và endpoint đã đối chiếu trong báo cáo U0, chưa test authenticated runtime.
-- api.txt giữ snapshot 107 REST cũ và 44 caller Web; [snapshot U0](docs/U0_OPENAPI_2026-10-03.md) kiểm kê 140 operations. SignalR không tính như REST. Không suy ra DTO/quyền chỉ từ tên bảng DB.
+- api.txt giữ snapshot 107 REST cũ và bổ sung U1, tổng 45 caller Web; [snapshot U0](docs/U0_OPENAPI_2026-10-03.md) kiểm kê 140 operations. SignalR không tính như REST. Không suy ra DTO/quyền chỉ từ tên bảng DB.
 - Lịch sử triển khai và checklist cũ được giữ tại [docs/PLAN_LEGACY_2026-10-03.md](docs/PLAN_LEGACY_2026-10-03.md). File đó chỉ tra cứu lịch sử; thứ tự thực hiện hiện hành là plan này.
 
 ## 3. Phần đã làm và phần cần điều chỉnh
@@ -36,7 +36,7 @@ Cập nhật 2026-10-03. Base FE khảo sát U0: dev `5692a87`; BE local mới `
 | Sửa UI | Merge dev 88ab163: reset link, căn hàng, popup chi tiết/form | Giữ Dialog/Confirm dùng chung, focus và pending guard khi thêm màn mới |
 | 8c | FCM mới chuẩn bị; config/VAPID đã nhận | BE có PUT /api/auth/fcm-token; gỡ blocker upsert, còn test logout/revoke/nhiều tab |
 | 9–14 | Các route nghiệp vụ tương ứng còn ApiPending trong API mode | Giữ backlog, sắp lại thứ tự bên dưới; mock không phải API đã nối |
-| License/PayOS/WebRTC/Hybrid | Chưa có implementation FE | Các đợt U0–U9 dưới đây |
+| License/PayOS/WebRTC/Hybrid | U1: profile license, trang /license chỉ đọc và UX 402; PayOS/WebRTC/Hybrid chưa làm | U2–U9 bên dưới |
 
 Bằng chứng gần nhất: 74 unit tests; lint/build đạt; 30 kịch bản API fixture có kết quả đạt qua các lượt chạy và chạy lại; mock notifications/TTS/geofence/keyboard đạt; kiểm tra popup 1440/768px. Không phải live BE E2E. Email đã được người dùng nhận trong trao đổi trước, nên lỗi SMTP 500 cũ chỉ là lịch sử, không kết luận đang hỏng. Chưa có xác nhận nghiệm thu toàn bộ luồng reset hoặc CORS hiện tại.
 
@@ -99,14 +99,15 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 - Dữ liệu cần: B2C mới/trial/active/expired trong và ngoài grace/NONE; 2 org; staff có/không link; pool rỗng/đầy/hết hạn; key chưa dùng/đã dùng/hết hạn; VIU được phép và ngoài scope.
 - Test/bàn giao: bảng contract + mẫu response đã bỏ dữ liệu nhạy cảm + danh sách câu hỏi đã giải quyết. Người dùng xác nhận BE version và tài khoản test trước U1.
 
-### U1 — Entitlement và xử lý 402 [CHƯA LÀM; phụ thuộc U0]
+### U1 — Entitlement và xử lý 402 [ĐÃ TRIỂN KHAI FE; CHỜ USER TEST]
 
 - Chạm auth.ts/profileSchema, models/domain hoặc DTO riêng, HTTP adapter và Shell/guards theo contract; tránh rải check license ở từng trang.
 - Hiển thị trial, ngày hết hạn/grace và CTA phù hợp role; không biến thiếu field thành ACTIVE/NONE giả. Quyền thực thi do BE quyết định; đồng hồ UI chỉ hiển thị.
 - 402 không logout hoặc refresh lặp; không auto retry mutation. Billing/auth/logout và luồng safety theo allowlist đã xác minh vẫn truy cập được; không dùng toàn bộ Guard để chặn mọi route.
 - Refetch sau đăng ký/thanh toán/kích hoạt key/thu hồi/thay đổi scope; không lưu feature flags trong JWT/UI mãi mà không đồng bộ.
 - Test cùng nhau: register -> me/entitlement; login -> entitlement -> request bị 402 -> billing; hết grace khi tab đang mở; đổi account/org; CenterAdmin NONE và staff org; safety exceptions; server unavailable không giả license hợp lệ.
-- Điểm dừng: người dùng test từng trạng thái, đặc biệt 402 và role exemption.
+- Đã nối GET /api/licenses/subscription chỉ cho Caregiver cá nhân; GET /api/users/me ánh xạ licenseStatus/licenseExpiresAt. Route /license; banner trạng thái; refetch profile/subscription mỗi 60 giây và nút tải lại. Checkout/key chưa có nên không tạo CTA mua giả. Không thêm license guard chặn route; 402 giữ phiên, không tự replay mutation. Các flow payment/key/revoke sẽ invalidation ở đợt triển khai tương ứng.
+- Kiểm tra: 77 unit tests, lint/build đạt; 5 E2E U1 fixture đạt (không thay live BE nghiệm thu). Checklist: docs/API_STAGE_U1_TEST.md. Điểm dừng: người dùng test từng trạng thái, đặc biệt 402 và role exemption.
 
 ### U2 — Danh mục gói và quản trị package [CHƯA LÀM; U0/U1]
 
@@ -222,7 +223,8 @@ Ghi trong bảng dưới: commit FE + BE/OpenAPI version đã dùng; route/API �
 | Checkpoint | Code | Contract | Fixture | Người dùng test thật | Việc tiếp |
 |---|---|---|---|---|---|
 | U0 | Đã khảo sát source/OpenAPI, chưa runtime | Đã có 140 endpoints; báo cáo U0 ghi chênh lệch | Chỉ kiểm tra tài liệu | Chưa test authenticated | Ba quyết định đã chốt; chờ source/deploy fixes và regression; đã được phép tạo/sửa dữ liệu test |
-| U1–U5 | Chưa làm | Chờ U0 | Chưa chạy | Chưa test | Theo thứ tự mục 6 |
+| U1 | Đã triển khai FE | Đọc profile/subscription, xử lý 402 | 77 unit + 5 U1 E2E fixture, lint/build đạt | Chưa test live | Dừng theo docs/API_STAGE_U1_TEST.md |
+| U2–U5 | Chưa làm | Contract đã kiểm kê U0 | Chưa chạy | Chưa test | Theo thứ tự mục 6 |
 | 8c | Chuẩn bị config, chưa runtime | Có upsert mới; revoke/logout/nhiều tab cần test | Chưa chạy push | Chưa test | Dùng PUT auth/fcm-token, kiểm tra lifecycle |
 | U6a/U6b | Chưa làm | Chờ WebRTC + Mobile + TURN | Chưa chạy | Chưa test | Sau U4 và hợp đồng signaling |
 | 9–13, U7–U9 | Chưa nối theo phạm vi trên | API cũ cần đối chiếu lại; API mới chờ U0 | Chưa chạy phạm vi mới | Chưa test | Thực hiện từng checkpoint |
