@@ -1,5 +1,7 @@
 import { ApiNotifications } from '../pages/shared/ApiNotifications';
 import { ApiPackages } from '../pages/shared/ApiPackages';
+import { ApiPayments } from '../pages/shared/ApiPayments';
+import { paymentResumeTarget } from '../services/api/payments';
 import { ApiLicense, LicenseNotice } from '../pages/shared/ApiLicense';
 import { ApiRealtime } from '../components/ApiRealtime';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
@@ -14,7 +16,16 @@ import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
 import { features } from './features';
 import { useState, useEffect, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, NavLink, Outlet, Link } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  NavLink,
+  Outlet,
+  Link,
+  useLocation,
+} from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LogOut, Menu, LayoutDashboard, UserRound, ShieldCheck } from 'lucide-react';
 import { useAuth, useSession } from '../hooks/useService';
@@ -27,6 +38,7 @@ export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 });
 export function Guard({ role }: { role?: string }) {
+  const location = useLocation();
   const q = useSession();
   const auth = useAuth();
   if (q.isPending)
@@ -44,7 +56,14 @@ export function Guard({ role }: { role?: string }) {
         <Link to="/auth/login">Đăng nhập</Link>
       </div>
     );
-  if (!q.data) return <Navigate to="/auth/login" replace />;
+  if (!q.data)
+    return (
+      <Navigate
+        to="/auth/login"
+        state={{ returnTo: paymentResumeTarget(location.pathname + location.search) }}
+        replace
+      />
+    );
   if (!['Caregiver', 'CenterAdmin', 'Admin'].includes(q.data.role))
     return (
       <main className="main">
@@ -187,6 +206,11 @@ function Shell() {
           </div>
           <nav className="nav">
             {runtime.mode === 'api' && <NavLink to="/license">License</NavLink>}
+            {runtime.mode === 'api' && user.role === 'Caregiver' && !user.orgId && (
+              <NavLink to="/caregiver/payments" onClick={() => setOpen(false)}>
+                Thanh toán
+              </NavLink>
+            )}
             {runtime.mode === 'api' &&
               (user.role === 'Admin' ||
                 user.role === 'CenterAdmin' ||
@@ -309,6 +333,13 @@ export function App() {
                 element={runtime.mode === 'api' ? <ApiSession /> : <Dashboard />}
               />
               <Route path="profile" element={<Profile />} />
+              {runtime.mode === 'api' && (
+                <>
+                  <Route path="caregiver/payments" element={<ApiPayments />} />
+                  <Route path="payments/return" element={<ApiPayments result />} />
+                  <Route path="payments/cancel" element={<ApiPayments result />} />
+                </>
+              )}
               {runtime.mode === 'api' && <Route path="packages" element={<ApiPackages />} />}
               {runtime.mode === 'api' && (
                 <Route element={<Guard role="Admin" />}>

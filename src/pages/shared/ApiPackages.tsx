@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { PersonalCheckout } from './ApiPayments';
+import { isPersonalCaregiver } from '../../services/api/licenses';
+import { canCheckout } from '../../services/api/payments';
 import { Form, type FieldSpec } from '../../components/Form';
 import { Dialog, PageHead, State } from '../../components/UI';
 import {
@@ -61,6 +64,8 @@ export function ApiPackages({ admin = false }: { admin?: boolean }) {
   ) : null;
 }
 function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
+  const personal = isPersonalCaregiver(actor);
+  const [checkout, setCheckout] = useState<LicensePackage | null>(null);
   const allowed = canBrowsePackages(actor) && (!admin || actor.role === 'Admin');
   const [page, setPage] = useState(1);
   const [active, setActive] = useState('');
@@ -86,7 +91,9 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
         description={
           admin
             ? 'Tạo và cập nhật cấu hình gói trên máy chủ.'
-            : 'Thông tin gói hiện hành từ máy chủ. Thanh toán sẽ được mở ở đợt tiếp theo.'
+            : personal
+              ? 'Chọn gói Personal và tạo đơn thanh toán qua PayOS.'
+              : 'Thông tin gói hiện hành từ máy chủ. Thanh toán tổ chức sẽ được mở ở đợt tiếp theo.'
         }
         actions={
           admin && (
@@ -146,7 +153,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                   <th>Giá tháng</th>
                   <th>Thời hạn</th>
                   <th>License</th>
-                  {admin && <th>Thao tác</th>}
+                  {(admin || personal) && <th>Thao tác</th>}
                 </tr>
               </thead>
               <tbody>
@@ -173,6 +180,17 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                         ? 'Tối đa 3 VIU theo chính sách B2C'
                         : `${p.includedLicenses} license bao gồm`}
                     </td>
+                    {personal && (
+                      <td>
+                        {canCheckout(p) ? (
+                          <button className="btn primary" onClick={() => setCheckout(p)}>
+                            Chọn gói {p.name}
+                          </button>
+                        ) : (
+                          <span>Gói chưa hỗ trợ thanh toán online.</span>
+                        )}
+                      </td>
+                    )}
                     {admin && (
                       <td>
                         <button
@@ -224,6 +242,9 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
           )}
         </State>
       </section>
+      {checkout && personal && (
+        <PersonalCheckout actor={actor} item={checkout} onClose={() => setCheckout(null)} />
+      )}
       {selected && admin && (
         <PackageEditor
           key={selected}

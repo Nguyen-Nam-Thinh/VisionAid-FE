@@ -1807,3 +1807,228 @@ test('U2 Staff has no personal catalog and makes no package request', async ({ p
   await expect(page.getByText(/License do tổ chức quản lý/)).toBeVisible();
   expect(calls.some((c) => c.includes('/licenses/packages'))).toBe(false);
 });
+
+const u3Order = '1791000000000';
+test('U3a: pending polling stops after one minute and manual refresh remains available', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let reads = 0;
+  await page.route('http://localhost:5176/api/payments/history?*', (route) => {
+    reads++;
+    return route.fulfill({ json: { success: true, data: organizationPage([u3Transaction()]) } });
+  });
+  await login(page);
+  await page.clock.install();
+  await page.goto('/payments/return?orderCode=' + u3Order);
+  await expect(page.getByRole('status')).toHaveText('Đang chờ thanh toán');
+  await page.clock.fastForward(61000);
+  await expect(page.getByText(/Đã hết thời gian chờ tự động/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Kiểm tra lại thanh toán' })).toBeEnabled();
+  const stopped = reads;
+  await page.clock.fastForward(30000);
+  expect(reads).toBe(stopped);
+  await page.getByRole('button', { name: 'Kiểm tra lại thanh toán' }).click();
+  await expect.poll(() => reads).toBe(stopped + 1);
+});
+test('U3a: staff cannot read personal payments', async ({ page }) => {
+  const calls = await stubApi(page, 'Caregiver', id);
+  await login(page);
+  await page.goto('/payments/return?orderCode=' + u3Order);
+  await expect(page.getByText(/Luồng thanh toán này dành cho Caregiver cá nhân/)).toBeVisible();
+  expect(calls.some((path) => path.startsWith('/api/payments'))).toBe(false);
+});
+const u3Transaction = (status = 'Pending') => ({
+  id,
+  payosOrderId: u3Order,
+  transactionType: 'SubscriptionRenew',
+  status,
+  amount: 123000,
+  currency: 'VND',
+  payosCheckoutUrl: 'https://pay.payos.vn/web/test-payment',
+  failureReason: null,
+  paidAt: status === 'Success' ? '2026-10-03T00:00:00Z' : null,
+  createdAt: '2026-10-03T00:00:00Z',
+});
+test('U3a: one create, safe checkout, spoofed PAID ignored, delayed success refreshes license', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let created = 0;
+  let status = 'Pending';
+  let profileReads = 0;
+  let subReads = 0;
+  await page.route('http://localhost:5176/api/users/me', (route) => {
+    profileReads++;
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          fullName: 'Test caregiver',
+          email: 'api@example.test',
+          role: 'Caregiver',
+          isActive: true,
+          organizationId: null,
+          licenseStatus: status === 'Success' ? 'Active' : 'Expired',
+          licenseExpiresAt: '2026-11-03T00:00:00Z',
+        },
+      },
+    });
+  });
+  await page.route('http://localhost:5176/api/licenses/packages**', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([u2Package()]) } }),
+  );
+  await page.route('http://localhost:5176/api/payments/create-link', async (route) => {
+    created++;
+    expect(route.request().postDataJSON()).toEqual({
+      packageId: id,
+      returnUrl: 'http://localhost:5176/payments/return',
+      cancelUrl: 'http://localhost:5176/payments/cancel',
+    });
+    await route.fulfill({
+      json: {
+        success: true,
+        data: {
+          transactionId: id,
+          checkoutUrl: u3Transaction().payosCheckoutUrl,
+          paymentLinkId: 'test-payment',
+          orderCode: Number(u3Order),
+          amount: 123000,
+          currency: 'VND',
+        },
+      },
+    });
+  });
+  await page.route('http://localhost:5176/api/payments/history?*', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([u3Transaction(status)]) } }),
+  );
+  await page.route('http://localhost:5176/api/licenses/subscription', (route) => {
+    subReads++;
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          status: 'Active',
+          package: { id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+          startedAt: '2026-10-03T00:00:00Z',
+          trialEndsAt: null,
+          currentPeriodStart: '2026-10-03T00:00:00Z',
+          currentPeriodEnd: '2026-11-03T00:00:00Z',
+          autoRenew: false,
+          daysRemaining: 30,
+        },
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/packages');
+  await page.getByRole('button', { name: 'Chọn gói Personal test' }).click();
+  await page
+    .getByRole('button', { name: 'Tạo đơn thanh toán', exact: true })
+    .evaluate((button: HTMLButtonElement) => {
+      button.click();
+      button.click();
+    });
+  await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toHaveAttribute(
+    'href',
+    'https://pay.payos.vn/web/test-payment',
+  );
+  expect(created).toBe(1);
+  await page.goto('/payments/return?orderCode=' + u3Order + '&status=PAID');
+  await expect(page.getByRole('status')).toHaveText('Đang chờ thanh toán');
+  expect(subReads).toBe(0);
+  const before = profileReads;
+  status = 'Success';
+  await page.getByRole('button', { name: 'Kiểm tra lại thanh toán' }).click();
+  await expect(page.getByText('Thanh toán thành công', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Subscription hiện tại: Đang hoạt động/)).toBeVisible();
+  await expect.poll(() => profileReads).toBeGreaterThan(before);
+  expect(subReads).toBeGreaterThan(0);
+  await page.reload();
+  await expect(page.getByText('Thanh toán thành công', { exact: true })).toBeVisible();
+  expect(created).toBe(1);
+});
+test('U3a: cancel return is read-only until confirmed, history restores pending order', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let status = 'Pending';
+  let cancelled = 0;
+  await page.route('http://localhost:5176/api/payments/history?*', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([u3Transaction(status)]) } }),
+  );
+  await page.route('http://localhost:5176/api/payments/' + id + '/cancel', (route) => {
+    expect(route.request().method()).toBe('DELETE');
+    cancelled++;
+    status = 'Cancelled';
+    return route.fulfill({ json: { success: true, message: 'Cancelled' } });
+  });
+  await login(page);
+  await page.goto('/caregiver/payments');
+  await page.getByRole('link', { name: 'Xem trạng thái', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Đang chờ thanh toán');
+  await page.goto('/payments/cancel?orderCode=' + u3Order + '&cancel=true');
+  await expect(page.getByRole('status')).toHaveText('Đang chờ thanh toán');
+  expect(cancelled).toBe(0);
+  await page.getByRole('button', { name: 'Hủy đơn thanh toán', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('status')).toHaveText('Đã hủy');
+  expect(cancelled).toBe(1);
+  await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toHaveCount(0);
+});
+test('U3a: login resumes order; another accounts order and URL status confer no success', async ({
+  page,
+}) => {
+  await stubApi(page);
+  await page.route('http://localhost:5176/api/payments/history?*', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([]) } }),
+  );
+  await page.goto('/payments/return?orderCode=' + u3Order + '&status=PAID');
+  await expect(page).toHaveURL(/auth\/login$/);
+  await page.reload();
+  await page.getByLabel('Địa chỉ email').fill('api@example.test');
+  await page.getByLabel('Mật khẩu *', { exact: true }).fill('Password@1');
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp('/payments/return\\?orderCode=' + u3Order + '$'));
+  await expect(page.getByText(/Chưa tìm thấy giao dịch trong lịch sử/)).toBeVisible();
+  await expect(page.getByText('Thanh toán thành công', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hủy đơn thanh toán', exact: true })).toHaveCount(
+    0,
+  );
+});
+test('U3a: uncertain create is not retried and unsafe checkout is not opened', async ({ page }) => {
+  await stubApi(page);
+  let writes = 0;
+  await page.route('http://localhost:5176/api/licenses/packages**', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([u2Package()]) } }),
+  );
+  await page.route('http://localhost:5176/api/payments/create-link', (route) => {
+    writes++;
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          transactionId: id,
+          checkoutUrl: 'https://evil.example/pay',
+          paymentLinkId: 'x',
+          orderCode: Number(u3Order),
+          amount: 123000,
+          currency: 'VND',
+        },
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/packages');
+  await page.getByRole('button', { name: 'Chọn gói Personal test' }).click();
+  await page.getByRole('button', { name: 'Tạo đơn thanh toán', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('không thuộc PayOS');
+  await expect(
+    page.getByRole('button', { name: 'Tạo đơn thanh toán', exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toHaveCount(0);
+  expect(writes).toBe(1);
+});
