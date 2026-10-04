@@ -1,11 +1,23 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+  useLocation,
+} from 'react-router-dom';
+import { paymentResumeTarget } from '../../services/api/payments';
 import { Eye, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { Form, type FieldSpec } from '../../components/Form';
 import { useAuth, useDemoAccounts, useSession } from '../../hooks/useService';
 import { roles } from '../../constants/labels';
 import { useUI } from '../../stores/ui';
 export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
+  const location = useLocation();
+  const returnTo =
+    paymentResumeTarget((location.state as { returnTo?: unknown } | null)?.returnTo) ??
+    '/dashboard';
   const { action: routeAction = 'login' } = useParams();
   const action = fixedAction ?? routeAction;
   const [search] = useSearchParams();
@@ -21,7 +33,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
   const [message, setMessage] = useState('');
   const emailReset = auth.mode === 'api' && action === 'reset';
   const validResetLink = !!resetToken && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail);
-  if (user && action !== 'reset') return <Navigate to="/dashboard" replace />;
+  if (user && action !== 'reset') return <Navigate to={returnTo} replace />;
   const titles: Record<string, string> = {
     login: 'Chào mừng trở lại.',
     register: 'Bắt đầu đồng hành.',
@@ -167,13 +179,13 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
                 setMessage('');
                 if (action === 'login') {
                   await auth.login(String(v.email), String(v.password));
-                  nav('/dashboard');
+                  nav(returnTo, { replace: true });
                 }
                 if (action === 'register') {
                   if (auth.mode === 'api' && v.password !== v.confirm)
                     throw Error('Mật khẩu xác nhận không khớp.');
                   await auth.register(String(v.name), String(v.email), String(v.password));
-                  nav('/dashboard');
+                  nav(returnTo, { replace: true });
                 }
                 if (action === 'recover') {
                   const code = await auth.recover(String(v.email));

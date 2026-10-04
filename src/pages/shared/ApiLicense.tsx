@@ -107,8 +107,8 @@ export function ApiLicense() {
               theo liên kết.
             </p>
             <p className="notice">
-              Chức năng mua, gia hạn và nhập key trên Web chưa được mở. Nếu license đã được cập nhật
-              qua kênh khác, hãy tải lại thông tin tại đây.
+              Bạn có thể mua hoặc gia hạn gói Personal từ danh mục gói. Nhập key chưa được mở. Nếu
+              license đã được cập nhật qua kênh khác, hãy tải lại thông tin tại đây.
             </p>
           </>
         )}
