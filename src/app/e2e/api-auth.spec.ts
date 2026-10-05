@@ -1313,9 +1313,11 @@ test('8a SignalR: receives event, refreshes REST and stops after logout', async 
     return route.fulfill({ json: { success: true, data: organizationPage([]) } });
   });
   await login(page);
-  await expect(page.getByText(/Đã kết nối realtime/)).toBeVisible();
+  await expect.poll(() => typeof send).toBe('function');
+  await expect(page.getByText(/Đã kết nối realtime/)).toHaveCount(0);
   await page.goto('/caregiver/alerts');
-  await expect(page.getByText(/Đã kết nối realtime/)).toBeVisible();
+  await expect.poll(() => typeof send).toBe('function');
+  await expect(page.getByText(/Đã kết nối realtime/)).toHaveCount(0);
   await expect(page.getByText('Không có cảnh báo phù hợp.')).toBeVisible();
   await page.waitForTimeout(400);
   const before = reads;
@@ -1564,10 +1566,11 @@ test('U1: trial, 402 keeps session, subscription recovery and refreshed status',
         }),
   );
   await login(page);
-  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toHaveCount(0);
+  await page.goto('/license');
+  await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
     'Đang dùng thử',
   );
-  await page.getByRole('link', { name: 'Xem license', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Phiên đăng nhập vẫn được giữ');
   expect(
     await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1')),
@@ -1578,7 +1581,7 @@ test('U1: trial, 402 keeps session, subscription recovery and refreshed status',
   subscriptionBlocked = false;
   await page.getByRole('button', { name: 'Tải lại thông tin license' }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+  await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
     'License đang hoạt động',
   );
   await expect(page.getByText('Personal', { exact: true })).toBeVisible();
@@ -1593,9 +1596,9 @@ for (const role of ['Staff', 'Admin', 'CenterAdmin']) {
   }) => {
     const calls = await stubApi(page, role === 'Staff' ? 'Caregiver' : role, id);
     await login(page);
-    await page.getByRole('link', { name: 'Xem license', exact: true }).click();
+    await page.getByRole('link', { name: 'License', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Trạng thái tài khoản' })).toBeVisible();
-    await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+    await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
       'không yêu cầu license cá nhân',
     );
     await expect(page.getByRole('heading', { name: 'Subscription cá nhân' })).toHaveCount(0);
@@ -1608,7 +1611,9 @@ test('U1: missing license, expired grace and failed subscription never display f
 }) => {
   await stubApi(page);
   await login(page);
-  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toHaveCount(0);
+  await page.goto('/license');
+  await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
     'Chưa xác định',
   );
   await page.route('**/api/users/me', (route) =>
@@ -1632,7 +1637,7 @@ test('U1: missing license, expired grace and failed subscription never display f
     route.fulfill({ status: 404, json: { detail: 'Not found' } }),
   );
   await page.goto('/license');
-  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+  await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
     'gia hạn 3 ngày',
   );
   await expect(
