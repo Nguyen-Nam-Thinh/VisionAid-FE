@@ -88,7 +88,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
           <strong style={{ fontSize: 24 }}>VisionAid.</strong>
         </div>
         <div className="stack">
-          <span className="eyebrow" style={{ color: '#d5e0ff' }}>
+          <span className="eyebrow" style={{ color: 'var(--on-primary)' }}>
             Một kết nối. Nhiều an tâm.
           </span>
           <h1>

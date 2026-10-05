@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import {
   ArrowRight,
   BellRing,
@@ -9,6 +10,8 @@ import {
   Smartphone,
   Users,
   Volume2,
+  Menu,
+  X,
 } from 'lucide-react';
 import { Brand } from '../../components/UI';
 import './landing.css';
@@ -35,16 +38,20 @@ const capabilities = [
 ];
 
 export function Landing() {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="landing">
       <a className="skip" href="#landing-main">
         Đến nội dung chính
       </a>
       <header className="landing-header landing-wrap">
-        <Link to="/" aria-label="VisionAid — Trang chủ">
-          <Brand />
-        </Link>
-        <nav aria-label="Điều hướng trang chủ" className="landing-nav">
+        <Brand />
+        <nav
+          id="landing-navigation"
+          aria-label="Điều hướng trang chủ"
+          className={'landing-nav' + (menuOpen ? ' is-open' : '')}
+          onClick={() => setMenuOpen(false)}
+        >
           <a href="#features">Tính năng</a>
           <a href="#how-it-works">Cách hoạt động</a>
           <a href="#for-you">Dành cho ai?</a>
@@ -52,6 +59,15 @@ export function Landing() {
         <Link className="btn" to="/auth/login">
           Đăng nhập <ArrowRight size={16} aria-hidden="true" />
         </Link>
+        <button
+          className="btn landing-mobile-menu"
+          aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
+          aria-expanded={menuOpen}
+          aria-controls="landing-navigation"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+        </button>
       </header>
 
       <main id="landing-main" tabIndex={-1}>
@@ -113,13 +129,20 @@ export function Landing() {
                   <path
                     d="M115 150V92Q115 78 130 78H180V48"
                     fill="none"
-                    stroke="#1856ff"
+                    stroke="var(--primary)"
                     strokeWidth="4"
                     strokeDasharray="6 6"
                   />
-                  <circle cx="115" cy="150" r="19" fill="#1856ff" fillOpacity=".15" />
-                  <circle cx="115" cy="150" r="7" fill="#1856ff" stroke="white" strokeWidth="3" />
-                  <circle cx="180" cy="48" r="6" fill="#1856ff" />
+                  <circle cx="115" cy="150" r="19" fill="var(--primary)" fillOpacity=".15" />
+                  <circle
+                    cx="115"
+                    cy="150"
+                    r="7"
+                    fill="var(--primary)"
+                    stroke="white"
+                    strokeWidth="3"
+                  />
+                  <circle cx="180" cy="48" r="6" fill="var(--primary)" />
                 </svg>
                 <span>
                   <MapPin size={14} /> Địa điểm quen thuộc

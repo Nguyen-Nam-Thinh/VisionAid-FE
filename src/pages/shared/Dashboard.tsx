@@ -91,7 +91,7 @@ export function Dashboard() {
   return (
     <>
       <PageHead
-        title={`Xin chào, ${user.name.split(' ').at(-1)} 👋`}
+        title={`Xin chào, ${user.name.split(' ').at(-1)}.`}
         description={
           admin
             ? 'Một góc nhìn rõ ràng về toàn bộ nền tảng.'
@@ -114,7 +114,7 @@ export function Dashboard() {
         <div className="stack">
           <section className="dashboard-hero">
             <div className="stack">
-              <span className="eyebrow" style={{ color: '#d9e3ff' }}>
+              <span className="eyebrow" style={{ color: 'var(--on-primary)' }}>
                 ĐỒNG HÀNH MỖI NGÀY
               </span>
               <h2>
@@ -202,7 +202,7 @@ export function Dashboard() {
             <section className="glass card stack">
               <div className="row between">
                 <h2>{admin ? 'Nhật ký gần đây' : 'Cần bạn quan tâm'}</h2>
-                <Activity size={20} color="#1856ff" />
+                <Activity size={20} color="var(--primary)" />
               </div>
               {admin ? (
                 <div className="timeline">
