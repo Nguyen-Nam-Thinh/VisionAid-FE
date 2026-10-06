@@ -2,7 +2,7 @@ import { ApiNotifications } from '../pages/shared/ApiNotifications';
 import { ApiPackages } from '../pages/shared/ApiPackages';
 import { ApiPayments } from '../pages/shared/ApiPayments';
 import { paymentResumeTarget } from '../services/api/payments';
-import { ApiLicense, LicenseNotice } from '../pages/shared/ApiLicense';
+import { ApiLicense } from '../pages/shared/ApiLicense';
 import { ApiRealtime } from '../components/ApiRealtime';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
 import { ApiTracking } from '../pages/shared/ApiTracking';
@@ -268,7 +268,6 @@ function Shell() {
             </span>
           </Link>
         </header>
-        {auth.mode === 'api' && <LicenseNotice user={user} />}
         {auth.mode === 'api' &&
           !signingOut &&
           (user.role === 'Caregiver' || (user.role === 'CenterAdmin' && user.orgId)) && (

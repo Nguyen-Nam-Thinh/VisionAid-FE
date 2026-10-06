@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -137,15 +138,22 @@ function PaymentHistory({ actor }: { actor: Person }) {
         title="Lịch sử thanh toán"
         description="Trạng thái do máy chủ xác nhận cho tài khoản của bạn."
         actions={
-          <Link className="btn" to="/packages">
-            Chọn gói Personal
-          </Link>
+          <>
+            <button
+              className="btn small"
+              aria-label="Tải lại lịch sử"
+              disabled={query.isFetching}
+              onClick={() => void query.refetch()}
+            >
+              <RefreshCw size={16} aria-hidden="true" /> Tải lại
+            </button>
+            <Link className="btn" to="/packages">
+              Chọn gói Personal
+            </Link>
+          </>
         }
       />
       <section className="glass card stack">
-        <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-          Tải lại lịch sử
-        </button>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           <div className="table-scroll">
             <table>

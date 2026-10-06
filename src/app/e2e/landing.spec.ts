@@ -25,7 +25,7 @@ test('landing is accessible and fits desktop, tablet and narrow screens', async 
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  for (const width of [1440, 1024, 390]) {
+  for (const width of [1440, 1024, 768, 375]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -35,6 +35,7 @@ test('landing is accessible and fits desktop, tablet and narrow screens', async 
       .analyze();
     expect(result.violations).toEqual([]);
   }
+  await page.getByRole('button', { name: 'Mở menu' }).click();
   await page
     .getByRole('navigation', { name: 'Điều hướng trang chủ' })
     .getByRole('link', { name: 'Cách hoạt động' })

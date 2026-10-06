@@ -36,19 +36,22 @@ export function ApiLinkedUsers() {
       <PageHead
         title="Người được chăm sóc"
         description="Danh sách người dùng được liên kết với tài khoản của bạn."
+        actions={
+          user?.role === 'Caregiver' &&
+          !user.orgId && (
+            <ApiCreateLinkedUser
+              key={user.id}
+              caregiverId={user.id}
+              onLinked={() => {
+                setPage(1);
+                setInput('');
+                setSearch('');
+                refresh();
+              }}
+            />
+          )
+        }
       />
-      {user?.role === 'Caregiver' && !user.orgId && (
-        <ApiCreateLinkedUser
-          key={user.id}
-          caregiverId={user.id}
-          onLinked={() => {
-            setPage(1);
-            setInput('');
-            setSearch('');
-            refresh();
-          }}
-        />
-      )}
       <section className="glass card stack">
         <form
           className="row"
