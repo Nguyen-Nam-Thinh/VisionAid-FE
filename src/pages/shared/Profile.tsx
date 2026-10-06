@@ -50,7 +50,7 @@ export function Profile() {
           )}
           {auth.mode === 'mock' && (
             <label className="field">
-              Ảnh đại diện JPG/PNG (demo tối đa 2 MB)
+              Ảnh đại diện JPG/PNG · bản demo tối đa 2 MB
               <input
                 type="file"
                 accept="image/png,image/jpeg"
