@@ -10,6 +10,8 @@ const userSchema = z.object({
   role: z.literal('VisuallyImpaired'),
   organizationId: z.string().uuid().nullable(),
   isActive: z.boolean(),
+  licenseStatus: z.string().nullable().optional(),
+  licenseExpiresAt: z.iso.datetime({ offset: true }).nullable().optional(),
 });
 export const linkSchema = z.object({
   id: z.string().uuid(),

@@ -53,6 +53,8 @@ function Links({ actor }: { actor: Person }) {
           'api-links',
           'api-link-detail',
           'api-users',
+          'api-accounts',
+          'api-account',
         ].includes(String(q.queryKey[0])) && q.queryKey[1] === actor.id,
     });
   };

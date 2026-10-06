@@ -9,6 +9,7 @@ import {
 } from '../../services/api/licenses';
 import { ServiceError } from '../../services/contracts';
 import type { Person } from '../../models/domain';
+import { LicenseAssignments } from './LicenseAssignments';
 
 export function OrganizationPool({ actor }: { actor: Person }) {
   const query = useQuery({
@@ -100,7 +101,10 @@ export function ApiLicensePool() {
           )
         }
       />
-      <OrganizationPool key={actor.id + actor.orgId} actor={actor} />
+      <OrganizationPool key={'pool-' + actor.id + actor.orgId} actor={actor} />
+      {isOrganizationBuyer(actor) && (
+        <LicenseAssignments key={'assignments-' + actor.id + actor.orgId} actor={actor} />
+      )}
     </>
   );
 }

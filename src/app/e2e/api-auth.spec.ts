@@ -2054,6 +2054,154 @@ const u3Pool = (status = 'Active', total = 50) => ({
   purchasedAt: '2026-10-06T00:00:00Z',
   expiresAt: '2026-11-05T00:00:00Z',
 });
+test('U4: create VIU quota error keeps account form and provides license management link', async ({
+  page,
+}) => {
+  await stubApi(page, 'CenterAdmin', organizationId);
+  await page.route('**/api/organizations/me', (route) =>
+    route.fulfill({ json: { success: true, data: organizationFixture } }),
+  );
+  let posts = 0;
+  await page.route('**/api/users**', (route) => {
+    if (new URL(route.request().url()).pathname === '/api/users/me') return route.fallback();
+    if (route.request().method() === 'POST') {
+      posts++;
+      expect(route.request().postDataJSON().role).toBe('VisuallyImpaired');
+      return route.fulfill({ status: 422, json: { detail: 'Kho không còn license.' } });
+    }
+    return route.fulfill({ json: { success: true, data: organizationPage([]) } });
+  });
+  await login(page);
+  await page.goto('/center-admin/users');
+  await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Họ và tên').fill('VIU giữ form');
+  await dialog.getByLabel('Email').fill('quota@example.test');
+  await dialog.getByLabel('Mật khẩu mới', { exact: false }).fill('Password@123');
+  await dialog.getByLabel('Nhập lại mật khẩu').fill('Password@123');
+  await dialog.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Kho không còn license');
+  await expect(dialog.getByLabel('Họ và tên')).toHaveValue('VIU giữ form');
+  await expect(dialog.getByRole('link', { name: 'Xem kho license' })).toHaveAttribute(
+    'href',
+    '/center-admin/licenses',
+  );
+  expect(posts).toBe(1);
+});
+
+test('U4: revoke confirmation and reassign refresh server quota; quota errors retain popup input', async ({
+  page,
+}) => {
+  await stubApi(page, 'CenterAdmin', id);
+  const viuId = '01900000-0000-7000-8000-000000000044';
+  let active = true;
+  let conflict = false;
+  const writes: string[] = [];
+  await page.route('**/api/licenses/pool', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: { ...u3Pool(), usedLicenses: active ? 1 : 0, availableLicenses: active ? 49 : 50 },
+      },
+    }),
+  );
+  await page.route('**/api/users/' + viuId, (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id: viuId,
+          fullName: 'VIU U4',
+          email: 'u4@example.test',
+          organizationId: id,
+          role: 'VisuallyImpaired',
+          isActive: true,
+          phoneNumber: null,
+          avatarUrl: null,
+          deletedAt: null,
+          lastLoginAt: null,
+          createdAt: '',
+          updatedAt: '',
+        },
+      },
+    }),
+  );
+  await page.route('**/api/licenses/assignments**', async (route) => {
+    const req = route.request();
+    const url = new URL(req.url());
+    if (req.method() === 'POST') {
+      writes.push(url.pathname);
+      if (url.pathname.endsWith('/assign')) {
+        expect(req.postDataJSON()).toEqual({ poolId: id });
+        if (conflict)
+          return route.fulfill({ status: 422, json: { detail: 'Suất cuối đã được sử dụng.' } });
+        active = true;
+      } else active = false;
+      return route.fulfill({ json: { success: true, data: active ? id : null } });
+    }
+    const filter = url.searchParams.get('isActive');
+    const items =
+      filter === null || filter === String(active)
+        ? [
+            {
+              id,
+              viuUser: { id: viuId, fullName: 'VIU U4', email: 'u4@example.test' },
+              assignedAt: '2026-10-01T00:00:00Z',
+              assignedBy: id,
+              revokedAt: active ? null : '2026-10-07T00:00:00Z',
+              isActive: active,
+            },
+          ]
+        : [];
+    return route.fulfill({
+      json: { success: true, data: { ...organizationPage(items), pageSize: 20 } },
+    });
+  });
+  await login(page);
+  await page.goto('/center-admin/licenses');
+  const pool = page.getByRole('region', { name: 'Kho license tổ chức' });
+  await page.getByRole('button', { name: 'Thu hồi', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText(
+    'Tài khoản và phân công chăm sóc vẫn được giữ',
+  );
+  expect(writes).toHaveLength(0);
+  await page.getByRole('button', { name: 'Hủy', exact: true }).click();
+  await page.getByRole('button', { name: 'Thu hồi', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(
+    pool
+      .locator('div')
+      .filter({ has: page.locator('dt', { hasText: 'Còn lại' }) })
+      .last(),
+  ).toContainText('50');
+  await page.getByLabel('Trạng thái cấp').selectOption('false');
+  await expect(page.getByRole('cell', { name: /Đã thu hồi/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Cấp license', exact: true }).click();
+  await page.getByLabel('Mã người được chăm sóc').fill(viuId);
+  conflict = true;
+  await page.getByRole('button', { name: 'Xác nhận cấp license' }).click();
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Suất cuối');
+  await expect(page.getByLabel('Mã người được chăm sóc')).toHaveValue(viuId);
+  conflict = false;
+  await page.getByRole('button', { name: 'Xác nhận cấp license' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByLabel('Trạng thái cấp').selectOption('true');
+  await expect(page.getByRole('button', { name: 'Thu hồi', exact: true })).toBeVisible();
+  expect(writes).toEqual([
+    `/api/licenses/assignments/${viuId}/revoke`,
+    `/api/licenses/assignments/${viuId}/assign`,
+    `/api/licenses/assignments/${viuId}/assign`,
+  ]);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
+    true,
+  );
+  await page.getByRole('button', { name: 'Cấp license', exact: true }).click();
+  const bounds = await page.getByRole('dialog').boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(391);
+  await page.screenshot({ path: 'test-results/u4-assign-mobile.png', fullPage: true });
+});
 for (const initial of ['None', 'Active', 'Expired']) {
   test(`U3b: ${initial} pool checkout waits for server success and refreshes organization quota`, async ({
     page,
@@ -2133,6 +2281,9 @@ test('U3b: foreign pool and server errors are visible without exposing data; res
   page,
 }) => {
   await stubApi(page, 'CenterAdmin', id);
+  await page.route('**/api/licenses/assignments?**', (route) =>
+    route.fulfill({ json: { success: true, data: { ...organizationPage([]), pageSize: 20 } } }),
+  );
   let mode = 'foreign';
   await page.route('http://localhost:5176/api/licenses/pool', (route) =>
     mode === 'error'
