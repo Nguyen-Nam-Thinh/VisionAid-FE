@@ -11,6 +11,8 @@ import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import { roles } from '../../constants/labels';
 import type { Person } from '../../models/domain';
+import { Link } from 'react-router-dom';
+import { viuLicenseLabel } from '../../services/api/licenses';
 
 const profileFields: FieldSpec[] = [
   { key: 'fullName', label: 'Họ và tên', required: true, max: 200 },
@@ -79,6 +81,8 @@ function Accounts({
           'api-organization',
           'api-organizations',
           'api-users',
+          'license-pool',
+          'license-assignments',
         ].includes(String(q.queryKey[0])) && q.queryKey[1] === actor.id,
     });
   };
@@ -112,7 +116,9 @@ function Accounts({
           saved={async (account) => {
             setCreating(false);
             setSelected(account.id);
-            setNotice('Đã tạo tài khoản. Phân công chăm sóc được thực hiện ở đợt 5c.');
+            setNotice(
+              'Đã tạo tài khoản. Kiểm tra thông tin license và phân công chăm sóc cho người dùng.',
+            );
             await refresh();
           }}
         />
@@ -286,6 +292,7 @@ function AccountEditor({
   saved: (account: Account) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  const cache = useQueryClient();
   const fields: FieldSpec[] = account
     ? profileFields
     : [
@@ -331,9 +338,16 @@ function AccountEditor({
         </p>
       )}
       {!account && actor.role === 'CenterAdmin' && (
-        <p>
-          Tổ chức: {actor.orgId} · Vai trò: {roles[fixedRole || 'Caregiver']}
-        </p>
+        <div className="stack">
+          <p>
+            Tổ chức: {actor.orgId} · Vai trò: {roles[fixedRole || 'Caregiver']}
+          </p>
+          <p>
+            Nhân viên không dùng suất license. Khi tạo VIU, máy chủ quyết định việc cấp license; hãy
+            kiểm tra trạng thái sau khi tạo.{' '}
+            <Link to="/center-admin/licenses">Xem kho license</Link>.
+          </p>
+        </div>
       )}
       <Form
         fields={fields}
@@ -368,6 +382,16 @@ function AccountEditor({
                 });
             await saved(result);
           } catch (error) {
+            if (
+              !account &&
+              actor.role === 'CenterAdmin' &&
+              (fixedRole || values.role) === 'VisuallyImpaired' &&
+              [402, 422].includes((error as { status?: number }).status || 0)
+            )
+              throw new Error(
+                `${error instanceof Error ? error.message : 'Không thể tạo tài khoản.'} Kiểm tra dữ liệu và kho license; nếu hết suất, mua thêm gói Business rồi thử lại.`,
+                { cause: error },
+              );
             if ((error as { status?: number }).status! >= 500)
               throw new Error(
                 'Chưa xác nhận được kết quả lưu. Đóng form và tải lại/tìm email trước khi gửi lại để tránh tạo trùng tài khoản.',
@@ -375,6 +399,12 @@ function AccountEditor({
               );
             throw error;
           } finally {
+            if (!account && actor.role === 'CenterAdmin')
+              await cache.invalidateQueries({
+                predicate: (q) =>
+                  ['license-pool', 'license-assignments'].includes(String(q.queryKey[0])) &&
+                  q.queryKey[1] === actor.id,
+              });
             setBusy(false);
           }
         }}
@@ -411,6 +441,19 @@ function AccountDetails({
         Mã tài khoản: {account.id} · Tổ chức: {account.organizationId || 'Không thuộc tổ chức'}
       </p>
       <p>URL ảnh: {account.avatarUrl || 'Chưa có'}</p>
+      {account.role === 'VisuallyImpaired' && (
+        <p>
+          License: {viuLicenseLabel(account.licenseStatus)}
+          {account.licenseExpiresAt &&
+            ` · Hết hạn: ${new Date(account.licenseExpiresAt).toLocaleString('vi-VN')}`}
+          {actor.role === 'CenterAdmin' && (
+            <>
+              {' '}
+              · <Link to="/center-admin/licenses">Quản lý cấp và thu hồi</Link>
+            </>
+          )}
+        </p>
+      )}
       {notice && (
         <p role="status" className="notice">
           {notice}

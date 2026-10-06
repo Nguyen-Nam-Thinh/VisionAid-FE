@@ -5,6 +5,7 @@ import { caregivingApi, type LinkedUser } from '../../services/api/caregiving';
 import { PageHead, State, Badge, Confirm, Dialog } from '../../components/UI';
 
 import { ApiCreateLinkedUser } from './ApiCreateLinkedUser';
+import { viuLicenseLabel } from '../../services/api/licenses';
 
 export function ApiLinkedUsers() {
   const { data: user } = useSession();
@@ -115,6 +116,7 @@ export function ApiLinkedUsers() {
                           <th>Email</th>
                           <th>Điện thoại</th>
                           <th>Tài khoản</th>
+                          <th>License</th>
                           <th>Thao tác</th>
                         </tr>
                       </thead>
@@ -128,6 +130,14 @@ export function ApiLinkedUsers() {
                               <Badge tone={p.isActive ? 'green' : 'amber'}>
                                 {p.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}
                               </Badge>
+                            </td>
+                            <td>
+                              {viuLicenseLabel(p.licenseStatus)}
+                              {p.licenseExpiresAt && (
+                                <p>
+                                  Hết hạn: {new Date(p.licenseExpiresAt).toLocaleString('vi-VN')}
+                                </p>
+                              )}
                             </td>
                             <td>
                               <button

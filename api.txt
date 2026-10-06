@@ -3,7 +3,7 @@ Cập nhật kế hoạch: 2026-10-06. Danh sách 001–107 là snapshot OpenAPI
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U3b: 53/140 operations có caller Web. Personal Payment đã nối; Business đã nối; WebRTC/Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U4: 56/140 operations có caller Web. Personal Payment đã nối; Business đã nối; WebRTC/Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -1198,4 +1198,12 @@ Tổng hiện tại: 53/140 operations có caller Web; thêm 1 GET pool, tái s�
 - POST create-link, GET history, DELETE payment cancel: thêm scope CenterAdmin tại /packages, /center-admin/payments và callback /payments/return|cancel.
   Không gửi organizationId, giá, quota hoặc loại giao dịch tự tính. BE xác định từ phiên. Staff/Admin không dùng checkout.
   History DTO không có organizationId; quyền transaction cuối cùng do BE bảo vệ. Kho Active/Expired không được checkout gói khác vì webhook BE dùng gói kho cũ.
-- GET assignments/POST assign/revoke chưa nối: U4. Test và lưu ý BE: docs/API_STAGE_U3B_TEST.md.
+- GET assignments/POST assign/revoke đã nối trong U4. Test và lưu ý BE: docs/API_STAGE_U3B_TEST.md.
+
+
+U4 — TRIỂN KHAI FE 2026-10-07, chờ test live
+- GET /api/licenses/assignments: DA_NOI; CenterAdmin; page/pageSize=20/isActive; LicenseAssignments.tsx tại /center-admin/licenses; service licenseAssignments.ts. Danh sách tổ chức và lịch sử đã thu hồi.
+- POST /api/licenses/assignments/{viuUserId}/assign: DA_NOI; popup cấp/cấp lại; body {poolId}; data GUID; GET users/{id} và pool preflight.
+- POST /api/licenses/assignments/{viuUserId}/revoke: DA_NOI; popup xác nhận thu hồi; không body; data null. Không xóa user hoặc caregiver link.
+- ApiAccounts.tsx refresh pool/assignments sau tạo; 402/422 giữ form. ApiLinkedUsers.tsx và chi tiết account hiển thị licenseStatus/licenseExpiresAt theo BE.
+- Tổng 56/140 operations có caller Web. U5 key distribution/activation chưa nối. Contract, test và guard BE còn thiếu: docs/API_STAGE_U4_TEST.md.

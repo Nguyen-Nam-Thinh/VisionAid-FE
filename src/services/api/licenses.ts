@@ -27,6 +27,12 @@ export const subscriptionLabels = {
   Cancelled: 'Đã hủy',
   Suspended: 'Tạm ngưng',
 };
+export function viuLicenseLabel(status?: string | null) {
+  return status === 'None'
+    ? 'Chưa có license'
+    : subscriptionLabels[status as keyof typeof subscriptionLabels] ||
+        'Chưa có thông tin license từ máy chủ';
+}
 export const isPersonalCaregiver = (user: Person) => user.role === 'Caregiver' && !user.orgId;
 export const isOrganizationBuyer = (user: Person) => user.role === 'CenterAdmin' && !!user.orgId;
 const pool = z.object({

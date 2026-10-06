@@ -12,6 +12,8 @@ const accountSchema = z.object({
   role: roleSchema,
   organizationId: z.string().uuid().nullable(),
   isActive: z.boolean(),
+  licenseStatus: z.string().nullable().optional(),
+  licenseExpiresAt: z.iso.datetime({ offset: true }).nullable().optional(),
   avatarUrl: z.string().nullable(),
   deletedAt: z.string().nullable(),
   lastLoginAt: z.string().nullable(),
