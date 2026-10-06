@@ -30,7 +30,7 @@ export async function request<T>(
         ? problem.detail
         : typeof problem.title === 'string'
           ? problem.title
-          : `Yêu cầu thất bại (${response.status}).`,
+          : `Yêu cầu thất bại. Mã lỗi: ${response.status}.`,
       response.status,
       Object.fromEntries(
         Object.entries(errors).map(([key, v]) => [key, Array.isArray(v) ? v.join(' ') : String(v)]),

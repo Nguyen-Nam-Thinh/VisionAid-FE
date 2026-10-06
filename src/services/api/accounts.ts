@@ -82,7 +82,7 @@ const profile = (values: unknown) =>
   parse(
     profileSchema,
     values,
-    'Kiểm tra họ tên (tối đa 200 ký tự), điện thoại Việt Nam và URL ảnh (500 ký tự).',
+    'Kiểm tra họ tên tối đa 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.',
     400,
   );
 export function createAccountsApi(get = apiGet, write = apiWrite) {

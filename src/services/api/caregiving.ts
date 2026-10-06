@@ -76,7 +76,7 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
         .safeParse(values);
       if (!input.success)
         throw new ServiceError(
-          'Kiểm tra họ tên, email, số điện thoại và mật khẩu (ít nhất 8 ký tự, có chữ hoa/thường, số, ký tự đặc biệt).',
+          'Kiểm tra họ tên, email, số điện thoại và mật khẩu. Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.',
           400,
         );
       const active = parse(

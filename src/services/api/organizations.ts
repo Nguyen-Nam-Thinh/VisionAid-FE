@@ -79,7 +79,7 @@ function input(values: OrganizationInput, create: boolean) {
     .safeParse(values);
   if (!result.success)
     throw new ServiceError(
-      'Kiểm tra tên (tối đa 200 ký tự), địa chỉ (500), mã số thuế (50), email và số điện thoại Việt Nam.',
+      'Kiểm tra tên tối đa 200 ký tự, địa chỉ tối đa 500 ký tự, mã số thuế tối đa 50 ký tự, email và số điện thoại Việt Nam.',
       400,
     );
   const { taxCode, ...rest } = result.data;

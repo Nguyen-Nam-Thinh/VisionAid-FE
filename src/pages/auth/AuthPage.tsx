@@ -192,7 +192,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
                   setMessage(
                     auth.mode === 'api'
                       ? code
-                      : 'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo (chỉ dùng với email tồn tại): ' +
+                      : 'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo chỉ dùng với email tồn tại: ' +
                           code,
                   );
                 }
