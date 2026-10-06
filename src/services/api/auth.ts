@@ -83,10 +83,7 @@ export function createApiAuth(
       );
     } catch (error) {
       if (error instanceof ServiceError) throw error;
-      throw new ServiceError(
-        'Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web (localhost:5173).',
-        503,
-      );
+      throw new ServiceError('Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web.', 503);
     }
     if (response === undefined) return undefined;
     const envelope = z
