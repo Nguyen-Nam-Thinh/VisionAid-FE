@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { getMySubscription, licenseSummary } from './licenses';
+import { getMySubscription, getOrganizationPool, licenseSummary } from './licenses';
 import type { Person } from '../../models/domain';
 const actor: Person = {
   id: '01900000-0000-7000-8000-000000000001',
@@ -11,6 +11,34 @@ const actor: Person = {
   active: true,
 };
 const now = Date.parse('2026-10-03T00:00:00Z');
+it('pool is organization-scoped, validates data and preserves missing/error responses', async () => {
+  const center = { ...actor, role: 'CenterAdmin' as const, orgId: actor.id };
+  const data = {
+    id: actor.id,
+    organizationId: actor.id,
+    package: { id: actor.id, name: 'Business', code: 'BUSINESS', packageType: 'Business' },
+    totalLicenses: 50,
+    usedLicenses: 3,
+    availableLicenses: 47,
+    status: 'Active',
+    purchasedAt: '2026-10-06T00:00:00Z',
+    expiresAt: null,
+  };
+  const get = vi.fn().mockResolvedValue(data);
+  await expect(getOrganizationPool(actor, undefined, get)).rejects.toMatchObject({ status: 403 });
+  await expect(getOrganizationPool({ ...center, orgId: '' }, undefined, get)).rejects.toMatchObject(
+    { status: 403 },
+  );
+  expect(get).not.toHaveBeenCalled();
+  await expect(getOrganizationPool(center, undefined, get)).resolves.toEqual(data);
+  get.mockResolvedValueOnce({ ...data, organizationId: '01900000-0000-7000-8000-000000000002' });
+  await expect(getOrganizationPool(center, undefined, get)).rejects.toMatchObject({ status: 403 });
+  get.mockResolvedValueOnce({ ...data, totalLicenses: -1 });
+  await expect(getOrganizationPool(center, undefined, get)).rejects.toMatchObject({ status: 502 });
+  const missing = { status: 404 };
+  get.mockRejectedValueOnce(missing);
+  await expect(getOrganizationPool(center, undefined, get)).rejects.toBe(missing);
+});
 it('distinguishes missing status, expiry boundaries and organization exemption without granting access', () => {
   expect(licenseSummary(actor, now)).toContain('Chưa xác định');
   expect(licenseSummary({ ...actor, licenseStatus: 'Unexpected' }, now)).toContain('Chưa xác định');

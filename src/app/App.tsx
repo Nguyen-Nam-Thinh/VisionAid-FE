@@ -1,6 +1,7 @@
 import { ApiNotifications } from '../pages/shared/ApiNotifications';
 import { ApiPackages } from '../pages/shared/ApiPackages';
 import { ApiPayments } from '../pages/shared/ApiPayments';
+import { ApiLicensePool } from '../pages/shared/ApiLicensePool';
 import { paymentResumeTarget } from '../services/api/payments';
 import { ApiLicense } from '../pages/shared/ApiLicense';
 import { ApiRealtime } from '../components/ApiRealtime';
@@ -205,6 +206,16 @@ function Shell() {
             <p>Mỗi kết nối là một sự an tâm.</p>
           </div>
           <nav className="nav">
+            {runtime.mode === 'api' && user.role === 'CenterAdmin' && user.orgId && (
+              <>
+                <NavLink to="/center-admin/licenses" onClick={() => setOpen(false)}>
+                  Kho license
+                </NavLink>
+                <NavLink to="/center-admin/payments" onClick={() => setOpen(false)}>
+                  Thanh toán
+                </NavLink>
+              </>
+            )}
             {runtime.mode === 'api' && <NavLink to="/license">License</NavLink>}
             {runtime.mode === 'api' && user.role === 'Caregiver' && !user.orgId && (
               <NavLink to="/caregiver/payments" onClick={() => setOpen(false)}>
@@ -335,6 +346,10 @@ export function App() {
               {runtime.mode === 'api' && (
                 <>
                   <Route path="caregiver/payments" element={<ApiPayments />} />
+                  <Route element={<Guard role="CenterAdmin" />}>
+                    <Route path="center-admin/payments" element={<ApiPayments />} />
+                    <Route path="center-admin/licenses" element={<ApiLicensePool />} />
+                  </Route>
                   <Route path="payments/return" element={<ApiPayments result />} />
                   <Route path="payments/cancel" element={<ApiPayments result />} />
                 </>

@@ -1,13 +1,13 @@
 # VisionAid Web — Plan cập nhật B2C, B2B, License, PayOS và WebRTC
 
-Cập nhật 2026-10-04. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1–U3a đã triển khai FE; U3b trở đi chưa triển khai.
+Cập nhật 2026-10-06. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1–U3b đã triển khai FE; U4 trở đi chưa triển khai.
 
 **Kết quả U0 mới nhất:** đã đọc BE mới và OpenAPI deploy có 140 operations (33 mới, 107 cũ giữ nguyên). Đọc [docs/U0_BACKEND_FINDINGS.md](docs/U0_BACKEND_FINDINGS.md) trước các câu hỏi dự kiến bên dưới; tài liệu đó thay thế những giả định đã được xác minh. U0 mới hoàn tất kiểm kê/khảo sát, còn policy và test thật. Có FCM upsert. Người dùng xác nhận BE đã sửa billing allowlist, Staff exemption và kế thừa license khi first Personal link; local chưa có bản sửa để đối chiếu. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforcement quota theo gói. Không còn cần người dùng gửi lại vị trí BE/Swagger.
 
 ## 1. AI tiếp theo bắt đầu ở đâu
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
-2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. Đợt kế tiếp là **U3b — Business/pool**, chỉ bắt đầu khi người dùng yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. Đợt kế tiếp là **U4 — tạo VIU/assignment/thu hồi**, chỉ bắt đầu khi người dùng yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
 3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
 4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
 5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
@@ -18,7 +18,7 @@ Cập nhật 2026-10-04. Base FE khảo sát U0: dev `5692a87`; BE local mới `
 - Code FE: src/app/App.tsx, src/services/api/*, src/models/domain.ts, src/pages/*; đã đối chiếu route đang mở và DTO hiện tại.
 - BE local ../VisionAid-BE/src đã cập nhật e56c545, có License/Payment/WebRTC. Chưa thấy API/pipeline Hybrid Guidance tương ứng trong phạm vi rà soát. Có entity không chứng minh tính năng chạy đầy đủ.
 - Swagger deploy: https://api.visionaid.net/swagger/index.html; đã GET schema public /swagger/v1/swagger.json. Source và endpoint đã đối chiếu trong báo cáo U0, chưa test authenticated runtime.
-- api.txt giữ snapshot 107 REST cũ và bổ sung U1–U3a, tổng 52 caller Web; [snapshot U0](docs/U0_OPENAPI_2026-10-03.md) kiểm kê 140 operations. SignalR không tính như REST. Không suy ra DTO/quyền chỉ từ tên bảng DB.
+- api.txt giữ snapshot 107 REST cũ và bổ sung U1–U3a, tổng 53 caller Web; [snapshot U0](docs/U0_OPENAPI_2026-10-03.md) kiểm kê 140 operations. SignalR không tính như REST. Không suy ra DTO/quyền chỉ từ tên bảng DB.
 - Lịch sử triển khai và checklist cũ được giữ tại [docs/PLAN_LEGACY_2026-10-03.md](docs/PLAN_LEGACY_2026-10-03.md). File đó chỉ tra cứu lịch sử; thứ tự thực hiện hiện hành là plan này.
 
 ## 3. Phần đã làm và phần cần điều chỉnh
@@ -127,9 +127,9 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 - Test chuỗi: tạo link -> PayOS môi trường test -> BE webhook -> GET transaction -> GET subscription/entitlement -> sử dụng lại tính năng. Test quay lại trước webhook, đóng trình duyệt, F5, hủy, double-click, giao dịch người khác. Webhook duplicate/signature/atomic là test BE phối hợp, Web không gọi webhook để giả success.
 - Điểm dừng: nghiệm thu mua/gia hạn Personal, không chuyển tiền thật trong kiểm thử tự động.
 
-### U3b — Checkout Business và kho license [CHƯA LÀM; U3a]
+### U3b — Checkout Business và kho license [ĐÃ TRIỂN KHAI FE; CHỜ USER TEST]
 
-- Tái sử dụng checkout; /center-admin/licenses và /center-admin/payments đề xuất. Đọc pool, used/available/expiry và lịch sử giao dịch theo org.
+- Đã tái sử dụng checkout tại /packages; /center-admin/licenses và /center-admin/payments. Thêm GET /api/licenses/pool, kiểm tra org/DTO; đọc used/available/expiry và refetch sau Success. Chặn đổi gói Business khi kho Active/Expired vì webhook BE dùng gói kho cũ; thời hạn topup tính lại từ ngày thanh toán. Xem docs/API_STAGE_U3B_TEST.md.
 - Mua lần đầu vs topup/renew do BE quyết định, không dựa một cờ UI tự suy ra transactionType. Không tự cộng quota từ thông báo thanh toán.
 - Test: CenterAdmin chưa có pool -> mua -> pool có quota; pool hết hạn -> gia hạn; pool còn hạn -> topup theo rule U0; 2 org không xem giao dịch/pool nhau; staff không có quyền mua nếu contract không cấp.
 - Điểm dừng: người dùng thấy pool đúng và transaction đúng trước tạo VIU có consume license.
@@ -227,7 +227,8 @@ Ghi trong bảng dưới: commit FE + BE/OpenAPI version đã dùng; route/API �
 | U1 | Đã triển khai FE | Đọc profile/subscription, xử lý 402 | 77 unit + 5 U1 E2E fixture, lint/build đạt | Chưa test live | Dừng theo docs/API_STAGE_U1_TEST.md |
 | U2 | Đã triển khai FE | 4 API packages theo source BE | Xem docs/API_STAGE_U2_TEST.md | Chưa test live | Dừng cho user test |
 | U3a | Đã triển khai FE | 3 API payment Personal | Xem docs/API_STAGE_U3A_TEST.md | Chưa test live PayOS | Dừng cho user test; môi trường PayOS chưa xác nhận |
-| U3b–U5 | Chưa làm | Contract đã kiểm kê U0 | Chưa chạy | Chưa test | Theo thứ tự mục 6 |
+| U3b | Đã triển khai FE | GET pool + tái sử dụng payment U3a | Xem docs/API_STAGE_U3B_TEST.md | Chưa test live | Chờ user test; U4 chưa làm |
+| U4–U5 | Chưa làm | Contract đã kiểm kê U0 | Chưa chạy | Chưa test | Theo thứ tự mục 6 |
 | 8c | Chuẩn bị config, chưa runtime | Có upsert mới; revoke/logout/nhiều tab cần test | Chưa chạy push | Chưa test | Dùng PUT auth/fcm-token, kiểm tra lifecycle |
 | U6a/U6b | Chưa làm | Chờ WebRTC + Mobile + TURN | Chưa chạy | Chưa test | Sau U4 và hợp đồng signaling |
 | 9–13, U7–U9 | Chưa nối theo phạm vi trên | API cũ cần đối chiếu lại; API mới chờ U0 | Chưa chạy phạm vi mới | Chưa test | Thực hiện từng checkpoint |

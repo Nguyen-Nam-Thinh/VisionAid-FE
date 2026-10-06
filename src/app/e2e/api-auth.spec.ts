@@ -2037,3 +2037,183 @@ test('U3a: uncertain create is not retried and unsafe checkout is not opened', a
   await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toHaveCount(0);
   expect(writes).toBe(1);
 });
+
+const u3Pool = (status = 'Active', total = 50) => ({
+  id,
+  organizationId: id,
+  package: {
+    id: u2Package('Business').id,
+    name: 'Business test',
+    code: 'BUSINESS',
+    packageType: 'Business',
+  },
+  totalLicenses: total,
+  usedLicenses: 3,
+  availableLicenses: total - 3,
+  status,
+  purchasedAt: '2026-10-06T00:00:00Z',
+  expiresAt: '2026-11-05T00:00:00Z',
+});
+for (const initial of ['None', 'Active', 'Expired']) {
+  test(`U3b: ${initial} pool checkout waits for server success and refreshes organization quota`, async ({
+    page,
+  }) => {
+    const calls = await stubApi(page, 'CenterAdmin', id);
+    let paid = false;
+    let writes = 0;
+    await page.route('http://localhost:5176/api/licenses/pool', (route) => {
+      if (!paid && initial === 'None')
+        return route.fulfill({ status: 404, json: { detail: 'No pool' } });
+      return route.fulfill({
+        json: { success: true, data: u3Pool(paid ? 'Active' : initial, paid ? 100 : 50) },
+      });
+    });
+    await page.route('http://localhost:5176/api/licenses/packages?*', (route) =>
+      route.fulfill({ json: { success: true, data: organizationPage([u2Package('Business')]) } }),
+    );
+    await page.route('http://localhost:5176/api/payments/create-link', (route) => {
+      writes++;
+      expect(route.request().postDataJSON()).toEqual({
+        packageId: u2Package('Business').id,
+        returnUrl: 'http://localhost:5176/payments/return',
+        cancelUrl: 'http://localhost:5176/payments/cancel',
+      });
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            transactionId: id,
+            checkoutUrl: 'https://pay.payos.vn/web/test-payment',
+            paymentLinkId: 'x',
+            orderCode: Number(u3Order),
+            amount: 123000,
+            currency: 'VND',
+          },
+        },
+      });
+    });
+    await page.route('http://localhost:5176/api/payments/history?*', (route) =>
+      route.fulfill({
+        json: {
+          success: true,
+          data: organizationPage([
+            {
+              ...u3Transaction(paid ? 'Success' : 'Pending'),
+              transactionType: initial === 'None' ? 'LicensePurchase' : 'LicenseTopup',
+            },
+          ]),
+        },
+      }),
+    );
+    await login(page);
+    await page.goto('/center-admin/licenses');
+    if (initial === 'None')
+      await expect(page.getByText(/Tổ chức chưa có kho license/)).toBeVisible();
+    else
+      await expect(page.getByRole('region', { name: 'Kho license tổ chức' })).toContainText('50');
+    await page.getByRole('link', { name: 'Chọn gói Business' }).click();
+    await page.getByRole('button', { name: 'Chọn gói Business test' }).click();
+    await page.getByRole('button', { name: 'Tạo đơn thanh toán', exact: true }).click();
+    await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toBeVisible();
+    await page.getByRole('link', { name: 'Kiểm tra trạng thái đơn' }).click();
+    await expect(page.getByText('Đang chờ thanh toán', { exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Kho license tổ chức' })).toHaveCount(0);
+    paid = true;
+    await page.getByRole('button', { name: 'Kiểm tra lại thanh toán' }).click();
+    await expect(page.getByText('Thanh toán thành công', { exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Kho license tổ chức' })).toContainText('100');
+    expect(writes).toBe(1);
+    expect(calls).not.toContain('/api/licenses/subscription');
+    await page.getByRole('link', { name: 'Lịch sử thanh toán', exact: true }).click();
+    await expect(page).toHaveURL(/center-admin\/payments$/);
+    await expect(page.getByText('Thanh toán thành công', { exact: true })).toBeVisible();
+  });
+}
+test('U3b: foreign pool and server errors are visible without exposing data; responsive pool layout', async ({
+  page,
+}) => {
+  await stubApi(page, 'CenterAdmin', id);
+  let mode = 'foreign';
+  await page.route('http://localhost:5176/api/licenses/pool', (route) =>
+    mode === 'error'
+      ? route.fulfill({ status: 500, json: { detail: 'Không đọc được kho' } })
+      : route.fulfill({
+          json: {
+            success: true,
+            data: {
+              ...u3Pool(),
+              organizationId: mode === 'foreign' ? '01900000-0000-7000-8000-000000000002' : id,
+            },
+          },
+        }),
+  );
+  await login(page);
+  await page.goto('/center-admin/licenses');
+  await expect(page.getByRole('alert')).toContainText('không thuộc tổ chức');
+  await expect(page.getByText('Business test', { exact: true })).toHaveCount(0);
+  mode = 'error';
+  await page.getByRole('button', { name: 'Tải lại kho license' }).click();
+  await expect(page.getByRole('alert')).toContainText('Không đọc được kho');
+  mode = 'valid';
+  await page.getByRole('button', { name: 'Tải lại kho license' }).click();
+  await expect(page.getByText('Business test', { exact: true })).toBeVisible();
+  for (const width of [1440, 768, 375]) {
+    await page.setViewportSize({ width, height: 1000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  }
+  await page.screenshot({ path: 'test-results/u3b-pool-mobile.png', fullPage: true });
+});
+
+test('U3b: organization cancel requires confirmation; other organizations order is not actionable', async ({
+  page,
+}) => {
+  await stubApi(page, 'CenterAdmin', id);
+  let status = 'Pending';
+  let cancelled = 0;
+  let own = true;
+  await page.route('http://localhost:5176/api/payments/history?*', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage(
+          own ? [{ ...u3Transaction(status), transactionType: 'LicenseTopup' }] : [],
+        ),
+      },
+    }),
+  );
+  await page.route('http://localhost:5176/api/payments/' + id + '/cancel', (route) => {
+    expect(route.request().method()).toBe('DELETE');
+    cancelled++;
+    status = 'Cancelled';
+    return route.fulfill({ json: { success: true, data: null } });
+  });
+  await login(page);
+  await page.goto('/payments/cancel?orderCode=' + u3Order);
+  await expect(page.getByText('Đang chờ thanh toán', { exact: true })).toBeVisible();
+  expect(cancelled).toBe(0);
+  await page.getByRole('button', { name: 'Hủy đơn thanh toán', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByText('Đã hủy', { exact: true })).toBeVisible();
+  expect(cancelled).toBe(1);
+  own = false;
+  await page.reload();
+  await expect(page.getByText(/Chưa tìm thấy giao dịch trong lịch sử/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Hủy đơn thanh toán', exact: true })).toHaveCount(
+    0,
+  );
+});
+test('U3b: CenterAdmin without organization cannot query payments or pool', async ({ page }) => {
+  const calls = await stubApi(page, 'CenterAdmin');
+  await login(page);
+  await page.goto('/center-admin/licenses');
+  await expect(
+    page.getByText('Chỉ quản trị trung tâm có tổ chức được xem kho license.'),
+  ).toBeVisible();
+  await page.goto('/center-admin/payments');
+  await expect(page.getByText(/Luồng thanh toán này dành cho/)).toBeVisible();
+  expect(
+    calls.some((path) => path.startsWith('/api/payments') || path === '/api/licenses/pool'),
+  ).toBe(false);
+});
