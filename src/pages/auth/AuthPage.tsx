@@ -1,11 +1,23 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+  useLocation,
+} from 'react-router-dom';
+import { paymentResumeTarget } from '../../services/api/payments';
 import { Eye, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { Form, type FieldSpec } from '../../components/Form';
 import { useAuth, useDemoAccounts, useSession } from '../../hooks/useService';
 import { roles } from '../../constants/labels';
 import { useUI } from '../../stores/ui';
 export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
+  const location = useLocation();
+  const returnTo =
+    paymentResumeTarget((location.state as { returnTo?: unknown } | null)?.returnTo) ??
+    '/dashboard';
   const { action: routeAction = 'login' } = useParams();
   const action = fixedAction ?? routeAction;
   const [search] = useSearchParams();
@@ -19,7 +31,9 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
   const nav = useNavigate();
   const [email, setEmail] = useState(auth.mode === 'mock' ? 'caregiver@demo.vn' : '');
   const [message, setMessage] = useState('');
-  if (user && action !== 'reset') return <Navigate to="/dashboard" replace />;
+  const emailReset = auth.mode === 'api' && action === 'reset';
+  const validResetLink = !!resetToken && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail);
+  if (user && action !== 'reset') return <Navigate to={returnTo} replace />;
   const titles: Record<string, string> = {
     login: 'Chào mừng trở lại.',
     register: 'Bắt đầu đồng hành.',
@@ -136,10 +150,17 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
               </select>
             </label>
           )}
-          {!(auth.mode === 'api' && session.isPending) && (
+          {emailReset && !validResetLink && (
+            <p className="notice error" role="alert">
+              Liên kết khôi phục thiếu hoặc không hợp lệ. Hãy yêu cầu email mới qua Quên mật khẩu.
+            </p>
+          )}
+          {!(auth.mode === 'api' && session.isPending) && (!emailReset || validResetLink) && (
             <Form
               key={action + email + resetEmail + resetToken}
-              fields={fields}
+              fields={
+                emailReset ? fields.filter((f) => !['email', 'code'].includes(f.key)) : fields
+              }
               initial={{
                 email: resetEmail || email,
                 code: resetToken,
@@ -158,13 +179,13 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
                 setMessage('');
                 if (action === 'login') {
                   await auth.login(String(v.email), String(v.password));
-                  nav('/dashboard');
+                  nav(returnTo, { replace: true });
                 }
                 if (action === 'register') {
                   if (auth.mode === 'api' && v.password !== v.confirm)
                     throw Error('Mật khẩu xác nhận không khớp.');
                   await auth.register(String(v.name), String(v.email), String(v.password));
-                  nav('/dashboard');
+                  nav(returnTo, { replace: true });
                 }
                 if (action === 'recover') {
                   const code = await auth.recover(String(v.email));
@@ -178,7 +199,11 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
                 if (action === 'reset') {
                   if (auth.mode === 'api' && v.password !== v.confirm)
                     throw Error('Mật khẩu xác nhận không khớp.');
-                  await auth.resetPassword(String(v.email), String(v.code), String(v.password));
+                  await auth.resetPassword(
+                    emailReset ? resetEmail : String(v.email),
+                    emailReset ? resetToken : String(v.code),
+                    String(v.password),
+                  );
                   if (auth.mode === 'api') nav('/auth/login', { replace: true });
                   else setMessage('Đã đổi mật khẩu demo. Bạn có thể đăng nhập lại.');
                 }
@@ -192,16 +217,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
           )}
           {auth.mode === 'api' && (
             <>
-              {action === 'reset' && (
-                <p className="muted">
-                  Nhập email đã yêu cầu khôi phục. Trong email, sao chép địa chỉ liên kết “Reset
-                  Password” rồi dán vào ô mã bên trên. Bạn cũng có thể nhập token trực tiếp.
-                </p>
-              )}
-              <div className="row between">
-                <Link to="/auth/recover">Quên mật khẩu?</Link>
-                <Link to="/auth/reset">Nhập mã khôi phục</Link>
-              </div>
+              {action !== 'recover' && <Link to="/auth/recover">Quên mật khẩu?</Link>}
               {['register', 'reset'].includes(action) && (
                 <p className="muted">
                   Mật khẩu cần 8–100 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.

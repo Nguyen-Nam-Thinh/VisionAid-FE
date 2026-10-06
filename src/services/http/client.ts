@@ -20,6 +20,11 @@ export async function request<T>(
       problem.errors && typeof problem.errors === 'object'
         ? (problem.errors as Record<string, unknown>)
         : {};
+    if (response.status === 402)
+      throw new ServiceError(
+        'Máy chủ yêu cầu kiểm tra license cho thao tác này. Phiên đăng nhập vẫn được giữ. Mở mục License để xem trạng thái hoặc tải lại sau khi license được cập nhật.',
+        402,
+      );
     throw new ServiceError(
       typeof problem.detail === 'string'
         ? problem.detail

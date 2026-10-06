@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { caregivingApi, type LinkedUser } from '../../services/api/caregiving';
-import { PageHead, State, Badge, Confirm } from '../../components/UI';
+import { PageHead, State, Badge, Confirm, Dialog } from '../../components/UI';
 
 import { ApiCreateLinkedUser } from './ApiCreateLinkedUser';
 
@@ -37,6 +37,18 @@ export function ApiLinkedUsers() {
         title="Người được chăm sóc"
         description="Danh sách người dùng được liên kết với tài khoản của bạn."
       />
+      {user?.role === 'Caregiver' && !user.orgId && (
+        <ApiCreateLinkedUser
+          key={user.id}
+          caregiverId={user.id}
+          onLinked={() => {
+            setPage(1);
+            setInput('');
+            setSearch('');
+            refresh();
+          }}
+        />
+      )}
       <section className="glass card stack">
         <form
           className="row"
@@ -156,26 +168,17 @@ export function ApiLinkedUsers() {
           )}
         </State>
       </section>
-      {user?.role === 'Caregiver' && !user.orgId && (
-        <ApiCreateLinkedUser
-          key={user.id}
-          caregiverId={user.id}
-          onLinked={() => {
-            setPage(1);
-            setInput('');
-            setSearch('');
-            refresh();
-          }}
-        />
-      )}
+
       {selectedUser && user && (
-        <UserLinks
-          key={user.id + selectedUser.id}
-          person={selectedUser}
-          caregiverId={user.id}
-          orgId={user.orgId}
-          onUnlinked={refresh}
-        />
+        <Dialog title="Chi tiết người được chăm sóc" onClose={() => setSelected('')}>
+          <UserLinks
+            key={user.id + selectedUser.id}
+            person={selectedUser}
+            caregiverId={user.id}
+            orgId={user.orgId}
+            onUnlinked={refresh}
+          />
+        </Dialog>
       )}
     </>
   );

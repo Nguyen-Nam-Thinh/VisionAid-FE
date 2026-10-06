@@ -71,6 +71,7 @@ export function Form({
   return (
     <form
       className="stack"
+      aria-busy={isSubmitting}
       noValidate
       onSubmit={handleSubmit(async (values) => {
         setFailure('');

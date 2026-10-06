@@ -1,4 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
+const actionDialog = (page: Page) =>
+  page.getByRole('dialog').filter({
+    hasNot: page.locator(':scope > header > h2').filter({
+      hasText:
+        /^(Chi tiết tổ chức|Chi tiết tài khoản|Thông tin liên kết|Chi tiết người được chăm sóc)$/,
+    }),
+  });
 const id = '01900000-0000-7000-8000-000000000001';
 const token = () =>
   'header.' +
@@ -146,21 +153,23 @@ test('profile save, reload, password rejection and successful change', async ({ 
   await login(page);
   await expect(page).toHaveURL(/dashboard$/);
   await page.goto('/profile');
+  await page.getByRole('button', { name: 'Chỉnh sửa hồ sơ', exact: true }).click();
   await page.getByLabel('Họ và tên').fill('Tên mới');
   await page.getByLabel('Số điện thoại').fill('0901234567');
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
   await expect(page.getByRole('status')).toContainText('Đã cập nhật hồ sơ');
   await page.reload();
-  await expect(page.getByLabel('Họ và tên')).toHaveValue('Tên mới');
+  await expect(page.getByText('Tên mới · 0901234567', { exact: true })).toBeVisible();
   await expect(page.locator('input[type=file]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
   await page.getByLabel('Mật khẩu hiện tại').fill('WrongPassword@1');
   await page.getByLabel('Mật khẩu mới', { exact: false }).first().fill('NewPassword@2');
   await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
-  await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
+  await actionDialog(page).getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Current password is incorrect.');
   await expect(page).toHaveURL(/profile$/);
   accepted = true;
-  await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
+  await actionDialog(page).getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
   await expect(page).toHaveURL(/auth\/login$/);
   await expect(page.getByRole('status')).toContainText('Đã đổi mật khẩu');
   expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
@@ -255,13 +264,8 @@ test('recovery email, expired token, pasted link and login after reset', async (
   await expect(page.getByRole('status')).toContainText('Nếu email này đã đăng ký');
   expect(emails).toBe(1);
   await expect(page.getByText('Mã demo', { exact: false })).toHaveCount(0);
-  await page.getByRole('link', { name: 'Nhập mã khôi phục' }).click();
-  await page.getByLabel('Địa chỉ email').fill('api@example.test');
-  await page
-    .getByLabel('Mã hoặc liên kết khôi phục')
-    .fill(
-      'https://visionaid.net/reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test',
-    );
+  await expect(page.getByRole('link', { name: 'Nhập mã khôi phục' })).toHaveCount(0);
+  await page.goto('/reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test');
   await page.getByLabel('Mật khẩu mới *', { exact: true }).fill('NewPassword@2');
   await page.getByLabel('Nhập lại mật khẩu mới').fill('Different@2');
   await page.getByRole('button', { name: 'Đặt mật khẩu', exact: true }).click();
@@ -347,6 +351,10 @@ test('caregiver reads paginated users, link permissions, search and revoked acce
   await page.getByRole('button', { name: 'Xem quyền liên kết' }).click();
   await expect(page.getByRole('heading', { name: 'Quyền liên kết', exact: true })).toBeVisible();
   await expect(page.locator('dl')).toContainText('Quản lý gương mặtKhông');
+  await page
+    .getByRole('dialog', { name: 'Chi tiết người được chăm sóc', exact: true })
+    .getByRole('button', { name: 'Đóng hộp thoại' })
+    .click();
   await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Quyền liên kết', exact: true })).toHaveCount(0);
   await expect(page.getByRole('status')).toContainText('Không có người dùng phù hợp');
@@ -357,6 +365,10 @@ test('caregiver reads paginated users, link permissions, search and revoked acce
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
   await page.getByLabel('Người được chăm sóc trên trang này').selectOption(viuId);
   revoked = true;
+  await page
+    .getByRole('dialog', { name: 'Chi tiết người được chăm sóc', exact: true })
+    .getByRole('button', { name: 'Đóng hộp thoại' })
+    .click();
   await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Liên kết với Người thân BE' })).toHaveCount(0);
 });
@@ -446,6 +458,7 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   });
   await login(page);
   await page.goto('/caregiver/users');
+  await page.getByRole('button', { name: 'Thêm người được chăm sóc', exact: true }).click();
   await page.getByLabel('Họ và tên', { exact: false }).fill(person.fullName);
   await page.getByLabel('Email *', { exact: true }).fill(person.email);
   await page.getByLabel('Mật khẩu *', { exact: true }).fill('Test123!');
@@ -455,18 +468,20 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
   await expect(page.getByRole('alert')).toBeVisible();
   await page.reload();
+  await page.getByRole('button', { name: 'Tiếp tục liên kết người được chăm sóc' }).click();
   await expect(page.getByText(viuId, { exact: true })).toBeVisible();
   expect(await page.evaluate(() => JSON.stringify(sessionStorage))).not.toContain('Test123!');
   await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
+  await actionDialog(page).getByRole('button', { name: 'Đóng hộp thoại' }).click();
   await page.getByRole('button', { name: 'Xem liên kết của VIU mới' }).click();
   await page.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
   await page.getByRole('button', { name: 'Hủy', exact: true }).click();
   expect(deletes).toBe(0);
   await page.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
   await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
-  await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible();
+  await expect(actionDialog(page).getByRole('alert')).toBeVisible();
   await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(actionDialog(page)).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Xem liên kết của VIU mới' })).toHaveCount(0);
   expect(creates).toBe(1);
   expect(links).toBe(2);
@@ -556,7 +571,7 @@ test('5a Admin: create, detail, update, status, delete and restore with confirma
   await login(page);
   await page.goto('/admin/organizations');
   await page.getByRole('button', { name: 'Tạo tổ chức', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = actionDialog(page);
   await dialog.getByLabel('Tên tổ chức').fill(org.name);
   await dialog.getByLabel('Mã số thuế / giấy phép').fill('TEST-123');
   await dialog.getByRole('button', { name: 'Tạo tổ chức', exact: true }).click();
@@ -631,9 +646,9 @@ test('5a CenterAdmin: own profile, member paging/filter and no platform mutation
   await page.getByRole('combobox', { name: 'Vai trò', exact: true }).selectOption('Caregiver');
   await expect(page.getByText('Nhân viên trang 1', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sửa tổ chức', exact: true }).click();
-  await page.getByRole('dialog').getByLabel('Email liên hệ').fill('center@example.test');
+  await actionDialog(page).getByLabel('Email liên hệ').fill('center@example.test');
   await page.getByRole('button', { name: 'Lưu tổ chức' }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(actionDialog(page)).toHaveCount(0);
   expect(calls.some((c) => c === 'GET /api/organizations/me')).toBe(true);
   expect(calls.some((c) => c.startsWith('GET /api/organizations?'))).toBe(false);
   expect(calls.some((c) => c.includes('role=Caregiver'))).toBe(true);
@@ -720,7 +735,7 @@ test('5b Admin: create/edit/status/reset/delete accounts without changing identi
   await login(page);
   await page.goto('/admin/accounts');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = actionDialog(page);
   await dialog.getByLabel('Họ và tên').fill(account.fullName);
   await dialog.getByLabel('Email', { exact: false }).fill(account.email);
   await dialog.getByLabel('Mật khẩu mới').fill('Password@1');
@@ -813,9 +828,13 @@ test('5b CenterAdmin: fixed role and own organization, no delete; cross-org resp
     page.getByRole('button', { name: 'Sửa hồ sơ tài khoản', exact: true }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Xóa tài khoản', exact: true })).toHaveCount(0);
+  await page
+    .getByRole('dialog', { name: 'Chi tiết tài khoản', exact: true })
+    .getByRole('button', { name: 'Đóng hộp thoại' })
+    .click();
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
-  await expect(page.getByRole('dialog').getByLabel('Vai trò tài khoản')).toHaveCount(0);
-  await expect(page.getByRole('dialog').getByLabel('Mã tổ chức', { exact: true })).toHaveCount(0);
+  await expect(actionDialog(page).getByLabel('Vai trò tài khoản')).toHaveCount(0);
+  await expect(actionDialog(page).getByLabel('Mã tổ chức', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
   expect(queries[0].searchParams.get('role')).toBe('Caregiver');
   expect(queries[0].searchParams.get('organizationId')).toBe(organizationId);
@@ -907,7 +926,7 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
       await login(page);
       await page.goto(actorRole === 'Admin' ? '/admin/links' : '/center-admin/assignments');
       await page.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();
-      const dialog = page.getByRole('dialog');
+      const dialog = actionDialog(page);
       await dialog.getByLabel('Mã Caregiver').fill(id);
       await dialog.getByLabel('Mã VIU').fill(linkedViuId);
       await dialog.getByLabel('Tôi xác nhận tạo liên kết giữa các tài khoản trên').check();
@@ -958,12 +977,16 @@ test('5c Caregiver: own Personal permissions only, Organization read-only and no
   await page.getByRole('button', { name: 'Xem liên kết ' + cgLinkId }).click();
   await expect(page.getByRole('button', { name: 'Chuyển thành chăm sóc chính' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true }).click();
-  await page.getByRole('dialog').getByLabel('Nhận cảnh báo').uncheck();
-  await page.getByRole('dialog').getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
+  await actionDialog(page).getByLabel('Nhận cảnh báo').uncheck();
+  await actionDialog(page).getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
   await page.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(actionDialog(page)).toHaveCount(0);
   expect(link.canReceiveAlerts).toBe(false);
   link = { ...link, linkType: 'Organization' };
+  await page
+    .getByRole('dialog', { name: 'Thông tin liên kết', exact: true })
+    .getByRole('button', { name: 'Đóng hộp thoại' })
+    .click();
   await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true })).toHaveCount(
     0,
@@ -1096,8 +1119,8 @@ test('email reset URL is public and preserves encoded token on reload', async ({
   await page.goto('/reset-password?token=abc%2Bdef%2Fghi%3D%3D&email=api%40example.test');
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Đặt mật khẩu mới', exact: true })).toBeVisible();
-  await expect(page.getByLabel('Địa chỉ email')).toHaveValue('api@example.test');
-  await expect(page.getByLabel('Mã hoặc liên kết khôi phục')).toHaveValue('abc+def/ghi==');
+  await expect(page.getByLabel('Địa chỉ email')).toHaveCount(0);
+  await expect(page.getByLabel('Mã hoặc liên kết khôi phục')).toHaveCount(0);
   expect(resets).toBe(0);
   await page.getByLabel('Mật khẩu mới *', { exact: true }).fill('NewPassword@2');
   await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
@@ -1260,3 +1283,752 @@ for (const simulateConflict of [false, true]) {
     );
   });
 }
+
+test('8a SignalR: receives event, refreshes REST and stops after logout', async ({ page }) => {
+  await stubApi(page);
+  let send: ((data: string) => void) | undefined;
+  let closed = false;
+  let reads = 0;
+  await page.route('http://localhost:5176/hubs/location/negotiate?*', (route) =>
+    route.fulfill({
+      json: {
+        negotiateVersion: 1,
+        connectionId: 'fixture',
+        connectionToken: 'fixture',
+        availableTransports: [{ transport: 'WebSockets', transferFormats: ['Text', 'Binary'] }],
+      },
+    }),
+  );
+  await page.routeWebSocket(/\/hubs\/location\?/, (ws) => {
+    send = (data) => ws.send(data);
+    ws.onMessage((data) => {
+      if (String(data).includes('"protocol"')) ws.send('{}\x1e');
+    });
+    ws.onClose(() => {
+      closed = true;
+    });
+  });
+  await page.route('http://localhost:5176/api/emergency-events?*', (route) => {
+    reads++;
+    return route.fulfill({ json: { success: true, data: organizationPage([]) } });
+  });
+  await login(page);
+  await expect(page.getByText(/Đã kết nối realtime/)).toBeVisible();
+  await page.goto('/caregiver/alerts');
+  await expect(page.getByText(/Đã kết nối realtime/)).toBeVisible();
+  await expect(page.getByText('Không có cảnh báo phù hợp.')).toBeVisible();
+  await page.waitForTimeout(400);
+  const before = reads;
+  send!(
+    JSON.stringify({
+      type: 1,
+      target: 'EmergencyAlert',
+      arguments: [{ viuId: id, eventId: id, sentAt: '2026-10-01T12:00:00Z' }],
+    }) + '\x1e',
+  );
+  await expect.poll(() => reads).toBeGreaterThan(before);
+  const after = reads;
+  send!(
+    JSON.stringify({
+      type: 1,
+      target: 'EmergencyAlert',
+      arguments: [{ viuId: id, eventId: id, sentAt: '2026-10-01T12:00:00Z' }],
+    }) + '\x1e',
+  );
+  await page.waitForTimeout(400);
+  expect(reads).toBe(after);
+  closed = false;
+  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await expect(page).toHaveURL(/auth\/login$/);
+  await expect.poll(() => closed).toBe(true);
+});
+
+test('stage 8b preferences save false, reload and surface failure without success', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let enabled = true;
+  let fail = false;
+  await page.route('**/api/notifications/preferences', async (route) => {
+    if (route.request().method() === 'PUT') {
+      if (fail) return route.fulfill({ status: 403, json: { detail: 'Preference denied' } });
+      expect(route.request().postDataJSON()).toEqual({
+        preferences: [{ notificationType: 'SystemAlert', channel: 'Email', isEnabled: false }],
+      });
+      enabled = false;
+    }
+    return route.fulfill({
+      json: {
+        success: true,
+        data: [
+          {
+            id,
+            userId: id,
+            notificationType: 'SystemAlert',
+            channel: 'Email',
+            isEnabled: enabled,
+            updatedAt: '2026-10-02T00:00:00Z',
+          },
+        ],
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/caregiver/notifications');
+  await expect(page.getByText('Thông báo bắt buộc vẫn được gửi', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await page.getByLabel('Bật nhận khi không bắt buộc').uncheck();
+  await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+  await expect(actionDialog(page)).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole('cell', { name: 'Tắt nếu không bắt buộc' })).toBeVisible();
+  fail = true;
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+  await expect(actionDialog(page).getByRole('alert')).toHaveText('Preference denied');
+});
+for (const role of ['Admin', 'CenterAdmin']) {
+  test('stage 8b ' + role + ' rule scope, create conflict, flags and delete', async ({ page }) => {
+    const org = '01900000-0000-7000-8000-000000000002';
+    const ruleId = '01900000-0000-7000-8000-000000000003';
+    await stubApi(page, role, role === 'CenterAdmin' ? org : null);
+    const base = {
+      id,
+      organizationId: null as string | null,
+      notificationType: 'FallDetected',
+      channel: 'Email',
+      targetRole: 'Caregiver',
+      isMandatory: true,
+      isActive: true,
+      createdAt: '',
+      updatedAt: '',
+      updatedBy: null,
+    };
+    let items = [base];
+    let conflict = true;
+    await page.route('**/api/notifications/rules**', async (route) => {
+      const req = route.request();
+      if (req.method() === 'POST') {
+        if (conflict)
+          return route.fulfill({ status: 409, json: { detail: 'Rule already exists' } });
+        expect(req.postDataJSON().organizationId).toBe(role === 'CenterAdmin' ? org : null);
+        const item = { ...base, ...req.postDataJSON(), id: ruleId };
+        items.push(item);
+        return route.fulfill({ status: 201, json: { success: true, data: item } });
+      }
+      if (req.method() === 'PUT') {
+        expect(req.postDataJSON()).toEqual({ isMandatory: true, isActive: false });
+        items = items.map((i) => (i.id === ruleId ? { ...i, ...req.postDataJSON() } : i));
+        return route.fulfill({ json: { success: true, data: items.find((i) => i.id === ruleId) } });
+      }
+      if (req.method() === 'DELETE') {
+        expect(new URL(req.url()).pathname).toBe('/api/notifications/rules/' + ruleId);
+        items = items.filter((i) => i.id !== ruleId);
+        return route.fulfill({ status: 204 });
+      }
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            items,
+            page: 1,
+            pageSize: 10,
+            totalCount: items.length,
+            totalPages: 1,
+            hasPreviousPage: false,
+            hasNextPage: false,
+          },
+        },
+      });
+    });
+    await login(page);
+    await page.goto(role === 'Admin' ? '/admin/rules' : '/center-admin/routing');
+    const global = page
+      .getByRole('row')
+      .filter({ has: page.getByRole('cell', { name: 'Toàn hệ thống', exact: true }) });
+    if (role === 'CenterAdmin') {
+      await expect(global.getByText('Chỉ xem')).toBeVisible();
+      await expect(global.getByRole('button')).toHaveCount(0);
+    }
+    await page.getByRole('button', { name: 'Thêm quy tắc', exact: true }).click();
+    let dialog = actionDialog(page);
+    await dialog.getByLabel('Loại thông báo').selectOption('SystemAlert');
+    await dialog.getByLabel('Kênh thông báo').selectOption('Email');
+    await dialog.getByLabel('Vai trò nhận').selectOption('Caregiver');
+    await dialog.getByLabel('Tôi xác nhận').check();
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(dialog.getByRole('alert')).toHaveText('Rule already exists');
+    conflict = false;
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(dialog).toHaveCount(0);
+    const row = page.getByRole('row').filter({ hasText: 'Thông báo hệ thống' });
+    await row.getByRole('button', { name: 'Chỉnh sửa' }).click();
+    dialog = actionDialog(page);
+    await dialog.getByLabel('Bắt buộc nhận').check();
+    await dialog.getByLabel('Đang áp dụng').uncheck();
+    await dialog.getByLabel('Tôi xác nhận').check();
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(row).toContainText('Ngừng áp dụng');
+    await row.getByRole('button', { name: 'Xóa', exact: true }).click();
+    await actionDialog(page).getByRole('button', { name: 'Xác nhận', exact: true }).click();
+    await expect(row).toHaveCount(0);
+  });
+}
+
+test('reset without email link cannot submit a password', async ({ page }) => {
+  await stubApi(page);
+  await page.goto('/auth/reset');
+  await expect(page.getByRole('alert')).toContainText('Liên kết khôi phục thiếu');
+  await expect(page.getByRole('button', { name: 'Đặt mật khẩu', exact: true })).toHaveCount(0);
+});
+
+test('layout: filter control baseline and centered organization popup on desktop and tablet', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  await page.route('http://localhost:5176/api/organizations**', (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const data = path.endsWith('/members')
+      ? organizationPage([])
+      : path.endsWith(organizationId)
+        ? organizationFixture
+        : organizationPage([organizationFixture]);
+    return route.fulfill({ json: { success: true, data } });
+  });
+  await login(page);
+  await page.goto('/admin/organizations');
+  for (const width of [1440, 768]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const input = await page.getByLabel('Tìm tổ chức').boundingBox();
+    const search = await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).boundingBox();
+    if (width === 1440)
+      expect(Math.abs(input!.y + input!.height - search!.y - search!.height)).toBeLessThan(2);
+    await page.getByRole('button', { name: 'Xem tổ chức ' + organizationFixture.name }).click();
+    const dialog = page.getByRole('dialog', { name: 'Chi tiết tổ chức', exact: true });
+    await expect(dialog).toBeVisible();
+    const box = await dialog.boundingBox();
+    expect(Math.abs(box!.x + box!.width / 2 - width / 2)).toBeLessThan(2);
+    expect(Math.abs(box!.y + box!.height / 2 - 500)).toBeLessThan(2);
+    expect(box!.height).toBeLessThanOrEqual(900);
+    await page.screenshot({ path: 'test-results/organization-popup-' + width + '.png' });
+    await dialog.getByRole('button', { name: 'Đóng hộp thoại', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Xem tổ chức ' + organizationFixture.name }),
+    ).toBeFocused();
+  }
+});
+
+test('U1: trial, 402 keeps session, subscription recovery and refreshed status', async ({
+  page,
+}) => {
+  const calls = await stubApi(page);
+  let status = 'Trial';
+  let expiry = new Date(Date.now() + 2 * 86400000).toISOString();
+  let subscriptionBlocked = true;
+  await page.route('**/api/users/me', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          email: 'api@example.test',
+          fullName: 'Người dùng API',
+          role: 'Caregiver',
+          isActive: true,
+          organizationId: null,
+          licenseStatus: status,
+          licenseExpiresAt: expiry,
+        },
+      },
+    }),
+  );
+  await page.route('**/api/licenses/subscription', (route) =>
+    subscriptionBlocked
+      ? route.fulfill({ status: 402, json: { detail: 'License required' } })
+      : route.fulfill({
+          json: {
+            success: true,
+            data: {
+              id,
+              status: 'Active',
+              package: { id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+              startedAt: '2026-10-01T00:00:00Z',
+              trialEndsAt: null,
+              currentPeriodStart: '2026-10-01T00:00:00Z',
+              currentPeriodEnd: expiry,
+              autoRenew: false,
+              daysRemaining: 30,
+            },
+          },
+        }),
+  );
+  await login(page);
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+    'Đang dùng thử',
+  );
+  await page.getByRole('link', { name: 'Xem license', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Phiên đăng nhập vẫn được giữ');
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1')),
+  ).not.toBeNull();
+  expect(calls).not.toContain('/api/auth/refresh');
+  status = 'Active';
+  expiry = new Date(Date.now() + 30 * 86400000).toISOString();
+  subscriptionBlocked = false;
+  await page.getByRole('button', { name: 'Tải lại thông tin license' }).click();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+    'License đang hoạt động',
+  );
+  await expect(page.getByText('Personal', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await expect(page).toHaveURL(/\/auth\/login$/);
+  await expect(page.getByText('Personal', { exact: true })).toHaveCount(0);
+});
+
+for (const role of ['Staff', 'Admin', 'CenterAdmin']) {
+  test(`U1: ${role} does not request a personal subscription or require a purchase`, async ({
+    page,
+  }) => {
+    const calls = await stubApi(page, role === 'Staff' ? 'Caregiver' : role, id);
+    await login(page);
+    await page.getByRole('link', { name: 'Xem license', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Trạng thái tài khoản' })).toBeVisible();
+    await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+      'không yêu cầu license cá nhân',
+    );
+    await expect(page.getByRole('heading', { name: 'Subscription cá nhân' })).toHaveCount(0);
+    expect(calls).not.toContain('/api/licenses/subscription');
+  });
+}
+
+test('U1: missing license, expired grace and failed subscription never display fake Active data', async ({
+  page,
+}) => {
+  await stubApi(page);
+  await login(page);
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+    'Chưa xác định',
+  );
+  await page.route('**/api/users/me', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          email: 'api@example.test',
+          fullName: 'Người dùng API',
+          role: 'Caregiver',
+          isActive: true,
+          organizationId: null,
+          licenseStatus: 'Expired',
+          licenseExpiresAt: new Date(Date.now() - 86400000).toISOString(),
+        },
+      },
+    }),
+  );
+  await page.route('**/api/licenses/subscription', (route) =>
+    route.fulfill({ status: 404, json: { detail: 'Not found' } }),
+  );
+  await page.goto('/license');
+  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toContainText(
+    'gia hạn 3 ngày',
+  );
+  await expect(
+    page.getByText('Máy chủ chưa tìm thấy subscription cho tài khoản này.'),
+  ).toBeVisible();
+  await page.route('**/api/licenses/subscription', (route) =>
+    route.fulfill({ status: 503, json: { detail: 'Server unavailable' } }),
+  );
+  await page.getByRole('button', { name: 'Tải lại thông tin license' }).click();
+  await expect(page.getByRole('alert')).toContainText('Server unavailable');
+  await expect(page.getByText('Đang hoạt động', { exact: true })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Hồ sơ của tôi' }).click();
+  await expect(page).toHaveURL(/\/profile$/);
+});
+
+const u2Package = (packageType = 'Personal', isActive = true) => ({
+  id: packageType === 'Personal' ? id : '01900000-0000-7000-8000-000000000002',
+  name: packageType + ' test',
+  code: packageType.toUpperCase(),
+  packageType,
+  priceMonthly: 123000,
+  priceYearly: null,
+  currency: 'VND',
+  maxViuPerLicense: 1,
+  includedLicenses: 1,
+  trialDays: 7,
+  durationDays: 30,
+  isActive,
+  featureFlags: { webrtc: true },
+  createdAt: '2026-10-03T00:00:00Z',
+  updatedAt: '2026-10-03T00:00:00Z',
+});
+test('U2 Admin: create, detail popup, immutable fields, server errors and deactivate', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  let items = [u2Package()];
+  let fail = false;
+  let writes = 0;
+  await page.route('http://localhost:5176/api/licenses/packages**', (route) => {
+    const req = route.request();
+    const url = new URL(req.url());
+    if (req.method() === 'GET') {
+      const data = url.pathname.endsWith('/packages')
+        ? {
+            ...organizationPage(
+              items.filter(
+                (p) =>
+                  !url.searchParams.has('isActive') ||
+                  String(p.isActive) === url.searchParams.get('isActive'),
+              ),
+            ),
+            pageSize: 20,
+          }
+        : items.find((p) => url.pathname.endsWith(p.id));
+      return route.fulfill({ json: { success: true, data } });
+    }
+    writes++;
+    if (fail) return route.fulfill({ status: 409, json: { detail: 'Package conflict test' } });
+    const body = req.postDataJSON();
+    if (req.method() === 'POST') {
+      expect(body).not.toHaveProperty('isActive');
+      const created = { ...u2Package(), ...body, id: '01900000-0000-7000-8000-000000000003' };
+      items.push(created);
+      return route.fulfill({ status: 201, json: { success: true, data: created } });
+    }
+    expect(req.method()).toBe('PUT');
+    expect(body).not.toHaveProperty('code');
+    expect(body).not.toHaveProperty('packageType');
+    items = items.map((p) => (url.pathname.endsWith(p.id) ? { ...p, ...body } : p));
+    return route.fulfill({
+      json: { success: true, data: items.find((p) => url.pathname.endsWith(p.id)) },
+    });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Gói dịch vụ', exact: true }).click();
+  await expect(page).toHaveURL(/admin\/packages$/);
+  await page.getByRole('button', { name: 'Thêm gói', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Mã gói').fill('NEW_TEST');
+  await dialog.getByLabel('Loại gói').selectOption('Personal');
+  await dialog.getByLabel('Tên gói').fill('New package test');
+  await dialog.getByLabel('Giá tháng *', { exact: true }).fill('99000');
+  await dialog.getByLabel('Đơn vị tiền tệ').fill('VND');
+  await dialog.getByRole('button', { name: 'Tạo gói', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByText('New package test', { exact: true })).toBeVisible();
+  expect(writes).toBe(1);
+  await page.getByRole('button', { name: 'Chi tiết Personal test', exact: true }).click();
+  await expect(dialog.getByText(/PERSONAL.*Personal.*không thể thay đổi/)).toBeVisible();
+  await expect(dialog.getByLabel('Mã gói')).toHaveCount(0);
+  await dialog.getByLabel('Giá tháng *', { exact: true }).fill('234000');
+  await dialog.getByLabel('Đang mở bán').uncheck();
+  fail = true;
+  await dialog.getByRole('button', { name: 'Lưu gói', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Package conflict test');
+  await expect(dialog.getByLabel('Giá tháng *', { exact: true })).toHaveValue('234000');
+  fail = false;
+  await dialog.getByRole('button', { name: 'Lưu gói', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByLabel('Trạng thái gói').selectOption('false');
+  await expect(page.getByText('Personal test', { exact: true })).toBeVisible();
+  await expect(page.getByText('New package test', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Chi tiết Personal test', exact: true }).click();
+  await expect(dialog.getByLabel('Đang mở bán')).not.toBeChecked();
+  for (const width of [1440, 768]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const box = await dialog.boundingBox();
+    expect(box).not.toBeNull();
+    expect(Math.abs(box!.x + box!.width / 2 - width / 2)).toBeLessThan(3);
+    await page.screenshot({ path: 'test-results/u2-editor-' + width + '.png', fullPage: true });
+  }
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+});
+for (const role of ['Caregiver', 'CenterAdmin']) {
+  test('U2 catalog scope and forbidden admin: ' + role, async ({ page }) => {
+    await stubApi(page, role, role === 'CenterAdmin' ? id : null);
+    let available = true;
+    let calls = 0;
+    await page.route('http://localhost:5176/api/licenses/packages**', (route) => {
+      calls++;
+      expect(route.request().method()).toBe('GET');
+      expect(new URL(route.request().url()).pathname).toBe('/api/licenses/packages');
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            ...organizationPage(
+              available
+                ? [
+                    u2Package(),
+                    u2Package('Business'),
+                    {
+                      ...u2Package(),
+                      id: '01900000-0000-7000-8000-000000000003',
+                      name: 'Hidden inactive',
+                      isActive: false,
+                    },
+                  ]
+                : [],
+            ),
+            pageSize: 20,
+          },
+        },
+      });
+    });
+    await login(page);
+    await page.getByRole('link', { name: 'Gói dịch vụ', exact: true }).click();
+    const name = role === 'Caregiver' ? 'Personal test' : 'Business test';
+    await expect(page.getByText(name, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(role === 'Caregiver' ? 'Business test' : 'Personal test', { exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByText('Hidden inactive')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Thêm gói' })).toHaveCount(0);
+    available = false;
+    await page.getByRole('button', { name: 'Tải lại danh mục' }).click();
+    await expect(page.getByText(name, { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Chưa có gói phù hợp trên trang này.')).toBeVisible();
+    const count = calls;
+    await page.goto('/admin/packages');
+    await expect(page).toHaveURL(/forbidden$/);
+    expect(calls).toBe(count);
+  });
+}
+test('U2 Staff has no personal catalog and makes no package request', async ({ page }) => {
+  const calls = await stubApi(page, 'Caregiver', id);
+  await login(page);
+  await expect(page.getByRole('link', { name: 'Gói dịch vụ' })).toHaveCount(0);
+  await page.goto('/packages');
+  await expect(page.getByText(/License do tổ chức quản lý/)).toBeVisible();
+  expect(calls.some((c) => c.includes('/licenses/packages'))).toBe(false);
+});
+
+const u3Order = '1791000000000';
+test('U3a: pending polling stops after one minute and manual refresh remains available', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let reads = 0;
+  await page.route('http://localhost:5176/api/payments/history?*', (route) => {
+    reads++;
+    return route.fulfill({ json: { success: true, data: organizationPage([u3Transaction()]) } });
+  });
+  await login(page);
+  await page.clock.install();
+  await page.goto('/payments/return?orderCode=' + u3Order);
+  await expect(page.getByRole('status')).toHaveText('Đang chờ thanh toán');
+  await page.clock.fastForward(61000);
+  await expect(page.getByText(/Đã hết thời gian chờ tự động/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Kiểm tra lại thanh toán' })).toBeEnabled();
+  const stopped = reads;
+  await page.clock.fastForward(30000);
+  expect(reads).toBe(stopped);
+  await page.getByRole('button', { name: 'Kiểm tra lại thanh toán' }).click();
+  await expect.poll(() => reads).toBe(stopped + 1);
+});
+test('U3a: staff cannot read personal payments', async ({ page }) => {
+  const calls = await stubApi(page, 'Caregiver', id);
+  await login(page);
+  await page.goto('/payments/return?orderCode=' + u3Order);
+  await expect(page.getByText(/Luồng thanh toán này dành cho Caregiver cá nhân/)).toBeVisible();
+  expect(calls.some((path) => path.startsWith('/api/payments'))).toBe(false);
+});
+const u3Transaction = (status = 'Pending') => ({
+  id,
+  payosOrderId: u3Order,
+  transactionType: 'SubscriptionRenew',
+  status,
+  amount: 123000,
+  currency: 'VND',
+  payosCheckoutUrl: 'https://pay.payos.vn/web/test-payment',
+  failureReason: null,
+  paidAt: status === 'Success' ? '2026-10-03T00:00:00Z' : null,
+  createdAt: '2026-10-03T00:00:00Z',
+});
+test('U3a: one create, safe checkout, spoofed PAID ignored, delayed success refreshes license', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let created = 0;
+  let status = 'Pending';
+  let profileReads = 0;
+  let subReads = 0;
+  await page.route('http://localhost:5176/api/users/me', (route) => {
+    profileReads++;
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          fullName: 'Test caregiver',
+          email: 'api@example.test',
+          role: 'Caregiver',
+          isActive: true,
+          organizationId: null,
+          licenseStatus: status === 'Success' ? 'Active' : 'Expired',
+          licenseExpiresAt: '2026-11-03T00:00:00Z',
+        },
+      },
+    });
+  });
+  await page.route('http://localhost:5176/api/licenses/packages**', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([u2Package()]) } }),
+  );
+  await page.route('http://localhost:5176/api/payments/create-link', async (route) => {
+    created++;
+    expect(route.request().postDataJSON()).toEqual({
+      packageId: id,
+      returnUrl: 'http://localhost:5176/payments/return',
+      cancelUrl: 'http://localhost:5176/payments/cancel',
+    });
+    await route.fulfill({
+      json: {
+        success: true,
+        data: {
+          transactionId: id,
+          checkoutUrl: u3Transaction().payosCheckoutUrl,
+          paymentLinkId: 'test-payment',
+          orderCode: Number(u3Order),
+          amount: 123000,
+          currency: 'VND',
+        },
+      },
+    });
+  });
+  await page.route('http://localhost:5176/api/payments/history?*', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([u3Transaction(status)]) } }),
+  );
+  await page.route('http://localhost:5176/api/licenses/subscription', (route) => {
+    subReads++;
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          status: 'Active',
+          package: { id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+          startedAt: '2026-10-03T00:00:00Z',
+          trialEndsAt: null,
+          currentPeriodStart: '2026-10-03T00:00:00Z',
+          currentPeriodEnd: '2026-11-03T00:00:00Z',
+          autoRenew: false,
+          daysRemaining: 30,
+        },
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/packages');
+  await page.getByRole('button', { name: 'Chọn gói Personal test' }).click();
+  await page
+    .getByRole('button', { name: 'Tạo đơn thanh toán', exact: true })
+    .evaluate((button: HTMLButtonElement) => {
+      button.click();
+      button.click();
+    });
+  await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toHaveAttribute(
+    'href',
+    'https://pay.payos.vn/web/test-payment',
+  );
+  expect(created).toBe(1);
+  await page.goto('/payments/return?orderCode=' + u3Order + '&status=PAID');
+  await expect(page.getByRole('status')).toHaveText('Đang chờ thanh toán');
+  expect(subReads).toBe(0);
+  const before = profileReads;
+  status = 'Success';
+  await page.getByRole('button', { name: 'Kiểm tra lại thanh toán' }).click();
+  await expect(page.getByText('Thanh toán thành công', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Subscription hiện tại: Đang hoạt động/)).toBeVisible();
+  await expect.poll(() => profileReads).toBeGreaterThan(before);
+  expect(subReads).toBeGreaterThan(0);
+  await page.reload();
+  await expect(page.getByText('Thanh toán thành công', { exact: true })).toBeVisible();
+  expect(created).toBe(1);
+});
+test('U3a: cancel return is read-only until confirmed, history restores pending order', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let status = 'Pending';
+  let cancelled = 0;
+  await page.route('http://localhost:5176/api/payments/history?*', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([u3Transaction(status)]) } }),
+  );
+  await page.route('http://localhost:5176/api/payments/' + id + '/cancel', (route) => {
+    expect(route.request().method()).toBe('DELETE');
+    cancelled++;
+    status = 'Cancelled';
+    return route.fulfill({ json: { success: true, message: 'Cancelled' } });
+  });
+  await login(page);
+  await page.goto('/caregiver/payments');
+  await page.getByRole('link', { name: 'Xem trạng thái', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Đang chờ thanh toán');
+  await page.goto('/payments/cancel?orderCode=' + u3Order + '&cancel=true');
+  await expect(page.getByRole('status')).toHaveText('Đang chờ thanh toán');
+  expect(cancelled).toBe(0);
+  await page.getByRole('button', { name: 'Hủy đơn thanh toán', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('status')).toHaveText('Đã hủy');
+  expect(cancelled).toBe(1);
+  await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toHaveCount(0);
+});
+test('U3a: login resumes order; another accounts order and URL status confer no success', async ({
+  page,
+}) => {
+  await stubApi(page);
+  await page.route('http://localhost:5176/api/payments/history?*', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([]) } }),
+  );
+  await page.goto('/payments/return?orderCode=' + u3Order + '&status=PAID');
+  await expect(page).toHaveURL(/auth\/login$/);
+  await page.reload();
+  await page.getByLabel('Địa chỉ email').fill('api@example.test');
+  await page.getByLabel('Mật khẩu *', { exact: true }).fill('Password@1');
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp('/payments/return\\?orderCode=' + u3Order + '$'));
+  await expect(page.getByText(/Chưa tìm thấy giao dịch trong lịch sử/)).toBeVisible();
+  await expect(page.getByText('Thanh toán thành công', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hủy đơn thanh toán', exact: true })).toHaveCount(
+    0,
+  );
+});
+test('U3a: uncertain create is not retried and unsafe checkout is not opened', async ({ page }) => {
+  await stubApi(page);
+  let writes = 0;
+  await page.route('http://localhost:5176/api/licenses/packages**', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([u2Package()]) } }),
+  );
+  await page.route('http://localhost:5176/api/payments/create-link', (route) => {
+    writes++;
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          transactionId: id,
+          checkoutUrl: 'https://evil.example/pay',
+          paymentLinkId: 'x',
+          orderCode: Number(u3Order),
+          amount: 123000,
+          currency: 'VND',
+        },
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/packages');
+  await page.getByRole('button', { name: 'Chọn gói Personal test' }).click();
+  await page.getByRole('button', { name: 'Tạo đơn thanh toán', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('không thuộc PayOS');
+  await expect(
+    page.getByRole('button', { name: 'Tạo đơn thanh toán', exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toHaveCount(0);
+  expect(writes).toBe(1);
+});

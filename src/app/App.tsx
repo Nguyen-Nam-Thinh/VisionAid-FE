@@ -1,3 +1,9 @@
+import { ApiNotifications } from '../pages/shared/ApiNotifications';
+import { ApiPackages } from '../pages/shared/ApiPackages';
+import { ApiPayments } from '../pages/shared/ApiPayments';
+import { paymentResumeTarget } from '../services/api/payments';
+import { ApiLicense, LicenseNotice } from '../pages/shared/ApiLicense';
+import { ApiRealtime } from '../components/ApiRealtime';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
 import { ApiTracking } from '../pages/shared/ApiTracking';
 import { ApiLinks } from '../pages/shared/ApiLinks';
@@ -10,7 +16,16 @@ import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
 import { features } from './features';
 import { useState, useEffect, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, NavLink, Outlet, Link } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  NavLink,
+  Outlet,
+  Link,
+  useLocation,
+} from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LogOut, Menu, LayoutDashboard, UserRound, ShieldCheck } from 'lucide-react';
 import { useAuth, useSession } from '../hooks/useService';
@@ -23,6 +38,7 @@ export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 });
 export function Guard({ role }: { role?: string }) {
+  const location = useLocation();
   const q = useSession();
   const auth = useAuth();
   if (q.isPending)
@@ -40,7 +56,14 @@ export function Guard({ role }: { role?: string }) {
         <Link to="/auth/login">Đăng nhập</Link>
       </div>
     );
-  if (!q.data) return <Navigate to="/auth/login" replace />;
+  if (!q.data)
+    return (
+      <Navigate
+        to="/auth/login"
+        state={{ returnTo: paymentResumeTarget(location.pathname + location.search) }}
+        replace
+      />
+    );
   if (!['Caregiver', 'CenterAdmin', 'Admin'].includes(q.data.role))
     return (
       <main className="main">
@@ -152,11 +175,15 @@ function Shell() {
                 (item) =>
                   runtime.mode === 'mock' ||
                   (user.role === 'Caregiver' &&
-                    ['users', 'caregivers', 'map', 'alerts'].includes(item.path)) ||
+                    ['users', 'caregivers', 'map', 'alerts', 'notifications'].includes(
+                      item.path,
+                    )) ||
                   (user.role === 'Admin' &&
-                    ['organizations', 'accounts', 'links'].includes(item.path)) ||
+                    ['organizations', 'accounts', 'links', 'rules'].includes(item.path)) ||
                   (user.role === 'CenterAdmin' &&
-                    ['organization', 'staff', 'users', 'assignments', 'map'].includes(item.path)),
+                    ['organization', 'staff', 'users', 'assignments', 'map', 'routing'].includes(
+                      item.path,
+                    )),
               )
               .map((item) => (
                 <NavLink
@@ -178,6 +205,23 @@ function Shell() {
             <p>Mỗi kết nối là một sự an tâm.</p>
           </div>
           <nav className="nav">
+            {runtime.mode === 'api' && <NavLink to="/license">License</NavLink>}
+            {runtime.mode === 'api' && user.role === 'Caregiver' && !user.orgId && (
+              <NavLink to="/caregiver/payments" onClick={() => setOpen(false)}>
+                Thanh toán
+              </NavLink>
+            )}
+            {runtime.mode === 'api' &&
+              (user.role === 'Admin' ||
+                user.role === 'CenterAdmin' ||
+                (user.role === 'Caregiver' && !user.orgId)) && (
+                <NavLink
+                  to={user.role === 'Admin' ? '/admin/packages' : '/packages'}
+                  onClick={() => setOpen(false)}
+                >
+                  Gói dịch vụ
+                </NavLink>
+              )}
             <NavLink to="/profile">
               <UserRound size={18} />
               Hồ sơ của tôi
@@ -224,6 +268,12 @@ function Shell() {
             </span>
           </Link>
         </header>
+        {auth.mode === 'api' && <LicenseNotice user={user} />}
+        {auth.mode === 'api' &&
+          !signingOut &&
+          (user.role === 'Caregiver' || (user.role === 'CenterAdmin' && user.orgId)) && (
+            <ApiRealtime key={user.id + ':' + user.role + ':' + user.orgId} actor={user} />
+          )}
         {auth.mode === 'mock' && (
           <div className="demo-strip">
             <span>● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối backend</span>
@@ -283,6 +333,20 @@ export function App() {
                 element={runtime.mode === 'api' ? <ApiSession /> : <Dashboard />}
               />
               <Route path="profile" element={<Profile />} />
+              {runtime.mode === 'api' && (
+                <>
+                  <Route path="caregiver/payments" element={<ApiPayments />} />
+                  <Route path="payments/return" element={<ApiPayments result />} />
+                  <Route path="payments/cancel" element={<ApiPayments result />} />
+                </>
+              )}
+              {runtime.mode === 'api' && <Route path="packages" element={<ApiPackages />} />}
+              {runtime.mode === 'api' && (
+                <Route element={<Guard role="Admin" />}>
+                  <Route path="admin/packages" element={<ApiPackages admin />} />
+                </Route>
+              )}
+              {runtime.mode === 'api' && <Route path="license" element={<ApiLicense />} />}
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>
                   <Route
@@ -308,6 +372,10 @@ export function App() {
                           <ApiTracking />
                         ) : f.role === 'Caregiver' && f.path === 'alerts' ? (
                           <ApiAlerts />
+                        ) : (f.role === 'Caregiver' && f.path === 'notifications') ||
+                          (f.role === 'Admin' && f.path === 'rules') ||
+                          (f.role === 'CenterAdmin' && f.path === 'routing') ? (
+                          <ApiNotifications />
                         ) : (
                           <ApiPending />
                         )

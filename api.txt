@@ -1,9 +1,9 @@
 VISIONAID WEB — API DÙNG Ở ĐÂU
-Cập nhật: 2026-09-26. Nguồn: live OpenAPI, controller BE, code FE và ảnh Swagger.
+Cập nhật kế hoạch: 2026-10-04. Danh sách 001–107 là snapshot OpenAPI cũ (2026-09-25), controller BE/code FE và ảnh Swagger; đã bổ sung đối chiếu 140 operations trong phụ lục U0 và docs/U0_OPENAPI_2026-10-03.md.
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-107 operations; 38 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U2/U3a: 52/140 operations có caller Web. Personal Payment đã nối; Business/WebRTC/Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -13,7 +13,8 @@ File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller
 8 API organizations: src/services/api/organizations.ts -> apiGet/apiWrite; UI src/pages/shared/ApiOrganizations.tsx. Activity-summary chưa nối.
 7 operation quản lý users: src/services/api/accounts.ts -> apiGet/apiWrite; UI src/pages/shared/ApiAccounts.tsx.
 6 operation caregiver-links: src/services/api/links.ts -> apiGet/apiWrite; UI src/pages/shared/ApiLinks.tsx (5c).
-2 operation locations: locations.ts -> ApiTracking.tsx; GET live polling 30 giây, history phân trang 20; POST GPS chỉ Mobile. Bản đồ nền chờ Mapbox token, chưa SignalR.
+2 operation locations: locations.ts -> ApiTracking.tsx; GET live polling 30 giây, history phân trang 20; POST GPS chỉ Mobile. Bản đồ nền chờ Mapbox token. Đợt 8a SignalR kích hoạt REST refetch; polling vẫn dự phòng.
+6 operation notifications: notifications.ts -> ApiNotifications.tsx; GET/PUT preferences tại /caregiver/notifications; rules CRUD tại /admin/rules và /center-admin/routing. Không phải inbox hoặc đăng ký FCM.
 Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE thật từ người dùng.
 Đợt triển khai/phụ thuộc/checklist đầy đủ ở PLAN.md; không tự làm tất cả roadmap.
 
@@ -72,7 +73,7 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Trạng thái: DA_NOI | Đợt: 3b
   Màn/luồng: /auth/recover
   File FE: src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/app/App.tsx
-  Dùng để: Gửi yêu cầu email khôi phục, thông báo chung không tiết lộ tài khoản tồn tại; cần test SMTP/inbox thật. Email BE dùng Mobile deep link, Web hỗ trợ sao chép/dán.
+  Dùng để: Gửi yêu cầu email khôi phục, thông báo chung không tiết lộ tài khoản tồn tại; người dùng mở link email tới /reset-password?token=...&email=... trên Web. Cần nghiệm thu đầy đủ inbox/reset/login, không nhập mã thủ công trong API mode.
   Quyền controller: Anonymous; controller Auth public
   Query: Không có
   Body/schema: application/json: ForgotPasswordRequest; text/json: ForgotPasswordRequest; application/*+json: ForgotPasswordRequest
@@ -80,9 +81,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
 
 007. POST /api/auth/reset-password
   Trạng thái: DA_NOI | Đợt: 3b
-  Màn/luồng: /auth/reset
+  Màn/luồng: /reset-password (link email); /auth/reset cũng nhận tham số URL
   File FE: src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/app/App.tsx
-  Dùng để: email + token + newPassword. Caller dùng resetPassword(email, code, password); code nhận token hoặc deep link visionaid://reset-password từ email. Thành công về login.
+  Dùng để: email + token + newPassword. API mode lấy email/token từ URL email, chỉ hiện mật khẩu mới và xác nhận; link thiếu dữ liệu yêu cầu gửi email mới. Thành công về login. Không hiển thị mã/token cho người dùng nhập thủ công.
   Quyền controller: Anonymous; controller Auth public
   Query: Không có
   Body/schema: application/json: ResetPasswordRequest; text/json: ResetPasswordRequest; application/*+json: ResetPasswordRequest
@@ -589,9 +590,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Navigation/Presentation/NavigationController.cs
 
 058. GET /api/notifications/rules
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /admin/rules; /center-admin/routing
-  File FE: src/pages/super-admin/Rules.tsx; src/pages/center-admin/Routing.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOrCenterAdmin
   Query: page, pageSize, notificationType, channel, targetRole, isActive
@@ -599,9 +600,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 059. POST /api/notifications/rules
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /admin/rules; /center-admin/routing
-  File FE: src/pages/super-admin/Rules.tsx; src/pages/center-admin/Routing.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOrCenterAdmin
   Query: Không có
@@ -609,9 +610,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 060. PUT /api/notifications/rules/{id}
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /admin/rules; /center-admin/routing
-  File FE: src/pages/super-admin/Rules.tsx; src/pages/center-admin/Routing.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOrCenterAdmin
   Query: Không có
@@ -619,9 +620,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 061. DELETE /api/notifications/rules/{id}
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /admin/rules; /center-admin/routing
-  File FE: src/pages/super-admin/Rules.tsx; src/pages/center-admin/Routing.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOrCenterAdmin
   Query: Không có
@@ -629,9 +630,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 062. GET /api/notifications/preferences
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /caregiver/notifications
-  File FE: src/pages/caregiver/Notifications.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -639,9 +640,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 063. PUT /api/notifications/preferences
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: DA_NOI | Đợt: 8b
   Màn/luồng: /caregiver/notifications
-  File FE: src/pages/caregiver/Notifications.tsx
+  File FE: src/services/api/notifications.ts -> src/pages/shared/ApiNotifications.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -649,7 +650,7 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 064. GET /api/notifications/preferences/{userId}
-  Trạng thái: CHUA_NOI | Đợt: 8b
+  Trạng thái: CHUA_NOI | Đợt: Bổ sung quản trị sau 8b
   Màn/luồng: Chi tiết tài khoản quản trị — UI dự kiến, chưa mở
   File FE: src/pages/super-admin/Accounts.tsx; src/pages/center-admin/Staff.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
@@ -1101,7 +1102,7 @@ PHỤ THUỘC PHẢI TEST CHUNG
 9. TTS PUT -> GET -> Mobile đọc lại; không tự kết luận đã đồng bộ thiết bị từ HTTP 200.
 
 NGOÀI DANH SÁCH REST / CONTRACT CÒN THIẾU
-- SignalR /hubs/location: xem LocationHub và nơi phát event; không phải REST operation.
+- SignalR /hubs/location: DA_NOI đợt 8a; components/ApiRealtime.tsx -> services/realtime/signalr.ts; JWT qua apiAccessToken. LocationUpdated/EmergencyAlert/EscalationSuggestion/GeofenceBreach kích hoạt refetch REST có kiểm tra quyền, không ghép payload vào cache. Hub tự join group theo JWT; không có client JoinGroup. Không tăng số REST operations.
 - Mapbox, Firebase, Google STT là dịch vụ ngoài; không suy ra endpoint BE từ tên dịch vụ.
 - Chưa tìm thấy QR invitation/generate/accept link; OCR QR không dùng thay.
 - Chưa xác nhận API upload avatar, đọc/giải mã ảnh .enc, cập nhật FCM token độc lập,
@@ -1113,3 +1114,77 @@ Ghi trạng thái từng method/path, caller FE thật, commit, kết quả test
 vào file này cùng PLAN.md. Không đánh dấu API Mobile là phần Web chưa hoàn thành.
 
 TRẠNG THÁI TEST: 3b đang lỗi 500 forgot-password trên BE, chờ log; người dùng hoãn test và cho phép làm 4a. DA_NOI không đồng nghĩa BE thật đã đạt.
+
+PHỤ LỤC U0 — ĐÃ ĐỐI CHIẾU BE MỚI VÀ OPENAPI DEPLOY 2026-10-03
+Swagger: https://api.visionaid.net/swagger/index.html
+OpenAPI: https://api.visionaid.net/swagger/v1/swagger.json
+BE local: e56c545. Public OpenAPI: 140 operations, thêm 33 so với 107 cũ, không mất method/path cũ. 44 callers FE chưa thay đổi.
+Danh mục 140 operations + request/query mới: docs/U0_OPENAPI_2026-10-03.md.
+Contract trọng yếu, policy và blocker cần nhóm BE: docs/U0_BACKEND_FINDINGS.md (ưu tiên hơn phụ lục chưa xác minh trước đây).
+Chưa authenticated runtime test, chưa nghiệm thu BE, không triển khai caller mới trong khảo sát này.
+
+Mapping mới:
+- U1: GET /api/users/me có licenseStatus/licenseExpiresAt; GET /api/licenses/subscription. Middleware có blocker 402 cho /api/licenses khi Caregiver None/quá grace.
+- U2: GET/POST /api/licenses/packages; GET/PUT /api/licenses/packages/{id}. Không có DELETE package.
+- U3: POST /api/payments/create-link (packageId, returnUrl?, cancelUrl?); GET /api/payments/history; DELETE /api/payments/{id}/cancel. Chưa có GET payment theo ID.
+- SERVER ONLY: POST /api/payments/payos-webhook; không gọi từ FE.
+- U3b/U4: GET /api/licenses/pool; GET /api/licenses/assignments; POST /api/licenses/assignments/{viuUserId}/assign (poolId); POST /api/licenses/assignments/{viuUserId}/revoke. Sửa path/method bản TXT: revoke là POST theo VIU ID, không DELETE theo assignment ID.
+- U5: POST /api/licenses/distribute (poolId, note?); POST /api/licenses/activate-key (licenseKey). Trừ pool khi distribute; chưa thấy API list distributed keys.
+- 8c: PUT /api/auth/fcm-token (fcmToken, clientDeviceId, deviceType?, deviceModel?, appVersion?). Đã có upsert, không cần login lại chỉ để cập nhật token; logout deactivate theo user/device, chưa revoke riêng để tắt push. Chưa nối FE.
+- U6: POST/GET /api/webrtc/sessions; POST /api/webrtc/sessions/{id}/accept, /reject, /end; GET /api/webrtc/ice-servers/public. Role/quyền theo handler, không suy quyền gọi từ ICE role.
+- U7a: GET/POST /api/webrtc/ice-servers; PUT/DELETE /api/webrtc/ice-servers/{id}.
+- SIGNALR /hubs/location: RelayOffer -> WebRtcOffer; RelayAnswer -> WebRtcAnswer; RelayIceCandidate -> WebRtcIceCandidate. Không tính là REST.
+- Các API mới khác trong snapshot (called, public configs, faces me/identify, GPS me/batch, navigation batch) cần đối chiếu role/handler trước khi phân loại Web/Mobile chính thức; không tự mở UI chỉ vì Swagger có path.
+
+XÁC NHẬN BE 2026-10-03: /api/licenses được pass-through cho None/Expired; Staff có organization_id hợp lệ bypass license cá nhân; first Personal link inherit nếu VIU chưa có license. Chờ source/deploy verification vì local chưa thấy fixes. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforce 1 VIU theo gói. Không thay giới hạn FE hiện có thành 1.
+
+U1 — TRIỂN KHAI FE 2026-10-03 (chờ user test live)
+- GET /api/users/me: DA_NOI; src/services/api/auth.ts đọc licenseStatus/licenseExpiresAt.
+  Dùng: banner trong Shell trên các trang đã đăng nhập, /license, profile/session.
+  Thiếu/null/unknown status: hiển thị chưa xác định, không tự gán Active/None.
+- GET /api/licenses/subscription: DA_NOI; src/services/api/licenses.ts -> src/pages/shared/ApiLicense.tsx.
+  Route /license, mở từ banner “Xem license” hoặc sidebar “License”.
+  Chỉ gọi cho Caregiver không có organizationId. Staff/Admin/CenterAdmin không gọi subscription cá nhân.
+  DTO: id, status (Trial/Active/Expired/Cancelled/Suspended), package {id,name,code,packageType},
+  startedAt, trialEndsAt, currentPeriodStart, currentPeriodEnd, autoRenew, daysRemaining.
+  Hiển thị tên gói/trạng thái/thời hạn; query key theo user và org; refresh mỗi 60 giây/nút tải lại.
+  404: chưa tìm thấy subscription. 402: thông báo license và giữ phiên. 5xx/DTO sai: lỗi, không fallback Active.
+- HTTP adapter chung: 402 không logout/refresh token/retry mutation; State cung cấp link xem license.
+  Không thêm guard toàn cục; các luồng safety và quyền truy cập vẫn do BE kiểm soát.
+- Chưa có caller checkout/activate-key/pool/package ở U1. Trial/Personal tối đa 3 VIU là policy đã chốt.
+- Kiểm thử: 77 unit + 5 U1 E2E fixture đạt; chưa kiểm thử authenticated BE runtime cho U1.
+  Checklist: docs/API_STAGE_U1_TEST.md. Tổng caller hiện tại: 45/140; không yêu cầu mọi API phải dùng trên Web.
+
+U2 — TRIỂN KHAI FE 2026-10-03 (chờ user test live)
+Tổng hiện tại: 49/140 operations có caller Web (45 sau U1 + 4 ở U2).
+Service: src/services/api/packages.ts. UI: src/pages/shared/ApiPackages.tsx.
+- GET /api/licenses/packages: DA_NOI. /admin/packages và /packages.
+  Query page/pageSize=20, isActive chỉ Admin. BE phân trang; FE lọc loại gói phù hợp trong từng trang cho non-admin.
+  Caregiver cá nhân -> Personal active; CenterAdmin -> Business active. Staff không có catalog mua cá nhân.
+- GET /api/licenses/packages/{id}: DA_NOI. Admin mở popup chi tiết/sửa; xác minh ID response.
+- POST /api/licenses/packages: DA_NOI. Admin popup tạo; body name, code, packageType, priceMonthly,
+  priceYearly|null, currency, maxViuPerLicense, includedLicenses, trialDays, durationDays, featureFlags.
+  Không gửi isActive khi tạo; BE mặc định true.
+- PUT /api/licenses/packages/{id}: DA_NOI. Admin popup sửa, gồm isActive; bỏ code và packageType immutable.
+  priceYearly=null không xóa giá trong BE; FE chặn thao tác xóa giá năm đã tồn tại.
+- FeatureFlags chỉ JSON object<string, boolean>; không secret, không tự bật toàn bộ UI từ cờ.
+- Sau lưu refetch danh mục/subscription; không optimistic success. HTTP lỗi giữ form.
+- Giá/thời hạn/currency đọc server. Chưa gọi payment/checkout; U3a phải kiểm tra lại giá và active trước thanh toán.
+- Không có DELETE package. Checklist: docs/API_STAGE_U2_TEST.md.
+
+
+U3a — TRIỂN KHAI FE 2026-10-04 (chờ user test live)
+Tổng hiện tại: 52/140 operations có caller Web (49 sau U2 + 3 payment). Webhook không phải caller Web.
+- POST /api/payments/create-link
+  Dùng tại /packages -> Chọn gói Personal -> popup Tạo đơn thanh toán.
+  Caller: src/services/api/payments.ts:create -> src/pages/shared/ApiPayments.tsx:PersonalCheckout.
+  Body: packageId, returnUrl, cancelUrl; không gửi giá. Chỉ Caregiver cá nhân; không tự retry.
+- GET /api/payments/history?page=&pageSize=
+  Dùng tại /caregiver/payments (10/trang); /payments/return và /payments/cancel (tra orderCode trong lịch sử, tối đa 1000 bản ghi); kiểm tra lại trước hủy.
+  Caller: paymentsApi.list/find -> PaymentHistory/PaymentResult và paymentsApi.cancel.
+  Success từ BE mới refetch session và GET /api/licenses/subscription. Query status=PAID không quyết định kết quả.
+- DELETE /api/payments/{id}/cancel
+  Dùng tại trang trạng thái đơn -> Hủy đơn thanh toán -> popup Xác nhận. Chỉ Pending thuộc lịch sử tài khoản hiện tại; BE vẫn kiểm tra quyền cuối cùng.
+  Caller: paymentsApi.cancel -> PaymentResult.
+- POST /api/payments/payos-webhook: SERVER ONLY, FE không gọi.
+- Business/CenterAdmin payment chưa triển khai (U3b). Checklist và giới hạn: docs/API_STAGE_U3A_TEST.md.

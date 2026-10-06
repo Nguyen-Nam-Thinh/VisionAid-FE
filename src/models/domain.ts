@@ -11,6 +11,8 @@ export interface Person {
   orgId: string;
   active: boolean;
   avatar?: string;
+  licenseStatus?: string | null;
+  licenseExpiresAt?: string | null;
 }
 export interface Link {
   id: string;

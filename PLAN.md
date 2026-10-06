@@ -1,295 +1,245 @@
-# VisionAid Web — Kế hoạch tích hợp API và bàn giao cho AI tiếp theo
+# VisionAid Web — Plan cập nhật B2C, B2B, License, PayOS và WebRTC
 
-Cập nhật: 2026-09-26. Phạm vi: VisionAid-FE. Không sửa BE/Mobile trong nhiệm vụ FE.
+Cập nhật 2026-10-04. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1–U3a đã triển khai FE; U3b trở đi chưa triển khai.
 
-## Đọc trước khi làm tiếp
+**Kết quả U0 mới nhất:** đã đọc BE mới và OpenAPI deploy có 140 operations (33 mới, 107 cũ giữ nguyên). Đọc [docs/U0_BACKEND_FINDINGS.md](docs/U0_BACKEND_FINDINGS.md) trước các câu hỏi dự kiến bên dưới; tài liệu đó thay thế những giả định đã được xác minh. U0 mới hoàn tất kiểm kê/khảo sát, còn policy và test thật. Có FCM upsert. Người dùng xác nhận BE đã sửa billing allowlist, Staff exemption và kế thừa license khi first Personal link; local chưa có bản sửa để đối chiếu. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforcement quota theo gói. Không còn cần người dùng gửi lại vị trí BE/Swagger.
 
-1. Đọc AGENTS.md, CLAUDE.md, PLAN.md (file này), api.txt và docs/API_STAGE_02_TEST.md.
-2. Kiểm tra git status/branch/log và fetch origin. Mốc code đã merge mới nhất: dev tại 632043a (đợt 5c), đợt 6 trên feat/api-location-tracking; lịch sử: bec1a1f; đợt 1: 700d748; đợt 2: 1441d10. Không reset về các mốc này nếu có code mới hơn.
-3. Code và contract đang chạy quyết định trạng thái. Một số đoạn CLAUDE.md/README/BACKEND_INTEGRATION.md cũ còn ghi toàn bộ là mock: phần đó đã lỗi thời đối với 38 API được đánh dấu DA_NOI trong api.txt.
-4. Chỉ làm đợt người dùng yêu cầu. Sau mỗi đợt đưa checklist test, báo các API phụ thuộc nhau, rồi DỪNG chờ người dùng xác nhận trước khi làm đợt tiếp theo. Không coi roadmap này là lệnh thực hiện toàn bộ.
-5. Yêu cầu merge/push không tự chứng minh người dùng đã test BE thật. Hiện chưa có báo cáo nghiệm thu từng bước từ người dùng; không ghi “live E2E passed”.
+## 1. AI tiếp theo bắt đầu ở đâu
 
-## Trạng thái tại lúc bàn giao
+1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
+2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. Đợt kế tiếp là **U3b — Business/pool**, chỉ bắt đầu khi người dùng yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
+4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
+5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
 
-| Đợt | Nội dung | Code | Kiểm thử BE thật |
-|---|---|---|---|
-| 0 | Base URL, CORS localhost, transport, API mode | Đã làm, merge dev | Đã đọc Swagger và gọi GET /users/me không token nhận 401; chưa chứng minh login |
-| 1 | Login, GET hồ sơ, refresh, logout, guards | Đã làm, merge dev | Chờ người dùng xác nhận |
-| 2 | PUT hồ sơ, đổi mật khẩu và đăng nhập lại | Đã làm, merge dev | Chờ người dùng xác nhận |
-| 3a | Đăng ký Caregiver + logout-all | Merge dev b008a59 | Chờ người dùng test; consent hoãn theo yêu cầu |
-| 3b | Quên/reset mật khẩu | Merge dev dc22c5c | Có lỗi 500 forgot-password, chờ log BE; người dùng hoãn test |
-| 4a | Đọc users/links cho Caregiver | Merge dev dc22c5c | Chờ người dùng test |
-| 4b | Tạo VIU, tạo/gỡ liên kết cá nhân | Merge dev 68bbbc5 | Chờ người dùng test |
-| 5a | Tổ chức và thành viên theo scope | Đã nối, tích hợp dev từ feat/api-organization-management | Chờ test BE thật |
-| 5b | Quản lý tài khoản Admin/CenterAdmin | Merge dev 94a2ef6 | Chờ test BE thật |
-| 5c | Phân công và quyền liên kết | Merge dev 632043a | Chờ test BE thật |
-| 6 | GPS live và history | Đã nối; bản đồ nền chờ Mapbox token | Chờ test BE thật |
-| 7 | Cảnh báo Caregiver: list/detail/acknowledge/escalate/resolve | Đã nối, feat/api-emergency-alerts | Chờ test BE thật |
-| 8–14 | Các phần dưới đây | CHƯA NỐI API | Chưa test |
+## 2. Nguồn và mức độ xác minh
 
-Bằng chứng mới nhất đợt 6: 64 unit tests / 13 files pass; 19 kịch bản Playwright cũ pass và 2 kịch bản GPS pass sau khi sửa assertion để chấp nhận refetch hợp lệ. Build/lint pass; chunk khoảng 576 kB còn cảnh báo. Đây là test fixture, chưa nghiệm thu BE thật.
+- Nghiệp vụ mới: `C:/Users/thinh/Downloads/VisionAid_Update_Report.docx`, báo cáo đề ngày 28/9/2026; và `C:/Users/thinh/Downloads/Luồng B2C - B2B.txt` do người dùng gửi 03/10/2026. Nội dung cần thiết để tiếp tục được tổng hợp ngay trong plan này, không phụ thuộc việc AI sau còn truy cập Downloads.
+- Code FE: src/app/App.tsx, src/services/api/*, src/models/domain.ts, src/pages/*; đã đối chiếu route đang mở và DTO hiện tại.
+- BE local ../VisionAid-BE/src đã cập nhật e56c545, có License/Payment/WebRTC. Chưa thấy API/pipeline Hybrid Guidance tương ứng trong phạm vi rà soát. Có entity không chứng minh tính năng chạy đầy đủ.
+- Swagger deploy: https://api.visionaid.net/swagger/index.html; đã GET schema public /swagger/v1/swagger.json. Source và endpoint đã đối chiếu trong báo cáo U0, chưa test authenticated runtime.
+- api.txt giữ snapshot 107 REST cũ và bổ sung U1–U3a, tổng 52 caller Web; [snapshot U0](docs/U0_OPENAPI_2026-10-03.md) kiểm kê 140 operations. SignalR không tính như REST. Không suy ra DTO/quyền chỉ từ tên bảng DB.
+- Lịch sử triển khai và checklist cũ được giữ tại [docs/PLAN_LEGACY_2026-10-03.md](docs/PLAN_LEGACY_2026-10-03.md). File đó chỉ tra cứu lịch sử; thứ tự thực hiện hiện hành là plan này.
 
-API mode mở landing, login, register, recover/reset, dashboard thông tin phiên và /profile (có logout-all). Đã mở /caregiver/users cho Caregiver, /admin/organizations cho Admin và /center-admin/organization cho CenterAdmin; đợt 5b mở thêm /admin/accounts, /center-admin/staff, /center-admin/users; 5c mở thêm /admin/links, /center-admin/assignments, /caregiver/caregivers; đợt 6 mở /caregiver/map và /center-admin/map; các route nghiệp vụ còn lại vẫn ApiPending. Các màn mock có sẵn không có nghĩa đã tích hợp BE. Không fallback seed khi API lỗi.
+## 3. Phần đã làm và phần cần điều chỉnh
 
-## Môi trường và file cần biết
+| Mốc cũ | Trạng thái code tại dev | Việc cần làm theo scope mới |
+|---|---|---|
+| 0–2 | Transport, auth/refresh/guards, hồ sơ, đổi mật khẩu đã nối | Bổ sung entitlement/license vào DTO theo contract; xử lý 402 riêng |
+| 3a | Đăng ký Caregiver, logout-all đã nối | Kiểm tra trial tự kích hoạt và login sau đăng ký; consent vẫn chờ nội dung/version |
+| 3b | Forgot/reset đã nối; email reset flow sửa ở 51c0a2b | Test email -> /reset-password -> mật khẩu mới -> login. Không còn form nhập mã thủ công trong API mode |
+| 4a–4b | Danh sách VIU, tạo VIU + link, gỡ link cá nhân đã nối | Giữ phục hồi bước link; giữ giới hạn tối đa 3 VIU; kiểm tra kế thừa license khi tạo và first Personal link |
+| 5a–5c | Tổ chức, tài khoản, staff, VIU, phân công đã nối | Tạo VIU B2B consume pool; tạo staff không consume; quyền Staff vẫn theo link/org |
+| 6 | GPS live/history đã nối | Bản đồ nền/Mapbox chưa được xác nhận hoàn tất; không gọi dữ liệu cũ là trực tiếp |
+| 7 | Cảnh báo đọc/acknowledge/escalate/resolve đã nối | Kiểm tra safety exception của license và liên kết WebRTC |
+| 8a–8b | SignalR vị trí/cảnh báo, preferences/rules đã nối | Bổ sung delivery cho license/payment khi BE có; không dùng rules UI để suy ra push đã gửi |
+| Sửa UI | Merge dev 88ab163: reset link, căn hàng, popup chi tiết/form | Giữ Dialog/Confirm dùng chung, focus và pending guard khi thêm màn mới |
+| 8c | FCM mới chuẩn bị; config/VAPID đã nhận | BE có PUT /api/auth/fcm-token; gỡ blocker upsert, còn test logout/revoke/nhiều tab |
+| 9–14 | Các route nghiệp vụ tương ứng còn ApiPending trong API mode | Giữ backlog, sắp lại thứ tự bên dưới; mock không phải API đã nối |
+| License/PayOS/WebRTC/Hybrid | U1: profile license, trang /license chỉ đọc và UX 402; Personal PayOS U3a đã có; Business/WebRTC/Hybrid chưa làm | U2–U9 bên dưới |
 
-- FE: D:/FPT/Ky-9/SEP409/VisionAid-FE; BE tham khảo: ../VisionAid-BE.
-- Swagger: http://51.210.176.94:5002/swagger/index.html; OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json.
-- Đã đối chiếu live OpenAPI ngày 2026-09-25: 107 method + path. api.txt liệt kê đủ 107, kèm nguồn controller, quyền khai báo, request schema và query params.
-- .env local: VITE_SERVICE_MODE=api; VITE_API_BASE_URL=http://51.210.176.94:5002. Không commit .env, password hoặc token.
-- Chạy npm.cmd run dev; mở http://localhost:5173. CORS đã kiểm tra trước đây cho phép origin này, không cho http://127.0.0.1:5173; xác minh lại khi đổi môi trường. FE HTTPS cần BE HTTPS để tránh mixed content.
-- src/services/api/auth.ts: token/session, single-flight refresh, unwrap response, profile mapping. expiresAt của BE là hạn refresh; access expiry đọc JWT exp. Token lưu sessionStorage theo tab; không remember-me, không lưu password, chưa đồng bộ refresh giữa nhiều tab.
-- src/services/http/client.ts: transport và lỗi; src/services/api/auth.ts, caregiving.ts, organizations.ts, accounts.ts, links.ts, locations.ts, emergencies.ts: tổng 38 API đã nối qua apiGet/apiWrite trong adapter.ts; hàm snapshot/mock nghiệp vụ chưa hỗ trợ vẫn fail 501.
-- src/hooks/useService.ts: session/cache/logout; src/app/App.tsx: route guards/menu/API stage gate; src/app/features.tsx: danh mục route nghiệp vụ.
-- src/pages/auth/AuthPage.tsx; src/pages/shared/Profile.tsx; src/pages/shared/ApiSession.tsx: màn đã nối.
-- src/services/contracts.ts và models/domain.ts là model nội bộ FE, không gửi nguyên lên BE. Snapshot toàn bộ chỉ là kiến trúc mock; mỗi resource thật cần query key gồm user/org/VIU/filter/page.
-- Tests: npm.cmd test; npm.cmd run lint; npm.cmd run build; npm.cmd run test:e2e:api. API fixture port 5176; mock E2E port 5177. Không sửa base URL người dùng để chạy fixture.
+Bằng chứng gần nhất: 74 unit tests; lint/build đạt; 30 kịch bản API fixture có kết quả đạt qua các lượt chạy và chạy lại; mock notifications/TTS/geofence/keyboard đạt; kiểm tra popup 1440/768px. Không phải live BE E2E. Email đã được người dùng nhận trong trao đổi trước, nên lỗi SMTP 500 cũ chỉ là lịch sử, không kết luận đang hỏng. Chưa có xác nhận nghiệm thu toàn bộ luồng reset hoặc CORS hiện tại.
 
-## Cách hoàn thành một đợt
+## 4. Nghiệp vụ mới dùng để thiết kế
 
-- Đọc controller, DTO, validator, handler và authorization của chính endpoint; Swagger có thể không khai báo response schema đầy đủ. Ảnh chỉ chứng minh tên API, không chứng minh payload/quyền.
-- Tạo nhánh riêng từ dev mới nhất theo CLAUDE.md. Không ghi đè thay đổi người dùng. Dùng lại auth transport; khi cần đưa authorized request ra dùng chung, refactor tối thiểu kèm regression refresh.
-- Chỉ mở route/menu đã nối xong. Không bỏ gate toàn bộ App chỉ để mở một màn.
-- Kiểm tra loading/empty/error, 401/403, server validation, pagination, đổi VIU nhanh, org khác và unlinked user. Không tự retry ghi dữ liệu hoặc optimistic quyền/cảnh báo/sinh trắc học.
-- Chạy test phù hợp + build/lint. Test fixture và test BE thật phải ghi riêng.
-- Đưa checklist, tài khoản/dữ liệu cần có, thứ tự API phải gọi chung. Không tự tạo cảnh báo khẩn cấp hoặc gửi email trên dữ liệu thật để kiểm thử.
-- Cập nhật PLAN.md và api.txt: code đã nối, file gọi, kết quả test thật, lỗi còn lại, commit, việc tiếp theo. Lưu/push theo quy trình repo; merge theo quyền đã được người dùng cấp cho công việc đó. Không tự đi sang đợt mới.
+### B2C cá nhân
 
-## Các đợt còn lại (đánh số tiếp từ đợt 2)
+Caregiver tự đăng ký -> BE cấp token và trial 7 ngày -> tạo VIU -> tạo personal primary link. TXT cho phép tạo trong trial; Word mô tả tạo sau thanh toán, cần U0 xác nhận luồng chính thức. Trial/Personal quản lý tối đa 3 VIU theo MaxViusPerCaregiver; đây là quyết định nghiệp vụ, không enforce quota B2C theo gói. Hết hạn có grace 3 ngày; sau grace cần mua/gia hạn để dùng các tính năng bị giới hạn. Personal mặc định 99.000 VND/tháng. Giá và feature flags lấy từ API gói; giới hạn B2C theo MaxViusPerCaregiver = 3, không suy ra quota từ maxViuPerLicense trong package.
 
-Đây là phân chia bàn giao cho phần chưa làm; không khẳng định các số đợt 3–14 đã được triển khai hay đã nghiệm thu.
+Chuỗi thanh toán: chọn packageId -> BE tạo giao dịch PENDING và checkoutUrl -> người dùng thanh toán PayOS -> BE xác minh webhook và kích hoạt/gia hạn -> Web đọc lại transaction và license. Return URL, query success hoặc đóng tab PayOS không chứng minh đã thanh toán.
 
-### Đợt 3 — Hoàn thiện tài khoản công khai
+### B2B nội bộ trung tâm
 
-- 3a: POST /auth/register; POST /auth/accept-privacy-policy nếu luồng đồng ý chính sách đã được chốt; POST /auth/logout-all tại hồ sơ có xác nhận.
-- 3b: POST /auth/forgot-password + POST /auth/reset-password. Tách checkpoint nếu mail chưa sẵn sàng.
-- Màn: /auth/register, /auth/recover, /auth/reset, /profile. Reuse AuthPage/useAuth; contract hiện là resetPassword(email, code, password); API nhận email/token/newPassword, mock cũng kiểm tra email khớp mã.
-- Phụ thuộc: đợt 1; inbox thử nghiệm, SMTP và URL email/reset của BE cho 3b. Register chỉ Caregiver, không tự chọn Admin/CenterAdmin. Device phải nhất quán login/refresh/logout.
-- Test 3a: email trùng, password policy, register -> GET me, logout-all -> đăng nhập lại; chỉ ghi consent sau người dùng đồng ý phiên bản cụ thể.
-- Test 3b: gửi mail -> lấy token -> đặt mật khẩu -> login; token sai/hết hạn/dùng lại bị từ chối; không hiển thị token giả trong UI API.
-- Điểm dừng: người dùng xác nhận từng checkpoint. Không chặn đợt đọc dữ liệu nếu chỉ SMTP đang lỗi và người dùng cho phép đổi thứ tự.
+Super Admin tạo organization -> tạo CenterAdmin thuộc org -> CenterAdmin mua Business -> BE tạo pool -> CenterAdmin tạo staff/VIU -> phân công staff có link ORGANIZATION. Business mặc định 4.500.000 VND/tháng, 50 VIUs. Staff không tiêu thụ license; mỗi VIU consume 1. CenterAdmin không cần subscription cá nhân; không chặn CenterAdmin mua pool chỉ vì license_status=NONE.
 
-### Đợt 4 — Người được chăm sóc và liên kết cơ bản
+Hết pool: BE có thể trả 422 khi tạo VIU; UI giữ dữ liệu form và chỉ rõ cần mua thêm/thu hồi. Topup, thời hạn, số dùng/còn lại do BE trả về. Thu hồi assignment có xác nhận, không đồng nghĩa xóa VIU hoặc caregiver link. Test hai admin tạo đồng thời ở suất cuối; FE không tự tăng/giảm số pool để quyết định quyền.
 
-- 4a (đọc): GET /users + GET /caregiver-links + GET /caregiver-links/{id}; /caregiver/users và selector VIU dùng dữ liệu thật.
-- 4b (ghi): POST /users tạo VIU B2C rồi POST /caregiver-links; DELETE link khi được phép. Hai request không atomic: tạo user thành công/link thất bại phải giữ ID, báo rõ bước thất bại và cho thử lại link, không tạo user trùng.
-- Caregiver không được GET /users/{id} theo controller; lấy dữ liệu được phép từ danh sách/DTO link, không mở quyền bằng FE. Chưa có link có thể khiến user mới không còn trong danh sách: giữ ID từ response tạo.
-- Phụ thuộc: tài khoản Caregiver + VIU thử nghiệm; primary/secondary; một VIU không liên kết để test cấm.
-- Test: rỗng, phân trang/search, tạo + link + reload, gỡ link -> mất quyền/cache, không thấy VIU/org khác. Hoàn thành 4a trước 4b.
+### B2B mở rộng cho gia đình
 
-### Đợt 5 — Tổ chức, tài khoản, phân công
+CenterAdmin phân phối key từ pool -> gia đình nhận key -> Caregiver kích hoạt -> dùng theo subscription B2C. Gia đình bên ngoài không tự trở thành thành viên org, không mặc định cấp trung tâm quyền GPS/ảnh/contacts. Key chưa có người nhận, chủ subscription, thời điểm consume pool và hết hạn cần contract rõ. Không tự gửi key qua email/Zalo; hiển thị/copy cho thao tác đã được người dùng yêu cầu.
 
-- 5a: /admin/organizations và /center-admin/organization: organizations list/me/detail/create/update/status/delete/members theo quyền; không cấp CenterAdmin delete/status tổ chức.
-- 5b: /admin/accounts, /center-admin/staff, /center-admin/users: users list/detail/create/update/status/reset-password; DELETE users chỉ Admin.
-- 5c: /center-admin/assignments, /admin/links, /caregiver/caregivers: caregiver-links create/detail/permissions/promote-primary/delete theo contract.
-- Phụ thuộc: 4 + tổ chức có CenterAdmin/staff/VIU, thêm tài khoản org khác. Tạo organization -> user đúng role/org -> link Organization -> test quyền.
-- Caregiver API chỉ đọc own links, không mặc định thấy danh sách mọi secondary. promote-primary chỉ Admin/CenterAdmin. QR invitation và add-secondary bằng email trong mock chưa có contract tương đương: giữ khóa phần đó và báo người dùng, không dùng /ocr/qr-scans thay thế.
-- Test riêng từng checkpoint: cross-org bị chặn, deactivate mất phiên, reset mật khẩu, thay primary không có hai primary, quyền đổi phải refetch. Các thao tác xóa/vô hiệu hóa cần xác nhận UI.
+### Standalone và Hybrid AI
 
-### Đợt 6 — GPS và bản đồ đọc dữ liệu
+Standalone là VIU thuộc trung tâm với Staff Caregiver phụ trách, không phải role mới hoặc tài khoản không có người hỗ trợ. Dùng luồng phân công sẵn có; contacts theo cấu hình trung tâm, không hardcode chỉ 115.
 
-- GET /locations/live + /locations/history -> /caregiver/map và /center-admin/map; history hiện nằm trong trang map; /caregiver/activity dự kiến ở đợt sau.
-- Phụ thuộc: 4 (Caregiver), 5 (fleet tổ chức), Mobile gửi POST /locations/gps, public Mapbox token. POST GPS không do Web giả gửi.
-- Test: VIU đang có GPS, VIU mất kết nối, không có dữ liệu, timestamp/lat-lng/accuracy nullable, đổi VIU, scope org. Không gọi vị trí cũ là realtime. Chưa có Mapbox token thì báo rõ giới hạn bản đồ, không tuyên bố đã nối SDK.
+YOLOv8n on-device xử lý NEAR ngay; Mobile gửi JSON MEDIUM/FAR cho BE; BE dùng JEV/Groq hoặc rule-based và map decision qua template TTS. Web chỉ quản trị cấu hình, xem log/metrics theo quyền; không chạy camera detection, decision engine hoặc thay Mobile phát TTS. Không đợi phản hồi cloud cho cảnh báo NEAR.
 
-### Đợt 7 — Cảnh báo và xử lý
+### WebRTC
 
-- GET /emergency-events, GET detail, PUT acknowledge/escalate/resolve -> /caregiver/alerts; dùng cùng dữ liệu cho fleet/report phù hợp.
-- Phụ thuộc: 4/5 và Mobile hoặc BE fixture có event test. POST event và PUT dismiss là Mobile, không thêm vào Web.
-- Test bắt buộc theo chuỗi: list -> detail -> acknowledge -> resolve; nhánh escalate theo state hợp lệ. Test event đã được người khác xử lý, quyền bị gỡ, snapshot thiếu, không ghi thành công khi lỗi.
-- Không tự suy ra state machine từ mock, không tự gọi 115, không invent endpoint history nếu detail đã chứa history.
+Ba trigger: CAREGIVER_INITIATED, VIU_VOICE_COMMAND, SOS_AUTO. Caregiver xem video VIU và trao đổi audio; VIU chủ yếu nghe audio. Signaling dự kiến qua SignalR, media qua WebRTC/STUN/TURN. Phải xác minh Hub method/event/DTO và quyền session trước khi triển khai. Tự mở stream do SOS phụ thuộc consent, permission, trạng thái Mobile/browser; không hứa browser tự bật mic/camera hoặc bỏ qua thao tác nhận cuộc gọi.
 
-### Đợt 8 — Realtime, thông báo và quy tắc
+## 5. Các điểm phải xác nhận ở U0
 
-- 8a: SignalR /hubs/location cho map/alerts; kiểm tra source Hub + nơi phát events và quyền groups trước khi viết client. Kết nối hai chiều không phải REST endpoint trong api.txt.
-- 8b: GET/PUT /notifications/preferences -> /caregiver/notifications; rules CRUD -> /admin/rules, /center-admin/routing.
-- 8c: FCM web push sau khi có Firebase public config, VAPID, service worker và contract token lifecycle. Login/register device.fcmToken có thể nhận token; chưa thấy endpoint độc lập cập nhật token, không bịa URL refresh FCM.
-- Phụ thuộc: 6/7, dữ liệu sự kiện, account đúng org. GET rules chỉ Admin/CenterAdmin; caregiver preference DTO không mặc định có thông tin mandatory: cần BE cung cấp hoặc chốt cách thể hiện.
-- Test từng checkpoint: reconnect/refetch, không nhân đôi handler, logout cleanup, dedup alert/push, quyền notifications denied; rule org không thay rule global trái phép.
+| Vấn đề | Nguồn/chênh lệch | Cách xử lý trong plan |
+|---|---|---|
+| BE mới nằm đâu | ĐÃ XÁC MINH local e56c545 + Swagger HTTPS 140 operations | Không hỏi lại; xem báo cáo U0 cho các chênh lệch contract cụ thể |
+| Giới hạn B2C | ĐÃ CHỐT: Trial/Personal tối đa 3 VIU, không quota enforcement theo gói | Giữ MaxViusPerCaregiver=3; test đủ 3 và từ chối link thứ 4 |
+| Dashboard sau grace | Word: read-only; TXT: middleware trả 402 dashboard/features | Chốt GET nào còn được phép, payload 402, allowlist billing/auth/SOS/navigation; FE không thể giữ read-only nếu BE chặn mọi GET |
+| NONE và Navigation | Bảng Word chặn Navigation khi NONE; kết luận “không bao giờ block” | Chốt riêng NONE so với EXPIRED. Giữ SOS; không tự chốt policy thay BE |
+| Trial và tạo VIU | ĐÃ ĐỌC: RegisterCaregiver gọi ActivateTrial; CreateUser cho kế thừa license caregiver | Có thể tạo trong trial theo source; chờ test thật, cần PERSONAL active seed |
+| Chủ license/quyền staff | BE xác nhận Staff Caregiver có organization_id hợp lệ bypass license cá nhân | Kế thừa lúc tạo VIU đã có; first Personal link chỉ inherit khi VIU chưa có license. Chờ đối chiếu source/deploy mới |
+| Key distribution | ĐÃ ĐỌC: trừ pool ngay khi phát key, Suspended/subscriber null, hạn theo pool | Activate gắn subscriber; còn kiểm tra cạnh tranh, reclaim/quản lý key và middleware allowlist |
+| Phân công B2B | Ví dụ POST link TXT thiếu caregiverId | Theo DTO/handler thực tế để chọn đúng staff, không dùng CenterAdmin làm caregiver mặc định |
+| Gia hạn/topup | TXT có now+30 ngày và cộng 50; Word có yearly/auto_renew | Chốt kỳ, còn hạn mua thêm, tháng vs 30 ngày, số lượng, cancel/refund; không tạo toggle auto-renew chỉ từ cột DB |
+| Hybrid NEAR | Mô tả NEAR luôn offline; config near_threshold_ms nói fallback sau chờ | NEAR không chờ cloud; hỏi BE ý nghĩa config trước khi mở editor |
+| PayOS môi trường | Báo cáo ghi sandbox | Cần xác nhận môi trường test thực sự được hỗ trợ/cấu hình; không giả định có sandbox hoặc thử chuyển tiền thật |
+| WebRTC/SOS | Chưa có session API, Hub contract và credential lifecycle | Chốt state transitions, ai được gọi/nhận, privacy/consent, TURN và quyền trên điện thoại trước test tích hợp |
 
-### Đợt 9 — Địa điểm và vùng an toàn
+Các blocker chỉ dừng phần phụ thuộc; vẫn có thể làm các đợt cũ độc lập khi người dùng chọn. Không tự nâng các ví dụ JSON/tên bảng trong báo cáo thành contract đã xác minh.
 
-- saved-locations CRUD + geofences CRUD -> /caregiver/locations; CenterAdmin được controller cho phép nhưng route quản lý tương ứng chưa có: chỉ thêm khi người dùng chọn scope.
-- Phụ thuộc: 4/5, quyền CanManageLocations; 6 để chọn tọa độ/map.
-- Test: tạo -> GET -> sửa -> reload -> xóa; radius/coordinate validation, active/enter/exit, user ngoài link bị cấm. Test alert đi vào/ra cần Mobile GPS + boundary worker + đợt 7/8, không kết luận từ lưu form.
+## 6. Thứ tự đợt mới và điều kiện test
 
-### Đợt 10 — Gương mặt thân quen
+Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 cho scope cập nhật. Đề xuất: **U0 -> U1 -> U2 -> U3a -> U3b -> U4 -> U5 -> 11a -> 8c -> U6a -> U6b -> 9 -> 10 -> 11b -> 12 -> 13/U7 -> U8 -> U9**. Sau từng checkpoint phải bàn giao và dừng. 8c có thể làm sớm hơn nếu contract token đã đủ; không cần FCM để nghiệm thu core license/payment qua REST.
 
-- persons CRUD + upload/delete/primary photos -> /caregiver/registry.
-- Phụ thuộc: 4, CanManageRegistry, storage/AI BE, ảnh thử có consent. Luồng: tạo person -> upload từng ảnh -> GET trạng thái -> chọn primary -> xóa ảnh/person.
-- Cần xác minh URL đọc ảnh/ủy quyền giải mã: đường dẫn .enc không phải ảnh browser; chưa có endpoint giải mã được xác nhận. Có thể nối metadata trước, chặn preview/upload nếu contract chưa đủ và ghi blocker riêng.
-- Test: dưới/đủ ngưỡng ảnh theo BE, upload lỗi không báo thành công, MIME/size theo validator thật, quyền gỡ giữa chừng, primary/delete, media bị cleanup. Không đưa AES key/MinIO credentials vào FE.
+### U0 — Kiểm kê contract và dữ liệu test [ĐÃ KHẢO SÁT; CHỜ CHỐT POLICY/TEST]
 
-### Đợt 11 — Liên hệ khẩn cấp và TTS
+- Đối chiếu OpenAPI/controller/DTO/validator/handler/authorization/middleware/jobs và deployment đang dùng. Kiểm kê thêm packages, subscriptions, pools, assignments, transactions, keys, WebRTC, ICE, guidance.
+- Cập nhật api.txt: method/path, role, query/body/response/error, màn FE, source, trạng thái. Xác định đường đọc trạng thái license và thanh toán; bảng DB không thay API.
+- Chốt ma trận 402, kế thừa entitlement, giới hạn gói, trạng thái cũ; migration/seeding/package IDs và backward compatibility do nhóm BE phụ trách.
+- Dữ liệu cần: B2C mới/trial/active/expired trong và ngoài grace/NONE; 2 org; staff có/không link; pool rỗng/đầy/hết hạn; key chưa dùng/đã dùng/hết hạn; VIU được phép và ngoài scope.
+- Test/bàn giao: bảng contract + mẫu response đã bỏ dữ liệu nhạy cảm + danh sách câu hỏi đã giải quyết. Người dùng xác nhận BE version và tài khoản test trước U1.
 
-- 11a: /users/{userId}/emergency-contacts list/detail/create/update/status/delete -> /caregiver/contacts.
-- 11b: GET/PUT /users/{userId}/tts-preferences -> /caregiver/tts.
-- Phụ thuộc: 4 và quyền BE cho VIU; luồng me chủ yếu phục vụ Mobile, không dùng me để sửa cài đặt của VIU được chọn.
-- Test: CRUD contacts, priority/channel validation; TTS save -> reload -> Mobile đọc lại. BE volume 0–1, UI mock 0–100 cần map; lưu server không chứng minh thiết bị đã phát giọng mới.
+### U1 — Entitlement và xử lý 402 [ĐÃ TRIỂN KHAI FE; CHỜ USER TEST]
 
-### Đợt 12 — Lịch sử và báo cáo
+- Chạm auth.ts/profileSchema, models/domain hoặc DTO riêng, HTTP adapter và Shell/guards theo contract; tránh rải check license ở từng trang.
+- Hiển thị trial, ngày hết hạn/grace và CTA phù hợp role; không biến thiếu field thành ACTIVE/NONE giả. Quyền thực thi do BE quyết định; đồng hồ UI chỉ hiển thị.
+- 402 không logout hoặc refresh lặp; không auto retry mutation. Billing/auth/logout và luồng safety theo allowlist đã xác minh vẫn truy cập được; không dùng toàn bộ Guard để chặn mọi route.
+- Refetch sau đăng ký/thanh toán/kích hoạt key/thu hồi/thay đổi scope; không lưu feature flags trong JWT/UI mãi mà không đồng bộ.
+- Test cùng nhau: register -> me/entitlement; login -> entitlement -> request bị 402 -> billing; hết grace khi tab đang mở; đổi account/org; CenterAdmin NONE và staff org; safety exceptions; server unavailable không giả license hợp lệ.
+- Đã nối GET /api/licenses/subscription chỉ cho Caregiver cá nhân; GET /api/users/me ánh xạ licenseStatus/licenseExpiresAt. Route /license; banner trạng thái; refetch profile/subscription mỗi 60 giây và nút tải lại. Checkout/key chưa có nên không tạo CTA mua giả. Không thêm license guard chặn route; 402 giữ phiên, không tự replay mutation. Các flow payment/key/revoke sẽ invalidation ở đợt triển khai tương ứng.
+- Kiểm tra: 77 unit tests, lint/build đạt; 5 E2E U1 fixture đạt (không thay live BE nghiệm thu). Checklist: docs/API_STAGE_U1_TEST.md. Điểm dừng: người dùng test từng trạng thái, đặc biệt 402 và role exemption.
 
-- GET navigation sessions/detail/events, OCR requests/detail, QR scans/detail, recognition logs/detail, voice commands/detail, location history -> /caregiver/activity.
-- /center-admin/reports: GET organizations/{id}/activity-summary, members và dữ liệu được phép; không kéo face recognition của Caregiver sang CenterAdmin trái quyền.
-- Phụ thuộc: 4/5 và dữ liệu do Mobile tạo. Các POST OCR/QR/voice/recognition/navigation không thuộc Web.
-- Test theo từng tab, pagination/date timezone, empty, detail ngoài scope, media hết retention, export chỉ nếu có contract hoặc xuất tập đã tải với giới hạn nêu rõ.
+### U2 — Danh mục gói và quản trị package [ĐÃ TRIỂN KHAI FE; CHỜ USER TEST]
 
-### Đợt 13 — Quản trị hệ thống
+- Màn đề xuất /admin/packages: list/detail/create/update/active nếu có contract; validation giá, currency, thời hạn, included licenses, VIU limit, feature flags theo schema cho phép.
+- Caregiver gia đình chọn gói cá nhân, CenterAdmin chọn gói tổ chức; staff không bị đưa sang mua Personal mặc định. Giá/default lấy từ server.
+- Không tự thêm DELETE, refund, yearly checkout hoặc “mọi feature flag đều điều khiển UI tự động” nếu BE chưa hỗ trợ. Gói mới không cần code riêng, nhưng feature mới vẫn cần implementation.
+- Test: Admin CRUD -> danh sách mua gói cập nhật; non-admin bị cấm; gói inactive/giá đổi giữa lúc xem và checkout; package scope khác role; không expose secrets trong flags.
+- Đã nối 4 API packages (GET list/detail, POST, PUT); route /admin/packages và /packages. Dialog thêm/sửa, immutable code/type, validation numeric(12,2)/integer/boolean flags; chỉ Admin ghi. Caregiver cá nhân/CenterAdmin lọc Personal/Business active trong từng trang BE; Staff không vào danh mục mua cá nhân. PUT null priceYearly không xóa giá, đã chặn và giải thích.
+- Điểm dừng: người dùng xác nhận gói và số liệu theo docs/API_STAGE_U2_TEST.md trước nối payment. Chưa test live U2; người dùng đã yêu cầu tiếp U3a.
 
-- /admin/configurations: configs list/detail/update/history/rollback; /admin/metrics: GET ai-metrics; /admin/audit: GET audit-logs; /admin/delivery: GET notifications/status + failed.
-- Phụ thuộc: Admin, dữ liệu jobs/logs; 8 để test kết quả notification thực. Không tự tạo CRUD/rerun job không có API.
-- Test: quyền non-admin bị chặn, filter/page, config validation -> history -> rollback; metrics đơn vị/weighted aggregates, trạng thái thông báo không giả thành đã nhận ở thiết bị.
+### U3a — Checkout và trạng thái payment B2C [ĐÃ TRIỂN KHAI FE; CHỜ USER TEST]
 
-### Đợt 14 — Dashboard tổng hợp và nghiệm thu
+- Đã dùng /license (không thêm alias subscription), /packages, /caregiver/payments, /payments/return và /payments/cancel. Đã nối 3 API create/history/cancel; BE chưa có detail nên tra history có giới hạn. Xem docs/API_STAGE_U3A_TEST.md cho dependency, test và giới hạn.
+- POST /api/payments/create-link với packageId theo contract; khóa double-submit; chỉ mở checkoutUrl hợp lệ theo gateway được cấu hình. Không gửi giá/quyền tự tính làm nguồn tin cậy.
+- Return/cancel refetch trạng thái từ BE với polling có giới hạn và nút tải lại; hết chờ hiển thị đang xác minh. ReturnUrl/cancelUrl phải dùng origin Web được BE cho phép, có cơ chế về đúng giao dịch sau login.
+- Pending/failed/cancelled/expired/success theo enum thực; query status=PAID không tự unlock. Refetch license sau SUCCESS; xử lý webhook đến chậm. Không lưu token/key trên URL/log ngoài điều kiện contract bắt buộc.
+- Test chuỗi: tạo link -> PayOS môi trường test -> BE webhook -> GET transaction -> GET subscription/entitlement -> sử dụng lại tính năng. Test quay lại trước webhook, đóng trình duyệt, F5, hủy, double-click, giao dịch người khác. Webhook duplicate/signature/atomic là test BE phối hợp, Web không gọi webhook để giả success.
+- Điểm dừng: nghiệm thu mua/gia hạn Personal, không chuyển tiền thật trong kiểm thử tự động.
 
-- Thay dashboard phiên bằng dữ liệu thực từ API đã nối theo từng role. Không có dashboard endpoint chuyên biệt trong 107 API: không bịa /api/dashboard hoặc số liệu thống kê từ trang đầu của danh sách.
-- Kiểm tra toàn bộ enabled routes, HTTP errors, refresh, đổi account/VIU, org isolation, responsive/accessibility, realtime/FCM và deployment HTTPS/SPA fallback.
-- Chỉ bỏ stage gates cho phần đã được nghiệm thu. Ghi mọi chức năng thiếu contract riêng; “UI có sẵn” không phải tiêu chí hoàn thành.
+### U3b — Checkout Business và kho license [CHƯA LÀM; U3a]
 
-## Việc bắt đầu tiếp theo
+- Tái sử dụng checkout; /center-admin/licenses và /center-admin/payments đề xuất. Đọc pool, used/available/expiry và lịch sử giao dịch theo org.
+- Mua lần đầu vs topup/renew do BE quyết định, không dựa một cờ UI tự suy ra transactionType. Không tự cộng quota từ thông báo thanh toán.
+- Test: CenterAdmin chưa có pool -> mua -> pool có quota; pool hết hạn -> gia hạn; pool còn hạn -> topup theo rule U0; 2 org không xem giao dịch/pool nhau; staff không có quyền mua nếu contract không cấp.
+- Điểm dừng: người dùng thấy pool đúng và transaction đúng trước tạo VIU có consume license.
 
-Khi người dùng yêu cầu tiếp tục: xử lý lỗi test 4a nếu có, rồi làm đợt 6 khi người dùng yêu cầu. Người dùng đã chủ động hoãn test 3b để tiến hành 4a; lỗi 500 forgot-password vẫn chưa được giải quyết, cần log BE. Người dùng đã yêu cầu để consent chờ do chưa có nội dung/phiên bản; không tự đặt policyVersion hoặc gửi consent. Nếu người dùng ưu tiên người được chăm sóc, có thể chuyển 4a vì không phụ thuộc register/mail; ghi lại thay đổi thứ tự. Không tự gửi mail hay thay mật khẩu tài khoản thật để tạo bằng chứng test.
+### U4 — Sửa tạo VIU, assignment và thu hồi [CHƯA LÀM; U1/U3b]
 
-## Nhật ký để AI tiếp theo cập nhật
+- ApiCreateLinkedUser.tsx/caregiving.ts: giữ giới hạn 3 VIU cho Trial/Personal; không thêm quota theo gói. Giữ UUID khi create thành công nhưng link lỗi, không tạo trùng. Test inherit lúc tạo và first Personal link khi VIU chưa có license; không ghi đè license sẵn có.
+- ApiAccounts.tsx/ApiLinks.tsx: staff org không consume; VIU org consume tại BE; refetch pool sau create/revoke. Hết quota 422/402 giữ form, chỉ dẫn mua thêm; không client-side giảm số pool.
+- Danh sách assignments + thu hồi có Confirm, mô tả ảnh hưởng quyền. Không unlink/delete account thay revoke. Khả năng gán lại phải có API đã xác minh.
+- Test B2C: trial -> VIU -> primary link -> reload; VIU thứ hai/thứ ba được link, thứ tư bị từ chối; link failure recovery và license inheritance. Test B2B: tạo staff -> quota không đổi -> tạo VIU -> used+1 -> phân công -> revoke -> available+1; hai tab cạnh tranh suất cuối, cross-org, hết hạn và lỗi giữa chừng.
+- Điểm dừng: người dùng test cả gia đình lẫn trung tâm, không chỉ test form tạo user.
 
-| Đợt/checkpoint | Trạng thái code | Test fixture | Test BE thật/người xác nhận | Commit | Blocker/việc tiếp |
+### U5 — Phân phối và kích hoạt key [CHƯA LÀM; U3b/U4]
+
+- /center-admin/license-distribution và /caregiver/activate-license đề xuất. Dùng POST distribute/activate-key theo contract cùng API list/detail/status nếu có. Nếu không có API quản lý danh sách thì ghi giới hạn, không hứa dashboard đầy đủ.
+- Hiển thị key có chủ đích, mask mặc định nếu phù hợp; không log, analytics hoặc lưu key trong query string. Không tự gửi cho người khác.
+- Kích hoạt thành công refetch subscription/entitlement; không tự đổi organizationId hoặc tạo caregiver link. Cần biết key dùng trial đang có, gia hạn và giới hạn VIU xử lý thế nào.
+- Test cả chuỗi: trung tâm có pool -> distribute -> gia đình kích hoạt -> đọc license -> tạo VIU -> link. Key đã dùng/sai/hết hạn, double-submit, hai gia đình tranh một key, pool thiếu, revoke và quyền ngoài org.
+- Điểm dừng: người dùng test bằng 2 tài khoản; đối chiếu pool với số key được cấp/kích hoạt theo rule U0.
+
+### 11a — Contacts và nghiệm thu Standalone [CHƯA NỐI; đưa lên sớm sau U4]
+
+- Giữ contract cũ GET/POST /users/{userId}/emergency-contacts và detail/PUT/DELETE/PATCH status; đối chiếu lại BE mới. Số khẩn cấp/hotline flexible theo khu vực, không tự gọi khi lưu hoặc xem.
+- Luồng liên hoàn: CenterAdmin tạo VIU có license -> phân công Staff -> Staff cấu hình contacts -> Mobile phát event test -> Staff nhận/xử lý. Cùng org nhưng không có link không tự được xem/sửa.
+- Test CRUD/priority/type/phone, gỡ link mất quyền, ngoài org; số ngắn 112/115 cần validator BE hỗ trợ, không ép regex số di động cho mọi contact.
+- Điểm dừng: phối hợp Mobile/BE; không tạo sự kiện SOS thật để test.
+
+### 8c — FCM web push [CHƯA LÀM; config và API upsert đã có]
+
+- Đã xác minh PUT /api/auth/fcm-token upsert theo user/device; không cần đăng nhập lại chỉ để cập nhật token. Đối chiếu logout và xử lý tắt push/nhiều tab; chưa có revoke riêng trong Swagger. Không gửi token rỗng để giả deactivate.
+- Permission sau click rõ ràng, denied/unsupported vẫn dùng Web; service worker, foreground/background, click qua guards; tránh trùng với SignalR.
+- Test token/device lifecycle, logout/đổi account/nhiều tab, permission revoked, offline/reconnect. License/payment reminder cần BE jobs và payload thật; API preferences không chứng minh notification đến thiết bị.
+- Điểm dừng: người dùng test HTTPS trên domain và thiết bị được phép.
+
+### U6a — Cuộc gọi chủ động và lịch sử [CHƯA LÀM; U0/U1/U4 + Mobile/TURN]
+
+Đã có REST session + ICE và RelayOffer/RelayAnswer/RelayIceCandidate ở /hubs/location; xem U0_BACKEND_FINDINGS.md. Chưa kiểm thử Mobile/media/TURN, không còn giả định chưa có signaling code.
+
+- Nút gọi người đang được liên kết; UI cuộc gọi/modal hoặc panel riêng đủ video/audio/status, accept/reject/end theo contract. Không chỉ tạo một POST “call” rồi báo kết nối.
+- Dùng RTCPeerConnection/getUserMedia và SignalR đã có nếu đáp ứng contract; không thêm peer library khi native đủ. Hub signaling không thay media transport.
+- Xác minh REST session/ICE/log, Hub offer/answer/candidate/hangup, call IDs, thứ tự event, reconnect, timeout/busy, duration limit; không đoán tên method từ location Hub.
+- BE kiểm tra quyền người tham gia và cấp ICE credentials phù hợp; không đưa TURN admin secret/static master credential vào VITE_* hoặc repo. Cleanup track/peer/handler khi kết thúc/logout/đổi tài khoản.
+- Test: Caregiver gọi -> Mobile nhận -> video VIU/audio 2 chiều -> kết thúc -> history; reject/missed/busy, mic denied/no device, autoplay restrictions, mất mạng/reconnect, hết thời gian; hai mạng khác nhau để bắt buộc TURN; revoked link/other org bị chặn.
+- Điểm dừng: Web + Mobile + TURN thực sự hoạt động, không coi fixture signaling là media E2E.
+
+### U6b — Cuộc gọi VIU voice và SOS [CHƯA LÀM; U6a/7/8a]
+
+- Nhận trigger VIU_VOICE_COMMAND/SOS_AUTO theo contract; gắn emergencyEventId khi hợp lệ, dedup và không tạo nhiều cuộc gọi vì cả FCM/SignalR tới.
+- Phối hợp Mobile về consent/mic/camera/background/locked screen; xử lý không kết nối được bằng trạng thái rõ ràng, vẫn giữ luồng cảnh báo và contacts. Không tự nhận thay người dùng khi chưa có quyền/chính sách đã chốt.
+- Test 3 trigger, duplicate/out-of-order, nhiều staff nhận cùng event, quyền bị gỡ giữa cuộc gọi, FCM click khi logout; SOS không bị gián đoạn vì checkout/license expired hoặc lỗi WebRTC.
+- Điểm dừng: nghiệm thu riêng từng trigger; privacy nội dung/version vẫn cần người dùng cung cấp, không tự tạo đồng ý pháp lý.
+
+### 9, 10, 11b, 12 — Hoàn thiện tính năng đã có UI mock [CHƯA NỐI]
+
+| Đợt | Màn và API phải nối cùng nhau | Phụ thuộc và test trước bàn giao |
+|---|---|---|
+| 9 | /caregiver/locations: saved-locations CRUD + geofences CRUD | Quyền link + entitlement + GPS/map; create/read/update/reload/delete, tọa độ/radius; cảnh báo vào/ra cần Mobile + boundary worker + 7/8 |
+| 10 | /caregiver/registry: persons CRUD + upload/delete/primary photos | Consent ảnh, MinIO/AI, endpoint preview có authorization; create -> upload -> GET trạng thái -> primary/delete; không render file .enc trực tiếp, thiếu contract media là blocker |
+| 11b | /caregiver/tts: GET/PUT preferences theo userId | VIU scope; map volume BE 0–1 nếu vẫn đúng; save -> reload -> Mobile đọc lại; không dùng me để sửa VIU được chọn |
+| 12a | /caregiver/activity: GET navigation/OCR/QR/recognition/voice list/detail/events | Dữ liệu Mobile và quyền; pagination/timezone/retention, không gửi các POST Mobile từ Web |
+| 12b | /center-admin/reports: organization activity-summary/members | Dữ liệu org + quyền; không gán số tổng bằng đếm trang đầu, không đưa face gallery Caregiver sang CenterAdmin |
+
+Mỗi dòng là một checkpoint riêng, không triển khai chung rồi mới cho test. Giữ checklist cũ trong docs và bổ sung trạng thái license trong test regression.
+
+### 13/U7 — Quản trị và theo dõi Hybrid/WebRTC [CHƯA NỐI]
+
+- 13a: system-configs list/detail/update/history/rollback. Bổ sung config license/trial/grace/PayOS/WebRTC/Hybrid khi API cung cấp; validation theo type/range, quyền Admin, confirm rollback. Không đưa PayOS checksum/API secret lên Web.
+- 13b: ai-metrics, audit-logs, notifications status/failed theo quyền; không gọi success rate là accuracy khi không có ground truth.
+- U7a: quản trị ICE servers theo API được xác minh; credential write/rotate được kiểm soát và không trả secret hiện hữu toàn bộ vào UI. Test STUN/TURN priority/active, invalid URL, rotate, non-admin cấm; không cài Coturn từ FE.
+- U7b: Hybrid guidance log/metrics và cấu hình engine nếu có GET API. Hiển thị decision, engine, latency, fallback, thời gian theo contract; không expose scene/GPS của VIU cho role chưa được cấp. JEV/Groq prices/latency trong báo cáo chỉ là giả định nguồn, không hứa SLA hoặc hardcode giá hiện hành.
+- Test: BE rule-based fallback, engine unavailable/config rollback qua môi trường test; Mobile NEAR vẫn cảnh báo độc lập. Web không tạo hướng dẫn tránh vật hoặc mô phỏng safety như hệ thống thật.
+- Điểm dừng: từng 13a/13b/U7a/U7b có checklist riêng; không cần chờ toàn bộ mới test.
+
+### U8 — Landing, nội dung sản phẩm và dashboard [CHƯA LÀM]
+
+- Cập nhật landing mô tả Hybrid AI, gói Personal/Business, hỗ trợ gọi, Standalone theo chức năng đã nghiệm thu. Gói/giá lấy API public nếu có, nếu chưa có contract thì không tạo checkout công khai giả.
+- Ghi chest strap bắt buộc theo báo cáo, camera có điểm mù/hạn chế ánh sáng/mưa và cần dùng cùng gậy trắng/IoT; không quảng bá thay thế hoàn toàn dụng cụ hỗ trợ.
+- Đợt 14 cũ: dashboard theo role tổng hợp dữ liệu thật, trial/grace/quota, alert open và payment pending từ nguồn authoritative. Không bịa /api/dashboard hoặc số liệu từ trang đầu. Staff không thấy billing cá nhân không liên quan.
+- Test desktop/tablet, keyboard/focus/contrast, form/modal/dialog pending, empty/error; thông tin marketing khớp feature flags và trạng thái triển khai.
+
+### U9 — Nghiệm thu liên thông và phát hành [CHƯA LÀM; thay phần đóng đợt 14]
+
+- Chạy đủ B2C trial -> mua/gia hạn -> hết grace; B2B mua pool -> staff/VIU -> phân công -> topup/revoke; B2B Extended distribute -> activate; Standalone contacts -> cảnh báo -> cuộc gọi.
+- Test data isolation user/org/VIU, refresh/logout/nhiều tab, payment webhook chậm/trùng, license cache stale, safety ngoại lệ, FCM trùng SignalR, Mobile offline NEAR và WebRTC TURN.
+- Regression 44 API cũ với BE mới; build/lint/unit/E2E fixture tách bằng chứng khỏi test server thật. Cập nhật tổng API mới sau kiểm kê, không đặt mục tiêu sai “107/107 trên Web” vì có API Mobile/webhook.
+- Kiểm tra HTTPS/CORS, Vercel SPA fallback/reset/payment return routes, env theo môi trường, backend redirect allowlist và cache. Push dev sau kiểm tra; người dùng đưa main/deploy và xác nhận production.
+
+## 7. Bàn giao sau mỗi đợt
+
+Ghi trong bảng dưới: commit FE + BE/OpenAPI version đã dùng; route/API đã mở; fixture nào đạt; dữ liệu/account role cần để test; chuỗi API phải test cùng nhau; lỗi/contract thiếu; trạng thái test thật; bước tiếp theo. Không ghi tài khoản/password/token/key thật vào tài liệu.
+
+| Checkpoint | Code | Contract | Fixture | Người dùng test thật | Việc tiếp |
 |---|---|---|---|---|---|
-| 0–1 | Merge dev | Đạt | Chưa có xác nhận chi tiết | 700d748 / bec1a1f | Theo dõi lỗi login thực tế nếu người dùng báo |
-| 2 | Merge dev | Đạt | Chưa có xác nhận chi tiết | 1441d10 / bec1a1f | Checklist docs/API_STAGE_02_TEST.md |
-| 3a | Merge dev | Xem docs/API_STAGE_03A_TEST.md | Chờ người dùng | 401b264 / b008a59 | Consent hoãn: chưa có nội dung/phiên bản chính thức |
+| U0 | Đã khảo sát source/OpenAPI, chưa runtime | Đã có 140 endpoints; báo cáo U0 ghi chênh lệch | Chỉ kiểm tra tài liệu | Chưa test authenticated | Ba quyết định đã chốt; chờ source/deploy fixes và regression; đã được phép tạo/sửa dữ liệu test |
+| U1 | Đã triển khai FE | Đọc profile/subscription, xử lý 402 | 77 unit + 5 U1 E2E fixture, lint/build đạt | Chưa test live | Dừng theo docs/API_STAGE_U1_TEST.md |
+| U2 | Đã triển khai FE | 4 API packages theo source BE | Xem docs/API_STAGE_U2_TEST.md | Chưa test live | Dừng cho user test |
+| U3a | Đã triển khai FE | 3 API payment Personal | Xem docs/API_STAGE_U3A_TEST.md | Chưa test live PayOS | Dừng cho user test; môi trường PayOS chưa xác nhận |
+| U3b–U5 | Chưa làm | Contract đã kiểm kê U0 | Chưa chạy | Chưa test | Theo thứ tự mục 6 |
+| 8c | Chuẩn bị config, chưa runtime | Có upsert mới; revoke/logout/nhiều tab cần test | Chưa chạy push | Chưa test | Dùng PUT auth/fcm-token, kiểm tra lifecycle |
+| U6a/U6b | Chưa làm | Chờ WebRTC + Mobile + TURN | Chưa chạy | Chưa test | Sau U4 và hợp đồng signaling |
+| 9–13, U7–U9 | Chưa nối theo phạm vi trên | API cũ cần đối chiếu lại; API mới chờ U0 | Chưa chạy phạm vi mới | Chưa test | Thực hiện từng checkpoint |
 
-| 3b | Đã nối forgot/reset | 42 unit + 8 API E2E + 1 mock regression đạt | Chờ inbox/SMTP thật | Nhánh feat/api-password-recovery | Email Mobile deep link, Web hỗ trợ dán |
+Riêng consent chính sách vẫn CHỜ theo yêu cầu trước đó. Không tự đặt version, tự tick đồng ý hoặc giả định tài liệu nghiệp vụ là nội dung chính sách đã được chấp thuận.
 
-Không đánh dấu một đợt hoàn thành chỉ vì đã commit hoặc push. Sau mỗi thay đổi, cập nhật từng API ở api.txt và bảng này để AI khác không làm lại hoặc bỏ sót.
+## Xác nhận nghiệp vụ và fixes từ nhóm BE — 2026-10-03
 
-### Checkpoint 3a
+- Trial/Personal: ≤3 VIU (MaxViusPerCaregiver=3). Không triển khai enforcement theo package.maxViuPerLicense cho B2C. Business vẫn theo pool.
+- Nhóm BE xác nhận /api/licenses pass-through khi None/Expired ngoài grace; Caregiver có organization_id hợp lệ bypass license cá nhân. Đây không phải bypass authorization/link/org.
+- Tạo VIU kế thừa license đã có; bổ sung first Personal link kế thừa nếu VIU chưa có license. Không tự áp dụng cho mọi link/ghi đè license khác.
+- Bản local đọc trong lượt này chưa có các đoạn fixes; trạng thái là BE xác nhận, chưa source/runtime verified. U1 có thể bắt đầu; test các đường đã sửa sau khi source/deploy cập nhật.
+- Người dùng đã cho phép tạo/sửa dữ liệu bằng tài khoản test. Không hỏi lại quyền này; không lưu credentials vào repo. PayOS/media test vẫn theo phạm vi từng checkpoint.
 
-Đã nối POST register và POST logout-all; tổng 8 operations Web. Đăng ký -> GET me dùng cùng deviceId với login/refresh. Logout-all luôn xóa local session/cache, kể cả lỗi, và báo chưa xác nhận server khi cần. BE chỉ revoke refresh/FCM; access token thiết bị khác có thể còn hiệu lực tới hạn. Consent chưa triển khai theo câu trả lời người dùng; không chặn test register/logout-all. Checklist: docs/API_STAGE_03A_TEST.md.
-
-Kiểm tra checkpoint 3a: 39 unit tests, 7 Playwright fixture tests exit 0, build/lint đạt. Chưa có nghiệm thu BE thật. Chờ người dùng test trước 3b.
-
-### Checkpoint 3b
-
-Đã nối POST /auth/forgot-password và POST /auth/reset-password. Tổng 10 operations Web.
-BE email hiện chứa visionaid://reset-password?token=...&email=... (Mobile), chưa có Web link.
-FE nhận token thô hoặc nguyên deep link sao chép từ email; chỉ parse đúng scheme/host và email khớp,
-không tự mở URL, không lưu token/password vào storage. Người dùng nhập email tại /auth/reset.
-Thông báo forgot dùng câu chung; 403 reset được báo mã sai/đã dùng/hết hạn; không retry mutation.
-Sau reset thành công xóa session/cache, về login. SMTP/inbox/Redis và token TTL 15 phút phải test BE thật.
-Consent vẫn hoãn theo yêu cầu. Checklist: docs/API_STAGE_03B_TEST.md. Chưa thực hiện 4a.
-
-Kiểm tra 3b: 42 unit, 8 API fixture E2E (chạy riêng, exit 0), 1 mock recovery regression, build/lint đạt. Lần đầu chạy song song hai bộ Playwright bị xung đột thư mục trace; không chạy hai bộ cùng outputDir đồng thời.
-
-### Checkpoint 4a — 2026-09-26
-
-Nhánh feat/api-linked-users-read nối tiếp feat/api-password-recovery (6dd021e), vì 3b đã push nhưng chưa merge dev; không làm mất code 3b. Dev đang có 3a tại b008a59.
-Người dùng cho phép hoãn test 3b. POST forgot-password có HTTP 500; payload FE đúng, chưa có log server để phân biệt Redis/SMTP/DB; không khẳng định đã sửa lỗi BE.
-
-Đã nối thêm GET /users, GET /caregiver-links, GET /caregiver-links/{id} cho Caregiver tại /caregiver/users.
-Caller: src/services/api/caregiving.ts -> apiGet trong adapter.ts -> auth.get/authorized; UI: src/pages/caregiver/ApiLinkedUsers.tsx.
-Danh sách phân trang/search server (10/trang), selector chỉ chứa người trên trang hiện tại; chọn VIU -> list link theo viuId -> chọn link -> detail/quyền.
-Query key gồm account/org/page/search/VIU/link, có AbortSignal; refetch mỗi 30 giây khi tab hoạt động và khi focus. Không phải realtime.
-Selection giữ trong component của màn 4a, chưa tích hợp selector nghiệp vụ toàn ứng dụng. Xóa lựa chọn khi đổi trang/tìm kiếm; ẩn detail khi người/link không còn trong kết quả hoặc query lỗi.
-Không dùng GET /users/{id}, không gọi snapshot mock, không mở create/link/unlink/QR/Map. Quyền BE là authoritative; FE kiểm tra link trả về khớp caregiverId và VIU để tránh hiển thị response sai scope.
-Tổng 13 operations đã có caller Web; các operation Users/Links mới chỉ được mở cho màn Caregiver, chưa có quản trị đợt 5.
-Checklist: docs/API_STAGE_04A_TEST.md. 4a đã merge dev dc22c5c theo yêu cầu; tiếp tục 4b.
-
-Kiểm tra 4a: 44 unit tests, 10 Playwright API fixture tests exit 0, build và lint đạt. Chưa nghiệm thu BE thật; build còn cảnh báo chunk >500 kB.
-
-
-## Bàn giao đợt 4b — tạo VIU và quản lý liên kết cá nhân
-
-- Dev đã merge/push 3b + 4a tại dc22c5c. Nhánh 4b: feat/api-caregiver-link-management; chờ test BE thật.
-- /caregiver/users: Caregiver không thuộc tổ chức có form hai bước POST /users -> POST /caregiver-links. Role cố định VisuallyImpaired, organizationId null; không tạo tài khoản Admin/CenterAdmin.
-- src/pages/caregiver/ApiCreateLinkedUser.tsx giữ UUID chờ liên kết trong sessionStorage theo caregiverId; không lưu mật khẩu. F5 tiếp tục bước liên kết; tiến độ tồn tại trong tab theo tài khoản để phục hồi. Bỏ tiến độ có xác nhận và không xóa tài khoản BE.
-- Tạo tài khoản bị lỗi 5xx/kết quả không rõ: dừng tạo lại, yêu cầu quản trị viên xác minh email và mã VIU. Có ô nhập UUID đã có để tiếp tục. Lỗi preflight 5xx cũng được xử lý thận trọng theo cách này.
-- POST link trả 409: đọc lại link hoạt động đúng caregiver/VIU để xác minh, không tự lặp POST. Phân quyền trả về BE là nguồn quyết định.
-- Gỡ link cá nhân có xác nhận, đọc lại scope/type trước DELETE, 204 mới làm mới cache và bỏ lựa chọn; lỗi giữ nguyên UI. Link tổ chức không có nút gỡ.
-- apiWrite dùng transport auth nhưng không tự replay mutation khi 401. GET vẫn có refresh/retry theo luồng cũ.
-- Checklist: docs/API_STAGE_04B_TEST.md. Đợt tiếp theo là 5a (Tổ chức; Users quản trị là 5b), chỉ bắt đầu sau yêu cầu người dùng.
-- 3b HTTP500 chưa sửa; privacy consent tiếp tục chờ nội dung/version chính thức.
-
-Kiểm tra 4b: 48 unit tests pass; build và lint pass (chunk chính ~520 kB cảnh báo). API Playwright: 10/11 pass lần đầu, một case Edge crash trước newPage; chạy lại riêng case đó pass (exit 0). Tất cả 11 kịch bản có kết quả pass, không phải live BE E2E.
-
-
-## Bàn giao đợt 5a — tổ chức và thành viên
-
-- 4b đã merge/push dev 68bbbc5. Nhánh mới feat/api-organization-management từ mốc đó.
-- Đã nối 8 operation Organizations: GET list/me/detail/members, POST create, PUT update, PATCH status, DELETE soft-delete. Activity-summary vẫn chờ đợt 12.
-- UI: src/pages/shared/ApiOrganizations.tsx. Caller: src/services/api/organizations.ts dùng apiGet/apiWrite. Mở đúng /admin/organizations và /center-admin/organization; route accounts/staff/users quản trị vẫn khóa đợt 5b.
-- Admin: list với search/isActive/isDeleted/pagination, chọn detail, create/edit, status/delete có xác nhận. Có lọc đã xóa và kích hoạt khôi phục theo BE. CenterAdmin: GET me, kiểm tra response.id khớp session.orgId, PUT cùng org, GET members; không list toàn cục/create/status/delete.
-- Members có search/role/isActive/pagination; số staff/VIU lấy từ GET detail/me thay vì response mutation (BE mutation trả count mặc định 0). Cache key chứa user/scope/org/filters; nhận lỗi query sẽ ẩn dữ liệu và actions, không fallback mock.
-- Form create nhận name/taxCode/address/phoneNumber/contactEmail; update không gửi taxCode vì BE không hỗ trợ sửa. Trường liên hệ tùy chọn, chuỗi rỗng cho phép xóa thông tin; null trong update BE có nghĩa giữ nguyên.
-- Vô hiệu hóa hoặc xóa tổ chức làm inactive thành viên + revoke refresh/FCM. Kích hoạt tổ chức xóa deletedAt nhưng KHÔNG kích hoạt lại thành viên; UI và checklist đã nêu rõ. Cần đợt 5b/BE admin để kích hoạt thành viên.
-- Không tự replay mutation, không optimistic status/delete. Lỗi 5xx lúc tạo/sửa nhắc kiểm tra dữ liệu đã lưu trước khi gửi lại. Chưa sửa transaction/audit phía BE.
-- Nguồn contract: controller/DTO/validator/handler Organizations trong BE local, không suy payload từ ảnh Swagger. Chưa có tài khoản để nghiệm thu BE thật.
-- Test và phụ thuộc: docs/API_STAGE_05A_TEST.md. Dừng cho người dùng test; tiếp theo 5b chỉ khi được yêu cầu. 3b HTTP500 và privacy consent vẫn chờ.
-
-Kiểm tra 5a (2026-09-26): 51 unit tests pass, 14 Playwright API fixture tests pass (exit 0), build/lint pass. Build còn cảnh báo chunk chính ~534 kB. Chưa có kiểm thử ghi trên BE thật.
-
-
-## Bàn giao đợt 5b — quản lý tài khoản
-
-- Base dev: 56671a8 đã có đợt 5a. Nhánh feat/api-account-management.
-- Caller src/services/api/accounts.ts; UI src/pages/shared/ApiAccounts.tsx. Tái sử dụng apiGet/apiWrite, Form/Dialog/Confirm. Không dùng Snapshot hay seed mock.
-- Mở /admin/accounts (mọi role), /center-admin/staff (role Caregiver cố định), /center-admin/users (role VisuallyImpaired cố định). List phân trang/search/role/isActive/isDeleted/organizationId; GET detail khi chọn.
-- POST users: Admin cần organizationId cho non-Admin; nhập UUID từ màn tổ chức và xác minh tổ chức active trước tạo. CenterAdmin chỉ tạo Caregiver/VIU, ép orgId từ session; không cho nhập org khác. Tạo tài khoản không tạo link/phân công; 5c mới làm phần đó.
-- PUT users/{id} chỉ fullName/phoneNumber/avatarUrl; không thay email, role hoặc organizationId. Không hiển thị ảnh từ URL ngoài, chỉ hiển thị URL dạng văn bản.
-- PATCH status có xác nhận, tự vô hiệu hóa bị chặn; soft-deleted không có action/không thể khôi phục bằng status.
-- PATCH reset-password dùng newPassword, password mạnh/nhập lại/checkbox xác nhận; không lưu mật khẩu vào storage, không gửi email. Reset chính mình thành công thì logout và xóa cache phiên. Không phụ thuộc SMTP/quên mật khẩu 3b.
-- DELETE chỉ Admin, không tự xóa, xác nhận + xử lý 204; không optimistic. Chưa có API restore user nên không vẽ action khôi phục.
-- Trước mutation trên tài khoản đã có, đọc lại detail để kiểm tra scope và deletedAt. Query key gồm actor/org/filter/selected ID; dùng AbortSignal, từ chối dữ liệu khác org/role.
-- Admin/CenterAdmin sửa/reset/status BE chỉ kiểm tra scope org; Web CenterAdmin hiện giới hạn trên 2 màn staff/VIU theo roadmap. Không tự triển khai quản lý CenterAdmin đồng cấp.
-- Lỗi 5xx tạo/sửa nhắc tìm email/tải lại trước gửi lại vì BE có thể đã lưu trước audit lỗi. Không sửa BE và chưa gửi mutation tới BE thật.
-- Checklist docs/API_STAGE_05B_TEST.md. Dừng để người dùng test; tiếp theo 5c khi được yêu cầu. Privacy consent và 3b HTTP500 vẫn chờ.
-
-Kiểm tra 5b: 55 unit tests và 16 Playwright API fixture tests pass (exit 0); build/lint pass. Build còn cảnh báo chunk chính ~548 kB. Chưa ghi dữ liệu/test nghiệm thu BE thật.
-
-
-## Bàn giao đợt 5c — phân công và liên kết
-
-- Base dev 94a2ef6 (5b). Nhánh feat/api-caregiver-assignments; đợt này không sửa BE.
-- Caller src/services/api/links.ts, reuse schema từ caregiving.ts. UI src/pages/shared/ApiLinks.tsx. Mở /admin/links, /center-admin/assignments, /caregiver/caregivers; menu Caregiver API đổi nhãn thành Liên kết của tôi để không hứa quản lý người khác.
-- GET list/detail, POST, DELETE dùng thêm tại các màn 5c; mới nối PUT permissions và PATCH promote-primary. Tổng 31/107 REST operation có caller Web.
-- List có page/caregiverId/viuId/linkType/isActive, 10/trang. CenterAdmin cố định linkType=Organization; Caregiver luôn own caregiverId, không query các caregiver khác.
-- DTO link không có organizationId: list CenterAdmin dựa trên scope do BE thực thi và kiểm tra type ở FE; detail/mutation đọc thêm GET users/{cgId} và GET users/{viuId}, xác minh ID/role/cùng org. Không tuyên bố FE tự kiểm tra được org từ list DTO.
-- Lưu ý BE: comments ghi CenterAdmin chỉ org-type nhưng handler permissions/promote/unlink hiện chỉ kiểm tra org của caregiver. Màn phân công FE chủ động chỉ mở Organization đúng phạm vi roadmap và kiểm tra cả hai tài khoản cùng org; không mở sửa Personal của người trong trung tâm.
-- Tạo: nhập UUID tài khoản đã có (lấy từ 5b), admin chọn Personal/Organization; CenterAdmin ép Organization/own org, Caregiver ép self/Personal. Preflight admin/center kiểm tra role, active/deleted và cùng org nếu Organization. Caregiver không có GET users/{id} nên để BE kiểm tra VIU.
-- Tạo luôn isPrimary=false: liên kết đầu vẫn được BE tự làm chính; muốn thay chính dùng action promote riêng có xác nhận. Không tự demote/setPrimary ở FE. BE giới hạn 3 liên kết mỗi bên.
-- Sửa quyền dùng 3 boolean rõ ràng, xác nhận checkbox; Caregiver chỉ own Personal theo handler, kể cả liên kết phụ (không suy quyền từ primary). Không có add-secondary bằng email/QR/invitation vì không có contract.
-- Promote chỉ Admin/CenterAdmin, active non-primary. Gỡ active link có xác nhận, 204 rồi xóa selection/refetch. Trước mutation đọc detail mới để kiểm tra scope/type/trạng thái; lỗi giữ form/dialog. 409/5xx create/update yêu cầu đóng/tải lại để xác minh, không tự retry mutation.
-- Invalidate list/detail 5c và query 4a/4b cùng account sau ghi; refetch 30s khi tab hoạt động, có AbortSignal. Chưa phải SignalR/realtime.
-- Checklist docs/API_STAGE_05C_TEST.md; chờ test người dùng. Tiếp theo 6: GPS live/history đọc, cần Mobile có dữ liệu và Mapbox token trước SDK. 3b HTTP500, consent vẫn chờ.
-
-Kiểm tra 5c: 60 unit tests, 19 Playwright API fixture tests pass (exit 0), build/lint pass. Helper E2E chờ login hoàn tất trước navigation để bỏ race. Build còn cảnh báo chunk chính ~562 kB. Chưa nghiệm thu BE thật.
-
-## Bàn giao đợt 6 — GPS đọc dữ liệu
-
-- Nhánh feat/api-location-tracking từ dev 632043a. Merge dev sau khi kiểm tra. Không coi push/merge là nghiệm thu BE thật.
-- 33/107 operation đã nối. Mới: GET /api/locations/live và GET /api/locations/history trong locations.ts / ApiTracking.tsx; mở menu map cho Caregiver và CenterAdmin.
-- Danh sách VIU lấy từ users (scope BE; CenterAdmin ép organizationId và role). Live lấy từng VIU trên trang hiện tại, tối đa 10, polling 30 giây khi tab hoạt động; không SignalR. History 20 bản ghi/trang, lọc datetime theo múi giờ trình duyệt rồi gửi ISO UTC.
-- Live cachedAt là thời điểm thiết bị ghi nhận; updatedAt là thời gian máy chủ cập nhật. Upload offline có thể làm cache mang điểm cũ. Ngưỡng 2 phút chỉ là nhãn độ mới UI, không kết luận thiết bị online/offline.
-- 404 live không chặn lịch sử; 401/403 live ẩn lịch sử. Lỗi không fallback mock. Live kiểm tra userId trả về và tọa độ bắt buộc; history giữ null và số 0 đúng nghĩa.
-- Caregiver chỉ cần active link để đọc; canManageLocations không phải điều kiện quyền xem. Admin không có quyền endpoint này. CenterAdmin chỉ VIU cùng tổ chức.
-- Không POST GPS từ Web; không gửi dữ liệu mô phỏng lên BE. Lịch sử /caregiver/activity chưa mở ở đợt này.
-- Mapbox token chưa được cung cấp; bản đồ nền để chờ, UI báo rõ và hiển thị tọa độ thật. Không thêm dependency Mapbox khi chưa cấu hình.
-- Test unit/build/lint đã pass; 19 case Playwright cũ và 2 case GPS mới pass (fixture). Chưa test tài khoản BE thật.
-- Người dùng test theo docs/API_STAGE_06_TEST.md. Đợt tiếp theo là 7 (emergency list/detail và xử lý), chỉ triển khai khi người dùng yêu cầu. Consent và lỗi mail 3b vẫn hoãn.
-
-## Deployment và sửa link email — 2026-09-28
-
-- Production Vercel theo nhánh main. Chỉ push/merge dev; người dùng tự đưa dev sang main để deploy.
-- Link email thực tế /reset-password?token=...&email=... được mở công khai, tự điền token/email; /auth/reset vẫn hoạt động. Trước đây route thiếu nên Guard đưa người chưa đăng nhập về login.
-- Hỗ trợ dán link HTTPS visionaid.net/www.visionaid.net và deep link visionaid:// cũ. Không dùng token thật từ ảnh để test; fixture kiểm tra ký tự + / = và reload.
-
-## Bàn giao đợt 7 — 2026-10-01
-
-- feat/api-emergency-alerts mở /caregiver/alerts: 5 API mới, 38/107 đã nối. Xem docs/API_STAGE_07_TEST.md để test và phụ thuộc.
-- Dùng trạng thái PascalCase từ BE, không chuyển theo mock. GET detail và link trước mỗi PUT để phát hiện đổi trạng thái/quyền; không auto-replay mutation. BE vẫn phải bảo vệ concurrency, pre-read FE không bảo đảm atomic.
-- Escalate trả liên hệ; không tự gọi điện/đặt Called. SnapshotPath là objectName, chưa có contract tải ảnh; placeholder thay vì URL đoán. Lịch sử lấy trong detail.
-- Chỉ mở UI Caregiver trong checkpoint này, CenterAdmin để phần fleet/report. 30 giây polling, chưa realtime. Admin không được BE cho phép endpoint.
-- CORS VPS đang có lỗi với localhost cần nhóm BE sửa trước test live. Không đánh dấu live passed. Thay đổi có sẵn src/services/api/auth.ts của người dùng giữ nguyên, không stage trong đợt 7.
-- Chỉ merge/push dev, người dùng tự phát hành main. Đợt tiếp theo 8a sau khi người dùng yêu cầu.
-
-Kiểm tra đợt 7: 66 unit tests / 14 files pass; 2 Playwright API fixture (chuỗi thành công và conflict) pass; build/lint pass. Build còn cảnh báo chunk >500 kB. Chưa test BE thật.
+Tài liệu Word: docs/VisionAid_Update_Report_Revised.docx là bản sửa nội dung từ file người dùng gửi, giữ nguyên bản gốc ở Downloads. Đã thay 4 đoạn (Trial/Personal và mô tả giới hạn) sang ≤3 VIU/MaxViusPerCaregiver. Kiểm tra XML đạt; chưa kiểm tra bố cục qua render vì môi trường không có LibreOffice/soffice. VisionAid.docx ở thư mục SEP409 đã được rà, không có mô tả Personal/Trial 1 VIU cần thay. BE CLAUDE.md §21 đã sửa đúng 2 dòng Plans tại local, chưa commit/push repository BE.

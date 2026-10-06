@@ -13,6 +13,8 @@ const profileSchema = z.object({
   organizationId: z.string().uuid().nullable(),
   isActive: z.boolean(),
   avatarUrl: z.string().nullable().optional(),
+  licenseStatus: z.string().nullable().optional(),
+  licenseExpiresAt: z.iso.datetime({ offset: true }).nullable().optional(),
 });
 type Tokens = z.infer<typeof tokensSchema>;
 export interface AuthStorage {
@@ -190,6 +192,8 @@ export function createApiAuth(
       orgId: p.organizationId ?? '',
       active: p.isActive,
       avatar: p.avatarUrl ?? undefined,
+      licenseStatus: p.licenseStatus,
+      licenseExpiresAt: p.licenseExpiresAt,
     };
   }
   async function profile(): Promise<Person> {
@@ -222,6 +226,13 @@ export function createApiAuth(
   return {
     get: (path: string, signal?: AbortSignal) => authorized(path, { signal }),
     write: (path: string, init: RequestInit) => authorized(path, init, false),
+    async accessToken() {
+      if (!tokens) throw new ServiceError('Vui lòng đăng nhập.', 401);
+      const epoch = generation;
+      if (expiresSoon()) await refresh();
+      if (!tokens || generation !== epoch) throw new ServiceError('Phiên đã kết thúc.', 401);
+      return tokens.accessToken;
+    },
     async recover(email: string) {
       email = email.trim();
       if (!z.string().email().max(255).safeParse(email).success)

@@ -237,22 +237,40 @@ function Organizations({ user }: { user: Person }) {
           </State>
         </section>
       )}
-      {(!admin || selected) && (
-        <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
-          {detail.data && (
-            <OrganizationDetails
-              key={detail.data.id}
-              user={user}
-              org={detail.data}
-              refresh={refresh}
-              removed={() => {
-                setSelected('');
-                setNotice('Đã xóa mềm tổ chức.');
-              }}
-            />
-          )}
-        </State>
-      )}
+      {(!admin || selected) &&
+        (admin ? (
+          <Dialog title="Chi tiết tổ chức" onClose={() => setSelected('')}>
+            <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
+              {detail.data && (
+                <OrganizationDetails
+                  key={detail.data.id}
+                  user={user}
+                  org={detail.data}
+                  refresh={refresh}
+                  removed={() => {
+                    setSelected('');
+                    setNotice('Đã xóa mềm tổ chức.');
+                  }}
+                />
+              )}
+            </State>
+          </Dialog>
+        ) : (
+          <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
+            {detail.data && (
+              <OrganizationDetails
+                key={detail.data.id}
+                user={user}
+                org={detail.data}
+                refresh={refresh}
+                removed={() => {
+                  setSelected('');
+                  setNotice('Đã xóa mềm tổ chức.');
+                }}
+              />
+            )}
+          </State>
+        ))}
     </>
   );
 }
