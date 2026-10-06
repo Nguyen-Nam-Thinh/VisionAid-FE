@@ -322,7 +322,7 @@ function PackageEditor({
           <>
             {current && (
               <p>
-                Mã: {current.code} · Loại: {current.packageType} (không thể thay đổi)
+                Mã: {current.code} · Loại: {current.packageType} · không thể thay đổi
               </p>
             )}
             <Form

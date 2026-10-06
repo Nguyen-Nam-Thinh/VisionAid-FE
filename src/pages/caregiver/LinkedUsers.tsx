@@ -130,7 +130,7 @@ export function LinkedUsers() {
           ) : (
             <div className="stack">
               <label className="field">
-                Đọc mã từ ảnh QR (JPG/PNG dưới 5 MB)
+                Đọc mã từ ảnh QR · JPG/PNG dưới 5 MB
                 <input
                   type="file"
                   accept="image/png,image/jpeg"

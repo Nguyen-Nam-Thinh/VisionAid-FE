@@ -616,7 +616,7 @@ export function createMockService(persistence?: DemoPersistence, delay = 180): V
       allowed(canManagePerson(a, p));
       const code = 'DEMO-' + id().slice(0, 8);
       recovery[code] = p.id;
-      audit(a, 'Yêu cầu đặt lại mật khẩu (mô phỏng)', p.name);
+      audit(a, 'Yêu cầu đặt lại mật khẩu · mô phỏng', p.name);
       save();
       return code;
     },
