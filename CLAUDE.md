@@ -2,7 +2,7 @@
 
 > Phạm vi: Web Frontend của VisionAid, dành cho Caregiver, Center Admin và Super Admin.
 > Cập nhật scope: 2026-10-03 theo VisionAid_Update_Report.docx và Luồng B2C - B2B.txt do người dùng cung cấp. Plan hiện hành là PLAN.md; lịch sử ở docs/PLAN_LEGACY_2026-10-03.md.
-> Web có 52 REST callers trên 140 operations đã kiểm kê (44 cũ + subscription U1 + 4 API packages U2 + 3 payment U3a), SignalR vị trí/cảnh báo và UI mock cho phần chưa nối. U1 đã có trạng thái license, trang /license chỉ đọc, UX 402 giữ phiên; chờ user test live. U2 đã có quản trị gói Admin và danh mục theo role; chờ test live. U3a đã có Personal PayOS checkout/history/return/cancel; chờ test BE/PayOS thật theo docs/API_STAGE_U3A_TEST.md. Business PayOS, quản trị pool/key, WebRTC, Hybrid management chưa triển khai FE. Test fixture không thay nghiệm thu BE thật. Các mô tả snapshot 2026-09-21 bên dưới không được dùng để ghi đè trạng thái mới trong PLAN.md/api.txt.
+> Web có 53 REST callers trên 140 operations đã kiểm kê (44 cũ + subscription U1 + 4 API packages U2 + 3 payment U3a + GET pool U3b), SignalR vị trí/cảnh báo và UI mock cho phần chưa nối. U1 đã có trạng thái license, trang /license chỉ đọc, UX 402 giữ phiên; chờ user test live. U2 đã có quản trị gói Admin và danh mục theo role; chờ test live. U3a đã có Personal PayOS checkout/history/return/cancel; chờ test BE/PayOS thật theo docs/API_STAGE_U3A_TEST.md. U3b đã có Business checkout/history/cancel và kho license chỉ đọc, chờ test live theo docs/API_STAGE_U3B_TEST.md. Assign/revoke/key, WebRTC, Hybrid management chưa triển khai FE. Test fixture không thay nghiệm thu BE thật. Các mô tả snapshot 2026-09-21 bên dưới không được dùng để ghi đè trạng thái mới trong PLAN.md/api.txt.
 
 ## 1. Cách sử dụng và nguồn tham chiếu
 
@@ -273,7 +273,7 @@ Giá trị nghiệp vụ trong DB: `DETECTED`, `DISMISSED`, `SENT`, `ACKNOWLEDGE
 
 ## 12. UX, accessibility và quy ước code
 
-- Glassmorphism đã được người dùng chọn: glass nhẹ, nền form/table rõ, tokens dùng chung, bento dashboard. Theo docs/DESIGN_SYSTEM.md; ưu tiên contrast và keyboard hơn hiệu ứng.
+- UI hiện hành theo DESIGN.md: Organic/Natural, xanh rêu, nền giấy, Fraunces/Nunito và native dialog. Giữ token/component đã sửa; không đưa màu xanh dương hoặc glassmorphism cũ trở lại. Ưu tiên contrast và keyboard hơn hiệu ứng.
 - Mọi trang có loading, empty, error, forbidden và pending states thích hợp; không dùng màn hình trắng khi lỗi.
 - Bảng có pagination/filter, trạng thái và action rõ ràng. Không ẩn dữ liệu bằng màu đơn thuần.
 - Theo yêu cầu WCAG 2.1 trong báo cáo: semantic HTML, labels, keyboard navigation, visible focus, contrast và text thay thế phù hợp. Đây là mục tiêu, không tự tuyên bố đạt chuẩn khi chưa kiểm tra.

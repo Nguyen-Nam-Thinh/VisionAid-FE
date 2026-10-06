@@ -28,6 +28,33 @@ export const subscriptionLabels = {
   Suspended: 'Tạm ngưng',
 };
 export const isPersonalCaregiver = (user: Person) => user.role === 'Caregiver' && !user.orgId;
+export const isOrganizationBuyer = (user: Person) => user.role === 'CenterAdmin' && !!user.orgId;
+const pool = z.object({
+  id: z.string().uuid(),
+  organizationId: z.string().uuid(),
+  package: z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    code: z.string(),
+    packageType: z.literal('Business'),
+  }),
+  totalLicenses: z.number().int().nonnegative(),
+  usedLicenses: z.number().int().nonnegative(),
+  availableLicenses: z.number().int().nonnegative(),
+  status: z.enum(['Active', 'Expired', 'Suspended']),
+  purchasedAt: date,
+  expiresAt: date.nullable(),
+});
+export async function getOrganizationPool(user: Person, signal?: AbortSignal, get = apiGet) {
+  if (!isOrganizationBuyer(user))
+    throw new ServiceError('Chỉ quản trị trung tâm có tổ chức được xem kho license.', 403);
+  const parsed = pool.safeParse(await get('/api/licenses/pool', signal));
+  if (!parsed.success)
+    throw new ServiceError('Dữ liệu kho license không hợp lệ. Hãy tải lại.', 502);
+  if (parsed.data.organizationId !== user.orgId)
+    throw new ServiceError('Máy chủ trả về kho license không thuộc tổ chức của bạn.', 403);
+  return parsed.data;
+}
 
 export async function getMySubscription(user: Person, signal?: AbortSignal, get = apiGet) {
   if (!isPersonalCaregiver(user))

@@ -111,10 +111,16 @@ export function ApiLicense() {
           </p>
         </section>
       )}
-      {!personal && (
-        <p className="notice">
-          Quản lý pool và thanh toán tổ chức sẽ được mở khi tính năng tương ứng sẵn sàng.
-        </p>
+      {user.role === 'CenterAdmin' && user.orgId ? (
+        <Link className="btn" to="/center-admin/licenses">
+          Xem kho license tổ chức
+        </Link>
+      ) : (
+        !personal && (
+          <p className="notice">
+            Kho license và thanh toán tổ chức do quản trị trung tâm phụ trách.
+          </p>
+        )
       )}
     </>
   );

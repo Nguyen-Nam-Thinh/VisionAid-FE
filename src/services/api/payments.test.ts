@@ -9,6 +9,7 @@ import {
 } from './payments';
 import type { Person } from '../../models/domain';
 import type { LicensePackage } from './packages';
+import { ServiceError } from '../contracts';
 const id = '01900000-0000-7000-8000-000000000001';
 const actor = { id, orgId: '', role: 'Caregiver' } as Person;
 const date = '2026-10-03T00:00:00Z';
@@ -58,6 +59,48 @@ const link = {
   amount: 99000,
   currency: 'VND',
 };
+it('Business checkout requires a CenterAdmin organization and matching package; history/cancel reuse server scope', async () => {
+  const center = { ...actor, role: 'CenterAdmin' as const, orgId: id };
+  const business = { ...pkg, packageType: 'Business' as const };
+  const get = vi.fn().mockResolvedValue(page([business]));
+  get
+    .mockResolvedValueOnce(page([business]))
+    .mockRejectedValueOnce(new ServiceError('Chưa có kho', 404));
+  const write = vi.fn().mockResolvedValue(link);
+  const api = createPaymentsApi(get, write);
+  await expect(api.create(center, business, 'https://visionaid.net')).resolves.toEqual(link);
+  await expect(api.create(center, pkg, 'https://visionaid.net')).rejects.toMatchObject({
+    status: 422,
+  });
+  await expect(api.create(actor, business, 'https://visionaid.net')).rejects.toMatchObject({
+    status: 422,
+  });
+  await expect(api.list({ ...center, orgId: '' }, 1)).rejects.toMatchObject({ status: 403 });
+  expect(write).toHaveBeenCalledTimes(1);
+  get.mockResolvedValueOnce(page([business])).mockResolvedValueOnce({
+    id,
+    organizationId: id,
+    package: {
+      id: '01900000-0000-7000-8000-000000000002',
+      name: 'Other',
+      code: 'OTHER',
+      packageType: 'Business',
+    },
+    totalLicenses: 50,
+    usedLicenses: 0,
+    availableLicenses: 50,
+    status: 'Active',
+    purchasedAt: date,
+    expiresAt: null,
+  });
+  await expect(api.create(center, business, 'https://visionaid.net')).rejects.toMatchObject({
+    status: 409,
+  });
+  expect(write).toHaveBeenCalledTimes(1);
+  get.mockResolvedValueOnce(page([{ ...payment, transactionType: 'LicenseTopup' }]));
+  await api.cancel(center, payment);
+  expect(write).toHaveBeenLastCalledWith('/api/payments/' + id + '/cancel', { method: 'DELETE' });
+});
 it('checkout and resume URLs fail closed; URL status is never copied into the resume target', () => {
   expect(safeCheckoutUrl(link.checkoutUrl)).toBe(link.checkoutUrl);
   for (const url of [
