@@ -2054,6 +2054,174 @@ const u3Pool = (status = 'Active', total = 50) => ({
   purchasedAt: '2026-10-06T00:00:00Z',
   expiresAt: '2026-11-05T00:00:00Z',
 });
+test('U5: distribute once, mask/copy key, then family activates and refreshes entitlement', async ({
+  page,
+  context,
+}) => {
+  const key = 'ABCD-1234-EFAB-5678';
+  await stubApi(page, 'CenterAdmin', id);
+  let issued = false;
+  let writes = 0;
+  await page.route('**/api/licenses/pool', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: { ...u3Pool(), availableLicenses: issued ? 46 : 47, usedLicenses: issued ? 4 : 3 },
+      },
+    }),
+  );
+  await page.route('**/api/licenses/assignments?**', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([]) } }),
+  );
+  await page.route('**/api/licenses/distribute', async (route) => {
+    writes++;
+    expect(route.request().postDataJSON()).toEqual({ poolId: id, note: 'Gia đình test' });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    issued = true;
+    await route.fulfill({
+      json: {
+        success: true,
+        data: { subscriptionId: id, licenseKey: key, expiresAt: u3Pool().expiresAt },
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/center-admin/licenses');
+  await page.getByRole('button', { name: 'Tạo key cho gia đình', exact: true }).click();
+  await page.getByLabel('Ghi chú').fill('Gia đình test');
+  await page.getByRole('button', { name: 'Xác nhận tạo key' }).click();
+  await expect(page.getByLabel('Key vừa tạo')).toHaveValue('••••-••••-••••-••••');
+  expect(writes).toBe(1);
+  await page.getByRole('button', { name: 'Hiện key', exact: true }).click();
+  await expect(page.getByLabel('Key vừa tạo')).toHaveValue(key);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByRole('button', { name: 'Sao chép key', exact: true }).click();
+  await expect(page.getByText('Đã sao chép key.', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(key);
+  expect(await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))).not.toContain(
+    key,
+  );
+  expect(page.url()).not.toContain(key);
+  await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  const pool = page.getByRole('region', { name: 'Kho license tổ chức' });
+  await expect(
+    pool
+      .locator('div')
+      .filter({ has: page.locator('dt', { hasText: 'Còn lại' }) })
+      .last(),
+  ).toContainText('46');
+  await page.getByRole('button', { name: 'Xem key vừa tạo' }).click();
+  await expect(page.getByLabel('Key vừa tạo')).toHaveValue('••••-••••-••••-••••');
+  await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.unrouteAll();
+  await stubApi(page);
+  let activated = false;
+  const subscription = () => ({
+    id,
+    status: activated ? 'Active' : 'Trial',
+    package: { id, name: 'Gói được cấp', code: 'BUSINESS', packageType: 'Business' },
+    startedAt: '2026-10-07T00:00:00Z',
+    trialEndsAt: '2026-10-14T00:00:00Z',
+    currentPeriodStart: '2026-10-07T00:00:00Z',
+    currentPeriodEnd: u3Pool().expiresAt,
+    autoRenew: false,
+    daysRemaining: 29,
+  });
+  await page.route('**/api/users/me', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          email: 'api@example.test',
+          fullName: 'Gia đình',
+          role: 'Caregiver',
+          organizationId: null,
+          isActive: true,
+          licenseStatus: activated ? 'Active' : 'Trial',
+          licenseExpiresAt: u3Pool().expiresAt,
+        },
+      },
+    }),
+  );
+  await page.route('**/api/licenses/subscription', (route) =>
+    route.fulfill({ json: { success: true, data: subscription() } }),
+  );
+  await page.route('**/api/licenses/activate-key', (route) => {
+    expect(route.request().postDataJSON()).toEqual({ licenseKey: key });
+    activated = true;
+    return route.fulfill({ json: { success: true, data: subscription() } });
+  });
+  await login(page);
+  await page.goto('/license');
+  await page.getByRole('button', { name: 'Nhập key kích hoạt' }).click();
+  await page.getByLabel('Key license').fill(key.toLowerCase());
+  await page.getByRole('button', { name: 'Xác nhận kích hoạt' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Thông tin license', exact: true })).toContainText(
+    'License đang hoạt động',
+  );
+  await expect(page.getByRole('region', { name: 'Kích hoạt key', exact: true })).toContainText(
+    'Máy chủ đã xác nhận kích hoạt',
+  );
+  expect(await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))).not.toContain(
+    key,
+  );
+});
+
+test('U5: invalid key retains form; unknown distribution blocks replay; staff cannot activate', async ({
+  page,
+}) => {
+  await stubApi(page);
+  await page.route('**/api/licenses/subscription', (route) =>
+    route.fulfill({ status: 404, json: { detail: 'Not found' } }),
+  );
+  await page.route('**/api/licenses/activate-key', (route) =>
+    route.fulfill({ status: 422, json: { detail: 'Invalid ABCD-1234-EFAB-5678' } }),
+  );
+  await login(page);
+  await page.goto('/license');
+  await page.getByRole('button', { name: 'Nhập key kích hoạt' }).click();
+  await page.getByLabel('Key license').fill('ABCD-1234-EFAB-5678');
+  await page.getByRole('button', { name: 'Xác nhận kích hoạt' }).click();
+  await expect(page.getByRole('dialog').getByRole('alert')).not.toContainText('ABCD');
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Kiểm tra key');
+  await expect(page.getByLabel('Key license')).toHaveValue('ABCD-1234-EFAB-5678');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const bounds = await page.getByRole('dialog').boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: 'test-results/u5-activate-mobile.png' });
+  await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  await page.unrouteAll();
+  await stubApi(page, 'CenterAdmin', id);
+  let writes = 0;
+  await page.route('**/api/licenses/pool', (route) =>
+    route.fulfill({ json: { success: true, data: u3Pool() } }),
+  );
+  await page.route('**/api/licenses/assignments?**', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([]) } }),
+  );
+  await page.route('**/api/licenses/distribute', (route) => {
+    writes++;
+    return route.abort('failed');
+  });
+  await page.goto('/center-admin/licenses');
+  await page.reload();
+  await page.getByRole('button', { name: 'Tạo key cho gia đình', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận tạo key' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Tạo key cho gia đình', exact: true }),
+  ).toBeDisabled();
+  expect(writes).toBe(1);
+  await page.unrouteAll();
+  const calls = await stubApi(page, 'Caregiver', id);
+  await page.goto('/license');
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Nhập key kích hoạt' })).toHaveCount(0);
+  expect(calls).not.toContain('/api/licenses/activate-key');
+});
 test('U4: create VIU quota error keeps account form and provides license management link', async ({
   page,
 }) => {

@@ -12,6 +12,7 @@ import {
 } from '../../services/api/licenses';
 import { ServiceError } from '../../services/contracts';
 import { canBrowsePackages } from '../../services/api/packages';
+import { LicenseKeys } from './LicenseKeys';
 
 const dateLabel = (date?: string | null) =>
   date
@@ -106,11 +107,12 @@ export function ApiLicense() {
             theo liên kết.
           </p>
           <p className="notice">
-            Bạn có thể mua hoặc gia hạn gói Personal từ danh mục gói. Nhập key chưa được mở. Nếu
-            license đã được cập nhật qua kênh khác, hãy tải lại thông tin tại đây.
+            Bạn có thể mua hoặc gia hạn gói Personal từ danh mục gói, hoặc kích hoạt key trung tâm
+            cấp. Nếu license đã được cập nhật qua kênh khác, hãy tải lại thông tin tại đây.
           </p>
         </section>
       )}
+      <LicenseKeys key={user.id + user.orgId} actor={user} mode="activate" />
       {user.role === 'CenterAdmin' && user.orgId ? (
         <Link className="btn" to="/center-admin/licenses">
           Xem kho license tổ chức

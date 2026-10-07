@@ -10,6 +10,7 @@ import {
 import { ServiceError } from '../../services/contracts';
 import type { Person } from '../../models/domain';
 import { LicenseAssignments } from './LicenseAssignments';
+import { LicenseKeys } from './LicenseKeys';
 
 export function OrganizationPool({ actor }: { actor: Person }) {
   const query = useQuery({
@@ -102,6 +103,7 @@ export function ApiLicensePool() {
         }
       />
       <OrganizationPool key={'pool-' + actor.id + actor.orgId} actor={actor} />
+      <LicenseKeys key={'keys-' + actor.id + actor.orgId} actor={actor} mode="distribute" />
       {isOrganizationBuyer(actor) && (
         <LicenseAssignments key={'assignments-' + actor.id + actor.orgId} actor={actor} />
       )}
