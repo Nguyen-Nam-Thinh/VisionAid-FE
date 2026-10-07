@@ -4,7 +4,7 @@ import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 
 const date = z.iso.datetime({ offset: true });
-const subscription = z.object({
+export const subscription = z.object({
   id: z.string().uuid(),
   status: z.enum(['Trial', 'Active', 'Expired', 'Cancelled', 'Suspended']),
   package: z.object({
