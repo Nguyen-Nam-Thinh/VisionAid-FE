@@ -7,6 +7,75 @@ const actionDialog = (page: Page) =>
     }),
   });
 const id = '01900000-0000-7000-8000-000000000001';
+test('8c: opt-in push registers the login device, survives reload and revokes on logout', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['notifications']);
+  await stubApi(page);
+  await page.route('**/node_modules/.vite/deps/@firebase_messaging.js*', (route) =>
+    route.fulfill({
+      contentType: 'application/javascript',
+      body: `
+      export const isSupported = async () => true;
+      export const getMessaging = () => ({});
+      export const deleteToken = async () => true;
+      export const getToken = async () => {
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {scope: '/firebase-cloud-messaging-push-scope'});
+        if (!registration.active) await new Promise(resolve => {
+          const worker = registration.installing || registration.waiting;
+          worker.addEventListener('statechange', () => { if (worker.state === 'activated') resolve(); });
+        });
+        return 'fixture-fcm-token';
+      };
+    `,
+    }),
+  );
+  let registrations = 0;
+  await page.route('**/api/auth/fcm-token', async (route) => {
+    const deviceId = await page.evaluate(() => sessionStorage.getItem('visionaid.api.device.v1'));
+    expect(route.request().method()).toBe('PUT');
+    expect(route.request().postDataJSON()).toEqual({
+      fcmToken: 'fixture-fcm-token',
+      clientDeviceId: deviceId,
+      deviceType: 'Web',
+      deviceModel: 'VisionAid Web',
+      appVersion: '0.1.0',
+    });
+    registrations++;
+    await route.fulfill({ json: { success: true, data: null } });
+  });
+  await login(page);
+  await page.goto('/profile');
+  expect(registrations).toBe(0);
+  await page.getByRole('button', { name: 'Bật thông báo trình duyệt', exact: true }).click();
+  await expect(
+    page.getByText('Đã đăng ký nhận push cho phiên này.', { exact: true }),
+  ).toBeVisible();
+  expect(registrations).toBe(1);
+  await page.screenshot({ path: 'test-results/8c-push-profile.png', fullPage: true });
+  await page.reload();
+  // Focus can also sync; every upsert above must use the same login device.
+  await expect.poll(() => registrations).toBeGreaterThanOrEqual(2);
+  await page.getByRole('button', { name: 'Tắt push trên trình duyệt', exact: true }).click();
+  await expect(page.getByText('Chưa đăng ký push cho phiên này.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Bật thông báo trình duyệt', exact: true }).click();
+  await expect(
+    page.getByText('Đã đăng ký nhận push cho phiên này.', { exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await expect(page).toHaveURL(/auth\/login/);
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('visionaid.push.owner.v1')))
+    .toBeNull();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        async () => !!(await (await caches.open('visionaid-push-v1')).match('/push-enabled')),
+      ),
+    )
+    .toBe(false);
+});
 const token = () =>
   'header.' +
   Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 600 })).toString('base64url') +

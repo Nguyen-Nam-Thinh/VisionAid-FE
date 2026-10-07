@@ -30,6 +30,7 @@ export function createApiAuth(
   baseUrl: string,
   storage?: AuthStorage,
   transport: typeof fetch = fetch,
+  onSessionEnd: () => void = () => {},
 ) {
   let tokens: Tokens | null = null;
   let deviceId = '';
@@ -46,6 +47,7 @@ export function createApiAuth(
   if (!deviceId) deviceId = crypto.randomUUID();
 
   function clear() {
+    onSessionEnd();
     generation++;
     tokens = null;
     try {
@@ -221,6 +223,7 @@ export function createApiAuth(
     }
   }
   return {
+    deviceId: () => deviceId,
     get: (path: string, signal?: AbortSignal) => authorized(path, { signal }),
     write: (path: string, init: RequestInit) => authorized(path, init, false),
     async accessToken() {

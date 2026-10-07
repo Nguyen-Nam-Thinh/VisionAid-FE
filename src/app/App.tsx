@@ -5,6 +5,7 @@ import { ApiLicensePool } from '../pages/shared/ApiLicensePool';
 import { paymentResumeTarget } from '../services/api/payments';
 import { ApiLicense } from '../pages/shared/ApiLicense';
 import { ApiRealtime } from '../components/ApiRealtime';
+import { PushSync } from '../components/PushSettings';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
 import { ApiTracking } from '../pages/shared/ApiTracking';
 import { ApiLinks } from '../pages/shared/ApiLinks';
@@ -283,7 +284,10 @@ function Shell() {
         {auth.mode === 'api' &&
           !signingOut &&
           (user.role === 'Caregiver' || (user.role === 'CenterAdmin' && user.orgId)) && (
-            <ApiRealtime key={user.id + ':' + user.role + ':' + user.orgId} actor={user} />
+            <>
+              <ApiRealtime key={user.id + ':' + user.role + ':' + user.orgId} actor={user} />
+              <PushSync key={user.id} userId={user.id} />
+            </>
           )}
         {auth.mode === 'mock' && (
           <div className="demo-strip">
