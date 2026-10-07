@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PushSettings } from '../../components/PushSettings';
 import { Form } from '../../components/Form';
 import { Confirm, Dialog, PageHead } from '../../components/UI';
 import { useAuth, useSession } from '../../hooks/useService';
@@ -17,6 +18,7 @@ export function Profile() {
           {message}
         </p>
       )}
+      {auth.mode === 'api' && <PushSettings key={user.id} userId={user.id} />}
       <div className="grid">
         <section className="glass card stack">
           <h2>Thông tin cá nhân</h2>
