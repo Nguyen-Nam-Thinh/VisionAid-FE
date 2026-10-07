@@ -2054,6 +2054,145 @@ const u3Pool = (status = 'Active', total = 50) => ({
   purchasedAt: '2026-10-06T00:00:00Z',
   expiresAt: '2026-11-05T00:00:00Z',
 });
+test('11a: staff manages contacts with conflict recovery, confirmations and revoked-link protection', async ({
+  page,
+}) => {
+  await stubApi(page, 'Caregiver', id);
+  const viuId = '01900000-0000-7000-8000-000000000061';
+  let linked = true;
+  let exists = false;
+  let conflict = true;
+  const writes: string[] = [];
+  let contact = {
+    id,
+    visuallyImpairedUserId: viuId,
+    contactName: 'Liên hệ test',
+    contactType: 'Both',
+    phoneNumber: '0901234567',
+    zaloDeepLink: 'https://zalo.me/0901234567',
+    priorityOrder: 1,
+    isActive: true,
+    notes: '',
+    createdAt: '2026-10-07T00:00:00Z',
+    updatedAt: '2026-10-07T00:00:00Z',
+  };
+  await page.route('**/api/caregiver-links?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage(
+          linked
+            ? [
+                {
+                  id,
+                  caregiverId: id,
+                  visuallyImpairedUserId: viuId,
+                  viuFullName: 'VIU test',
+                  isPrimary: false,
+                  linkType: 'Organization',
+                  canReceiveAlerts: false,
+                  canManageRegistry: false,
+                  canManageLocations: false,
+                  linkedAt: '',
+                  unlinkedAt: null,
+                },
+              ]
+            : [],
+        ),
+      },
+    }),
+  );
+  await page.route('**/api/users?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: viuId,
+            fullName: 'VIU test',
+            email: 'viu@example.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId: id,
+            isActive: true,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route(`**/api/users/${viuId}/emergency-contacts**`, (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    if (request.method() !== 'GET') {
+      writes.push(request.method());
+      if (request.method() === 'POST' && conflict)
+        return route.fulfill({ status: 409, json: { detail: 'Ưu tiên đã được dùng.' } });
+      if (request.method() === 'DELETE') {
+        exists = false;
+        return route.fulfill({ status: 204 });
+      }
+      contact = { ...contact, ...request.postDataJSON() };
+      exists = true;
+    }
+    return route.fulfill({
+      json: {
+        success: true,
+        data:
+          request.method() === 'GET' && path.endsWith('/emergency-contacts')
+            ? exists
+              ? [contact]
+              : []
+            : contact,
+      },
+    });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Liên hệ khẩn cấp', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
+    .selectOption(viuId);
+  await page.getByRole('button', { name: 'Thêm liên hệ', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Tên liên hệ').fill('Liên hệ test');
+  await dialog.getByLabel('Loại liên hệ').selectOption('Both');
+  await dialog.getByLabel('Số điện thoại').fill('0901234567');
+  await dialog.getByLabel('Liên kết Zalo').fill('https://zalo.me/0901234567');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Ưu tiên đã được dùng');
+  await expect(dialog.getByLabel('Tên liên hệ')).toHaveValue('Liên hệ test');
+  conflict = false;
+  await dialog.getByLabel('Thứ tự ưu tiên').fill('2');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await dialog.getByLabel('Loại liên hệ').selectOption('Phone');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(contact.zaloDeepLink).toBe('');
+  await page.getByRole('button', { name: 'Tạm ngưng', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
+  expect(writes).not.toContain('PATCH');
+  await page.getByRole('button', { name: 'Tạm ngưng', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Kích hoạt', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Xóa', exact: true }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const bounds = await dialog.boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: 'test-results/11a-confirm-mobile.png' });
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByText('Chưa có liên hệ khẩn cấp.', { exact: true })).toBeVisible();
+  linked = false;
+  await page.getByRole('button', { name: 'Thêm liên hệ', exact: true }).click();
+  await dialog.getByLabel('Tên liên hệ').fill('Không được tạo');
+  await dialog.getByLabel('Số điện thoại').fill('0901234567');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(page.getByRole('alert')).toContainText('không còn liên kết');
+  await expect(page.getByRole('button', { name: 'Thêm liên hệ', exact: true })).toHaveCount(0);
+  expect(writes).toEqual(['POST', 'POST', 'PUT', 'PATCH', 'DELETE']);
+  expect(await page.locator('a[href^="tel:"], a[href^="zalo:"]').count()).toBe(0);
+});
 test('U5: distribute once, mask/copy key, then family activates and refreshes entitlement', async ({
   page,
   context,
