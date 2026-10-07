@@ -13,6 +13,7 @@ import { ApiOrganizations } from '../pages/shared/ApiOrganizations';
 import { Landing } from '../pages/public/Landing';
 import { ApiSession, ApiPending } from '../pages/shared/ApiSession';
 import { ApiLinkedUsers } from '../pages/caregiver/ApiLinkedUsers';
+import { ApiContacts } from '../pages/caregiver/ApiContacts';
 import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
 import { features } from './features';
@@ -176,7 +177,7 @@ function Shell() {
                 (item) =>
                   runtime.mode === 'mock' ||
                   (user.role === 'Caregiver' &&
-                    ['users', 'caregivers', 'map', 'alerts', 'notifications'].includes(
+                    ['users', 'caregivers', 'map', 'alerts', 'notifications', 'contacts'].includes(
                       item.path,
                     )) ||
                   (user.role === 'Admin' &&
@@ -369,6 +370,8 @@ export function App() {
                       runtime.mode === 'api' ? (
                         f.role === 'Caregiver' && f.path === 'users' ? (
                           <ApiLinkedUsers />
+                        ) : f.role === 'Caregiver' && f.path === 'contacts' ? (
+                          <ApiContacts />
                         ) : (f.role === 'Admin' && f.path === 'organizations') ||
                           (f.role === 'CenterAdmin' && f.path === 'organization') ? (
                           <ApiOrganizations />

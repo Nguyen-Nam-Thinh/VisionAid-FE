@@ -1,13 +1,13 @@
 # VisionAid Web — Plan cập nhật B2C, B2B, License, PayOS và WebRTC
 
-Cập nhật 2026-10-07. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1–U5 đã triển khai FE, chờ nghiệm thu live; tiếp theo là 11a.
+Cập nhật 2026-10-07. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1–U5 và 11a đã triển khai FE, chờ nghiệm thu live; tiếp theo là 8c.
 
 **Kết quả U0 mới nhất:** đã đọc BE mới và OpenAPI deploy có 140 operations (33 mới, 107 cũ giữ nguyên). Đọc [docs/U0_BACKEND_FINDINGS.md](docs/U0_BACKEND_FINDINGS.md) trước các câu hỏi dự kiến bên dưới; tài liệu đó thay thế những giả định đã được xác minh. U0 mới hoàn tất kiểm kê/khảo sát, còn policy và test thật. Có FCM upsert. Người dùng xác nhận BE đã sửa billing allowlist, Staff exemption và kế thừa license khi first Personal link; local chưa có bản sửa để đối chiếu. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforcement quota theo gói. Không còn cần người dùng gửi lại vị trí BE/Swagger.
 
 ## 1. AI tiếp theo bắt đầu ở đâu
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
-2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. Đợt kế tiếp là **11a — Emergency Contacts và Standalone**, chỉ bắt đầu khi người dùng yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. Đợt kế tiếp là **8c — FCM web push**, chỉ bắt đầu khi người dùng yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
 3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
 4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
 5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
@@ -18,7 +18,7 @@ Cập nhật 2026-10-07. Base FE khảo sát U0: dev `5692a87`; BE local mới `
 - Code FE: src/app/App.tsx, src/services/api/*, src/models/domain.ts, src/pages/*; đã đối chiếu route đang mở và DTO hiện tại.
 - BE local ../VisionAid-BE/src đã cập nhật e56c545, có License/Payment/WebRTC. Chưa thấy API/pipeline Hybrid Guidance tương ứng trong phạm vi rà soát. Có entity không chứng minh tính năng chạy đầy đủ.
 - Swagger deploy: https://api.visionaid.net/swagger/index.html; đã GET schema public /swagger/v1/swagger.json. Source và endpoint đã đối chiếu trong báo cáo U0, chưa test authenticated runtime.
-- api.txt giữ snapshot 107 REST cũ và bổ sung U1–U5, tổng 58 caller Web; [snapshot U0](docs/U0_OPENAPI_2026-10-03.md) kiểm kê 140 operations. SignalR không tính như REST. Không suy ra DTO/quyền chỉ từ tên bảng DB.
+- api.txt giữ snapshot 107 REST cũ và bổ sung U1–U5 và 11a, tổng 64 caller Web; [snapshot U0](docs/U0_OPENAPI_2026-10-03.md) kiểm kê 140 operations. SignalR không tính như REST. Không suy ra DTO/quyền chỉ từ tên bảng DB.
 - Lịch sử triển khai và checklist cũ được giữ tại [docs/PLAN_LEGACY_2026-10-03.md](docs/PLAN_LEGACY_2026-10-03.md). File đó chỉ tra cứu lịch sử; thứ tự thực hiện hiện hành là plan này.
 
 ## 3. Phần đã làm và phần cần điều chỉnh
@@ -154,12 +154,13 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 
 - U5 thực tế dùng popup tại /center-admin/licenses và /license, không thêm route riêng. Key chỉ trong memory, che/copy có chủ đích; lỗi không rõ kết quả chặn gửi lại trong màn hiện tại. Chưa có API list/revoke key. BE cần sửa raw-key logging, atomic claim và lựa chọn subscription sau activate; xem docs/API_STAGE_U5_TEST.md.
 
-### 11a — Contacts và nghiệm thu Standalone [CHƯA NỐI; đưa lên sớm sau U4]
+### 11a — Contacts và nghiệm thu Standalone [ĐÃ TRIỂN KHAI FE; CHỜ USER TEST]
 
 - Giữ contract cũ GET/POST /users/{userId}/emergency-contacts và detail/PUT/DELETE/PATCH status; đối chiếu lại BE mới. Số khẩn cấp/hotline flexible theo khu vực, không tự gọi khi lưu hoặc xem.
 - Luồng liên hoàn: CenterAdmin tạo VIU có license -> phân công Staff -> Staff cấu hình contacts -> Mobile phát event test -> Staff nhận/xử lý. Cùng org nhưng không có link không tự được xem/sửa.
 - Test CRUD/priority/type/phone, gỡ link mất quyền, ngoài org; số ngắn 112/115 cần validator BE hỗ trợ, không ép regex số di động cho mọi contact.
-- Điểm dừng: phối hợp Mobile/BE; không tạo sự kiện SOS thật để test.
+- Đã nối 6 APIs tại /caregiver/contacts, popup thêm/sửa, xác nhận bật/tắt/xóa, kiểm tra lại active link trước thao tác. Secondary và Staff có link đều được quản lý; không cần primary. BE hiện chỉ nhận số di động Việt Nam nên 112/115 còn bị chặn. Checklist: docs/API_STAGE_11A_TEST.md.
+- Điểm dừng: phối hợp Mobile/BE; chưa nghiệm thu Standalone end-to-end, không tạo sự kiện SOS thật để test.
 
 ### 8c — FCM web push [CHƯA LÀM; config và API upsert đã có]
 
@@ -233,7 +234,8 @@ Ghi trong bảng dưới: commit FE + BE/OpenAPI version đã dùng; route/API �
 | U3a | Đã triển khai FE | 3 API payment Personal | Xem docs/API_STAGE_U3A_TEST.md | Chưa test live PayOS | Dừng cho user test; môi trường PayOS chưa xác nhận |
 | U3b | Đã triển khai FE | GET pool + tái sử dụng payment U3a | Xem docs/API_STAGE_U3B_TEST.md | Chưa test live | Chờ user test; U4 đã triển khai |
 | U4 | Đã triển khai FE | 3 API assignments + DTO license VIU | 86 unit; 14 E2E liên quan đạt sau sửa fixture; lint/build đạt | Chưa test live | docs/API_STAGE_U4_TEST.md; BE guard/inheritance cần xác minh |
-| U5 | Đã triển khai FE | POST distribute/activate-key | 88 unit, 9 E2E U1/U4/U5, lint/build đạt | Chưa test live | docs/API_STAGE_U5_TEST.md; tiếp theo 11a |
+| U5 | Đã triển khai FE | POST distribute/activate-key | 88 unit, 9 E2E U1/U4/U5, lint/build đạt | Chưa test live | docs/API_STAGE_U5_TEST.md; 11a đã triển khai |
+| 11a | Đã triển khai FE | 6 emergency-contacts APIs | 90 unit; lint/build đạt; E2E xem checklist | Chưa test live; hotline bị BE chặn | docs/API_STAGE_11A_TEST.md; tiếp theo 8c |
 | 8c | Chuẩn bị config, chưa runtime | Có upsert mới; revoke/logout/nhiều tab cần test | Chưa chạy push | Chưa test | Dùng PUT auth/fcm-token, kiểm tra lifecycle |
 | U6a/U6b | Chưa làm | Chờ WebRTC + Mobile + TURN | Chưa chạy | Chưa test | Sau U4 và hợp đồng signaling |
 | 9–13, U7–U9 | Chưa nối theo phạm vi trên | API cũ cần đối chiếu lại; API mới chờ U0 | Chưa chạy phạm vi mới | Chưa test | Thực hiện từng checkpoint |
