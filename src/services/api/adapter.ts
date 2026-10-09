@@ -2,11 +2,13 @@ import { ServiceError, type VisionService } from '../contracts';
 import { runtime } from '../../configs/runtime';
 import { createApiAuth } from './auth';
 import { disablePush } from '../notifications/push';
+import { sessionEnded } from '../sessionLifecycle';
 const auth = createApiAuth(
   runtime.apiBaseUrl,
   typeof sessionStorage === 'undefined' ? undefined : sessionStorage,
   fetch,
   () => {
+    sessionEnded();
     void disablePush().catch(() => {});
   },
 );

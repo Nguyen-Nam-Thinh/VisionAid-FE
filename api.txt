@@ -3,7 +3,7 @@ Cập nhật kế hoạch: 2026-10-08. Danh sách 001–107 là snapshot OpenAPI
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau 8c: 65/140 operations có caller Web. Personal Payment đã nối; Business đã nối; WebRTC/Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U6a: 70/140 operations có caller Web. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -1223,3 +1223,14 @@ BE local chỉ nhận số di động Việt Nam; 112/115 chưa hỗ trợ. Khô
 8c — DA_NOI PUT /api/auth/fcm-token
 Màn /profile -> PushSettings; nền PushSync trong Shell. Payload fcmToken, clientDeviceId khớp auth, deviceType Web, deviceModel, appVersion. Permission chỉ sau click; Web Locks tránh đồng thời nhiều tab; một owner/browser. Native unsubscribe khi tắt/logout, BE chưa revoke riêng.
 Foreground refetch REST, background lời nhắc chung; click /dashboard qua guards. 93 unit/6 E2E fixture đạt, chưa xác minh FCM live. BE job SELECT device_token khác mapping fcm_token: cần đối chiếu deploy.
+
+U6a — DA_NOI FE, chờ test Mobile/TURN/deploy; BE source 48a7346
+- POST /api/webrtc/sessions: calls.ts:initiate -> CallButton tại /caregiver/users (ApiLinkedUsers). Body viuUserId + triggerType CaregiverInitiated; preflight active links. Xin micro trước POST, không camera Web.
+- POST /api/webrtc/sessions/{id}/accept: calls.ts:accept -> popup CallPanel trong Shell sau WebRtcIncomingCall được đối chiếu history.receiverId. User bấm Nhận, không auto-accept.
+- POST /api/webrtc/sessions/{id}/reject: calls.ts:reject -> Từ chối/Escape popup incoming. Không xin micro.
+- POST /api/webrtc/sessions/{id}/end: calls.ts:end -> nút Kết thúc/đóng popup, lỗi media/signaling, cleanup best-effort. Body reason. Không auto-retry thao tác ghi.
+- GET /api/webrtc/sessions: calls.ts:history -> /caregiver/calls (ApiCalls); page/pageSize=20/viuUserId/dateFrom/dateTo; popup chi tiết. Dùng thêm để xác minh incoming và poll phiên hoạt động 10 giây. Query cache scope actor/org/filter.
+- ICE lấy từ response initiate/accept, myRole video_viewer_audio_sender; GET /api/webrtc/ice-servers/public vẫn CHUA_NOI Web vì không cần caller thừa.
+- SignalR /hubs/location dùng chung kết nối ApiRealtime. Nhận WebRtcIncomingCall/CallAccepted/CallEnded/CallRejected/Offer/IceCandidate. Mobile tạo offer; Web invoke RelayAnswer(sessionId,sdp), RelayIceCandidate(sessionId,candidateJson). Không invoke RelayOffer từ Web ở luồng này.
+- src/services/realtime/calls.ts giữ lifecycle/SDP/ICE; CallPanel chỉ UI/media element. Không lưu SDP/ICE/video/credentials vào storage. Dọn khi logout; một browser lock theo account; mất signaling đóng media, không tự khôi phục.
+- Đã nối tổng 70/140; không coi U6b SOS/FCM/Mobile đã nghiệm thu. Checklist/giới hạn: docs/API_STAGE_U6A_TEST.md.

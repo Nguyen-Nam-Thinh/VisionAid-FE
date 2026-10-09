@@ -6,6 +6,7 @@ import { PageHead, State, Badge, Confirm, Dialog } from '../../components/UI';
 
 import { ApiCreateLinkedUser } from './ApiCreateLinkedUser';
 import { viuLicenseLabel } from '../../services/api/licenses';
+import { CallButton, CallAvailability } from '../../components/CallPanel';
 
 export function ApiLinkedUsers() {
   const { data: user } = useSession();
@@ -53,6 +54,7 @@ export function ApiLinkedUsers() {
           )
         }
       />
+      <CallAvailability />
       <section className="glass card stack">
         <form
           className="row"
@@ -140,6 +142,7 @@ export function ApiLinkedUsers() {
                               )}
                             </td>
                             <td>
+                              <CallButton viuId={p.id} name={p.fullName} disabled={!p.isActive} />
                               <button
                                 className="btn"
                                 onClick={() => setSelected(p.id)}
