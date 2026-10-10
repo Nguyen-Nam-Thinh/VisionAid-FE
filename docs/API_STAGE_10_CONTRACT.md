@@ -1,3 +1,14 @@
+# Đợt 10 — Contract media đã bổ sung
+
+Cập nhật 2026-10-10: BE local f277b6a và Swagger deploy đã có GET /api/face-registry/persons/{personId}/photos/{photoId}. Đây là URL thật, không có hậu tố /content như đề xuất cũ.
+
+- Caregiver + active link để đọc; kiểm photo thuộc personId và person chưa xóa; AES decrypt tại server, Cache-Control private/no-store.
+- DELETE photo và PATCH primary đã kiểm personId/photoId; ghi vẫn cần canManageRegistry.
+- Web FaceRegistryImageResponse bỏ embeddingVector; bản Mobile có vector riêng. FE không lưu/render storagePath hoặc embedding.
+- Còn MIME hardcode image/jpeg cho PNG/WebP. FE kiểm chữ ký raster, tạo Blob đúng MIME; BE nên lưu/trả MIME chính xác. Không coi chữ ký là chứng minh ảnh nhận diện được.
+- Đã triển khai FE, test/checklist xem API_STAGE_10_TEST.md. Privacy policy vẫn chờ nội dung/version; không tự ghi đồng ý pháp lý.
+
+## Lịch sử khảo sát trước bản sửa — chỉ tham khảo
 # Đợt 10 — Contract cần bổ sung trước khi nối quản lý ảnh
 
 Khảo sát 2026-10-10. BE local: `48a7346`. Đã đọc Swagger deploy tại

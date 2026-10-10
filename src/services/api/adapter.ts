@@ -13,6 +13,7 @@ const auth = createApiAuth(
   },
 );
 export const apiGet = auth.get;
+export const apiBlob = auth.blob;
 export const apiWrite = auth.write;
 export const apiAccessToken = auth.accessToken;
 export const apiDeviceId = auth.deviceId;
