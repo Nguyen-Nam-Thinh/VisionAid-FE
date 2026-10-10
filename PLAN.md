@@ -7,7 +7,7 @@ Cập nhật 2026-10-11. Base FE khảo sát U0: dev `5692a87`; BE local mới `
 ## 1. AI tiếp theo bắt đầu ở đâu
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
-2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt tiếp theo 12b khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt 12b đã nối FE, chờ test docs/API_STAGE_12B_TEST.md. Đợt tiếp theo 13a khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
 3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
 4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
 5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
@@ -188,15 +188,15 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 - Test 3 trigger, duplicate/out-of-order, nhiều staff nhận cùng event, quyền bị gỡ giữa cuộc gọi, FCM click khi logout; SOS không bị gián đoạn vì checkout/license expired hoặc lỗi WebRTC.
 - Điểm dừng: nghiệm thu riêng từng trigger; privacy nội dung/version vẫn cần người dùng cung cấp, không tự tạo đồng ý pháp lý.
 
-### 9, 10, 11b, 12 — Đợt 9, 10 và 11b đã nối FE; 12 chưa nối
+### 9, 10, 11b, 12 — Đã nối FE, chờ test live
 
 | Đợt | Màn và API phải nối cùng nhau | Phụ thuộc và test trước bàn giao |
 |---|---|---|
 | 9 — ĐÃ NỐI FE, chờ live | /caregiver/locations: saved-locations CRUD + geofences CRUD | Quyền link + entitlement + GPS/map; create/read/update/reload/delete, tọa độ/radius; cảnh báo vào/ra cần Mobile + boundary worker + 7/8 |
 | 10 — ĐÃ NỐI FE, chờ live | /caregiver/registry: persons CRUD + upload/preview/delete/primary photos | BE f277b6a và Swagger đã có GET ảnh có xác thực. 9 callers; kiểm tra scope và quyền trước ghi; popup, JPEG/PNG/WebP ≤10 MiB. Checklist docs/API_STAGE_10_TEST.md. Consent chính sách vẫn chờ, không tự tạo version. |
 | 11b — ĐÃ NỐI FE, chờ live | /caregiver/tts: GET/PUT preferences theo userId | Active link đọc/ghi, volume UI 0–100 sang BE 0–1, popup tạo/sửa, 404 xác minh VIU trước tạo. Checklist docs/API_STAGE_11B_TEST.md; cần Mobile tải lại cấu hình. |
-| 12a | /caregiver/activity: GET navigation/OCR/QR/recognition/voice list/detail/events | Dữ liệu Mobile và quyền; pagination/timezone/retention, không gửi các POST Mobile từ Web |
-| 12b | /center-admin/reports: organization activity-summary/members | Dữ liệu org + quyền; không gán số tổng bằng đếm trang đầu, không đưa face gallery Caregiver sang CenterAdmin |
+| 12a — ĐÃ NỐI FE, chờ live | /caregiver/activity: GET navigation/OCR/QR/recognition/voice list/detail/events | Dữ liệu Mobile và quyền; pagination/timezone/retention, không gửi các POST Mobile từ Web |
+| 12b — ĐÃ NỐI FE, chờ live | /center-admin/reports: organization activity-summary/members | Dữ liệu org + quyền; không gán số tổng bằng đếm trang đầu, không đưa face gallery Caregiver sang CenterAdmin |
 
 Mỗi dòng là một checkpoint riêng, không triển khai chung rồi mới cho test. Giữ checklist cũ trong docs và bổ sung trạng thái license trong test regression.
 
@@ -261,7 +261,7 @@ User đã yêu cầu tiếp tục sau khi BE sửa membership relay ở 48a7346.
 
 ## Bàn giao U6b — 2026-10-10
 
-User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt tiếp theo 12b khi user yêu cầu.
+User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt 12b đã nối FE, chờ test docs/API_STAGE_12B_TEST.md. Đợt tiếp theo 13a khi user yêu cầu.
 
 ## Bàn giao đợt 9 — 2026-10-10
 
@@ -294,3 +294,11 @@ Voice Male/Female, speedRate 0.5–2, volume UI 0–100% chuyển volumeLevel 0�
 Chọn VIU, kiểm tra active link, owner/id/session, query cache scope actor/org/VIU/kind/filter/page, abort + gcTime0, dữ liệu nullable và errors giữ đúng nghĩa. List phân trang20 riêng từng loại; filter theo ngày Việt Nam. Detail native dialog, events phân trang riêng toàn phiên. Không tạo POST Mobile, không trộn 5 trang đầu, không đọc public storagePath hoặc mở QR URL.
 
 135 unit tests, browser fixture 12a và hồi quy auth Caregiver, lint/build đạt. Đã kiểm tra popup desktop/mobile375. Chưa nghiệm thu BE deploy/Mobile thật; cần VIU có hoạt động đã đồng bộ để test đủ. Checklist docs/API_STAGE_12A_TEST.md. Dừng bàn giao để người dùng test, tiếp theo **12b — báo cáo tổ chức** khi được yêu cầu. Chính sách riêng tư vẫn chờ.
+
+## Bàn giao đợt 12b — 2026-10-11
+
+Đã nối /center-admin/reports và sidebar, GET activity-summary mới + tái sử dụng members 5a. Tổng hiện hành 103/144 Web callers. BE f277b6a. Summary lấy 4 số tổng từ BE, không đếm trang đầu hoặc cộng nhóm có thể trùng. Role/org guard, kiểm tra orgId và ngày DTO, query cache theo actor/org/filter, AbortSignal và gcTime0.
+
+Lưu ý contract: DateOnly lọc ngày UTC, không phải UTC+7; UI nói rõ 07:00 Việt Nam đến trước07:00 hôm sau. Members phân trang/filter riêng. OCR count gồm QR, boundary count gồm mọi loại sự kiện ranh giới. Chỉ đếm VIU hiện thuộc org và chưa xóa; chưa có hiệu suất phản hồi nhân viên trong DTO. Không mở face gallery cho CenterAdmin.
+
+137 unit tests, 2 browser fixtures báo cáo/auth CenterAdmin, lint/build đạt, kiểm tra desktop/mobile375. Chưa nghiệm thu BE/Mobile thật. Checklist docs/API_STAGE_12B_TEST.md. Tiếp theo 13a — cấu hình hệ thống khi người dùng yêu cầu; chính sách riêng tư vẫn chờ.

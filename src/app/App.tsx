@@ -18,6 +18,7 @@ import { ApiPlaces } from '../pages/caregiver/ApiPlaces';
 import { ApiRegistry } from '../pages/caregiver/ApiRegistry';
 import { ApiTts } from '../pages/caregiver/ApiTts';
 import { ApiActivity } from '../pages/caregiver/ApiActivity';
+import { ApiReports } from '../pages/center-admin/ApiReports';
 import { ApiContacts } from '../pages/caregiver/ApiContacts';
 import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
@@ -195,9 +196,15 @@ function Shell() {
                   (user.role === 'Admin' &&
                     ['organizations', 'accounts', 'links', 'rules'].includes(item.path)) ||
                   (user.role === 'CenterAdmin' &&
-                    ['organization', 'staff', 'users', 'assignments', 'map', 'routing'].includes(
-                      item.path,
-                    )),
+                    [
+                      'organization',
+                      'staff',
+                      'users',
+                      'assignments',
+                      'map',
+                      'routing',
+                      'reports',
+                    ].includes(item.path)),
               )
               .map((item) => (
                 <NavLink
@@ -413,6 +420,8 @@ export function App() {
                           <ApiTts />
                         ) : f.role === 'Caregiver' && f.path === 'activity' ? (
                           <ApiActivity />
+                        ) : f.role === 'CenterAdmin' && f.path === 'reports' ? (
+                          <ApiReports />
                         ) : (f.role === 'Admin' && f.path === 'organizations') ||
                           (f.role === 'CenterAdmin' && f.path === 'organization') ? (
                           <ApiOrganizations />

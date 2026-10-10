@@ -3,14 +3,14 @@ Cập nhật kế hoạch: 2026-10-11. Danh sách 001–107 là snapshot OpenAPI
 Swagger: https://api.visionaid.net/swagger/index.html
 OpenAPI: https://api.visionaid.net/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 12a: 102/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 12b: 103/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
 File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller đang hoạt động.
 10 API auth/profile: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
 6 API users/links: src/services/api/caregiving.ts -> apiGet/apiWrite/auth; UI ApiLinkedUsers.tsx và ApiCreateLinkedUser.tsx.
-8 API organizations: src/services/api/organizations.ts -> apiGet/apiWrite; UI src/pages/shared/ApiOrganizations.tsx. Activity-summary chưa nối.
+8 API organizations: src/services/api/organizations.ts -> apiGet/apiWrite; UI src/pages/shared/ApiOrganizations.tsx. Activity-summary đã nối tại /center-admin/reports ở đợt 12b.
 7 operation quản lý users: src/services/api/accounts.ts -> apiGet/apiWrite; UI src/pages/shared/ApiAccounts.tsx.
 6 operation caregiver-links: src/services/api/links.ts -> apiGet/apiWrite; UI src/pages/shared/ApiLinks.tsx (5c).
 2 operation locations: locations.ts -> ApiTracking.tsx; GET live polling 30 giây, history phân trang 20; POST GPS chỉ Mobile. Bản đồ nền chờ Mapbox token. Đợt 8a SignalR kích hoạt REST refetch; polling vẫn dự phòng.
@@ -801,8 +801,8 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
 
 079. GET /api/organizations/{id}/members
   Trạng thái: DA_NOI | Đợt: 5a
-  Màn/luồng: /admin/organizations; /center-admin/organization
-  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx và src/pages/center-admin/ApiReports.tsx
   Dùng để: Danh sách thành viên theo org, phân trang/search/role/isActive; chỉ đọc ở 5a.
   Quyền controller: Roles = "Admin,CenterAdmin"
   Query: page, pageSize, search, isActive, role
@@ -810,15 +810,14 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 080. GET /api/organizations/{id}/activity-summary
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
-  Quyền controller: Roles = "Admin,CenterAdmin"
-  Query: dateFrom, dateTo
-  Body/schema: Không khai báo request body
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12b
+  Màn/luồng: /center-admin/reports
+  File FE: src/services/api/organizations.ts -> src/pages/center-admin/ApiReports.tsx
+  Dùng để: 4 số tổng hoạt động theo VIU hiện thuộc org; DateOnly UTC. Không có response-time nhân viên.
+  Quyền controller: Admin,CenterAdmin; UI chỉ CenterAdmin org hiện tại, handler kiểm tra scope.
+  Query: dateFrom, dateTo dạng YYYY-MM-DD, bỏ trống để không giới hạn.
+  Body/schema: OrganizationActivitySummaryResponse, kiểm tra orgId và ngày phản hồi.
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
-
 081. PATCH /api/organizations/{id}/status
   Trạng thái: DA_NOI | Đợt: 5a
   Màn/luồng: /admin/organizations
@@ -1275,3 +1274,8 @@ BỔ SUNG ĐỢT 12a — 2026-10-11
 - UI loại + ngày UTC+7 + pagination BE20; events trong popup phân trang riêng, toàn phiên và cũ nhất trước. Không trộn các trang đầu thành một timeline/tổng số giả.
 - Query nhận diện: viuId; các loại khác: userId. Raw text/QR/transcript chỉ text, không mở link, không fetch imageStoragePath.
 - Kiểm thử fixture không thay nghiệm thu BE/Mobile. Checklist/dependencies: docs/API_STAGE_12A_TEST.md. Tiếp theo 12b theo PLAN.
+
+BỔ SUNG ĐỢT 12b — 2026-10-11
+- GET activity-summary mới, tái sử dụng GET members, tổng 103/144 operations có caller Web.
+- /center-admin/reports có sidebar; lấy orgId từ session. Summary dùng ngày UTC, members có search/role/isActive/page riêng. Không cộng tổng bằng số dòng trang đầu.
+- geofenceBreachCount đếm mọi boundary event; ocrRequestCount bao gồm QR. Xem docs/API_STAGE_12B_TEST.md để test nguồn dữ liệu và ý nghĩa số liệu.
