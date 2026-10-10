@@ -242,8 +242,8 @@ test('U6a: incoming SOS stays silent until accept, duplicate does not reopen and
 }) => {
   const f = await callFixture(page, true);
   await login(page);
-  await page.getByRole('link', { name: 'Người được chăm sóc', exact: true }).click();
-  await expect(page.getByText('Sẵn sàng gọi hỗ trợ.', { exact: false })).toBeVisible();
+  // Recovery must work even when the original SignalR invitation was missed.
+  await expect(page.getByRole('button', { name: 'Nhận cuộc gọi', exact: true })).toBeVisible();
   const payload = {
     callerName: 'VIU gọi thử',
     triggerType: 'SosAuto',

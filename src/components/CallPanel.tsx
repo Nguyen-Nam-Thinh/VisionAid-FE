@@ -117,6 +117,11 @@ export function CallPanel({ client }: { client: CallClient }) {
     <Dialog title={'Cuộc gọi · ' + call.name} onClose={close}>
       <div className="stack">
         <p role="status">{call.message}</p>
+        {call.pending && (
+          <p role="status">
+            Có cuộc gọi khác cần kiểm tra. Đóng cuộc gọi hiện tại để kiểm tra lại trên máy chủ.
+          </p>
+        )}
         {call.phase !== 'ended' && (
           <>
             <video

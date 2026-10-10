@@ -1234,3 +1234,5 @@ U6a — DA_NOI FE, chờ test Mobile/TURN/deploy; BE source 48a7346
 - SignalR /hubs/location dùng chung kết nối ApiRealtime. Nhận WebRtcIncomingCall/CallAccepted/CallEnded/CallRejected/Offer/IceCandidate. Mobile tạo offer; Web invoke RelayAnswer(sessionId,sdp), RelayIceCandidate(sessionId,candidateJson). Không invoke RelayOffer từ Web ở luồng này.
 - src/services/realtime/calls.ts giữ lifecycle/SDP/ICE; CallPanel chỉ UI/media element. Không lưu SDP/ICE/video/credentials vào storage. Dọn khi logout; một browser lock theo account; mất signaling đóng media, không tự khôi phục.
 - Đã nối tổng 70/140; không coi U6b SOS/FCM/Mobile đã nghiệm thu. Checklist/giới hạn: docs/API_STAGE_U6A_TEST.md.
+U6b — FE đã nối recovery, chờ test live
+GET /api/webrtc/sessions: ngoài history còn được ApiRealtime gọi qua CallClient.recover khi connected/focus/push, xác minh receiver và trạng thái trước popup. Không thêm REST operation. Bấm push focus cửa sổ hiện tại. Payload/history chưa có emergencyEventId nên chưa ghép cảnh báo cụ thể. Chi tiết: docs/API_STAGE_U6B_TEST.md.

@@ -72,6 +72,7 @@ function fixture() {
     status: 'Ringing',
     receiverId: userId,
     initiatorId: null,
+    triggerType: 'SosAuto',
     viuUserId: viuId,
   };
   const api = {
@@ -309,4 +310,57 @@ it('retains the local end result when server end fails and stops pending media o
   expect(f.client.snapshot().remote).toBeNull();
   expect(f.client.snapshot().sessionId).toBe('');
   expect(f.track.stop).toHaveBeenCalled();
+});
+
+it('recovers voice calls once from REST without autoaccepting and ignores late terminal events', async () => {
+  const f = fixture();
+  f.call.triggerType = 'ViuVoiceCommand';
+  await Promise.all([f.client.recover(), f.client.recover()]);
+  expect(f.api.history).toHaveBeenCalledTimes(1);
+  expect(f.client.snapshot().message).toContain('giọng nói');
+  expect(f.media).not.toHaveBeenCalled();
+  expect(f.api.accept).not.toHaveBeenCalled();
+  f.emit('WebRtcCallEnded', { reason: 'Missed' });
+  await settle();
+  f.client.dismiss();
+  await settle();
+  expect(f.client.snapshot().phase).toBe('idle');
+  f.stop();
+});
+it('does not revive terminal-before-incoming or failed/foreign recovery', async () => {
+  const f = fixture();
+  f.emit('WebRtcCallEnded', { reason: 'Missed' });
+  await settle();
+  await f.client.recover();
+  expect(f.client.snapshot().phase).toBe('idle');
+  f.call.sessionId = viuId;
+  f.call.receiverId = viuId;
+  await f.client.recover();
+  expect(f.client.snapshot().phase).toBe('idle');
+  f.api.history.mockRejectedValueOnce(Error('402'));
+  await f.client.recover();
+  expect(f.api.end).not.toHaveBeenCalled();
+  expect(f.media).not.toHaveBeenCalled();
+  f.stop();
+});
+it('keeps active media when another incoming arrives and recovers it after dismissal', async () => {
+  const f = fixture();
+  await f.client.start(viuId, 'VIU');
+  f.call.sessionId = viuId;
+  f.emit('WebRtcIncomingCall', {
+    sessionId: viuId,
+    callerName: 'SOS',
+    triggerType: 'SosAuto',
+    receiverRole: 'video_viewer_audio_sender',
+  });
+  await settle();
+  expect(f.client.snapshot().pending).toBe(true);
+  expect(f.client.snapshot().sessionId).toBe(sessionId);
+  expect(f.track.stop).not.toHaveBeenCalled();
+  await f.client.end();
+  f.client.dismiss();
+  await settle();
+  expect(f.client.snapshot().sessionId).toBe(viuId);
+  expect(f.client.snapshot().phase).toBe('incoming');
+  f.stop();
 });
