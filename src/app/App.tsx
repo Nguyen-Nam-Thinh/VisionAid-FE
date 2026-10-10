@@ -17,6 +17,7 @@ import { ApiLinkedUsers } from '../pages/caregiver/ApiLinkedUsers';
 import { ApiPlaces } from '../pages/caregiver/ApiPlaces';
 import { ApiRegistry } from '../pages/caregiver/ApiRegistry';
 import { ApiTts } from '../pages/caregiver/ApiTts';
+import { ApiActivity } from '../pages/caregiver/ApiActivity';
 import { ApiContacts } from '../pages/caregiver/ApiContacts';
 import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
@@ -182,9 +183,15 @@ function Shell() {
                 (item) =>
                   runtime.mode === 'mock' ||
                   (user.role === 'Caregiver' &&
-                    ['users', 'caregivers', 'map', 'alerts', 'notifications', 'contacts'].includes(
-                      item.path,
-                    )) ||
+                    [
+                      'users',
+                      'caregivers',
+                      'map',
+                      'alerts',
+                      'notifications',
+                      'contacts',
+                      'activity',
+                    ].includes(item.path)) ||
                   (user.role === 'Admin' &&
                     ['organizations', 'accounts', 'links', 'rules'].includes(item.path)) ||
                   (user.role === 'CenterAdmin' &&
@@ -404,6 +411,8 @@ export function App() {
                           <ApiRegistry />
                         ) : f.role === 'Caregiver' && f.path === 'tts' ? (
                           <ApiTts />
+                        ) : f.role === 'Caregiver' && f.path === 'activity' ? (
+                          <ApiActivity />
                         ) : (f.role === 'Admin' && f.path === 'organizations') ||
                           (f.role === 'CenterAdmin' && f.path === 'organization') ? (
                           <ApiOrganizations />

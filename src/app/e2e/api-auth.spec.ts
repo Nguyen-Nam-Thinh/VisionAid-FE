@@ -1,4 +1,266 @@
 import { test, expect, type Page } from '@playwright/test';
+test('12a: scoped activity history, dates, pagination, all details and revoked access', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const viuId = '01900000-0000-7000-8000-000000000092';
+  const at = '2026-10-11T00:00:00Z';
+  const base = { id, userId: viuId, latitude: null, longitude: null };
+  const ocrBase = {
+    ...base,
+    requestedAt: at,
+    triggerMethod: 'Manual',
+    ocrEngine: 'VietOCR',
+    processingTimeMs: null,
+    resultStatus: 'Success',
+    errorMessage: null,
+    ttsAnnounced: false,
+    imageStoragePath: 'private/secret.jpg',
+  };
+  const rows: Record<string, Record<string, unknown>> = {
+    '/api/navigation/sessions': {
+      ...base,
+      startedAt: at,
+      endedAt: null,
+      detectionMode: 'Full',
+      totalDetections: 2,
+      totalAlertsIssued: 0,
+      deviceModel: null,
+      appVersion: null,
+      isActive: true,
+    },
+    '/api/ocr/requests': {
+      ...ocrBase,
+      requestType: 'Text',
+      rawText: '<script>alert(1)</script>',
+      processedText: null,
+      confidenceScore: null,
+      languageDetected: null,
+    },
+    '/api/ocr/qr-scans': {
+      ...ocrBase,
+      ocrRequestId: id,
+      qrContent: 'javascript:alert(1)',
+      qrType: null,
+      isUrl: true,
+      urlDomain: null,
+      scannedAt: at,
+    },
+    '/api/face-registry/recognition-logs': {
+      id,
+      visuallyImpairedUserId: viuId,
+      matchedPersonId: null,
+      matchedPersonName: null,
+      similarityScore: null,
+      recognitionResult: 'NotMatched',
+      estimatedDistance: null,
+      processingTimeMs: null,
+      recognizedAt: at,
+      errorMessage: null,
+    },
+    '/api/voice-commands': {
+      ...base,
+      rawTranscript: 'Đọc văn bản',
+      matchedCommand: null,
+      recognitionEngine: 'Whisper',
+      confidenceScore: 0,
+      executionStatus: 'Unrecognized',
+      requiredConfirmation: false,
+      confirmedAt: null,
+      processingTimeMs: null,
+      audioDurationMs: null,
+      isOffline: true,
+      executedAt: at,
+    },
+  };
+  let revoked = false;
+  let wrongOwner = false;
+  let failure = 0;
+  const urls: URL[] = [];
+  const methods: string[] = [];
+  await page.route('**/api/users?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: viuId,
+            fullName: 'VIU lịch sử',
+            email: 'history@example.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId: null,
+            isActive: true,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route('**/api/caregiver-links?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage(
+          revoked
+            ? []
+            : [
+                {
+                  id,
+                  caregiverId: id,
+                  visuallyImpairedUserId: viuId,
+                  viuFullName: 'VIU lịch sử',
+                  isPrimary: false,
+                  linkType: 'Personal',
+                  canReceiveAlerts: false,
+                  canManageRegistry: false,
+                  canManageLocations: false,
+                  linkedAt: '',
+                  unlinkedAt: null,
+                },
+              ],
+        ),
+      },
+    }),
+  );
+  await page.route(
+    /\/api\/(navigation\/sessions|ocr\/(requests|qr-scans)|face-registry\/recognition-logs|voice-commands)/,
+    (route) => {
+      const url = new URL(route.request().url());
+      urls.push(url);
+      methods.push(route.request().method());
+      if (failure)
+        return route.fulfill({ status: failure, json: { detail: 'Không thể tải lịch sử.' } });
+      const root = Object.keys(rows).find((path) => url.pathname.startsWith(path))!;
+      let row = { ...rows[root] };
+      if (wrongOwner) row = { ...row, userId: id, visuallyImpairedUserId: id };
+      if (url.pathname.endsWith('/events')) {
+        const current = Number(url.searchParams.get('page'));
+        return route.fulfill({
+          json: {
+            success: true,
+            data: {
+              ...organizationPage([
+                {
+                  ...base,
+                  sessionId: id,
+                  objectClass: current === 1 ? 'chair' : 'door',
+                  confidenceScore: 0.9,
+                  distanceRange: 'Near',
+                  alertIssued: false,
+                  inferenceTimeMs: null,
+                  detectedAt: at,
+                },
+              ]),
+              page: current,
+              pageSize: 20,
+              totalCount: 21,
+              totalPages: 2,
+              hasNextPage: current === 1,
+              hasPreviousPage: current === 2,
+            },
+          },
+        });
+      }
+      const current = Number(url.searchParams.get('page') || 1);
+      return route.fulfill({
+        json: {
+          success: true,
+          data:
+            url.pathname === root
+              ? {
+                  ...organizationPage([row]),
+                  page: current,
+                  pageSize: 20,
+                  totalCount: 21,
+                  totalPages: 2,
+                  hasNextPage: current === 1,
+                  hasPreviousPage: current === 2,
+                }
+              : row,
+        },
+      });
+    },
+  );
+  await login(page);
+  await page.getByRole('link', { name: 'Nhật ký hoạt động', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
+    .selectOption(viuId);
+  await expect(page.getByText('21 kết quả · Trang 1/2')).toBeVisible();
+  await page.getByLabel('Từ ngày', { exact: true }).fill('2026-10-11');
+  await page.getByLabel('Đến ngày', { exact: true }).fill('2026-10-11');
+  await page.getByRole('button', { name: 'Lọc lịch sử' }).click();
+  await expect
+    .poll(() =>
+      urls.some(
+        (url) =>
+          url.searchParams.get('dateFrom') === '2026-10-10T17:00:00.000Z' &&
+          url.searchParams.get('dateTo') === '2026-10-11T16:59:59.999Z',
+      ),
+    )
+    .toBe(true);
+  await page.getByRole('button', { name: 'Trang sau', exact: true }).last().click();
+  await expect(page.getByText('21 kết quả · Trang 2/2')).toBeVisible();
+  await page.screenshot({ path: 'test-results/stage12a-list-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.screenshot({ path: 'test-results/stage12a-list-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('chair', { exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Trang sau' }).click();
+  await expect(dialog.getByText('door', { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  for (const [kind, content] of [
+    ['ocr', '<script>alert(1)</script>'],
+    ['qr', 'javascript:alert(1)'],
+    ['recognition', 'Chưa nhận diện được'],
+    ['voice', 'Đọc văn bản'],
+  ]) {
+    await page.getByRole('combobox', { name: 'Loại hoạt động', exact: true }).selectOption(kind);
+    await expect(page.getByText('21 kết quả · Trang 1/2')).toBeVisible();
+    await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+    await expect(dialog.getByText(content, { exact: true })).toBeVisible();
+    await expect(dialog.getByText('private/secret.jpg')).toHaveCount(0);
+    await expect(dialog.locator('a[href^="javascript:"]')).toHaveCount(0);
+    if (kind === 'qr') {
+      await page.screenshot({ path: 'test-results/stage12a-desktop.png' });
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.screenshot({ path: 'test-results/stage12a-mobile.png' });
+      const box = await dialog.boundingBox();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(376);
+      await page.setViewportSize({ width: 1440, height: 1000 });
+    }
+    await page.keyboard.press('Escape');
+  }
+  expect(
+    urls.some(
+      (url) =>
+        url.pathname === '/api/face-registry/recognition-logs' &&
+        url.searchParams.get('viuId') === viuId &&
+        !url.searchParams.has('userId'),
+    ),
+  ).toBe(true);
+  wrongOwner = true;
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('không thuộc');
+  await page.keyboard.press('Escape');
+  wrongOwner = false;
+  failure = 404;
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toBeVisible();
+  await expect(dialog.getByText('Đọc văn bản', { exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  failure = 0;
+  revoked = true;
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('không còn liên kết');
+  expect(methods.every((method) => method === 'GET')).toBe(true);
+});
 type CallHarness = {
   peer: RTCPeerConnection;
   mic: MediaStream;
@@ -773,9 +1035,14 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
         ? '/admin/metrics'
         : role === 'CenterAdmin'
           ? '/center-admin/reports'
-          : '/caregiver/activity';
+          : '/dashboard';
     await page.goto(path);
-    await expect(page.getByRole('heading', { name: 'Chưa tích hợp trong đợt này' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', {
+        name:
+          role === 'Caregiver' ? 'Đã đăng nhập bằng tài khoản BE' : 'Chưa tích hợp trong đợt này',
+      }),
+    ).toBeVisible();
     expect(
       calls.every((p) => ['/api/auth/login', '/api/users/me', '/api/auth/refresh'].includes(p)),
     ).toBe(true);

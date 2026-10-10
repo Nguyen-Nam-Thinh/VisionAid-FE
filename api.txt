@@ -3,7 +3,7 @@ Cập nhật kế hoạch: 2026-10-11. Danh sách 001–107 là snapshot OpenAPI
 Swagger: https://api.visionaid.net/swagger/index.html
 OpenAPI: https://api.visionaid.net/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 11b: 91/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 12a: 102/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -430,20 +430,20 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 042. GET /api/face-registry/recognition-logs
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
+  Dùng để: Đọc lịch sử nhận diện và chi tiết; Caregiver active link, không yêu cầu CanManageRegistry. Không trả gallery hoặc storagePath.
   Quyền controller: Roles = "Caregiver"
   Query: page, pageSize, viuId, result, dateFrom, dateTo
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 043. GET /api/face-registry/recognition-logs/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
+  Dùng để: Đọc lịch sử nhận diện và chi tiết; Caregiver active link, không yêu cầu CanManageRegistry. Không trả gallery hoặc storagePath.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
@@ -540,9 +540,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Navigation/Presentation/NavigationController.cs
 
 053. GET /api/navigation/sessions
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử phiên di chuyển; lấy sessionId từ list rồi detail/events. Thao tác ghi thuộc Mobile.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, userId, dateFrom, dateTo, detectionMode, isActive
@@ -570,9 +570,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Navigation/Presentation/NavigationController.cs
 
 056. GET /api/navigation/sessions/{id}/events
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử phiên di chuyển; lấy sessionId từ list rồi detail/events. Thao tác ghi thuộc Mobile.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, objectClass, alertIssued, distanceRange, dateFrom, dateTo
@@ -580,9 +580,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Navigation/Presentation/NavigationController.cs
 
 057. GET /api/navigation/sessions/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử phiên di chuyển; lấy sessionId từ list rồi detail/events. Thao tác ghi thuộc Mobile.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -690,9 +690,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Ocr/Presentation/OcrController.cs
 
 068. GET /api/ocr/requests
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử OCR/QR và detail; thao tác ghi thuộc Mobile. QR này không phải mời liên kết.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, userId, requestType, resultStatus, dateFrom, dateTo
@@ -710,9 +710,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Ocr/Presentation/OcrController.cs
 
 070. GET /api/ocr/qr-scans
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử OCR/QR và detail; thao tác ghi thuộc Mobile. QR này không phải mời liên kết.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, userId, isUrl, dateFrom, dateTo
@@ -720,9 +720,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Ocr/Presentation/OcrController.cs
 
 071. GET /api/ocr/requests/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử OCR/QR và detail; thao tác ghi thuộc Mobile. QR này không phải mời liên kết.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -730,9 +730,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Ocr/Presentation/OcrController.cs
 
 072. GET /api/ocr/qr-scans/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử OCR/QR và detail; thao tác ghi thuộc Mobile. QR này không phải mời liên kết.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -1070,9 +1070,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.VoiceCommands/Presentation/VoiceCommandsController.cs
 
 106. GET /api/voice-commands
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử lệnh giọng nói; dữ liệu ghi từ Mobile, Web đọc list/detail theo scope.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, userId, matchedCommand, executionStatus, isOffline, dateFrom, dateTo
@@ -1080,9 +1080,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.VoiceCommands/Presentation/VoiceCommandsController.cs
 
 107. GET /api/voice-commands/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử lệnh giọng nói; dữ liệu ghi từ Mobile, Web đọc list/detail theo scope.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -1268,3 +1268,10 @@ UI: src/pages/caregiver/ApiRegistry.tsx, route /caregiver/registry. Chỉ Caregi
 - Ngôn ngữ phụ trống gửi "" để xóa; null giữ nguyên theo BE. Không gọi /me cho VIU được chọn; không có DELETE. Không tự gửi PUT khi chỉ mở trang, không retry ghi hoặc đánh dấu Mobile đã áp dụng.
 - Query scope actor/org/VIU; popup giữ dữ liệu khi lỗi, đổi VIU/unmount loại response cũ. Route chỉ Caregiver, chưa mở UI TTS toàn tổ chức/Admin.
 - Test: docs/API_STAGE_11B_TEST.md. Mobile cần GET /api/users/me/tts-preferences rồi áp dụng TTS để nghiệm thu liên thông.
+
+BỔ SUNG ĐỢT 12a — 2026-10-11
+- 11 GET callers tại /caregiver/activity: navigation list/detail/events, OCR list/detail, QR list/detail, recognition list/detail, voice list/detail. Tổng 102/144.
+- activity.ts -> ApiActivity.tsx; chọn VIU qua caregiving.users, authorize qua caregiver-links trước mỗi request, check owner/id/session ở DTO, không gửi POST Mobile.
+- UI loại + ngày UTC+7 + pagination BE20; events trong popup phân trang riêng, toàn phiên và cũ nhất trước. Không trộn các trang đầu thành một timeline/tổng số giả.
+- Query nhận diện: viuId; các loại khác: userId. Raw text/QR/transcript chỉ text, không mở link, không fetch imageStoragePath.
+- Kiểm thử fixture không thay nghiệm thu BE/Mobile. Checklist/dependencies: docs/API_STAGE_12A_TEST.md. Tiếp theo 12b theo PLAN.
