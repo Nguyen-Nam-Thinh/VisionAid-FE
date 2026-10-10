@@ -7,7 +7,7 @@ Cập nhật 2026-10-11. Base FE khảo sát U0: dev `5692a87`; BE local mới `
 ## 1. AI tiếp theo bắt đầu ở đâu
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
-2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt tiếp theo 12a khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt tiếp theo 12b khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
 3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
 4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
 5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
@@ -261,7 +261,7 @@ User đã yêu cầu tiếp tục sau khi BE sửa membership relay ở 48a7346.
 
 ## Bàn giao U6b — 2026-10-10
 
-User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt tiếp theo 12a khi user yêu cầu.
+User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt tiếp theo 12b khi user yêu cầu.
 
 ## Bàn giao đợt 9 — 2026-10-10
 
@@ -286,3 +286,11 @@ Test theo docs/API_STAGE_10_TEST.md, dừng bàn giao. Đợt kế tiếp 11b �
 Voice Male/Female, speedRate 0.5–2, volume UI 0–100% chuyển volumeLevel 0–1 giữ giá trị 0, detection Minimal/Full, language tối đa 10 ký tự. Secondary trống gửi chuỗi rỗng để xóa; null có nghĩa giữ nguyên theo BE. GET404 chỉ mở tạo sau GET user xác minh đúng VIU; lỗi khác không biến thành mặc định. Không tự retry PUT hay giả đồng bộ Mobile.
 
 126 unit tests, 2 E2E fixture chọn lọc TTS/auth, lint/build đạt. Đã xem popup desktop/mobile375. Chưa nghiệm thu BE deploy/Mobile thật; không thêm phát thử giọng bằng trình duyệt vì không đại diện giọng trên thiết bị. Checklist docs/API_STAGE_11B_TEST.md. Tổng 91/144 callers Web. Đợt kế tiếp 12a — lịch sử hoạt động, chỉ tiếp khi người dùng yêu cầu.
+
+## Bàn giao đợt 12a — 2026-10-11
+
+Đã nối /caregiver/activity và sidebar Nhật ký hoạt động: 11 GET operations navigation/OCR/QR/recognition/voice list-detail, navigation events. Source BE f277b6a. Tổng hiện hành **102/144** REST operations có caller Web. Đợt 12b chưa làm.
+
+Chọn VIU, kiểm tra active link, owner/id/session, query cache scope actor/org/VIU/kind/filter/page, abort + gcTime0, dữ liệu nullable và errors giữ đúng nghĩa. List phân trang20 riêng từng loại; filter theo ngày Việt Nam. Detail native dialog, events phân trang riêng toàn phiên. Không tạo POST Mobile, không trộn 5 trang đầu, không đọc public storagePath hoặc mở QR URL.
+
+135 unit tests, browser fixture 12a và hồi quy auth Caregiver, lint/build đạt. Đã kiểm tra popup desktop/mobile375. Chưa nghiệm thu BE deploy/Mobile thật; cần VIU có hoạt động đã đồng bộ để test đủ. Checklist docs/API_STAGE_12A_TEST.md. Dừng bàn giao để người dùng test, tiếp theo **12b — báo cáo tổ chức** khi được yêu cầu. Chính sách riêng tư vẫn chờ.
