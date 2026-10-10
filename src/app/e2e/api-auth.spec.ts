@@ -349,6 +349,151 @@ const token = () =>
   Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 600 })).toString('base64url') +
   '.signature';
 
+test('11b: TTS create/update, percent mapping, cleared language, revoked link and license', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const viuId = '01900000-0000-7000-8000-000000000082';
+  let exists = false;
+  let revoked = false;
+  let failWrite = false;
+  let expired = false;
+  const bodies: Record<string, unknown>[] = [];
+  const user = {
+    id: viuId,
+    fullName: 'VIU giọng đọc',
+    email: 'viu@example.test',
+    phoneNumber: null,
+    role: 'VisuallyImpaired',
+    organizationId: null,
+    isActive: true,
+  };
+  const preference = {
+    id,
+    userId: viuId,
+    voiceGender: 'Female',
+    speedRate: 1,
+    volumeLevel: 0.8,
+    detectionMode: 'Full',
+    primaryLanguage: 'vi-VN',
+    secondaryLanguage: null,
+    updatedAt: '2026-10-11T00:00:00Z',
+  };
+  await page.route('**/api/users?**', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([user]) } }),
+  );
+  await page.route(`**/api/users/${viuId}`, (route) =>
+    route.fulfill({ json: { success: true, data: user } }),
+  );
+  await page.route('**/api/caregiver-links?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage(
+          revoked
+            ? []
+            : [
+                {
+                  id,
+                  caregiverId: id,
+                  visuallyImpairedUserId: viuId,
+                  viuFullName: user.fullName,
+                  isPrimary: false,
+                  linkType: 'Personal',
+                  canReceiveAlerts: false,
+                  canManageRegistry: false,
+                  canManageLocations: false,
+                  linkedAt: '',
+                  unlinkedAt: null,
+                },
+              ],
+        ),
+      },
+    }),
+  );
+  await page.route(`**/api/users/${viuId}/tts-preferences`, (route) => {
+    if (expired) return route.fulfill({ status: 402, json: { detail: 'License test' } });
+    if (route.request().method() === 'PUT') {
+      bodies.push(route.request().postDataJSON());
+      if (failWrite) return route.fulfill({ status: 500, json: { detail: 'unavailable' } });
+      Object.assign(preference, bodies.at(-1));
+      exists = true;
+    }
+    return exists
+      ? route.fulfill({ json: { success: true, data: preference } })
+      : route.fulfill({ status: 404, json: { detail: 'TtsPreference not found' } });
+  });
+  await login(page);
+  await page.goto('/caregiver/tts');
+  await page
+    .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
+    .selectOption(viuId);
+  await expect(page.getByText('Chưa có cấu hình giọng đọc.', { exact: false })).toBeVisible();
+  expect(bodies).toHaveLength(0);
+  await page.getByRole('button', { name: 'Tạo cấu hình giọng đọc', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByLabel('Âm lượng')).toHaveValue('80');
+  await dialog.getByLabel('Âm lượng').fill('101');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('tối đa');
+  expect(bodies).toHaveLength(0);
+  await dialog.getByLabel('Âm lượng').fill('0');
+  await dialog.getByLabel('Giọng đọc', { exact: false }).selectOption('Male');
+  await dialog.getByLabel('Tốc độ đọc').fill('1.5');
+  await dialog.getByLabel('Chế độ phát hiện').selectOption('Minimal');
+  await dialog.getByLabel('Ngôn ngữ phụ').fill('en-US');
+  await page.screenshot({ path: 'test-results/stage11b-desktop.png' });
+  await page.setViewportSize({ width: 375, height: 812 });
+  const bounds = await dialog.boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(375);
+  await page.screenshot({ path: 'test-results/stage11b-mobile.png' });
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(bodies[0]).toMatchObject({
+    volumeLevel: 0,
+    voiceGender: 'Male',
+    speedRate: 1.5,
+    detectionMode: 'Minimal',
+    secondaryLanguage: 'en-US',
+  });
+  expect(bodies[0]).not.toHaveProperty('volumePercent');
+  await page.reload();
+  await page
+    .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
+    .selectOption(viuId);
+  await page.getByRole('button', { name: 'Chỉnh sửa giọng đọc', exact: true }).click();
+  await expect(dialog.getByLabel('Âm lượng')).toHaveValue('0');
+  await expect(dialog.getByLabel('Ngôn ngữ phụ')).toHaveValue('en-US');
+  await dialog.getByLabel('Ngôn ngữ phụ').fill('');
+  await dialog.getByLabel('Âm lượng').fill('80');
+  failWrite = true;
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('tải lại cấu hình');
+  await expect(dialog.getByLabel('Âm lượng')).toHaveValue('80');
+  expect(bodies).toHaveLength(2);
+  failWrite = false;
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(bodies.at(-1)).toMatchObject({ volumeLevel: 0.8, secondaryLanguage: '' });
+  await page.getByRole('button', { name: 'Chỉnh sửa giọng đọc', exact: true }).click();
+  revoked = true;
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('không còn liên kết');
+  expect(bodies).toHaveLength(3);
+  await page.keyboard.press('Escape');
+  revoked = false;
+  expired = true;
+  await page.getByRole('button', { name: 'Tải lại cấu hình', exact: true }).click();
+  await expect(
+    page.getByRole('link', { name: 'Xem trạng thái license', exact: true }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/caregiver\/tts$/);
+  await expect(
+    page.getByRole('button', { name: 'Tạo cấu hình giọng đọc', exact: true }),
+  ).toHaveCount(0);
+});
+
 test('10: registry CRUD, authenticated photos, revoked permissions and recoverable failures', async ({
   page,
 }) => {
@@ -628,7 +773,7 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
         ? '/admin/metrics'
         : role === 'CenterAdmin'
           ? '/center-admin/reports'
-          : '/caregiver/tts';
+          : '/caregiver/activity';
     await page.goto(path);
     await expect(page.getByRole('heading', { name: 'Chưa tích hợp trong đợt này' })).toBeVisible();
     expect(
