@@ -15,6 +15,7 @@ import { Landing } from '../pages/public/Landing';
 import { ApiSession, ApiPending } from '../pages/shared/ApiSession';
 import { ApiLinkedUsers } from '../pages/caregiver/ApiLinkedUsers';
 import { ApiContacts } from '../pages/caregiver/ApiContacts';
+import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
 import { features } from './features';
@@ -157,7 +158,7 @@ function Shell() {
     return () => clearTimeout(timer);
   }, [notice]);
   if (!user) return null;
-  return (
+  const content = (
     <div className="shell">
       <a className="skip" href="#main">
         Đến nội dung chính
@@ -208,6 +209,11 @@ function Shell() {
             <p>Mỗi kết nối là một sự an tâm.</p>
           </div>
           <nav className="nav">
+            {runtime.mode === 'api' && user.role === 'Caregiver' && (
+              <NavLink to="/caregiver/calls" onClick={() => setOpen(false)}>
+                Lịch sử cuộc gọi
+              </NavLink>
+            )}
             {runtime.mode === 'api' && user.role === 'CenterAdmin' && user.orgId && (
               <>
                 <NavLink to="/center-admin/licenses" onClick={() => setOpen(false)}>
@@ -285,7 +291,6 @@ function Shell() {
           !signingOut &&
           (user.role === 'Caregiver' || (user.role === 'CenterAdmin' && user.orgId)) && (
             <>
-              <ApiRealtime key={user.id + ':' + user.role + ':' + user.orgId} actor={user} />
               <PushSync key={user.id} userId={user.id} />
             </>
           )}
@@ -332,6 +337,17 @@ function Shell() {
       )}
     </div>
   );
+  return auth.mode === 'api' ? (
+    <ApiRealtime
+      key={user.id + ':' + user.role + ':' + user.orgId}
+      actor={user}
+      enabled={!signingOut}
+    >
+      {content}
+    </ApiRealtime>
+  ) : (
+    content
+  );
 }
 export function App() {
   return (
@@ -351,6 +367,9 @@ export function App() {
               {runtime.mode === 'api' && (
                 <>
                   <Route path="caregiver/payments" element={<ApiPayments />} />
+                  <Route element={<Guard role="Caregiver" />}>
+                    <Route path="caregiver/calls" element={<ApiCalls />} />
+                  </Route>
                   <Route element={<Guard role="CenterAdmin" />}>
                     <Route path="center-admin/payments" element={<ApiPayments />} />
                     <Route path="center-admin/licenses" element={<ApiLicensePool />} />

@@ -1,4 +1,4 @@
-import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { HubConnectionBuilder, LogLevel, type HubConnection } from '@microsoft/signalr';
 import { z } from 'zod';
 import type { QueryClient } from '@tanstack/react-query';
 import type { Person } from '../../models/domain';
@@ -85,6 +85,7 @@ export function startSignalR(
   accessToken: () => Promise<string>,
   onData: () => void,
   onState: (state: RealtimeState) => void,
+  attach?: (connection: HubConnection) => () => void,
 ) {
   let active = true;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -115,6 +116,7 @@ export function startSignalR(
     connection.on(name, handler);
     return { name, handler };
   });
+  const detach = attach?.(connection);
   connection.onreconnecting(() => {
     if (active) onState('reconnecting');
   });
@@ -141,6 +143,7 @@ export function startSignalR(
     });
   return () => {
     active = false;
+    detach?.();
     if (timer) clearTimeout(timer);
     handlers.forEach(({ name, handler }) => connection.off(name, handler));
     void connection.stop().catch(() => {});

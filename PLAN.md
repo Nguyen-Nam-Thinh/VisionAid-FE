@@ -1,13 +1,13 @@
 # VisionAid Web — Plan cập nhật B2C, B2B, License, PayOS và WebRTC
 
-Cập nhật 2026-10-08. Base FE khảo sát U0: dev `5692a87`; BE local mới `e56c545`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1–U5, 11a và 8c đã triển khai FE, chờ nghiệm thu live; tiếp theo là U6a.
+Cập nhật 2026-10-10. Base FE khảo sát U0: dev `5692a87`; BE local mới `48a7346`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1–U5, 11a, 8c và U6a đã triển khai FE, chờ nghiệm thu live; sau test U6a mới tiếp U6b theo yêu cầu.
 
 **Kết quả U0 mới nhất:** đã đọc BE mới và OpenAPI deploy có 140 operations (33 mới, 107 cũ giữ nguyên). Đọc [docs/U0_BACKEND_FINDINGS.md](docs/U0_BACKEND_FINDINGS.md) trước các câu hỏi dự kiến bên dưới; tài liệu đó thay thế những giả định đã được xác minh. U0 mới hoàn tất kiểm kê/khảo sát, còn policy và test thật. Có FCM upsert. Người dùng xác nhận BE đã sửa billing allowlist, Staff exemption và kế thừa license khi first Personal link; local chưa có bản sửa để đối chiếu. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforcement quota theo gói. Không còn cần người dùng gửi lại vị trí BE/Swagger.
 
 ## 1. AI tiếp theo bắt đầu ở đâu
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
-2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. Đợt kế tiếp là **U6a — WebRTC**, chỉ bắt đầu khi người dùng yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. Đợt kế tiếp U6b chỉ bắt đầu khi người dùng yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
 3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
 4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
 5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
@@ -170,7 +170,7 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 - Đã triển khai tại Hồ sơ; mỗi browser/origin một phiên nhận push, native unsubscribe khi tắt/logout. Foreground chỉ refetch REST; background lời nhắc chung. Không auto-display payload riêng tư. BE source có chênh cột device_token/fcm_token cần nhóm BE kiểm tra.
 - Điểm dừng: người dùng test HTTPS theo docs/API_STAGE_8C_TEST.md; chưa xác minh FCM thật.
 
-### U6a — Cuộc gọi chủ động và lịch sử [CHƯA LÀM; U0/U1/U4 + Mobile/TURN]
+### U6a — Cuộc gọi chủ động và lịch sử [ĐÃ NỐI FE; CHỜ TEST MOBILE/TURN]
 
 Đã có REST session + ICE và RelayOffer/RelayAnswer/RelayIceCandidate ở /hubs/location; xem U0_BACKEND_FINDINGS.md. Chưa kiểm thử Mobile/media/TURN, không còn giả định chưa có signaling code.
 
@@ -238,7 +238,8 @@ Ghi trong bảng dưới: commit FE + BE/OpenAPI version đã dùng; route/API �
 | U5 | Đã triển khai FE | POST distribute/activate-key | 88 unit, 9 E2E U1/U4/U5, lint/build đạt | Chưa test live | docs/API_STAGE_U5_TEST.md; 11a đã triển khai |
 | 11a | Đã triển khai FE | 6 emergency-contacts APIs | 90 unit; lint/build đạt; E2E xem checklist | Chưa test live; hotline bị BE chặn | docs/API_STAGE_11A_TEST.md; tiếp theo 8c |
 | 8c | Đã triển khai FE | PUT auth/fcm-token; SW native + Firebase SDK | 93 unit, 6 E2E fixture, lint/build đạt | Chưa test FCM thật | docs/API_STAGE_8C_TEST.md; tiếp theo U6a |
-| U6a/U6b | Chưa làm | Chờ WebRTC + Mobile + TURN | Chưa chạy | Chưa test | Sau U4 và hợp đồng signaling |
+| U6a | Đã nối FE: gọi đi, nhận/từ chối/end, media native, history | BE 48a7346; 5 REST callers + signaling | 106 unit, 5 E2E fixture/native local peer, lint/build đạt | Chưa test Mobile/TURN/deploy | Test U6a trước U6b |
+| U6b | Có tiếp nhận payload voice/SOS cơ bản; chưa nghiệm thu phối hợp Mobile/FCM | Chờ Mobile/TURN/consent | Chưa test luồng SOS liên thông | Chưa test | Chỉ tiếp khi user yêu cầu |
 | 9–13, U7–U9 | Chưa nối theo phạm vi trên | API cũ cần đối chiếu lại; API mới chờ U0 | Chưa chạy phạm vi mới | Chưa test | Thực hiện từng checkpoint |
 
 Riêng consent chính sách vẫn CHỜ theo yêu cầu trước đó. Không tự đặt version, tự tick đồng ý hoặc giả định tài liệu nghiệp vụ là nội dung chính sách đã được chấp thuận.
@@ -252,3 +253,8 @@ Riêng consent chính sách vẫn CHỜ theo yêu cầu trước đó. Không t�
 - Người dùng đã cho phép tạo/sửa dữ liệu bằng tài khoản test. Không hỏi lại quyền này; không lưu credentials vào repo. PayOS/media test vẫn theo phạm vi từng checkpoint.
 
 Tài liệu Word: docs/VisionAid_Update_Report_Revised.docx là bản sửa nội dung từ file người dùng gửi, giữ nguyên bản gốc ở Downloads. Đã thay 4 đoạn (Trial/Personal và mô tả giới hạn) sang ≤3 VIU/MaxViusPerCaregiver. Kiểm tra XML đạt; chưa kiểm tra bố cục qua render vì môi trường không có LibreOffice/soffice. VisionAid.docx ở thư mục SEP409 đã được rà, không có mô tả Personal/Trial 1 VIU cần thay. BE CLAUDE.md §21 đã sửa đúng 2 dòng Plans tại local, chưa commit/push repository BE.
+
+
+## Bàn giao U6a — 2026-10-10
+
+User đã yêu cầu tiếp tục sau khi BE sửa membership relay ở 48a7346. Đã nối 5 REST operations và luồng native WebRTC; tổng 70/140 callers. Đã có popup nhận/từ chối cơ bản cho voice/SOS nhưng U6b chưa hoàn tất. Test và giới hạn BE busy/max duration/revocation/TURN: docs/API_STAGE_U6A_TEST.md. Trạng thái các đợt trước giữ nguyên; điểm tiếp tục hiện tại là nghiệm thu U6a, rồi U6b khi được yêu cầu.

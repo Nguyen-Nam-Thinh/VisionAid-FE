@@ -1,4 +1,272 @@
 import { test, expect, type Page } from '@playwright/test';
+type CallHarness = {
+  peer: RTCPeerConnection;
+  mic: MediaStream;
+  ice: RTCIceCandidateInit[];
+  pending: RTCIceCandidateInit[];
+  mediaRequests: number;
+};
+declare global {
+  interface Window {
+    callHarness: CallHarness;
+  }
+}
+
+async function callFixture(page: Page, incoming = false, denied = false) {
+  await stubApi(page);
+  const viuId = '01900000-0000-7000-8000-000000000002';
+  const sessionId = '01900000-0000-7000-8000-000000000003';
+  let status = 'Ringing';
+  const writes: string[] = [];
+  const messages: string[] = [];
+  let send: (data: string) => void = () => {
+    throw Error('Hub not connected');
+  };
+  await page.addInitScript(
+    ({ denied }) => {
+      const audio = new AudioContext();
+      const mic = audio.createMediaStreamDestination().stream;
+      const peer = new RTCPeerConnection({ iceServers: [] });
+      const harness = {
+        peer,
+        mic,
+        ice: [] as RTCIceCandidateInit[],
+        pending: [] as RTCIceCandidateInit[],
+        mediaRequests: 0,
+      };
+      window.callHarness = harness;
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+        value: async (constraints: MediaStreamConstraints) => {
+          harness.mediaRequests++;
+          if (constraints.video !== false) throw Error('Web must never request a camera');
+          if (denied) throw new DOMException('Denied', 'NotAllowedError');
+          return mic;
+        },
+      });
+      peer.onicecandidate = (event) => {
+        if (event.candidate) harness.ice.push(event.candidate.toJSON());
+      };
+    },
+    { denied },
+  );
+  await page.route('**/hubs/location/negotiate?*', (route) =>
+    route.fulfill({
+      json: {
+        negotiateVersion: 1,
+        connectionId: 'calls',
+        connectionToken: 'calls',
+        availableTransports: [{ transport: 'WebSockets', transferFormats: ['Text', 'Binary'] }],
+      },
+    }),
+  );
+  await page.routeWebSocket(/\/hubs\/location\?/, (ws) => {
+    send = (data) => ws.send(data);
+    ws.onMessage(async (raw) => {
+      for (const part of String(raw).split('\x1e').filter(Boolean)) {
+        const message = JSON.parse(part);
+        if (message.protocol) {
+          ws.send('{}\x1e');
+          continue;
+        }
+        if (message.type !== 1) continue;
+        messages.push(message.target);
+        if (message.target === 'RelayAnswer')
+          await page.evaluate(async (sdp) => {
+            const h = window.callHarness;
+            await h.peer.setRemoteDescription({ type: 'answer', sdp });
+            for (const candidate of h.pending.splice(0)) await h.peer.addIceCandidate(candidate);
+          }, message.arguments[1]);
+        if (message.target === 'RelayIceCandidate')
+          await page.evaluate(async (json) => {
+            const h = window.callHarness;
+            const candidate = JSON.parse(json);
+            if (h.peer.remoteDescription) await h.peer.addIceCandidate(candidate);
+            else h.pending.push(candidate);
+          }, message.arguments[1]);
+        ws.send(JSON.stringify({ type: 3, invocationId: message.invocationId }) + '\x1e');
+      }
+    });
+  });
+  await page.route('**/api/users?*', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: viuId,
+            fullName: 'VIU gọi thử',
+            email: 'viu@example.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId: null,
+            isActive: true,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route('**/api/caregiver-links?*', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id,
+            caregiverId: id,
+            visuallyImpairedUserId: viuId,
+            viuFullName: 'VIU gọi thử',
+            isPrimary: true,
+            linkType: 'Personal',
+            canReceiveAlerts: true,
+            canManageRegistry: true,
+            canManageLocations: true,
+            linkedAt: '',
+            unlinkedAt: null,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route('**/api/webrtc/sessions**', (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (route.request().method() === 'GET')
+      return route.fulfill({
+        json: {
+          success: true,
+          data: organizationPage([
+            {
+              sessionId,
+              status,
+              triggerType: incoming ? 'SosAuto' : 'CaregiverInitiated',
+              durationSeconds: null,
+              startedAt: '2026-10-10T00:00:00Z',
+              connectedAt: null,
+              endedAt: null,
+              endReason: null,
+              initiatorId: incoming ? null : id,
+              receiverId: incoming ? id : viuId,
+              viuUserId: viuId,
+            },
+          ]),
+        },
+      });
+    writes.push(path);
+    if (path.endsWith('/end')) status = 'Ended';
+    if (path.endsWith('/reject')) status = 'Rejected';
+    if (path.endsWith('/accept')) status = 'Connected';
+    return route.fulfill({
+      json: {
+        success: true,
+        data:
+          path.endsWith('/end') || path.endsWith('/reject')
+            ? null
+            : { sessionId, status, myRole: 'video_viewer_audio_sender', iceServers: [] },
+      },
+    });
+  });
+  const notify = (target: string, payload: object = {}) =>
+    send(JSON.stringify({ type: 1, target, arguments: [{ sessionId, ...payload }] }) + '\x1e');
+  return {
+    writes,
+    messages,
+    sessionId,
+    notify,
+    connected: () => {
+      status = 'Connected';
+    },
+  };
+}
+
+test('U6a: outgoing call negotiates native local media, mutes, ends and refreshes history', async ({
+  page,
+}) => {
+  const f = await callFixture(page);
+  await login(page);
+  await page.getByRole('link', { name: 'Người được chăm sóc', exact: true }).click();
+  const call = page.getByRole('button', { name: 'Gọi VIU gọi thử', exact: true });
+  await expect(call).toBeEnabled();
+  await call.click();
+  await page.getByRole('button', { name: 'Bắt đầu gọi', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Đang đổ chuông' })).toBeVisible();
+  f.connected();
+  f.notify('WebRtcCallAccepted', { receiverRole: 'video_viewer_audio_sender' });
+  const sdp = await page.evaluate(async () => {
+    const h = window.callHarness;
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 240;
+    canvas.getContext('2d')!.fillRect(0, 0, 320, 240);
+    const video = canvas.captureStream(5);
+    setInterval(() => canvas.getContext('2d')!.fillRect(0, 0, 320, 240), 100);
+    video.getTracks().forEach((track) => h.peer.addTrack(track, video));
+    const audio = new AudioContext().createMediaStreamDestination().stream;
+    audio.getTracks().forEach((track) => h.peer.addTrack(track, audio));
+    const offer = await h.peer.createOffer();
+    await h.peer.setLocalDescription(offer);
+    return offer.sdp!;
+  });
+  f.notify('WebRtcOffer', { sdp });
+  await expect.poll(() => f.messages.includes('RelayAnswer')).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.callHarness.ice.length)).toBeGreaterThan(0);
+  const candidates = await page.evaluate(() => window.callHarness.ice);
+  candidates.forEach((candidate) =>
+    f.notify('WebRtcIceCandidate', { candidateJson: JSON.stringify(candidate) }),
+  );
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Âm thanh và hình ảnh đã kết nối.' }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator('video').evaluate((element) => (element as HTMLVideoElement).videoWidth),
+    )
+    .toBe(320);
+  await page.getByRole('button', { name: 'Tắt micro', exact: true }).click();
+  expect(await page.evaluate(() => window.callHarness.mic.getAudioTracks()[0].enabled)).toBe(false);
+  await page.screenshot({ path: 'test-results/u6a-call-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByRole('button', { name: 'Kết thúc cuộc gọi', exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/u6a-call-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: 'Kết thúc cuộc gọi', exact: true }).click();
+  await expect.poll(() => f.writes.some((path) => path.endsWith('/end'))).toBe(true);
+  expect(await page.evaluate(() => window.callHarness.mic.getAudioTracks()[0].readyState)).toBe(
+    'ended',
+  );
+  await page.getByRole('button', { name: 'Đóng', exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('link', { name: 'Lịch sử cuộc gọi', exact: true }).click();
+  await expect(page.getByRole('cell', { name: 'Đã kết thúc', exact: true })).toBeVisible();
+});
+
+test('U6a: incoming SOS stays silent until accept, duplicate does not reopen and Escape rejects', async ({
+  page,
+}) => {
+  const f = await callFixture(page, true);
+  await login(page);
+  await page.getByRole('link', { name: 'Người được chăm sóc', exact: true }).click();
+  await expect(page.getByText('Sẵn sàng gọi hỗ trợ.', { exact: false })).toBeVisible();
+  const payload = {
+    callerName: 'VIU gọi thử',
+    triggerType: 'SosAuto',
+    receiverRole: 'video_viewer_audio_sender',
+  };
+  f.notify('WebRtcIncomingCall', payload);
+  await expect(page.getByRole('button', { name: 'Nhận cuộc gọi', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => window.callHarness.mediaRequests)).toBe(0);
+  await page.keyboard.press('Escape');
+  await expect.poll(() => f.writes.some((path) => path.endsWith('/reject'))).toBe(true);
+  f.notify('WebRtcIncomingCall', payload);
+  await expect(page.getByRole('button', { name: 'Nhận cuộc gọi', exact: true })).toHaveCount(0);
+});
+
+test('U6a: microphone denial never creates a call', async ({ page }) => {
+  const f = await callFixture(page, false, true);
+  await login(page);
+  await page.getByRole('link', { name: 'Người được chăm sóc', exact: true }).click();
+  await page.getByRole('button', { name: 'Gọi VIU gọi thử', exact: true }).click();
+  await page.getByRole('button', { name: 'Bắt đầu gọi', exact: true }).click();
+  await expect(page.getByText('Bạn chưa cho phép micro. Hãy cấp quyền rồi thử lại.')).toBeVisible();
+  expect(f.writes).toEqual([]);
+});
 const actionDialog = (page: Page) =>
   page.getByRole('dialog').filter({
     hasNot: page.locator(':scope > header > h2').filter({
