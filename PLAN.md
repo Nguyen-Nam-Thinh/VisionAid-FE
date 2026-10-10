@@ -193,7 +193,7 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 | Đợt | Màn và API phải nối cùng nhau | Phụ thuộc và test trước bàn giao |
 |---|---|---|
 | 9 — ĐÃ NỐI FE, chờ live | /caregiver/locations: saved-locations CRUD + geofences CRUD | Quyền link + entitlement + GPS/map; create/read/update/reload/delete, tọa độ/radius; cảnh báo vào/ra cần Mobile + boundary worker + 7/8 |
-| 10 | /caregiver/registry: persons CRUD + upload/delete/primary photos | Consent ảnh, MinIO/AI, endpoint preview có authorization; create -> upload -> GET trạng thái -> primary/delete; không render file .enc trực tiếp, thiếu contract media là blocker |
+| 10 — CHỜ BE MEDIA CONTRACT | /caregiver/registry: persons CRUD + upload/delete/primary photos | Đã đối chiếu source 48a7346 và Swagger deploy 2026-10-10: thiếu GET preview/content ảnh đã giải mã. Chi tiết và đề xuất BE: docs/API_STAGE_10_CONTRACT.md. Chưa nối FE; consent vẫn chờ. |
 | 11b | /caregiver/tts: GET/PUT preferences theo userId | VIU scope; map volume BE 0–1 nếu vẫn đúng; save -> reload -> Mobile đọc lại; không dùng me để sửa VIU được chọn |
 | 12a | /caregiver/activity: GET navigation/OCR/QR/recognition/voice list/detail/events | Dữ liệu Mobile và quyền; pagination/timezone/retention, không gửi các POST Mobile từ Web |
 | 12b | /center-admin/reports: organization activity-summary/members | Dữ liệu org + quyền; không gán số tổng bằng đếm trang đầu, không đưa face gallery Caregiver sang CenterAdmin |
