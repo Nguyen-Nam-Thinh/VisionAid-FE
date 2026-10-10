@@ -3012,3 +3012,173 @@ test('U3b: CenterAdmin without organization cannot query payments or pool', asyn
     calls.some((path) => path.startsWith('/api/payments') || path === '/api/licenses/pool'),
   ).toBe(false);
 });
+
+for (const kind of ['saved-locations', 'geofences'] as const) {
+  test(`9: ${kind} CRUD, read-only/revoked permissions, license and delete failures`, async ({
+    page,
+  }) => {
+    await stubApi(page);
+    const viuId = '01900000-0000-7000-8000-000000000071';
+    const zone = kind === 'geofences';
+    let canManage = false;
+    let exists = false;
+    let failDelete = true;
+    let expired = false;
+    const writes: string[] = [];
+    let item: Record<string, unknown> = {
+      id,
+      visuallyImpairedUserId: viuId,
+      name: 'Nhà test',
+      latitude: 0,
+      longitude: 106.81,
+      isActive: true,
+      createdAt: '2026-10-10T00:00:00Z',
+      updatedAt: '2026-10-10T00:00:00Z',
+      ...(zone
+        ? { radiusMeters: 300, alertOnExit: true, alertOnEnter: false }
+        : { arrivalRadiusMeters: 50, description: '', ttsAnnouncement: '' }),
+    };
+    await page.route('**/api/users?**', (route) =>
+      route.fulfill({
+        json: {
+          success: true,
+          data: organizationPage([
+            {
+              id: viuId,
+              fullName: 'VIU địa điểm',
+              email: 'viu@example.test',
+              phoneNumber: null,
+              role: 'VisuallyImpaired',
+              organizationId: null,
+              isActive: true,
+            },
+          ]),
+        },
+      }),
+    );
+    await page.route('**/api/caregiver-links?**', (route) =>
+      route.fulfill({
+        json: {
+          success: true,
+          data: organizationPage([
+            {
+              id,
+              caregiverId: id,
+              visuallyImpairedUserId: viuId,
+              viuFullName: 'VIU địa điểm',
+              isPrimary: false,
+              linkType: 'Personal',
+              canReceiveAlerts: false,
+              canManageRegistry: false,
+              canManageLocations: canManage,
+              linkedAt: '',
+              unlinkedAt: null,
+            },
+          ]),
+        },
+      }),
+    );
+    await page.route(/\/api\/(saved-locations|geofences)/, (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      const list = url.pathname === `/api/${kind}`;
+      if (expired)
+        return route.fulfill({ status: 402, json: { detail: 'License hết hạn thử nghiệm.' } });
+      if (request.method() !== 'GET') {
+        writes.push(request.method());
+        if (request.method() === 'DELETE') {
+          if (failDelete)
+            return route.fulfill({ status: 500, json: { detail: 'Không thể xóa lúc này.' } });
+          exists = false;
+          return route.fulfill({ status: 204 });
+        }
+        item = { ...item, ...request.postDataJSON() };
+        exists = true;
+      }
+      const matches =
+        !url.searchParams.has('isActive') ||
+        String(item.isActive) === url.searchParams.get('isActive');
+      return route.fulfill({
+        json: {
+          success: true,
+          data:
+            request.method() === 'GET' && list
+              ? organizationPage(exists && matches ? [item] : [])
+              : url.pathname.endsWith('/' + id) || request.method() !== 'GET'
+                ? item
+                : organizationPage([]),
+        },
+      });
+    });
+    await login(page);
+    await page.goto('/caregiver/locations');
+    await page
+      .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
+      .selectOption(viuId);
+    if (zone) await page.getByRole('button', { name: 'Vùng an toàn', exact: true }).click();
+    const add = page.getByRole('button', {
+      name: zone ? 'Thêm vùng an toàn' : 'Thêm địa điểm',
+      exact: true,
+    });
+    await expect(add).toBeDisabled();
+    await expect(page.getByText('Bạn có quyền xem.', { exact: false })).toBeVisible();
+    canManage = true;
+    await page.getByRole('button', { name: 'Tải lại địa điểm', exact: true }).click();
+    await expect(add).toBeEnabled();
+    await add.click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByLabel('Vĩ độ')).toHaveValue('');
+    await dialog.getByLabel('Tên', { exact: false }).fill('Nhà test');
+    await dialog.getByLabel('Vĩ độ').fill('0');
+    await dialog.getByLabel('Kinh độ').fill('106.81');
+    await dialog.getByLabel('Bán kính').fill('1');
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(dialog.getByRole('alert')).toContainText('tối thiểu');
+    expect(writes).toEqual([]);
+    await dialog.getByLabel('Bán kính').fill(zone ? '300' : '50');
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole('cell', { name: 'Nhà test', exact: !zone })).toBeVisible();
+    await page.getByRole('button', { name: 'Xem và sửa' }).click();
+    await expect(dialog.getByLabel('Vĩ độ')).toHaveValue('0');
+    await dialog.getByLabel('Hoạt động', { exact: true }).uncheck();
+    if (zone) await dialog.getByLabel('Cảnh báo khi đi vào').check();
+    else await dialog.getByLabel('Lời nhắc khi đến nơi').fill('Đã đến nhà.');
+    await page.screenshot({ path: `test-results/stage9-${kind}-desktop.png` });
+    await page.setViewportSize({ width: 375, height: 812 });
+    const bounds = await dialog.boundingBox();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(375);
+    await page.screenshot({ path: `test-results/stage9-${kind}-mobile.png` });
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(dialog).toHaveCount(0);
+    await page.getByRole('combobox', { name: 'Trạng thái', exact: true }).selectOption('true');
+    await expect(page.getByText('Chưa có địa điểm phù hợp.', { exact: true })).toBeVisible();
+    await page.getByRole('combobox', { name: 'Trạng thái', exact: true }).selectOption('false');
+    await expect(page.getByRole('button', { name: 'Xem và sửa' })).toBeVisible();
+    await page.getByRole('button', { name: 'Xóa', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
+    expect(writes).toEqual(['POST', 'PUT']);
+    await page.getByRole('button', { name: 'Xóa', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+    await expect(dialog.getByRole('alert')).toBeVisible();
+    expect(exists).toBe(true);
+    failDelete = false;
+    await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByText('Chưa có địa điểm phù hợp.', { exact: true })).toBeVisible();
+    await add.click();
+    await dialog.getByLabel('Tên', { exact: false }).fill('Không được tạo');
+    await dialog.getByLabel('Vĩ độ').fill('10');
+    await dialog.getByLabel('Kinh độ').fill('106');
+    canManage = false;
+    await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(page.getByText('Bạn có quyền xem.', { exact: false })).toBeVisible();
+    expect(writes).toEqual(['POST', 'PUT', 'DELETE', 'DELETE']);
+    await page.keyboard.press('Escape');
+    expired = true;
+    await page.getByRole('button', { name: 'Tải lại địa điểm', exact: true }).click();
+    await expect(page.getByRole('link', { name: 'Xem trạng thái license' })).toBeVisible();
+    await expect(page).toHaveURL(/caregiver\/locations/);
+  });
+}
