@@ -1,9 +1,9 @@
 VISIONAID WEB — API DÙNG Ở ĐÂU
-Cập nhật kế hoạch: 2026-10-08. Danh sách 001–107 là snapshot OpenAPI cũ (2026-09-25), controller BE/code FE và ảnh Swagger; đã bổ sung đối chiếu 140 operations trong phụ lục U0 và docs/U0_OPENAPI_2026-10-03.md.
-Swagger: http://51.210.176.94:5002/swagger/index.html
-OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
+Cập nhật kế hoạch: 2026-10-10. Danh sách 001–107 là snapshot OpenAPI cũ (2026-09-25), controller BE/code FE và ảnh Swagger; đã bổ sung đối chiếu 140 operations trong phụ lục U0 và docs/U0_OPENAPI_2026-10-03.md.
+Swagger: https://api.visionaid.net/swagger/index.html
+OpenAPI: https://api.visionaid.net/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 9: 80/140 operations có caller Web. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 10: 89/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -340,80 +340,80 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/EmergencyContactsController.cs
 
 033. POST /api/face-registry/persons
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: application/json: AddPersonRequest; text/json: AddPersonRequest; application/*+json: AddPersonRequest
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 034. GET /api/face-registry/persons
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: viuId, isActive
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 035. GET /api/face-registry/persons/{id}
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 036. PUT /api/face-registry/persons/{id}
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: application/json: EditPersonInfoRequest; text/json: EditPersonInfoRequest; application/*+json: EditPersonInfoRequest
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 037. DELETE /api/face-registry/persons/{id}
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 038. POST /api/face-registry/persons/{personId}/photos
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: multipart/form-data: photo,setAsPrimary,captureAngle,imageQualityScore,embeddingVector,embeddingModel
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 039. DELETE /api/face-registry/persons/{personId}/photos/{photoId}
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 040. PATCH /api/face-registry/persons/{personId}/photos/{photoId}/primary
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
@@ -1241,5 +1241,22 @@ GET /api/webrtc/sessions: ngoài history còn được ApiRealtime gọi qua Cal
 Đợt 9 — ĐÃ NỐI FE, chờ test BE/Mobile thật
 /api/saved-locations và /api/geofences: mỗi resource gồm GET list, GET id, POST, PUT id, DELETE id. Dùng tại /caregiver/locations, hai tab riêng, popup thêm/sửa/xóa; list có viuId/isActive/page/pageSize. Tổng 80/140. Contract và chuỗi test: docs/API_STAGE_9_TEST.md. Mapbox picker chưa nối; nhập tọa độ chính xác.
 
-Đợt 10 — CHỜ BE MEDIA CONTRACT, khảo sát 2026-10-10
+Đợt 10 — LỊCH SỬ blocker trước BE f277b6a, đã gỡ theo cập nhật bên dưới
 Source BE 48a7346 và Swagger deploy chưa có GET preview/content ảnh đã giải mã; upload lưu .enc, storagePath không phải URL preview. Chưa thêm caller, tổng vẫn 80/140. Đề xuất BE và điểm tiếp tục: docs/API_STAGE_10_CONTRACT.md.
+
+Đợt 10 — DA_NOI FE 2026-10-10; BE f277b6a, chờ test live
+Tổng 89/144 operations có caller Web. Registry service: src/services/api/registry.ts.
+UI: src/pages/caregiver/ApiRegistry.tsx, route /caregiver/registry. Chỉ Caregiver có active link; query cache theo actor/org/VIU. Không dùng API Mobile persons/me hoặc identify.
+- GET /api/face-registry/persons?viuId=: list -> bảng người thân, lọc tên/trạng thái tại FE. BE trả mảng không phân trang, tối đa 20 người.
+- POST /api/face-registry/persons: save -> popup Thêm người thân. JSON visuallyImpairedUserId, displayName, relationship|null, notes|null.
+- GET /api/face-registry/persons/{id}: detail/read -> popup sửa/ảnh và xác minh VIU trước thao tác. DTO FE loại storagePath/embedding.
+- PUT /api/face-registry/persons/{id}: save -> popup Chỉnh sửa. JSON displayName, relationship|null, notes|null; null xóa nội dung.
+- DELETE /api/face-registry/persons/{id}: remove -> popup Xóa người thân, 204; refresh danh bạ sau kết quả.
+- POST /api/face-registry/persons/{personId}/photos: upload -> popup Quản lý ảnh, một ảnh mỗi lần. FormData photo,setAsPrimary; browser tự đặt boundary. Không gửi embedding/vector/model/quality tự tạo. JPEG/PNG/WebP <=10 MiB, không rỗng, kiểm chữ ký. Timeout 90 giây, không replay POST.
+- GET /api/face-registry/persons/{personId}/photos/{photoId}: photo -> RegistryPreview (CALLER MỚI so với snapshot140). Bearer + no-store, auth refresh một lần nếu401, trả Blob. Chỉ dùng object URL trong component; revoke khi đóng/đổi scope/logout. BE hardcode image/jpeg, FE nhận dạng chữ ký raster; không biến lỗi JSON thành ảnh.
+- DELETE /api/face-registry/persons/{personId}/photos/{photoId}: removePhoto -> popup Xóa ảnh; xác minh ảnh thuộc person, quyền mới nhất; 204; lỗi giữ ảnh, không optimistic delete.
+- PATCH /api/face-registry/persons/{personId}/photos/{photoId}/primary: primary -> Đặt ảnh chính; không body, trả image DTO; refresh dữ liệu server.
+- GET /api/users và GET /api/caregiver-links tái sử dụng để chọn VIU và kiểm quyền đọc/ghi. canManageRegistry=false chỉ xem; revoked link chặn trước download/write. Count/isActive đọc BE, không tự cộng trừ hay suy đoán FaceNet đã sẵn sàng.
+- Auth binary dùng client.ts -> auth.blob -> adapter.apiBlob; giữ nguyên lỗi JSON/402, không đưa token lên URL. Response đến sau logout bị loại.
+- GET/POST recognition-logs giữ trạng thái đợt12/Mobile. Privacy policy vẫn chờ, không gọi accept-privacy-policy. Test và dependencies: docs/API_STAGE_10_TEST.md.
+- Swagger mới 144: ngoài GET photo còn PUT /api/emergency-events/{id}/snapshot, POST /api/navigation/guidance, GET /api/navigation/guidance/logs; chưa nối Web, cần đối chiếu role/DTO ở đợt liên quan. Không tự mở rộng phạm vi đợt10.

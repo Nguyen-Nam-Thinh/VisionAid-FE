@@ -4,9 +4,11 @@ export async function request<T>(
   url: string,
   init: RequestInit = {},
   transport: typeof fetch = fetch,
+  responseType: 'json' | 'blob' = 'json',
 ): Promise<T | undefined> {
   const response = await transport(url, init);
   if (response.status === 204) return undefined;
+  if (response.ok && responseType === 'blob') return (await response.blob()) as T;
   let body: unknown;
   try {
     body = await response.json();

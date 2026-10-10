@@ -17,6 +17,38 @@ const user = {
 };
 const ok = (data: unknown) => Response.json({ success: true, data });
 
+it('authenticated binary photos refresh once, use no-store, preserve HTTP errors and discard late logout responses', async () => {
+  const storage = memory();
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  let attempts = 0;
+  let release!: (response: Response) => void;
+  const fetcher = vi.fn<typeof fetch>(async (url) => {
+    if (String(url).endsWith('/refresh')) return ok(pair());
+    if (String(url).endsWith('/logout')) return ok(null);
+    if (String(url).endsWith('/late'))
+      return new Promise<Response>((resolve) => {
+        release = resolve;
+      });
+    if (String(url).endsWith('/forbidden'))
+      return Response.json({ detail: 'No access' }, { status: 403 });
+    if (attempts++ === 0) return Response.json({ detail: 'expired' }, { status: 401 });
+    return new Response('bytes', { headers: { 'Content-Type': 'image/png' } });
+  });
+  const auth = createApiAuth('http://example.test', storage, fetcher);
+  const blob = (await auth.blob('/photo')) as Blob;
+  expect(await blob.text()).toBe('bytes');
+  expect(attempts).toBe(2);
+  expect(fetcher.mock.calls[0][1]).toMatchObject({
+    cache: 'no-store',
+    headers: { Authorization: `Bearer ${jwt()}` },
+  });
+  await expect(auth.blob('/forbidden')).rejects.toMatchObject({ status: 403 });
+  const late = auth.blob('/late');
+  await auth.logout();
+  release(new Response('private photo'));
+  await expect(late).rejects.toMatchObject({ status: 401 });
+});
+
 it('maps nullable license fields and preserves session without refresh/replay on 402 reads and writes', async () => {
   const storage = memory();
   const calls: string[] = [];

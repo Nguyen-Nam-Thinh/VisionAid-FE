@@ -15,6 +15,7 @@ import { Landing } from '../pages/public/Landing';
 import { ApiSession, ApiPending } from '../pages/shared/ApiSession';
 import { ApiLinkedUsers } from '../pages/caregiver/ApiLinkedUsers';
 import { ApiPlaces } from '../pages/caregiver/ApiPlaces';
+import { ApiRegistry } from '../pages/caregiver/ApiRegistry';
 import { ApiContacts } from '../pages/caregiver/ApiContacts';
 import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
@@ -398,6 +399,8 @@ export function App() {
                           <ApiContacts />
                         ) : f.role === 'Caregiver' && f.path === 'locations' ? (
                           <ApiPlaces />
+                        ) : f.role === 'Caregiver' && f.path === 'registry' ? (
+                          <ApiRegistry />
                         ) : (f.role === 'Admin' && f.path === 'organizations') ||
                           (f.role === 'CenterAdmin' && f.path === 'organization') ? (
                           <ApiOrganizations />

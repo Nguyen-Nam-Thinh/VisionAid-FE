@@ -1,13 +1,13 @@
 # VisionAid Web — Plan cập nhật B2C, B2B, License, PayOS và WebRTC
 
-Cập nhật 2026-10-10. Base FE khảo sát U0: dev `5692a87`; BE local mới `48a7346`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1–U5, 11a, 8c và U6a đã triển khai FE, chờ nghiệm thu live; U6b cũng đã nối FE theo yêu cầu; chờ test Mobile/FCM/TURN.
+Cập nhật 2026-10-11. Base FE khảo sát U0: dev `5692a87`; BE local mới `f277b6a`. Đây là kế hoạch triển khai, không phải lệnh thực hiện mọi đợt. U1–U5, 11a, 8c và U6a đã triển khai FE, chờ nghiệm thu live; U6b cũng đã nối FE theo yêu cầu; chờ test Mobile/FCM/TURN.
 
 **Kết quả U0 mới nhất:** đã đọc BE mới và OpenAPI deploy có 140 operations (33 mới, 107 cũ giữ nguyên). Đọc [docs/U0_BACKEND_FINDINGS.md](docs/U0_BACKEND_FINDINGS.md) trước các câu hỏi dự kiến bên dưới; tài liệu đó thay thế những giả định đã được xác minh. U0 mới hoàn tất kiểm kê/khảo sát, còn policy và test thật. Có FCM upsert. Người dùng xác nhận BE đã sửa billing allowlist, Staff exemption và kế thừa license khi first Personal link; local chưa có bản sửa để đối chiếu. Trial/Personal tối đa 3 VIU theo MaxViusPerCaregiver, không enforcement quota theo gói. Không còn cần người dùng gửi lại vị trí BE/Swagger.
 
 ## 1. AI tiếp theo bắt đầu ở đâu
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
-2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt tiếp theo 10 khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt tiếp theo 11b khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
 3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
 4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
 5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
@@ -188,12 +188,12 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 - Test 3 trigger, duplicate/out-of-order, nhiều staff nhận cùng event, quyền bị gỡ giữa cuộc gọi, FCM click khi logout; SOS không bị gián đoạn vì checkout/license expired hoặc lỗi WebRTC.
 - Điểm dừng: nghiệm thu riêng từng trigger; privacy nội dung/version vẫn cần người dùng cung cấp, không tự tạo đồng ý pháp lý.
 
-### 9, 10, 11b, 12 — Đợt 9 đã nối FE; 10/11b/12 chưa nối
+### 9, 10, 11b, 12 — Đợt 9 và 10 đã nối FE; 11b/12 chưa nối
 
 | Đợt | Màn và API phải nối cùng nhau | Phụ thuộc và test trước bàn giao |
 |---|---|---|
 | 9 — ĐÃ NỐI FE, chờ live | /caregiver/locations: saved-locations CRUD + geofences CRUD | Quyền link + entitlement + GPS/map; create/read/update/reload/delete, tọa độ/radius; cảnh báo vào/ra cần Mobile + boundary worker + 7/8 |
-| 10 — CHỜ BE MEDIA CONTRACT | /caregiver/registry: persons CRUD + upload/delete/primary photos | Đã đối chiếu source 48a7346 và Swagger deploy 2026-10-10: thiếu GET preview/content ảnh đã giải mã. Chi tiết và đề xuất BE: docs/API_STAGE_10_CONTRACT.md. Chưa nối FE; consent vẫn chờ. |
+| 10 — ĐÃ NỐI FE, chờ live | /caregiver/registry: persons CRUD + upload/preview/delete/primary photos | BE f277b6a và Swagger đã có GET ảnh có xác thực. 9 callers; kiểm tra scope và quyền trước ghi; popup, JPEG/PNG/WebP ≤10 MiB. Checklist docs/API_STAGE_10_TEST.md. Consent chính sách vẫn chờ, không tự tạo version. |
 | 11b | /caregiver/tts: GET/PUT preferences theo userId | VIU scope; map volume BE 0–1 nếu vẫn đúng; save -> reload -> Mobile đọc lại; không dùng me để sửa VIU được chọn |
 | 12a | /caregiver/activity: GET navigation/OCR/QR/recognition/voice list/detail/events | Dữ liệu Mobile và quyền; pagination/timezone/retention, không gửi các POST Mobile từ Web |
 | 12b | /center-admin/reports: organization activity-summary/members | Dữ liệu org + quyền; không gán số tổng bằng đếm trang đầu, không đưa face gallery Caregiver sang CenterAdmin |
@@ -261,8 +261,20 @@ User đã yêu cầu tiếp tục sau khi BE sửa membership relay ở 48a7346.
 
 ## Bàn giao U6b — 2026-10-10
 
-User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt tiếp theo 10 khi user yêu cầu.
+User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt tiếp theo 11b khi user yêu cầu.
 
 ## Bàn giao đợt 9 — 2026-10-10
 
 Đã nối saved-locations/geofences CRUD tại /caregiver/locations, 10 REST operations, tổng 80/140. Contract BE 48a7346. Query scope theo actor/org/VIU/loại/filter; active-link view và canManageLocations write; popup và validation theo BE. 117 unit tests, 4 browser fixture tests chọn lọc, lint/build đạt. Chưa test BE deploy/Mobile/boundary worker thật; Mapbox picker chưa nối, nhập tọa độ. Checklist: docs/API_STAGE_9_TEST.md. Đợt tiếp theo 10 — Face Registry; phải xác minh consent và preview ảnh có authorization, không render file .enc. Không tự chuyển đợt khi chưa được yêu cầu.
+
+## Bàn giao đợt 10 — 2026-10-11
+
+BE f277b6a đã gỡ blocker media: GET /api/face-registry/persons/{personId}/photos/{photoId}, AES decrypt server, active-link guard, Cache-Control private/no-store; DELETE và primary kiểm tra đúng personId. Web DTO không còn embeddingVector. Xem cập nhật docs/API_STAGE_10_CONTRACT.md.
+
+FE đã nối 9 operations tại /caregiver/registry: thêm/sửa/xóa người, danh sách/chi tiết, upload từng ảnh, preview Bearer binary, xóa/chọn ảnh chính. Không đọc storagePath, không lưu ảnh vào storage/query cache; object URL thu hồi khi đóng/đổi scope/logout. Quyền canManageRegistry được đọc lại trước ghi. Upload/ghi không tự retry; refetch count/isActive từ BE.
+
+122 unit tests, 4 E2E fixture chọn lọc, lint/build đạt; ảnh fixture 1 pixel, đã xem popup desktop/mobile 375px. Chưa upload ảnh người thật hoặc test MinIO/AES/FaceNet/Mobile trên deploy. BE vẫn gán MIME JPEG cho mọi ảnh; FE nhận dạng chữ ký JPEG/PNG/WebP và từ chối nội dung khác, BE nên trả Content-Type đúng.
+
+Tổng hiện tại: 89/144 REST operations có caller Web (80 trước đó + 9 đợt 10). Swagger hiện 144, thêm GET photo, PUT emergency snapshot, POST navigation guidance, GET navigation guidance logs so với 140. Snapshot: docs/OPENAPI_2026-10-10.md. Ba API mới ngoài ảnh chưa nối, cần khảo sát ở đợt phù hợp; không suy ra schema từ tên endpoint.
+
+Test theo docs/API_STAGE_10_TEST.md, dừng bàn giao. Đợt kế tiếp 11b — TTS khi người dùng yêu cầu. Chính sách/nội dung/version tiếp tục CHỜ như người dùng đã chốt; chưa gọi accept-privacy-policy.

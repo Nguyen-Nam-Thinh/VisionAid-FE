@@ -348,6 +348,215 @@ const token = () =>
   'header.' +
   Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 600 })).toString('base64url') +
   '.signature';
+
+test('10: registry CRUD, authenticated photos, revoked permissions and recoverable failures', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const viuId = '01900000-0000-7000-8000-000000000081';
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a7XkAAAAASUVORK5CYII=',
+    'base64',
+  );
+  let canManage = true;
+  let exists = false;
+  let failUpload = true;
+  let failDelete = true;
+  const writes: string[] = [];
+  const person = {
+    id,
+    visuallyImpairedUserId: viuId,
+    displayName: 'Người thân test',
+    relationship: 'Gia đình',
+    notes: '',
+    isActive: false,
+    imageCount: 0,
+    images: [] as { id: string; personId: string; isPrimaryImage: boolean; uploadedAt: string }[],
+  };
+  await page.route('**/api/users?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: viuId,
+            fullName: 'VIU danh bạ',
+            email: 'viu@example.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId: null,
+            isActive: true,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route('**/api/caregiver-links?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id,
+            caregiverId: id,
+            visuallyImpairedUserId: viuId,
+            viuFullName: 'VIU danh bạ',
+            isPrimary: false,
+            linkType: 'Personal',
+            canReceiveAlerts: false,
+            canManageRegistry: canManage,
+            canManageLocations: false,
+            linkedAt: '',
+            unlinkedAt: null,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route('**/api/face-registry/**', (route) => {
+    const req = route.request();
+    const path = new URL(req.url()).pathname;
+    const method = req.method();
+    if (method !== 'GET') writes.push(method + ' ' + path);
+    if (path.includes('/photos')) {
+      if (method === 'GET') {
+        expect(req.headers().authorization).toContain('Bearer ');
+        expect(req.url()).not.toContain('token');
+        return route.fulfill({
+          body: png,
+          contentType: 'image/jpeg',
+          headers: { 'Cache-Control': 'private, no-store' },
+        });
+      }
+      if (method === 'POST') {
+        expect(req.headers()['content-type']).toContain('multipart/form-data');
+        expect(req.postData()).not.toContain('embeddingVector');
+        if (failUpload)
+          return route.fulfill({ status: 500, json: { detail: 'Upload unavailable' } });
+        const photo = {
+          id: `01900000-0000-7000-8000-00000000009${person.images.length}`,
+          personId: id,
+          isPrimaryImage: !person.images.length,
+          uploadedAt: '2026-10-10T00:00:00Z',
+        };
+        person.images.push(photo);
+        person.imageCount = person.images.length;
+        person.isActive = person.imageCount >= 3;
+        return route.fulfill({ json: { success: true, data: photo } });
+      }
+      if (method === 'PATCH') {
+        const photoId = path.split('/').at(-2);
+        person.images.forEach((p) => {
+          p.isPrimaryImage = p.id === photoId;
+        });
+        return route.fulfill({
+          json: { success: true, data: person.images.find((p) => p.id === photoId) },
+        });
+      }
+      if (failDelete)
+        return route.fulfill({ status: 500, json: { detail: 'Không thể xóa ảnh lúc này.' } });
+      person.images = person.images.filter((p) => p.id !== path.split('/').at(-1));
+      person.imageCount = person.images.length;
+      person.isActive = person.imageCount >= 3;
+      return route.fulfill({ status: 204 });
+    }
+    if (method === 'POST' || method === 'PUT') {
+      Object.assign(person, req.postDataJSON());
+      exists = true;
+    }
+    if (method === 'DELETE') {
+      exists = false;
+      return route.fulfill({ status: 204 });
+    }
+    return route.fulfill({
+      json: {
+        success: true,
+        data: path.endsWith('/persons') && method === 'GET' ? (exists ? [person] : []) : person,
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/caregiver/registry');
+  await page
+    .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
+    .selectOption(viuId);
+  await page.getByRole('button', { name: 'Thêm người thân', exact: true }).click();
+  let dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Tên người thân').fill('Người thân test');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await dialog.getByLabel('Mối quan hệ').fill('Gia đình');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: 'Quản lý ảnh', exact: true }).click();
+  const upload = async () => {
+    await dialog
+      .getByLabel('Chọn ảnh người thân')
+      .setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
+    await dialog.getByRole('button', { name: 'Tải ảnh lên', exact: true }).click();
+  };
+  await upload();
+  await expect(dialog.getByRole('alert')).toContainText('tránh trùng');
+  expect(person.images).toHaveLength(0);
+  failUpload = false;
+  for (let i = 1; i <= 3; i++) {
+    await upload();
+    await expect(dialog.getByRole('img')).toHaveCount(i);
+  }
+  await expect(dialog.getByText('3 ảnh · Hoạt động.', { exact: false })).toBeVisible();
+  await expect(dialog.getByRole('img').first()).toHaveJSProperty('naturalWidth', 1);
+  await dialog.getByRole('button', { name: 'Đặt ảnh chính', exact: true }).last().click();
+  await expect(dialog.getByText('Đã đổi ảnh chính.', { exact: true })).toBeVisible();
+  expect(person.images[2].isPrimaryImage).toBe(true);
+  await page.screenshot({ path: 'test-results/stage10-photos-desktop.png' });
+  await page.setViewportSize({ width: 375, height: 812 });
+  const bounds = await dialog.boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(375);
+  await page.screenshot({ path: 'test-results/stage10-photos-mobile.png' });
+  await dialog.getByRole('button', { name: 'Xóa ảnh', exact: true }).first().click();
+  const confirm = page.getByRole('dialog', { name: 'Xóa ảnh người thân', exact: true });
+  await confirm.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(confirm.getByRole('alert')).toContainText('Không thể xóa');
+  expect(person.images).toHaveLength(3);
+  failDelete = false;
+  await confirm.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(confirm).toHaveCount(0);
+  await expect(dialog.getByText('2 ảnh · Chưa hoạt động.', { exact: false })).toBeVisible();
+  const blobUrl = await dialog.getByRole('img').first().getAttribute('src');
+  await dialog.getByRole('button', { name: 'Đóng hộp thoại', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(
+    await page.evaluate(async (url) => {
+      try {
+        await fetch(url!);
+        return true;
+      } catch {
+        return false;
+      }
+    }, blobUrl),
+  ).toBe(false);
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  canManage = false;
+  const count = writes.length;
+  await dialog.getByLabel('Tên người thân').fill('Không được sửa');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(page.getByText('Bạn có quyền xem.', { exact: false })).toBeVisible();
+  expect(writes).toHaveLength(count);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Thêm người thân', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Quản lý ảnh', exact: true }).click();
+  dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('img')).toHaveCount(2);
+  await expect(dialog.getByRole('button', { name: 'Tải ảnh lên', exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  canManage = true;
+  await page.getByRole('button', { name: 'Tải lại danh bạ', exact: true }).click();
+  await page.getByRole('button', { name: 'Xóa', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByText('Chưa có người thân phù hợp.', { exact: true })).toBeVisible();
+});
 async function stubApi(page: Page, role = 'Caregiver', organizationId: string | null = null) {
   const calls: string[] = [];
   await page.route('http://localhost:5176/api/**', async (route) => {
@@ -419,7 +628,7 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
         ? '/admin/metrics'
         : role === 'CenterAdmin'
           ? '/center-admin/reports'
-          : '/caregiver/registry';
+          : '/caregiver/tts';
     await page.goto(path);
     await expect(page.getByRole('heading', { name: 'Chưa tích hợp trong đợt này' })).toBeVisible();
     expect(
