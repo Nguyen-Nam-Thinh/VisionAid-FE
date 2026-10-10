@@ -20,6 +20,61 @@ const org = {
   centerAdminName: null,
 };
 const input = { name: ' Center ', taxCode: '123', address: '', phoneNumber: '', contactEmail: '' };
+it('summary uses DateOnly UTC filters, preserves server totals/zero and forwards cancellation', async () => {
+  const data = {
+    organizationId: id,
+    dateFrom: '2026-10-01',
+    dateTo: '2026-10-11',
+    emergencyEventCount: 101,
+    geofenceBreachCount: 0,
+    ocrRequestCount: 302,
+    faceRecognitionCount: 4,
+  };
+  const get = vi.fn(async () => data);
+  const api = createOrganizationsApi(get);
+  const signal = new AbortController().signal;
+  expect(await api.summary(center, id, '2026-10-01', '2026-10-11', signal)).toEqual(data);
+  expect(get).toHaveBeenCalledWith(
+    `/api/organizations/${id}/activity-summary?dateFrom=2026-10-01&dateTo=2026-10-11`,
+    signal,
+  );
+});
+it('summary rejects foreign org, missing scope, invalid dates before HTTP and mismatched response', async () => {
+  const data = {
+    organizationId: id,
+    dateFrom: null as string | null,
+    dateTo: null as string | null,
+    emergencyEventCount: 0,
+    geofenceBreachCount: 0,
+    ocrRequestCount: 0,
+    faceRecognitionCount: 0,
+  };
+  const get = vi.fn(async () => data);
+  const api = createOrganizationsApi(get);
+  await expect(api.summary(center, other, '', '')).rejects.toMatchObject({ status: 403 });
+  await expect(api.summary({ role: 'Caregiver', orgId: id }, id, '', '')).rejects.toMatchObject({
+    status: 403,
+  });
+  await expect(api.summary({ ...center, orgId: '' }, id, '', '')).rejects.toMatchObject({
+    status: 403,
+  });
+  for (const from of ['2026-02-30', 'invalid', '2026-10-12'])
+    await expect(api.summary(center, id, from, '2026-10-11')).rejects.toMatchObject({
+      status: 400,
+    });
+  expect(get).not.toHaveBeenCalled();
+  expect(await api.summary(center, id, '', '')).toEqual(data);
+  data.organizationId = other;
+  await expect(api.summary(center, id, '', '')).rejects.toMatchObject({ status: 403 });
+  data.organizationId = id;
+  data.dateFrom = '2026-10-01';
+  await expect(api.summary(center, id, '', '')).rejects.toMatchObject({ status: 502 });
+  data.dateFrom = null;
+  data.ocrRequestCount = -1;
+  await expect(api.summary(center, id, '', '')).rejects.toMatchObject({ status: 502 });
+  get.mockRejectedValue(new Error('network unavailable'));
+  await expect(api.summary(center, id, '', '')).rejects.toThrow('network unavailable');
+});
 it('enforces own organization and Admin-only mutations before any HTTP request', async () => {
   const get = vi.fn(async () => org);
   const write = vi.fn(async () => org);

@@ -1,4 +1,117 @@
 import { test, expect, type Page } from '@playwright/test';
+test('12b: organization report totals, UTC days, member pagination and scope errors', async ({
+  page,
+}) => {
+  const orgId = '01900000-0000-7000-8000-000000000093';
+  await stubApi(page, 'CenterAdmin', orgId);
+  let wrongOrg = false;
+  let failure = 0;
+  const requests: URL[] = [];
+  await page.route(`**/api/organizations/${orgId}/activity-summary?**`, (route) => {
+    const url = new URL(route.request().url());
+    requests.push(url);
+    if (failure)
+      return route.fulfill({
+        status: failure,
+        json: { detail: 'Báo cáo tạm thời không khả dụng.' },
+      });
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          organizationId: wrongOrg ? id : orgId,
+          dateFrom: url.searchParams.get('dateFrom'),
+          dateTo: url.searchParams.get('dateTo'),
+          emergencyEventCount: 101,
+          geofenceBreachCount: 0,
+          ocrRequestCount: 302,
+          faceRecognitionCount: 4,
+        },
+      },
+    });
+  });
+  await page.route(`**/api/organizations/${orgId}/members?**`, (route) => {
+    const url = new URL(route.request().url());
+    requests.push(url);
+    const current = Number(url.searchParams.get('page'));
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          ...organizationPage([
+            {
+              id,
+              fullName: current === 1 ? 'Thành viên trang một' : 'Thành viên trang hai',
+              email: 'member@example.test',
+              phoneNumber: null,
+              role: 'VisuallyImpaired',
+              isActive: true,
+              lastLoginAt: null,
+              createdAt: '2026-10-11T00:00:00Z',
+            },
+          ]),
+          page: current,
+          totalCount: 11,
+          totalPages: 2,
+          hasPreviousPage: current === 2,
+          hasNextPage: current === 1,
+        },
+      },
+    });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Báo cáo hoạt động', exact: true }).click();
+  await expect(page.getByRole('cell', { name: '101', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '0', exact: true })).toBeVisible();
+  await expect(page.getByText('11 thành viên · Trang 1/2')).toBeVisible();
+  await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
+  await expect(page.getByText('Thành viên trang hai')).toBeVisible();
+  await page.getByLabel('Từ ngày UTC').fill('2026-10-01');
+  await page.getByLabel('Đến ngày UTC').fill('2026-10-11');
+  await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('2026-10-01 → 2026-10-11');
+  expect(
+    requests.some(
+      (url) =>
+        url.searchParams.get('dateFrom') === '2026-10-01' &&
+        url.searchParams.get('dateTo') === '2026-10-11',
+    ),
+  ).toBe(true);
+  await page.getByLabel('Tìm thành viên', { exact: true }).fill('test');
+  await page
+    .getByRole('combobox', { name: 'Vai trò', exact: true })
+    .selectOption('VisuallyImpaired');
+  await page.getByRole('button', { name: 'Lọc thành viên', exact: true }).click();
+  await expect(page.getByText('Thành viên trang một')).toBeVisible();
+  expect(
+    requests.some(
+      (url) =>
+        url.searchParams.get('search') === 'test' &&
+        url.searchParams.get('role') === 'VisuallyImpaired' &&
+        url.searchParams.get('page') === '1' &&
+        !url.searchParams.has('dateFrom'),
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: 'test-results/stage12b-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.screenshot({ path: 'test-results/stage12b-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const previous = requests.length;
+  await page.getByLabel('Từ ngày UTC').fill('2026-10-12');
+  await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('ngày kết thúc');
+  expect(requests).toHaveLength(previous);
+  wrongOrg = true;
+  await page.getByLabel('Từ ngày UTC').fill('2026-10-01');
+  await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('không thuộc tổ chức');
+  await expect(page.getByRole('cell', { name: '101', exact: true })).toHaveCount(0);
+  wrongOrg = false;
+  failure = 403;
+  await page.getByRole('button', { name: 'Tải lại báo cáo', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Báo cáo tạm thời');
+});
 test('12a: scoped activity history, dates, pagination, all details and revoked access', async ({
   page,
 }) => {
@@ -1030,17 +1143,11 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
       page.getByRole('heading', { name: 'Đã đăng nhập bằng tài khoản BE' }),
     ).toBeVisible();
     expect(calls.filter((p) => p === '/api/auth/refresh')).toHaveLength(1);
-    const path =
-      role === 'Admin'
-        ? '/admin/metrics'
-        : role === 'CenterAdmin'
-          ? '/center-admin/reports'
-          : '/dashboard';
+    const path = role === 'Admin' ? '/admin/metrics' : '/dashboard';
     await page.goto(path);
     await expect(
       page.getByRole('heading', {
-        name:
-          role === 'Caregiver' ? 'Đã đăng nhập bằng tài khoản BE' : 'Chưa tích hợp trong đợt này',
+        name: role !== 'Admin' ? 'Đã đăng nhập bằng tài khoản BE' : 'Chưa tích hợp trong đợt này',
       }),
     ).toBeVisible();
     expect(
