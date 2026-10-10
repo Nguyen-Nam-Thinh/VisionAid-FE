@@ -3,7 +3,7 @@ Cập nhật kế hoạch: 2026-10-08. Danh sách 001–107 là snapshot OpenAPI
 Swagger: http://51.210.176.94:5002/swagger/index.html
 OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U6a: 70/140 operations có caller Web. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 9: 80/140 operations có caller Web. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -450,9 +450,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 044. POST /api/geofences
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -460,9 +460,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/GeofencesController.cs
 
 045. GET /api/geofences
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: viuId, isActive, page, pageSize
@@ -470,9 +470,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/GeofencesController.cs
 
 046. GET /api/geofences/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -480,9 +480,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/GeofencesController.cs
 
 047. PUT /api/geofences/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -490,9 +490,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/GeofencesController.cs
 
 048. DELETE /api/geofences/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -830,50 +830,50 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 082. POST /api/saved-locations
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
   Body/schema: application/json: AddSavedLocationRequest; text/json: AddSavedLocationRequest; application/*+json: AddSavedLocationRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 083. GET /api/saved-locations
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: viuId, isActive, page, pageSize
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 084. GET /api/saved-locations/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 085. PUT /api/saved-locations/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
   Body/schema: application/json: EditSavedLocationRequest; text/json: EditSavedLocationRequest; application/*+json: EditSavedLocationRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 086. DELETE /api/saved-locations/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
   Body/schema: Không khai báo request body
@@ -1236,3 +1236,7 @@ U6a — DA_NOI FE, chờ test Mobile/TURN/deploy; BE source 48a7346
 - Đã nối tổng 70/140; không coi U6b SOS/FCM/Mobile đã nghiệm thu. Checklist/giới hạn: docs/API_STAGE_U6A_TEST.md.
 U6b — FE đã nối recovery, chờ test live
 GET /api/webrtc/sessions: ngoài history còn được ApiRealtime gọi qua CallClient.recover khi connected/focus/push, xác minh receiver và trạng thái trước popup. Không thêm REST operation. Bấm push focus cửa sổ hiện tại. Payload/history chưa có emergencyEventId nên chưa ghép cảnh báo cụ thể. Chi tiết: docs/API_STAGE_U6B_TEST.md.
+
+
+Đợt 9 — ĐÃ NỐI FE, chờ test BE/Mobile thật
+/api/saved-locations và /api/geofences: mỗi resource gồm GET list, GET id, POST, PUT id, DELETE id. Dùng tại /caregiver/locations, hai tab riêng, popup thêm/sửa/xóa; list có viuId/isActive/page/pageSize. Tổng 80/140. Contract và chuỗi test: docs/API_STAGE_9_TEST.md. Mapbox picker chưa nối; nhập tọa độ chính xác.

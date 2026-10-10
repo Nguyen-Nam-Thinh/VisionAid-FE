@@ -7,7 +7,7 @@ Cập nhật 2026-10-10. Base FE khảo sát U0: dev `5692a87`; BE local mới `
 ## 1. AI tiếp theo bắt đầu ở đâu
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
-2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt tiếp theo 9 chỉ khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt tiếp theo 10 khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
 3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
 4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
 5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
@@ -188,11 +188,11 @@ Giữ mã cũ 0–14 để không làm hỏng checklist/api.txt. Dùng U0–U9 c
 - Test 3 trigger, duplicate/out-of-order, nhiều staff nhận cùng event, quyền bị gỡ giữa cuộc gọi, FCM click khi logout; SOS không bị gián đoạn vì checkout/license expired hoặc lỗi WebRTC.
 - Điểm dừng: nghiệm thu riêng từng trigger; privacy nội dung/version vẫn cần người dùng cung cấp, không tự tạo đồng ý pháp lý.
 
-### 9, 10, 11b, 12 — Hoàn thiện tính năng đã có UI mock [CHƯA NỐI]
+### 9, 10, 11b, 12 — Đợt 9 đã nối FE; 10/11b/12 chưa nối
 
 | Đợt | Màn và API phải nối cùng nhau | Phụ thuộc và test trước bàn giao |
 |---|---|---|
-| 9 | /caregiver/locations: saved-locations CRUD + geofences CRUD | Quyền link + entitlement + GPS/map; create/read/update/reload/delete, tọa độ/radius; cảnh báo vào/ra cần Mobile + boundary worker + 7/8 |
+| 9 — ĐÃ NỐI FE, chờ live | /caregiver/locations: saved-locations CRUD + geofences CRUD | Quyền link + entitlement + GPS/map; create/read/update/reload/delete, tọa độ/radius; cảnh báo vào/ra cần Mobile + boundary worker + 7/8 |
 | 10 | /caregiver/registry: persons CRUD + upload/delete/primary photos | Consent ảnh, MinIO/AI, endpoint preview có authorization; create -> upload -> GET trạng thái -> primary/delete; không render file .enc trực tiếp, thiếu contract media là blocker |
 | 11b | /caregiver/tts: GET/PUT preferences theo userId | VIU scope; map volume BE 0–1 nếu vẫn đúng; save -> reload -> Mobile đọc lại; không dùng me để sửa VIU được chọn |
 | 12a | /caregiver/activity: GET navigation/OCR/QR/recognition/voice list/detail/events | Dữ liệu Mobile và quyền; pagination/timezone/retention, không gửi các POST Mobile từ Web |
@@ -261,4 +261,8 @@ User đã yêu cầu tiếp tục sau khi BE sửa membership relay ở 48a7346.
 
 ## Bàn giao U6b — 2026-10-10
 
-User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt tiếp theo 9 chỉ khi user yêu cầu.
+User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt tiếp theo 10 khi user yêu cầu.
+
+## Bàn giao đợt 9 — 2026-10-10
+
+Đã nối saved-locations/geofences CRUD tại /caregiver/locations, 10 REST operations, tổng 80/140. Contract BE 48a7346. Query scope theo actor/org/VIU/loại/filter; active-link view và canManageLocations write; popup và validation theo BE. 117 unit tests, 4 browser fixture tests chọn lọc, lint/build đạt. Chưa test BE deploy/Mobile/boundary worker thật; Mapbox picker chưa nối, nhập tọa độ. Checklist: docs/API_STAGE_9_TEST.md. Đợt tiếp theo 10 — Face Registry; phải xác minh consent và preview ảnh có authorization, không render file .enc. Không tự chuyển đợt khi chưa được yêu cầu.
