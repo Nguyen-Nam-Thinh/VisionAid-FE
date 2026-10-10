@@ -1240,3 +1240,6 @@ GET /api/webrtc/sessions: ngoài history còn được ApiRealtime gọi qua Cal
 
 Đợt 9 — ĐÃ NỐI FE, chờ test BE/Mobile thật
 /api/saved-locations và /api/geofences: mỗi resource gồm GET list, GET id, POST, PUT id, DELETE id. Dùng tại /caregiver/locations, hai tab riêng, popup thêm/sửa/xóa; list có viuId/isActive/page/pageSize. Tổng 80/140. Contract và chuỗi test: docs/API_STAGE_9_TEST.md. Mapbox picker chưa nối; nhập tọa độ chính xác.
+
+Đợt 10 — CHỜ BE MEDIA CONTRACT, khảo sát 2026-10-10
+Source BE 48a7346 và Swagger deploy chưa có GET preview/content ảnh đã giải mã; upload lưu .enc, storagePath không phải URL preview. Chưa thêm caller, tổng vẫn 80/140. Đề xuất BE và điểm tiếp tục: docs/API_STAGE_10_CONTRACT.md.
