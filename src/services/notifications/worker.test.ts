@@ -58,6 +58,7 @@ it('worker hides payloads, does not duplicate foreground alerts, and ignores sup
   );
   handlers.notificationclick(event);
   await done;
-  expect(navigate).toHaveBeenCalledWith('/dashboard');
+  expect(navigate).not.toHaveBeenCalled();
+  expect(focus).toHaveBeenCalled();
   expect(openWindow).not.toHaveBeenCalled();
 });

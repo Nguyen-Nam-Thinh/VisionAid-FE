@@ -6,6 +6,7 @@ import { hubUrl, startSignalR, refreshRealtimeQueries } from '../services/realti
 import type { Person } from '../models/domain';
 import { createCallClient } from '../services/realtime/calls';
 import { callsApi } from '../services/api/calls';
+import { pushOwner } from '../services/notifications/push';
 import { onSessionEnded } from '../services/sessionLifecycle';
 import { CallContext, CallPanel } from './CallPanel';
 export function ApiRealtime({
@@ -38,13 +39,26 @@ export function ApiRealtime({
       },
       (next) => {
         client.network(next);
-        if (next === 'connected')
+        if (next === 'connected') {
           void cache.invalidateQueries({ queryKey: ['session'] }, { cancelRefetch: false });
+          void client.recover();
+        }
       },
       actor.role === 'Caregiver' ? (connection) => client.attach(connection) : undefined,
     );
+    const recover = () => {
+      void client.recover();
+    };
+    const push = (event: MessageEvent) => {
+      if (event.data?.type === 'visionaid-push' && pushOwner()?.split(':')[0] === actor.id)
+        recover();
+    };
+    window.addEventListener('focus', recover);
+    navigator.serviceWorker?.addEventListener('message', push);
     const unsubscribe = onSessionEnded(stop);
     return () => {
+      window.removeEventListener('focus', recover);
+      navigator.serviceWorker?.removeEventListener('message', push);
       unsubscribe();
       stop();
     };

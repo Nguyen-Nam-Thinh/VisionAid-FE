@@ -36,6 +36,7 @@ export type CallView = {
   message: string;
   muted: boolean;
   remote: MediaStream | null;
+  pending: boolean;
 };
 type Api = ReturnType<typeof createCallsApi>;
 type CallHub = Pick<HubConnection, 'on' | 'off'> & {
@@ -82,6 +83,7 @@ export function createCallClient({
     message: '',
     muted: false,
     remote: null,
+    pending: false,
   };
   const listeners = new Set<() => void>();
   const update = (patch: Partial<CallView>) => {
@@ -120,9 +122,12 @@ export function createCallClient({
     busy = false;
     syncing = false;
   };
-  const finish = (message: string) => {
-    if (view.sessionId) closed.add(view.sessionId);
+  const rememberClosed = (sessionId: string) => {
+    closed.add(sessionId);
     if (closed.size > 128) closed.delete(closed.values().next().value!);
+  };
+  const finish = (message: string) => {
+    if (view.sessionId) rememberClosed(view.sessionId);
     cleanup();
     update({ phase: 'ended', message, remote: null, muted: false });
     changed();
@@ -151,6 +156,47 @@ export function createCallClient({
     await hub.invoke(method, view.sessionId, value);
   };
   const filters = (viuId = '') => ({ viuUserId: viuId, dateFrom: '', dateTo: '' });
+  let recovering = false;
+  async function recover(sessionId?: string, name = 'Người được chăm sóc') {
+    if (!enabled || actor.role !== 'Caregiver' || view.network !== 'connected' || recovering)
+      return;
+    if (active() || busy) return;
+    recovering = true;
+    const epoch = generation;
+    try {
+      // shortcut: inspect the newest 20 sessions; use a pending-call endpoint when BE provides one.
+      const result = await api.history(actor, 1, filters());
+      if (!current(epoch) || active() || busy) return;
+      const call = result.items.find(
+        (item) =>
+          (!sessionId || item.sessionId === sessionId) &&
+          !closed.has(item.sessionId) &&
+          item.receiverId === actor.id &&
+          item.viuUserId &&
+          ['Initiated', 'Ringing'].includes(item.status),
+      );
+      update({ pending: false });
+      if (!call?.viuUserId) return;
+      update({
+        phase: 'incoming',
+        sessionId: call.sessionId,
+        viuId: call.viuUserId,
+        name,
+        message:
+          call.triggerType === 'SosAuto'
+            ? 'Cuộc gọi SOS đến. Chọn nhận để bật micro.'
+            : call.triggerType === 'ViuVoiceCommand'
+              ? 'Người được chăm sóc gọi bằng giọng nói. Chọn nhận để bật micro.'
+              : 'Cuộc gọi đến. Chọn nhận để bật micro.',
+        remote: null,
+      });
+      watch();
+    } catch {
+      // A failed lookup must not change alerts, open media or mutate a server call.
+    } finally {
+      recovering = false;
+    }
+  }
   async function sync() {
     if (!active() || !view.sessionId || syncing || busy) return;
     syncing = true;
@@ -264,44 +310,21 @@ export function createCallClient({
     if (!parsed.success || !enabled || actor.role !== 'Caregiver') return;
     const data = parsed.data;
     if (name === 'WebRtcIncomingCall') {
-      const incoming = events.WebRtcIncomingCall.parse(value);
-      if (active() || busy || closed.has(data.sessionId)) return;
-      busy = true;
-      const epoch = generation;
-      try {
-        const history = await api.history(actor, 1, filters());
-        if (!current(epoch) || active()) return;
-        const call = history.items.find(
-          (item) =>
-            item.sessionId === data.sessionId &&
-            item.receiverId === actor.id &&
-            ['Initiated', 'Ringing'].includes(item.status),
-        );
-        if (!call?.viuUserId) return;
-        update({
-          phase: 'incoming',
-          sessionId: call.sessionId,
-          viuId: call.viuUserId,
-          name: incoming.callerName || 'Người được chăm sóc',
-          message:
-            incoming.triggerType === 'SosAuto'
-              ? 'Cuộc gọi SOS đến. Chọn nhận để bật micro.'
-              : 'Cuộc gọi đến. Chọn nhận để bật micro.',
-          remote: null,
-        });
-        watch();
-      } catch {
-        /* An unverified event must never open media or an actionable call. */
-      } finally {
-        if (current(epoch)) busy = false;
+      if (closed.has(data.sessionId) || data.sessionId === view.sessionId) return;
+      if (active() || busy) {
+        update({ pending: true });
+        return;
       }
+      await recover(data.sessionId, events.WebRtcIncomingCall.parse(value).callerName);
+      return;
+    }
+    if (name === 'WebRtcCallEnded' || name === 'WebRtcCallRejected') {
+      rememberClosed(data.sessionId);
+      if (active() && data.sessionId === view.sessionId)
+        finish(name === 'WebRtcCallRejected' ? 'Cuộc gọi đã bị từ chối.' : 'Cuộc gọi đã kết thúc.');
       return;
     }
     if (!active() || data.sessionId !== view.sessionId) return;
-    if (name === 'WebRtcCallEnded' || name === 'WebRtcCallRejected') {
-      finish(name === 'WebRtcCallRejected' ? 'Cuộc gọi đã bị từ chối.' : 'Cuộc gọi đã kết thúc.');
-      return;
-    }
     if (name === 'WebRtcCallAccepted') {
       if (view.phase === 'ringing')
         update({ phase: 'connecting', message: 'Đã chấp nhận, đang chờ âm thanh và hình ảnh…' });
@@ -337,6 +360,7 @@ export function createCallClient({
   function receive(name: keyof typeof events, value: unknown) {
     if (!enabled) return;
     if (busy && !view.sessionId && view.phase === 'preparing') {
+      if (name === 'WebRtcIncomingCall') update({ pending: true });
       if (queue.length < 128 && name !== 'WebRtcIncomingCall') queue.push({ name, value });
       return;
     }
@@ -459,6 +483,7 @@ export function createCallClient({
           'signaling_lost',
         );
     },
+    recover: () => recover(),
     start: (viuId: string, name: string) => begin(viuId, name),
     accept: () => begin(view.viuId, view.name, true),
     async reject() {
@@ -483,7 +508,10 @@ export function createCallClient({
       update({ muted });
     },
     dismiss() {
-      if (!active()) update({ phase: 'idle', message: '', sessionId: '', name: '', viuId: '' });
+      if (!active()) {
+        update({ phase: 'idle', message: '', sessionId: '', name: '', viuId: '' });
+        void recover();
+      }
     },
   };
 }

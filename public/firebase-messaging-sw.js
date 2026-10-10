@@ -26,7 +26,7 @@ self.addEventListener('notificationclick', (event) => {
         (client) => new URL(client.url).origin === self.location.origin,
       );
       if (existing) {
-        await existing.navigate('/dashboard');
+        existing.postMessage({ type: 'visionaid-push' });
         await existing.focus();
       } else await self.clients.openWindow('/dashboard');
     })(),
