@@ -1,9 +1,9 @@
 VISIONAID WEB — API DÙNG Ở ĐÂU
-Cập nhật kế hoạch: 2026-10-10. Danh sách 001–107 là snapshot OpenAPI cũ (2026-09-25), controller BE/code FE và ảnh Swagger; đã bổ sung đối chiếu 140 operations trong phụ lục U0 và docs/U0_OPENAPI_2026-10-03.md.
+Cập nhật kế hoạch: 2026-10-11. Danh sách 001–107 là snapshot OpenAPI cũ (2026-09-25), controller BE/code FE và ảnh Swagger; đã bổ sung đối chiếu 140 operations trong phụ lục U0 và docs/U0_OPENAPI_2026-10-03.md.
 Swagger: https://api.visionaid.net/swagger/index.html
 OpenAPI: https://api.visionaid.net/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 10: 89/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 11b: 91/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -950,20 +950,20 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/TtsPreferencesController.cs
 
 094. GET /api/users/{userId}/tts-preferences
-  Trạng thái: CHUA_NOI | Đợt: 11b
+  Trạng thái: DA_NOI | Đợt: 11b
   Màn/luồng: /caregiver/tts
-  File FE: src/pages/caregiver/Tts.tsx
-  Dùng để: Cài đặt TTS của VIU. BE volume 0–1, UI mock 0–100 cần map. PUT thành công chưa chứng minh Mobile đã đọc lại.
+  File FE: src/services/api/tts.ts -> src/pages/caregiver/ApiTts.tsx
+  Dùng để: Cài đặt TTS của VIU có active link. Volume UI 0–100% map BE 0–1. Popup tạo/sửa, lưu rồi GET lại; Mobile cần tải lại cấu hình.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/TtsPreferencesController.cs
 
 095. PUT /api/users/{userId}/tts-preferences
-  Trạng thái: CHUA_NOI | Đợt: 11b
+  Trạng thái: DA_NOI | Đợt: 11b
   Màn/luồng: /caregiver/tts
-  File FE: src/pages/caregiver/Tts.tsx
-  Dùng để: Cài đặt TTS của VIU. BE volume 0–1, UI mock 0–100 cần map. PUT thành công chưa chứng minh Mobile đã đọc lại.
+  File FE: src/services/api/tts.ts -> src/pages/caregiver/ApiTts.tsx
+  Dùng để: Cài đặt TTS của VIU có active link. Volume UI 0–100% map BE 0–1. Popup tạo/sửa, lưu rồi GET lại; Mobile cần tải lại cấu hình.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: application/json: UpsertTtsPreferenceRequest; text/json: UpsertTtsPreferenceRequest; application/*+json: UpsertTtsPreferenceRequest
@@ -1260,3 +1260,11 @@ UI: src/pages/caregiver/ApiRegistry.tsx, route /caregiver/registry. Chỉ Caregi
 - Auth binary dùng client.ts -> auth.blob -> adapter.apiBlob; giữ nguyên lỗi JSON/402, không đưa token lên URL. Response đến sau logout bị loại.
 - GET/POST recognition-logs giữ trạng thái đợt12/Mobile. Privacy policy vẫn chờ, không gọi accept-privacy-policy. Test và dependencies: docs/API_STAGE_10_TEST.md.
 - Swagger mới 144: ngoài GET photo còn PUT /api/emergency-events/{id}/snapshot, POST /api/navigation/guidance, GET /api/navigation/guidance/logs; chưa nối Web, cần đối chiếu role/DTO ở đợt liên quan. Không tự mở rộng phạm vi đợt10.
+
+Đợt 11b — DA_NOI FE 2026-10-11; tổng 91/144 callers Web
+- GET /api/users/{userId}/tts-preferences: ttsApi.read -> /caregiver/tts, sau khi chọn VIU và sau lưu/tải lại/poll30s ngoài popup. DTO id,userId,voiceGender,speedRate,volumeLevel,detectionMode,primaryLanguage,secondaryLanguage,updatedAt. Xác minh userId; sai DTO/enum/range báo lỗi.
+- PUT /api/users/{userId}/tts-preferences: ttsApi.save -> popup Tạo/Chỉnh sửa giọng đọc. Upsert JSON voiceGender Male/Female, speedRate 0.5–2, volumeLevel 0–1, detectionMode Minimal/Full, primaryLanguage, secondaryLanguage. UI chuyển percent/100; không gửi volumePercent hay userId trong body.
+- GET caregiver-links kiểm lại active link trước đọc/ghi. Không dựa vào primary hoặc quyền ảnh/vị trí. GET404 preferences thì GET users/{id} xác minh VIU tồn tại trước hiển thị trạng thái chưa có cấu hình; lỗi user/403/402/5xx không giả default.
+- Ngôn ngữ phụ trống gửi "" để xóa; null giữ nguyên theo BE. Không gọi /me cho VIU được chọn; không có DELETE. Không tự gửi PUT khi chỉ mở trang, không retry ghi hoặc đánh dấu Mobile đã áp dụng.
+- Query scope actor/org/VIU; popup giữ dữ liệu khi lỗi, đổi VIU/unmount loại response cũ. Route chỉ Caregiver, chưa mở UI TTS toàn tổ chức/Admin.
+- Test: docs/API_STAGE_11B_TEST.md. Mobile cần GET /api/users/me/tts-preferences rồi áp dụng TTS để nghiệm thu liên thông.
