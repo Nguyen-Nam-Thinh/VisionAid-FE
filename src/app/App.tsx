@@ -19,6 +19,7 @@ import { ApiRegistry } from '../pages/caregiver/ApiRegistry';
 import { ApiTts } from '../pages/caregiver/ApiTts';
 import { ApiActivity } from '../pages/caregiver/ApiActivity';
 import { ApiReports } from '../pages/center-admin/ApiReports';
+import { ApiConfigurations } from '../pages/super-admin/ApiConfigurations';
 import { ApiContacts } from '../pages/caregiver/ApiContacts';
 import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
@@ -194,7 +195,9 @@ function Shell() {
                       'activity',
                     ].includes(item.path)) ||
                   (user.role === 'Admin' &&
-                    ['organizations', 'accounts', 'links', 'rules'].includes(item.path)) ||
+                    ['organizations', 'accounts', 'links', 'rules', 'configurations'].includes(
+                      item.path,
+                    )) ||
                   (user.role === 'CenterAdmin' &&
                     [
                       'organization',
@@ -422,6 +425,8 @@ export function App() {
                           <ApiActivity />
                         ) : f.role === 'CenterAdmin' && f.path === 'reports' ? (
                           <ApiReports />
+                        ) : f.role === 'Admin' && f.path === 'configurations' ? (
+                          <ApiConfigurations />
                         ) : (f.role === 'Admin' && f.path === 'organizations') ||
                           (f.role === 'CenterAdmin' && f.path === 'organization') ? (
                           <ApiOrganizations />
