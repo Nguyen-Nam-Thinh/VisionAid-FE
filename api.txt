@@ -3,7 +3,7 @@ Cập nhật kế hoạch: 2026-10-11. Danh sách 001–107 là snapshot OpenAPI
 Swagger: https://api.visionaid.net/swagger/index.html
 OpenAPI: https://api.visionaid.net/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U7a: 116/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U7b: 117/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid metadata logs đã nối U7b; metrics/config tái sử dụng 13b/13a.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -1285,3 +1285,10 @@ BỔ SUNG ĐỢT 12b — 2026-10-11
 Đợt 13b: 4 GET callers mới, tổng 112/144. Metrics DateOnly UTC, audit và failed lọc ngày Việt Nam; status 24h/7d không theo filter failed. Audit chỉ giữ metadata, raw response cần BE redaction. Không có mutation/retry delivery. Checklist docs/API_STAGE_13B_TEST.md; tiếp U7a khi được yêu cầu.
 
 U7a: 4 ICE admin operations đã nối, tổng 116/144. GET page/pageSize/isActive, POST tạo luôn bật, PUT phải nhập credential TURN mỗi lần, DELETE204. Credential bị loại khỏi cache/UI nhưng raw BE response vẫn chứa. Không rotate TURN server hay test cuộc gọi tự động. Checklist docs/API_STAGE_U7A_TEST.md.
+
+U7b — 2026-10-11: 1 GET caller mới, tổng 117/144.
+- GET /api/navigation/guidance/logs -> services/api/monitoring.ts -> pages/super-admin/ApiMonitoring.tsx -> /admin/hybrid, menu Nhật ký Hybrid, Admin-only.
+- Query page/pageSize20, userId, sessionId, engineUsed Jev/Groq/RuleBased, isOfflineFallback true/false, dateFrom/dateTo bao gồm trọn ngày Việt Nam.
+- Popup dùng metadata của dòng list, không bịa GET detail. Loại detectedObjectsJson/ttsText khỏi cache/UI; raw response vẫn có. Không gửi POST guidance của Mobile.
+- Link /admin/metrics dùng GET /api/ai-metrics đã có; modelName JEV/Groq/RuleBased, DateOnly UTC. Link /admin/configurations dùng 5 operations13a đã có cho 3 khóa Hybrid, không đếm lại callers.
+- latency null không hiển thị 0; fallback không chứng minh Mobile offline; failed metric của nguồn này đếm latency null. Checklist docs/API_STAGE_U7B_TEST.md. Tiếp U8, chờ nghiệm thu Mobile/engine thật.

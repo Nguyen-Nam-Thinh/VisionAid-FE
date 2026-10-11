@@ -1,4 +1,103 @@
 import { test, expect, type Page } from '@playwright/test';
+test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ page }) => {
+  await stubApi(page, 'Admin');
+  const requests: URL[] = [];
+  let failed = false;
+  await page.route('**/api/navigation/guidance/logs?*', (route) => {
+    expect(route.request().method()).toBe('GET');
+    const url = new URL(route.request().url());
+    requests.push(url);
+    if (failed) return route.fulfill({ status: 500, json: { detail: 'Nhật ký tạm thời lỗi' } });
+    const current = Number(url.searchParams.get('page'));
+    const empty = url.searchParams.get('engineUsed') === 'Groq';
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          items: empty
+            ? []
+            : [
+                {
+                  id,
+                  sessionId: id,
+                  userId: id,
+                  frameId: 0,
+                  decision: 'STOP',
+                  engineUsed: 'RuleBased',
+                  isOfflineFallback: true,
+                  latencyMs: null,
+                  createdAt: '2026-10-11T00:00:00Z',
+                  detectedObjectsJson: 'PRIVATE_SCENE',
+                  ttsText: 'PRIVATE_SPEECH',
+                },
+              ],
+          page: current,
+          pageSize: 20,
+          totalCount: empty ? 0 : 21,
+          totalPages: empty ? 0 : 2,
+          hasNextPage: !empty && current === 1,
+          hasPreviousPage: current > 1,
+        },
+      },
+    });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Nhật ký Hybrid', exact: true }).click();
+  await expect(page.getByRole('cell', { name: 'Dừng lại', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Chưa có dữ liệu', exact: true })).toBeVisible();
+  await page.getByLabel('Mã người dùng', { exact: true }).fill(id);
+  await page.getByLabel('Mã phiên điều hướng', { exact: true }).fill(id);
+  await page.getByRole('combobox', { name: 'Engine', exact: true }).selectOption('RuleBased');
+  await page.getByRole('combobox', { name: 'Fallback', exact: true }).selectOption('true');
+  await page.getByLabel('Từ ngày Việt Nam').fill('2026-10-11');
+  await page.getByLabel('Đến ngày Việt Nam').fill('2026-10-11');
+  await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
+  await expect.poll(() => requests.at(-1)?.searchParams.get('userId')).toBe(id);
+  expect(requests.at(-1)?.searchParams.get('engineUsed')).toBe('RuleBased');
+  expect(requests.at(-1)?.searchParams.get('isOfflineFallback')).toBe('true');
+  expect(requests.at(-1)?.searchParams.get('dateTo')).toBe('2026-10-11T23:59:59.9999999+07:00');
+  await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Trang 2/2');
+  await page.screenshot({ path: 'test-results/stageU7b-desktop.png', fullPage: true });
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('RuleBased');
+  await expect(dialog).not.toContainText('PRIVATE_');
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    .toBe(true);
+  await page.screenshot({ path: 'test-results/stageU7b-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+  await page.screenshot({ path: 'test-results/stageU7b-dialog-mobile.png', fullPage: false });
+  await page.keyboard.press('Escape');
+  await page.getByRole('combobox', { name: 'Engine', exact: true }).selectOption('Groq');
+  await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
+  await expect(page.getByText('Không có bản ghi phù hợp.')).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Trang' })).toContainText('Trang 1/1');
+  await expect(page.getByRole('link', { name: 'Xem số liệu AI' })).toHaveAttribute(
+    'href',
+    '/admin/metrics',
+  );
+  await expect(page.getByRole('link', { name: 'Cấu hình engine', exact: true })).toHaveAttribute(
+    'href',
+    '/admin/configurations',
+  );
+  failed = true;
+  await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Nhật ký tạm thời lỗi');
+});
+
+test('U7b: non-admin cannot open Hybrid administration', async ({ page }) => {
+  const calls = await stubApi(page, 'CenterAdmin', '01900000-0000-7000-8000-000000000002');
+  await login(page);
+  await expect(page.getByRole('link', { name: 'Nhật ký Hybrid' })).toHaveCount(0);
+  await page.goto('/admin/hybrid');
+  await expect(page).toHaveURL(/forbidden$/);
+  expect(calls.some((path) => path.includes('/navigation/guidance'))).toBe(false);
+});
+
 test('U7a: ICE CRUD, credential exclusion and uncertain writes', async ({ page }) => {
   await stubApi(page, 'Admin');
   let servers = [

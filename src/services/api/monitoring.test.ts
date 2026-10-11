@@ -33,7 +33,7 @@ it('denies every monitoring request for non-admin before HTTP', async () => {
   const get = vi.fn();
   const api = createMonitoringApi(get);
   for (const role of ['Caregiver', 'CenterAdmin', 'VisuallyImpaired'] as const) {
-    for (const kind of ['metrics', 'audit', 'delivery'] as const)
+    for (const kind of ['metrics', 'audit', 'delivery', 'guidance'] as const)
       await expect(api.list({ role }, kind, 1, {})).rejects.toMatchObject({ status: 403 });
     await expect(api.status({ role })).rejects.toMatchObject({ status: 403 });
   }
@@ -68,31 +68,33 @@ it('validates dates, page, UUID and enum filters before HTTP', async () => {
     ['audit', { targetRecordId: 'oops' }],
     ['audit', { actionType: 'DeleteAll' }],
     ['delivery', { channel: 'SMS' }],
+    ['guidance', { userId: 'oops' }],
+    ['guidance', { sessionId: 'oops' }],
+    ['guidance', { engineUsed: 'JEV' }],
+    ['guidance', { isOfflineFallback: 'yes' }],
   ] as const)
     await expect(api.list(actor, kind, 1, filters)).rejects.toMatchObject({ status: 400 });
   await expect(api.list(actor, 'metrics', 0, {})).rejects.toMatchObject({ status: 400 });
   expect(get).not.toHaveBeenCalled();
 });
 it('keeps audit metadata only and uses complete Vietnam dates including sub-millisecond boundary', async () => {
-  const get = vi
-    .fn()
-    .mockResolvedValue(
-      page([
-        {
-          id,
-          actorId: null,
-          actionType: 'ConfigChanged',
-          targetTable: 'system_configurations',
-          targetRecordId: id,
-          performedAt: at,
-          oldData: '{"secret":"old"}',
-          newData: 'secret',
-          notes: 'secret',
-          ipAddress: 'secret',
-          userAgent: 'secret',
-        },
-      ]),
-    );
+  const get = vi.fn().mockResolvedValue(
+    page([
+      {
+        id,
+        actorId: null,
+        actionType: 'ConfigChanged',
+        targetTable: 'system_configurations',
+        targetRecordId: id,
+        performedAt: at,
+        oldData: '{"secret":"old"}',
+        newData: 'secret',
+        notes: 'secret',
+        ipAddress: 'secret',
+        userAgent: 'secret',
+      },
+    ]),
+  );
   const result = await createMonitoringApi(get).list(actor, 'audit', 1, {
     from: '2026-10-11',
     to: '2026-10-11',
@@ -139,11 +141,66 @@ it('reads notification status and failed records without mutation or retry', asy
   expect(get).toHaveBeenCalledTimes(3);
 });
 it('rejects malformed responses instead of presenting fake zero totals', async () => {
-  for (const kind of ['metrics', 'audit', 'delivery'] as MonitoringKind[])
+  for (const kind of ['metrics', 'audit', 'delivery', 'guidance'] as MonitoringKind[])
     await expect(
       createMonitoringApi(vi.fn().mockResolvedValue(page([{ id }]))).list(actor, kind, 1, {}),
     ).rejects.toMatchObject({ status: 502 });
   await expect(
     createMonitoringApi(vi.fn().mockResolvedValue({})).status(actor),
   ).rejects.toMatchObject({ status: 502 });
+});
+it('reads Hybrid metadata, preserves null timing and strips scene/TTS before caching', async () => {
+  const record = {
+    id,
+    sessionId: id,
+    userId: id,
+    frameId: 0,
+    decision: 'STOP',
+    engineUsed: 'RuleBased',
+    isOfflineFallback: true,
+    latencyMs: null,
+    createdAt: at,
+  };
+  const get = vi
+    .fn()
+    .mockResolvedValue(
+      page([{ ...record, detectedObjectsJson: 'PRIVATE_SCENE', ttsText: 'PRIVATE_SPEECH' }]),
+    );
+  const signal = new AbortController().signal;
+  const result = await createMonitoringApi(get).list(
+    actor,
+    'guidance',
+    2,
+    {
+      userId: id,
+      sessionId: id,
+      engineUsed: 'RuleBased',
+      isOfflineFallback: 'false',
+      from: '2026-10-11',
+      to: '2026-10-11',
+    },
+    signal,
+  );
+  expect(result.items).toEqual([record]);
+  const url = new URL('https://test' + get.mock.calls[0][0]);
+  expect(url.pathname).toBe('/api/navigation/guidance/logs');
+  expect(Object.fromEntries(url.searchParams)).toEqual({
+    page: '2',
+    pageSize: '20',
+    userId: id,
+    sessionId: id,
+    engineUsed: 'RuleBased',
+    isOfflineFallback: 'false',
+    dateFrom: '2026-10-11T00:00:00+07:00',
+    dateTo: '2026-10-11T23:59:59.9999999+07:00',
+  });
+  expect(get.mock.calls[0][1]).toBe(signal);
+  get.mockResolvedValue(page([{ ...record, latencyMs: 0, isOfflineFallback: false }]));
+  expect((await createMonitoringApi(get).list(actor, 'guidance', 1, {})).items[0].latencyMs).toBe(
+    0,
+  );
+  get.mockResolvedValue(page([{ ...record, isOfflineFallback: 'false' }]));
+  await expect(createMonitoringApi(get).list(actor, 'guidance', 1, {})).rejects.toMatchObject({
+    status: 502,
+  });
 });

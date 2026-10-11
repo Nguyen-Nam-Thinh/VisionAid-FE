@@ -44,6 +44,19 @@ const failed = z.object({
   failureReason: z.string().nullable(),
   createdAt: time,
 });
+// Keep operational metadata only; scene JSON and spoken content stay out of cache/UI.
+const guidance = z.object({
+  id: uuid,
+  sessionId: uuid,
+  userId: uuid,
+  frameId: z.number().int(),
+  decision: z.string(),
+  engineUsed: z.string(),
+  isOfflineFallback: z.boolean(),
+  latencyMs: count.nullable(),
+  createdAt: time,
+});
+export const guidanceEngines = ['Jev', 'Groq', 'RuleBased'] as const;
 const period = z.object({
   totalSent: count,
   totalFailed: count,
@@ -86,9 +99,10 @@ const kinds = {
   metrics: { path: '/api/ai-metrics', schema: metric },
   audit: { path: '/api/audit-logs', schema: audit },
   delivery: { path: '/api/notifications/failed', schema: failed },
+  guidance: { path: '/api/navigation/guidance/logs', schema: guidance },
 };
 export type MonitoringKind = keyof typeof kinds;
-export type MonitoringRecord = Record<string, string | number | null> & { id: string };
+export type MonitoringRecord = Record<string, string | number | boolean | null> & { id: string };
 export type MonitoringFilters = {
   from?: string;
   to?: string;
@@ -98,6 +112,10 @@ export type MonitoringFilters = {
   targetTable?: string;
   targetRecordId?: string;
   channel?: string;
+  userId?: string;
+  sessionId?: string;
+  engineUsed?: string;
+  isOfflineFallback?: string;
 };
 function authorize(actor: Pick<Person, 'role'>) {
   if (actor.role !== 'Admin')
@@ -133,16 +151,23 @@ export function createMonitoringApi(get = apiGet) {
           ? (['modelName'] as const)
           : kind === 'audit'
             ? (['actorId', 'actionType', 'targetTable', 'targetRecordId'] as const)
-            : (['channel'] as const);
+            : kind === 'guidance'
+              ? (['userId', 'sessionId', 'engineUsed', 'isOfflineFallback'] as const)
+              : (['channel'] as const);
       for (const key of allowed) {
         const value = filters[key]?.trim();
         if (!value) continue;
-        if ((key === 'actorId' || key === 'targetRecordId') && !uuid.safeParse(value).success)
-          throw new ServiceError('Mã người thực hiện hoặc đối tượng phải là UUID hợp lệ.', 400);
+        if (
+          ['actorId', 'targetRecordId', 'userId', 'sessionId'].includes(key) &&
+          !uuid.safeParse(value).success
+        )
+          throw new ServiceError('Mã định danh phải là UUID hợp lệ.', 400);
         if (
           (key === 'targetTable' && value.length > 100) ||
           (key === 'actionType' && !auditActions.some((action) => action === value)) ||
-          (key === 'channel' && !['Fcm', 'SignalR', 'Email'].includes(value))
+          (key === 'channel' && !['Fcm', 'SignalR', 'Email'].includes(value)) ||
+          (key === 'engineUsed' && !guidanceEngines.some((engine) => engine === value)) ||
+          (key === 'isOfflineFallback' && !['true', 'false'].includes(value))
         )
           throw new ServiceError('Bộ lọc không hợp lệ.', 400);
         query.set(key, value);

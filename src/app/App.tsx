@@ -254,6 +254,11 @@ function Shell() {
               </>
             )}
             {runtime.mode === 'api' && user.role === 'Admin' && (
+              <NavLink to="/admin/hybrid" onClick={() => setOpen(false)}>
+                Nhật ký Hybrid
+              </NavLink>
+            )}
+            {runtime.mode === 'api' && user.role === 'Admin' && (
               <NavLink to="/admin/ice-servers" onClick={() => setOpen(false)}>
                 Máy chủ cuộc gọi
               </NavLink>
@@ -417,6 +422,7 @@ export function App() {
                 <Route element={<Guard role="Admin" />}>
                   <Route path="admin/packages" element={<ApiPackages admin />} />
                   <Route path="admin/ice-servers" element={<ApiIceServers />} />
+                  <Route path="admin/hybrid" element={<ApiMonitoring kind="guidance" />} />
                 </Route>
               )}
               {runtime.mode === 'api' && <Route path="license" element={<ApiLicense />} />}
