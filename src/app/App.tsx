@@ -19,6 +19,7 @@ import { ApiRegistry } from '../pages/caregiver/ApiRegistry';
 import { ApiTts } from '../pages/caregiver/ApiTts';
 import { ApiActivity } from '../pages/caregiver/ApiActivity';
 import { ApiReports } from '../pages/center-admin/ApiReports';
+import { ApiIceServers } from '../pages/super-admin/ApiIceServers';
 import { ApiMonitoring } from '../pages/super-admin/ApiMonitoring';
 import { ApiConfigurations } from '../pages/super-admin/ApiConfigurations';
 import { ApiContacts } from '../pages/caregiver/ApiContacts';
@@ -252,6 +253,11 @@ function Shell() {
                 </NavLink>
               </>
             )}
+            {runtime.mode === 'api' && user.role === 'Admin' && (
+              <NavLink to="/admin/ice-servers" onClick={() => setOpen(false)}>
+                Máy chủ cuộc gọi
+              </NavLink>
+            )}
             {runtime.mode === 'api' && <NavLink to="/license">License</NavLink>}
             {runtime.mode === 'api' && user.role === 'Caregiver' && !user.orgId && (
               <NavLink to="/caregiver/payments" onClick={() => setOpen(false)}>
@@ -410,6 +416,7 @@ export function App() {
               {runtime.mode === 'api' && (
                 <Route element={<Guard role="Admin" />}>
                   <Route path="admin/packages" element={<ApiPackages admin />} />
+                  <Route path="admin/ice-servers" element={<ApiIceServers />} />
                 </Route>
               )}
               {runtime.mode === 'api' && <Route path="license" element={<ApiLicense />} />}

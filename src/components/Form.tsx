@@ -15,6 +15,7 @@ export interface FieldSpec {
   disabled?: boolean;
   hint?: string;
   step?: number;
+  autoComplete?: string;
 }
 
 export function Form({
@@ -119,11 +120,12 @@ export function Form({
                 type={field.type ?? 'text'}
                 step={field.step ?? 'any'}
                 autoComplete={
-                  field.type === 'password'
+                  field.autoComplete ??
+                  (field.type === 'password'
                     ? 'current-password'
                     : field.type === 'email'
                       ? 'email'
-                      : 'off'
+                      : 'off')
                 }
               />
             )}

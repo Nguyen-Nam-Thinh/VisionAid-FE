@@ -1,4 +1,132 @@
 import { test, expect, type Page } from '@playwright/test';
+test('U7a: ICE CRUD, credential exclusion and uncertain writes', async ({ page }) => {
+  await stubApi(page, 'Admin');
+  let servers = [
+    {
+      id,
+      serverType: 'Turn',
+      url: 'turn:relay.test:3478',
+      username: 'relay-user',
+      credential: 'EXISTING_SECRET',
+      priority: 100,
+      isActive: true,
+      createdAt: '2026-10-11T00:00:00Z',
+      updatedAt: '2026-10-11T00:00:00Z',
+    },
+  ];
+  const writes: { method: string; body: Record<string, unknown> }[] = [];
+  let ambiguous = false;
+  await page.route('**/api/webrtc/ice-servers**', (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const method = request.method();
+    if (method === 'GET') {
+      const active = url.searchParams.get('isActive');
+      const items = servers.filter((server) => !active || String(server.isActive) === active);
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            items,
+            page: 1,
+            pageSize: 20,
+            totalCount: items.length,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        },
+      });
+    }
+    const body = method === 'DELETE' ? {} : request.postDataJSON();
+    writes.push({ method, body });
+    if (ambiguous) return route.fulfill({ status: 500, json: { detail: 'SECRET_IN_ERROR' } });
+    if (method === 'DELETE') {
+      servers = [];
+      return route.fulfill({ status: 204 });
+    }
+    const updated = {
+      ...servers[0],
+      ...body,
+      id,
+      createdAt: '2026-10-11T00:00:00Z',
+      isActive: method === 'POST' ? true : body.isActive,
+      updatedAt: '2026-10-11T01:00:00Z',
+    };
+    servers = [updated];
+    return route.fulfill({ json: { success: true, data: updated } });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Máy chủ cuộc gọi' }).click();
+  await expect(page.getByRole('cell', { name: 'turn:relay.test:3478', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByLabel('Credential TURN muốn áp dụng')).toHaveValue('');
+  await expect(dialog.getByLabel('Credential TURN muốn áp dụng')).toHaveAttribute(
+    'autocomplete',
+    'new-password',
+  );
+  await expect(page.getByText('EXISTING_SECRET')).toHaveCount(0);
+  await dialog.getByLabel('Tôi xác nhận').check();
+  await dialog.getByRole('button', { name: 'Lưu máy chủ' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('TURN cần');
+  expect(writes).toHaveLength(0);
+  await dialog.getByLabel('Credential TURN muốn áp dụng').fill('replacement');
+  await dialog.getByLabel('Độ ưu tiên').fill('25');
+  await dialog.getByLabel('Bật máy chủ').uncheck();
+  await page.screenshot({ path: 'test-results/stageU7a-edit-desktop.png', fullPage: false });
+  await dialog.getByRole('button', { name: 'Lưu máy chủ' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(writes[0]).toMatchObject({
+    method: 'PUT',
+    body: { credential: 'replacement', isActive: false, priority: 25 },
+  });
+  await page.getByRole('combobox', { name: /Trạng thái máy chủ/ }).selectOption('false');
+  await expect(page.getByRole('cell', { name: 'Đang tắt', exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/stageU7a-list-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.screenshot({ path: 'test-results/stageU7a-list-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Xóa', exact: true }).click();
+  await page.keyboard.press('Escape');
+  expect(writes).toHaveLength(1);
+  await page.getByRole('button', { name: 'Xóa', exact: true }).click();
+  await dialog.getByLabel('Tôi xác nhận').check();
+  await dialog.getByRole('button', { name: 'Xác nhận xóa' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByText('Không có máy chủ phù hợp.')).toBeVisible();
+  await page.getByRole('combobox', { name: /Trạng thái máy chủ/ }).selectOption('');
+  await page.getByRole('button', { name: 'Thêm máy chủ', exact: true }).click();
+  await dialog.getByLabel('Địa chỉ máy chủ').fill('https://wrong.test');
+  await dialog.getByLabel('Tôi xác nhận').check();
+  await dialog.getByRole('button', { name: 'Lưu máy chủ' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Địa chỉ phải');
+  expect(writes).toHaveLength(2);
+  await dialog.getByLabel('Địa chỉ máy chủ').fill('stun:relay.test:3478');
+  await page.screenshot({ path: 'test-results/stageU7a-create-mobile.png', fullPage: false });
+  await dialog.getByRole('button', { name: 'Lưu máy chủ' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('cell', { name: 'stun:relay.test:3478', exact: true })).toBeVisible();
+  expect(writes[2]).toMatchObject({ method: 'POST', body: { credential: null, username: null } });
+  expect(writes[2].body).not.toHaveProperty('isActive');
+  await page.getByRole('button', { name: 'Thêm máy chủ', exact: true }).click();
+  await dialog.getByLabel('Địa chỉ máy chủ').fill('stun:another.test:3478');
+  await dialog.getByLabel('Tôi xác nhận').check();
+  ambiguous = true;
+  await dialog.getByRole('button', { name: 'Lưu máy chủ' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Chưa xác nhận kết quả ghi');
+  await expect(dialog.getByRole('button', { name: 'Lưu máy chủ' })).toHaveCount(0);
+  await expect(page.getByText('SECRET_IN_ERROR')).toHaveCount(0);
+  expect(writes).toHaveLength(4);
+});
+test('U7a: ICE admin route denies CenterAdmin', async ({ page }) => {
+  const calls = await stubApi(page, 'CenterAdmin', '01900000-0000-7000-8000-000000000002');
+  await login(page);
+  await expect(page.getByRole('link', { name: 'Máy chủ cuộc gọi' })).toHaveCount(0);
+  await page.goto('/admin/ice-servers');
+  await expect(page).toHaveURL(/forbidden$/);
+  expect(calls.some((path) => path.includes('ice-servers'))).toBe(false);
+});
 test('13b: metrics, audit and delivery filters, details and independent errors', async ({
   page,
 }) => {
