@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { PageHead, State, Dialog } from '../../components/UI';
@@ -6,6 +7,7 @@ import { formatTime } from '../../constants/labels';
 import {
   monitoringApi,
   auditActions,
+  guidanceEngines,
   type MonitoringKind,
   type MonitoringFilters,
   type MonitoringRecord,
@@ -16,8 +18,16 @@ const titles = {
   metrics: 'Hiệu năng AI',
   audit: 'Nhật ký kiểm toán',
   delivery: 'Theo dõi thông báo',
+  guidance: 'Nhật ký Hybrid',
 };
 const labels: Record<string, string> = {
+  sessionId: 'Mã phiên điều hướng',
+  userId: 'Mã người dùng',
+  frameId: 'Mã khung hình',
+  decision: 'Quyết định',
+  engineUsed: 'Engine',
+  isOfflineFallback: 'Fallback theo máy chủ',
+  latencyMs: 'Thời gian xử lý',
   id: 'Mã bản ghi',
   modelName: 'Mô hình',
   modelVersion: 'Phiên bản',
@@ -49,6 +59,7 @@ const labels: Record<string, string> = {
   createdAt: 'Thời gian tạo',
 };
 const columns = {
+  guidance: ['createdAt', 'engineUsed', 'decision', 'latencyMs', 'isOfflineFallback'],
   metrics: [
     'metricDate',
     'modelName',
@@ -66,8 +77,16 @@ const channelLabels: Record<string, string> = {
   SignalR: 'SignalR',
   Email: 'Email',
 };
-function valueText(key: string, value: string | number | null) {
+const decisions = new Map([
+  ['STOP', 'Dừng lại'],
+  ['TURN_LEFT', 'Rẽ trái'],
+  ['TURN_RIGHT', 'Rẽ phải'],
+  ['PROCEED', 'Tiếp tục'],
+]);
+function valueText(key: string, value: string | number | boolean | null) {
   if (value === null) return key === 'actorId' ? 'Hệ thống hoặc chưa ghi nhận' : 'Chưa có dữ liệu';
+  if (key === 'isOfflineFallback') return value ? 'Có' : 'Không';
+  if (key === 'decision') return decisions.get(String(value)) ?? String(value);
   if (key.endsWith('At')) return formatTime(String(value)) + ' · UTC+7';
   if (key.endsWith('Ms')) return value + ' ms';
   if (key === 'avgConfidence') return (Number(value) * 100).toFixed(1) + '%';
@@ -102,9 +121,11 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
         description={
           kind === 'metrics'
             ? 'Số liệu theo mô hình và ngày UTC. Confidence và tỷ lệ xử lý thành công không phải độ chính xác AI.'
-            : kind === 'audit'
-              ? 'Tra cứu thao tác quản trị. Nhật ký chỉ đọc, không sửa hoặc xóa.'
-              : 'Thống kê gửi cảnh báo và tra cứu thông báo thất bại.'
+            : kind === 'guidance'
+              ? 'Theo dõi quyết định và thời gian xử lý do máy chủ ghi nhận. Đây là lịch sử, không phải hướng dẫn di chuyển trực tiếp.'
+              : kind === 'audit'
+                ? 'Tra cứu thao tác quản trị. Nhật ký chỉ đọc, không sửa hoặc xóa.'
+                : 'Thống kê gửi cảnh báo và tra cứu thông báo thất bại.'
         }
       />
       <div className="stack">
@@ -125,6 +146,35 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
               setSelected(null);
             }}
           >
+            {kind === 'guidance' && (
+              <>
+                <label className="field">
+                  Mã người dùng
+                  <input name="userId" placeholder="UUID" />
+                </label>
+                <label className="field">
+                  Mã phiên điều hướng
+                  <input name="sessionId" placeholder="UUID" />
+                </label>
+                <label className="field">
+                  Engine
+                  <select name="engineUsed">
+                    <option value="">Tất cả engine</option>
+                    {guidanceEngines.map((engine) => (
+                      <option key={engine}>{engine}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  Fallback
+                  <select name="isOfflineFallback">
+                    <option value="">Tất cả bản ghi</option>
+                    <option value="true">Có fallback</option>
+                    <option value="false">Không fallback</option>
+                  </select>
+                </label>
+              </>
+            )}
             {kind === 'metrics' && (
               <label className="field">
                 Tên mô hình
@@ -202,6 +252,36 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
             <p>
               Chi tiết hiển thị thông tin thao tác. Nội dung trước/sau, ghi chú và thông tin thiết
               bị chưa hiển thị vì có thể chứa dữ liệu nhạy cảm.
+            </p>
+          )}
+          {kind === 'guidance' && (
+            <div className="stack">
+              <p>
+                Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói.
+                Fallback là cờ do máy chủ ghi nhận, không chứng minh điện thoại đang offline hoặc
+                ghi lại mọi lần chuyển engine. Độ trễ không phải thời gian toàn bộ yêu cầu từ điện
+                thoại.
+              </p>
+              <div className="row">
+                <Link className="btn" to="/admin/metrics">
+                  Xem số liệu AI
+                </Link>
+                <Link className="btn" to="/admin/configurations">
+                  Cấu hình engine
+                </Link>
+              </div>
+              <p>
+                Trong cấu hình hệ thống, tìm hybrid_navigation_enabled, hybrid_navigation_engine
+                hoặc navigation_near_threshold_ms. Số liệu AI tổng hợp dùng tên JEV, Groq và
+                RuleBased.
+              </p>
+            </div>
+          )}
+          {kind === 'metrics' && (
+            <p>
+              Với nguồn navigation_guidance_logs, máy chủ tính bản ghi thiếu độ trễ vào nhóm thất
+              bại, kể cả RuleBased đã trả quyết định. Các số này không đánh giá độ đúng hoặc an toàn
+              của hướng dẫn.
             </p>
           )}
           <State loading={query.isPending} error={query.error} retry={() => void query.refetch()}>
