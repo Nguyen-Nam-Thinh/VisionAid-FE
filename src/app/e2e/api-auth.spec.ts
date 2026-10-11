@@ -1,4 +1,166 @@
 import { test, expect, type Page } from '@playwright/test';
+test('13b: metrics, audit and delivery filters, details and independent errors', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  const at = '2026-10-11T00:00:00Z';
+  const metric = {
+    id,
+    modelName: 'Tesseract',
+    modelVersion: '1.0',
+    metricDate: '2026-10-10',
+    sourceTable: 'ocr_requests',
+    totalRequests: 10,
+    successfulRequests: 8,
+    failedRequests: 2,
+    avgConfidence: null,
+    avgLatencyMs: 0,
+    p95LatencyMs: null,
+    p99LatencyMs: 50,
+    errorCount: 2,
+    aggregatedBy: 'AiMetricsAggregator',
+    recordedAt: at,
+  };
+  const audit = {
+    id,
+    actorId: null,
+    actionType: 'ConfigChanged',
+    targetTable: 'system_configurations',
+    targetRecordId: id,
+    performedAt: at,
+    oldData: 'DO_NOT_DISPLAY_SECRET',
+    newData: 'DO_NOT_DISPLAY_SECRET',
+    notes: 'DO_NOT_DISPLAY_SECRET',
+  };
+  const failure = {
+    id,
+    sourceType: 'Emergency',
+    emergencyEventId: id,
+    locationBoundaryEventId: null,
+    recipientId: id,
+    notificationType: 'FallDetected',
+    channel: 'Fcm',
+    status: 'Failed',
+    failureReason: '<script>not executable</script>',
+    createdAt: at,
+  };
+  const calls: URL[] = [];
+  let statusError = false;
+  await page.route('**/api/ai-metrics?*', (route) => {
+    const url = new URL(route.request().url());
+    calls.push(url);
+    expect(route.request().method()).toBe('GET');
+    const next = url.searchParams.get('page') === '2';
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          items: next ? [] : [metric],
+          page: next ? 2 : 1,
+          pageSize: 20,
+          totalCount: 21,
+          totalPages: 2,
+          hasNextPage: !next,
+          hasPreviousPage: next,
+        },
+      },
+    });
+  });
+  const paged = (item: unknown) => ({
+    items: [item],
+    page: 1,
+    pageSize: 20,
+    totalCount: 1,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
+  await page.route('**/api/audit-logs?*', (route) => {
+    calls.push(new URL(route.request().url()));
+    return route.fulfill({ json: { success: true, data: paged(audit) } });
+  });
+  await page.route('**/api/notifications/failed?*', (route) => {
+    calls.push(new URL(route.request().url()));
+    return route.fulfill({ json: { success: true, data: paged(failure) } });
+  });
+  await page.route('**/api/notifications/status', (route) => {
+    const period = {
+      totalSent: 0,
+      totalFailed: 1,
+      totalPending: 2,
+      byChannel: [{ channel: 'Fcm', sent: 0, failed: 1 }],
+    };
+    return route.fulfill(
+      statusError
+        ? { status: 500, json: { detail: 'Thống kê tạm thời lỗi' } }
+        : { json: { success: true, data: { last24Hours: period, last7Days: period } } },
+    );
+  });
+  await login(page);
+  await page.goto('/admin/metrics');
+  await expect(page.getByRole('cell', { name: 'Tesseract', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '0 ms', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Trang sau' }).click();
+  await expect(page.getByText('Không có bản ghi phù hợp.')).toBeVisible();
+  await page.getByLabel('Tên mô hình').fill('Tesseract');
+  await page.getByLabel('Từ ngày UTC').fill('2026-10-10');
+  await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
+  await expect(page.getByRole('cell', { name: 'Tesseract', exact: true })).toBeVisible();
+  expect(calls.at(-1)?.searchParams.get('page')).toBe('1');
+  expect(calls.at(-1)?.searchParams.get('dateFrom')).toBe('2026-10-10');
+  await page.screenshot({ path: 'test-results/stage13b-metrics-desktop.png', fullPage: true });
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Chưa có dữ liệu');
+  await page.keyboard.press('Escape');
+  await page.goto('/admin/audit');
+  await expect(page.getByRole('cell', { name: 'ConfigChanged', exact: true })).toBeVisible();
+  await page.getByLabel('Mã người thực hiện').fill('invalid');
+  const before = calls.length;
+  await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
+  await expect(page.getByRole('alert')).toContainText('UUID');
+  expect(calls).toHaveLength(before);
+  await page.getByLabel('Mã người thực hiện').fill(id);
+  await page.getByLabel('Đến ngày Việt Nam').fill('2026-10-11');
+  await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
+  await expect(page.getByRole('cell', { name: 'ConfigChanged', exact: true })).toBeVisible();
+  expect(calls.at(-1)?.searchParams.get('dateTo')).toBe('2026-10-11T23:59:59.9999999+07:00');
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('ConfigChanged');
+  await expect(page.getByText('DO_NOT_DISPLAY_SECRET')).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/stage13b-audit-desktop.png', fullPage: true });
+  await page.keyboard.press('Escape');
+  await page.goto('/admin/delivery');
+  await expect(page.getByRole('cell', { name: 'FallDetected', exact: true })).toBeVisible();
+  await expect(page.getByText('24 giờ gần nhất', { exact: true })).toBeVisible();
+  await page.getByRole('combobox', { name: /Kênh gửi/ }).selectOption('Fcm');
+  await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
+  await expect.poll(() => calls.at(-1)?.searchParams.get('channel')).toBe('Fcm');
+  await page.screenshot({ path: 'test-results/stage13b-delivery-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.screenshot({ path: 'test-results/stage13b-delivery-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('<script>not executable</script>');
+  await page.screenshot({ path: 'test-results/stage13b-dialog-mobile.png', fullPage: false });
+  await page.keyboard.press('Escape');
+  statusError = true;
+  await page.getByRole('button', { name: 'Tải lại thống kê' }).click();
+  await expect(page.getByRole('alert')).toContainText('Thống kê tạm thời lỗi');
+  await expect(page.getByRole('cell', { name: 'FallDetected', exact: true })).toBeVisible();
+});
+
+test('13b: non-admin cannot access global monitoring routes', async ({ page }) => {
+  const calls = await stubApi(page, 'CenterAdmin', '01900000-0000-7000-8000-000000000002');
+  await login(page);
+  for (const path of ['metrics', 'audit', 'delivery']) {
+    await page.goto('/admin/' + path);
+    await expect(page).toHaveURL(/forbidden$/);
+  }
+  expect(
+    calls.some((path) => /ai-metrics|audit-logs|notifications\/(status|failed)/.test(path)),
+  ).toBe(false);
+});
+
 test('13a: config edit, rollback old value, unknown key hidden and ambiguous write', async ({
   page,
 }) => {
@@ -1252,11 +1414,13 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
     await page.goto(path);
     await expect(
       page.getByRole('heading', {
-        name: role !== 'Admin' ? 'Đã đăng nhập bằng tài khoản BE' : 'Chưa tích hợp trong đợt này',
+        name: role !== 'Admin' ? 'Đã đăng nhập bằng tài khoản BE' : 'Hiệu năng AI',
       }),
     ).toBeVisible();
     expect(
-      calls.every((p) => ['/api/auth/login', '/api/users/me', '/api/auth/refresh'].includes(p)),
+      calls.every((p) =>
+        ['/api/auth/login', '/api/users/me', '/api/auth/refresh', '/api/ai-metrics'].includes(p),
+      ),
     ).toBe(true);
     await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
     await expect(page).toHaveURL(/\/auth\/login$/);
