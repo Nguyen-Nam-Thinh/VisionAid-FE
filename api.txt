@@ -3,7 +3,7 @@ Cập nhật kế hoạch: 2026-10-11. Danh sách 001–107 là snapshot OpenAPI
 Swagger: https://api.visionaid.net/swagger/index.html
 OpenAPI: https://api.visionaid.net/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 13b: 112/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U7a: 116/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -1131,7 +1131,7 @@ Mapping mới:
 - U5: POST /api/licenses/distribute (poolId, note?); POST /api/licenses/activate-key (licenseKey). Trừ pool khi distribute; chưa thấy API list distributed keys.
 - 8c: PUT /api/auth/fcm-token (fcmToken, clientDeviceId, deviceType?, deviceModel?, appVersion?). Đã có upsert, không cần login lại chỉ để cập nhật token; logout deactivate theo user/device, chưa revoke riêng để tắt push. Đã nối FE tại Hồ sơ qua src/services/api/push.ts; xem docs/API_STAGE_8C_TEST.md.
 - U6: POST/GET /api/webrtc/sessions; POST /api/webrtc/sessions/{id}/accept, /reject, /end; GET /api/webrtc/ice-servers/public. Role/quyền theo handler, không suy quyền gọi từ ICE role.
-- U7a: GET/POST /api/webrtc/ice-servers; PUT/DELETE /api/webrtc/ice-servers/{id}.
+- U7a DA_NOI_FE_CHO_TEST_LIVE: GET/POST /api/webrtc/ice-servers; PUT/DELETE /api/webrtc/ice-servers/{id}. src/services/api/iceServers.ts -> src/pages/super-admin/ApiIceServers.tsx, /admin/ice-servers.
 - SIGNALR /hubs/location: RelayOffer -> WebRtcOffer; RelayAnswer -> WebRtcAnswer; RelayIceCandidate -> WebRtcIceCandidate. Không tính là REST.
 - Các API mới khác trong snapshot (called, public configs, faces me/identify, GPS me/batch, navigation batch) cần đối chiếu role/handler trước khi phân loại Web/Mobile chính thức; không tự mở UI chỉ vì Swagger có path.
 
@@ -1283,3 +1283,5 @@ BỔ SUNG ĐỢT 12b — 2026-10-11
 Đợt 13a: 5 system-configs operations, tổng 108/144. Admin list/detail/update/history/rollback; rollback khôi phục oldValue của lịch sử, không phải newValue. Chỉ khóa đã duyệt được hiện giá trị và chỉnh sửa. BE vẫn cần che secret trong response, kiểm soát version nguyên tử và validate rollback. Checklist: docs/API_STAGE_13A_TEST.md. Chưa ghi cấu hình live.
 
 Đợt 13b: 4 GET callers mới, tổng 112/144. Metrics DateOnly UTC, audit và failed lọc ngày Việt Nam; status 24h/7d không theo filter failed. Audit chỉ giữ metadata, raw response cần BE redaction. Không có mutation/retry delivery. Checklist docs/API_STAGE_13B_TEST.md; tiếp U7a khi được yêu cầu.
+
+U7a: 4 ICE admin operations đã nối, tổng 116/144. GET page/pageSize/isActive, POST tạo luôn bật, PUT phải nhập credential TURN mỗi lần, DELETE204. Credential bị loại khỏi cache/UI nhưng raw BE response vẫn chứa. Không rotate TURN server hay test cuộc gọi tự động. Checklist docs/API_STAGE_U7A_TEST.md.
