@@ -7,7 +7,7 @@ Cập nhật 2026-10-11. Base FE khảo sát U0: dev `5692a87`; BE local mới `
 ## 1. AI tiếp theo bắt đầu ở đâu
 
 1. Đọc AGENTS.md, CLAUDE.md, PLAN.md và api.txt; kiểm tra git status, fetch dev. Giữ thay đổi có sẵn của người dùng tại src/services/api/auth.ts và .env ngoài commit.
-2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt 12b đã nối FE, chờ test docs/API_STAGE_12B_TEST.md. Đợt tiếp theo 13a khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
+2. U2 đã triển khai, chờ test theo docs/API_STAGE_U2_TEST.md. U1 vẫn chưa có xác nhận test live, người dùng đã yêu cầu tiếp U2. Người dùng đã yêu cầu tiếp U3a, hiện đã triển khai FE và chờ test theo docs/API_STAGE_U3A_TEST.md. U3b đã triển khai theo yêu cầu tiếp tục, chờ test docs/API_STAGE_U3B_TEST.md. U4 đã triển khai, chờ test docs/API_STAGE_U4_TEST.md. U5 đã triển khai, chờ test docs/API_STAGE_U5_TEST.md. 11a đã triển khai FE, chờ test docs/API_STAGE_11A_TEST.md. 8c đã triển khai FE, chờ test docs/API_STAGE_8C_TEST.md. **U6a — WebRTC** đã nối FE; test theo docs/API_STAGE_U6A_TEST.md. U6b đã nối FE; checklist docs/API_STAGE_U6B_TEST.md. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt 12b đã nối FE, chờ test docs/API_STAGE_12B_TEST.md. Đợt 13a đã nối FE, chờ test docs/API_STAGE_13A_TEST.md. Đợt tiếp theo 13b khi user yêu cầu. Không tiếp tục máy móc từ mục “đợt 6” trong plan cũ.
 3. Sau mỗi checkpoint: kiểm thử tự động, bàn giao checklist test thật và API phải chạy cùng nhau, rồi dừng chờ người dùng. Chỉ đổi thứ tự hoặc bỏ qua test khi người dùng cho phép; merge/push không có nghĩa đã nghiệm thu.
 4. Mỗi đợt dùng nhánh riêng, commit/push và merge dev sau kiểm tra theo CLAUDE.md. Main/Vercel production do người dùng chủ động phát hành.
 5. Cập nhật trạng thái từng đợt trong file này và từng API trong api.txt. Không đánh dấu DA_NOI chỉ vì có menu, mock hoặc tài liệu BE.
@@ -202,7 +202,7 @@ Mỗi dòng là một checkpoint riêng, không triển khai chung rồi mới c
 
 ### 13/U7 — Quản trị và theo dõi Hybrid/WebRTC [CHƯA NỐI]
 
-- 13a: system-configs list/detail/update/history/rollback. Bổ sung config license/trial/grace/PayOS/WebRTC/Hybrid khi API cung cấp; validation theo type/range, quyền Admin, confirm rollback. Không đưa PayOS checksum/API secret lên Web.
+- 13a đã nối FE, chờ test live: system-configs list/detail/update/history/rollback. Bổ sung config license/trial/grace/PayOS/WebRTC/Hybrid khi API cung cấp; validation theo type/range, quyền Admin, confirm rollback. Không đưa PayOS checksum/API secret lên Web.
 - 13b: ai-metrics, audit-logs, notifications status/failed theo quyền; không gọi success rate là accuracy khi không có ground truth.
 - U7a: quản trị ICE servers theo API được xác minh; credential write/rotate được kiểm soát và không trả secret hiện hữu toàn bộ vào UI. Test STUN/TURN priority/active, invalid URL, rotate, non-admin cấm; không cài Coturn từ FE.
 - U7b: Hybrid guidance log/metrics và cấu hình engine nếu có GET API. Hiển thị decision, engine, latency, fallback, thời gian theo contract; không expose scene/GPS của VIU cho role chưa được cấp. JEV/Groq prices/latency trong báo cáo chỉ là giả định nguồn, không hứa SLA hoặc hardcode giá hiện hành.
@@ -261,7 +261,7 @@ User đã yêu cầu tiếp tục sau khi BE sửa membership relay ở 48a7346.
 
 ## Bàn giao U6b — 2026-10-10
 
-User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt 12b đã nối FE, chờ test docs/API_STAGE_12B_TEST.md. Đợt tiếp theo 13a khi user yêu cầu.
+User đã yêu cầu tiếp U6b. Đã bổ sung recovery từ history khi kết nối/focus/push, dedup terminal và incoming, giữ cuộc gọi hiện tại khi nhận cuộc gọi khác hoặc bấm push. Không thêm REST callers: vẫn 70/140. Checklist và giới hạn contract emergencyEventId, trang history 20 phiên, license, Mobile/FCM/TURN: docs/API_STAGE_U6B_TEST.md. Trạng thái này thay các ghi chú U6b chưa làm ở snapshot phía trên. Đợt 9 đã nối FE theo yêu cầu; xem docs/API_STAGE_9_TEST.md. Đợt 10 đã nối FE, xem docs/API_STAGE_10_TEST.md. Đợt 11b đã nối FE; checklist docs/API_STAGE_11B_TEST.md. Đợt 12a đã nối FE, chờ test theo docs/API_STAGE_12A_TEST.md. Đợt 12b đã nối FE, chờ test docs/API_STAGE_12B_TEST.md. Đợt 13a đã nối FE, chờ test docs/API_STAGE_13A_TEST.md. Đợt tiếp theo 13b khi user yêu cầu.
 
 ## Bàn giao đợt 9 — 2026-10-10
 
@@ -302,3 +302,11 @@ Chọn VIU, kiểm tra active link, owner/id/session, query cache scope actor/or
 Lưu ý contract: DateOnly lọc ngày UTC, không phải UTC+7; UI nói rõ 07:00 Việt Nam đến trước07:00 hôm sau. Members phân trang/filter riêng. OCR count gồm QR, boundary count gồm mọi loại sự kiện ranh giới. Chỉ đếm VIU hiện thuộc org và chưa xóa; chưa có hiệu suất phản hồi nhân viên trong DTO. Không mở face gallery cho CenterAdmin.
 
 137 unit tests, 2 browser fixtures báo cáo/auth CenterAdmin, lint/build đạt, kiểm tra desktop/mobile375. Chưa nghiệm thu BE/Mobile thật. Checklist docs/API_STAGE_12B_TEST.md. Tiếp theo 13a — cấu hình hệ thống khi người dùng yêu cầu; chính sách riêng tư vẫn chờ.
+
+## Bàn giao đợt 13a — 2026-10-11
+
+Admin cấu hình hệ thống đã nối 5 operations list/detail/update/history/rollback tại /admin/configurations, tổng 108/144. Chỉnh sửa và xác nhận khôi phục trong popup; kiểm tra type/range, reason tối đa 500, đọc lại snapshot trước khi ghi. Khôi phục oldValue của dòng lịch sử. Lỗi ghi không rõ kết quả không tự retry.
+
+143 unit tests và 2 E2E fixtures cấu hình/auth Admin đạt; lint/build đạt, rà desktop/mobile375. Không ghi cấu hình production để test. BE f277b6a còn thiếu che secret ở response, version/ETag nguyên tử và validate giá trị rollback; FE allowlist chỉ hạn chế hiển thị/cache, không che raw Network response. Checklist docs/API_STAGE_13A_TEST.md.
+
+Tiếp theo 13b — metrics, audit và giám sát notification khi người dùng yêu cầu, rồi U7a/U7b. Chính sách riêng tư tiếp tục chờ nội dung/version. Không coi merge là nghiệm thu live.

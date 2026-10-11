@@ -1,4 +1,109 @@
 import { test, expect, type Page } from '@playwright/test';
+test('13a: config edit, rollback old value, unknown key hidden and ambiguous write', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  const historyId = '01900000-0000-7000-8000-000000000094';
+  let config = {
+    id,
+    configKey: 'trial_days_default',
+    configValue: '7',
+    valueType: 'Integer',
+    category: 'BusinessRules',
+    description: 'Số ngày dùng thử',
+    minValue: '1',
+    maxValue: '30',
+    isPublic: false,
+    updatedAt: '2026-10-11T00:00:00Z',
+    updatedBy: null,
+  };
+  const history = {
+    id: historyId,
+    configId: id,
+    configKey: config.configKey,
+    oldValue: '5',
+    newValue: '7',
+    changedBy: null,
+    changedAt: config.updatedAt,
+    reason: 'Seed',
+  };
+  const writes: { method: string; body: Record<string, unknown> }[] = [];
+  let fail = false;
+  await page.route('**/api/system-configs**', async (route) => {
+    const url = new URL(route.request().url());
+    const method = route.request().method();
+    if (method === 'PUT' || method === 'POST') {
+      const body = route.request().postDataJSON();
+      writes.push({ method, body });
+      if (fail) return route.fulfill({ status: 500, json: { detail: 'Failed' } });
+      config = {
+        ...config,
+        configValue: method === 'POST' ? history.oldValue : body.configValue,
+        updatedAt: method === 'POST' ? '2026-10-11T00:02:00Z' : '2026-10-11T00:01:00Z',
+      };
+      return route.fulfill({ json: { success: true, data: config } });
+    }
+    const data = url.pathname.endsWith('/history')
+      ? organizationPage([history])
+      : url.pathname === '/api/system-configs'
+        ? organizationPage([
+            config,
+            {
+              ...config,
+              id: historyId,
+              configKey: 'payos_checksum_key',
+              configValue: 'SECRET-FIXTURE',
+              description: 'SECRET-FIXTURE',
+            },
+          ])
+        : config;
+    return route.fulfill({ json: { success: true, data } });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Cấu hình hệ thống', exact: true }).click();
+  await expect(page.getByText('SECRET-FIXTURE')).toHaveCount(0);
+  await expect(
+    page.getByRole('row').filter({ hasText: 'payos_checksum_key' }).getByRole('button'),
+  ).toBeDisabled();
+  await page
+    .getByRole('row')
+    .filter({ hasText: 'trial_days_default' })
+    .getByRole('button', { name: 'Chi tiết' })
+    .click();
+  const detail = page.getByRole('dialog', { name: 'Chi tiết cấu hình', exact: true });
+  await detail.getByRole('button', { name: 'Điều chỉnh', exact: true }).click();
+  const editor = page.getByRole('dialog', { name: 'Điều chỉnh cấu hình', exact: true });
+  await editor.getByLabel('Giá trị mới').fill('31');
+  await editor.getByRole('button', { name: 'Lưu cấu hình' }).click();
+  await expect(editor.getByRole('alert')).toContainText('giới hạn');
+  expect(writes).toHaveLength(0);
+  await editor.getByLabel('Giá trị mới').fill('8');
+  await editor.getByLabel('Lý do thay đổi').fill('Test update');
+  await page.screenshot({ path: 'test-results/stage13a-desktop.png' });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.screenshot({ path: 'test-results/stage13a-mobile.png' });
+  const box = await editor.boundingBox();
+  expect(box!.x).toBeGreaterThanOrEqual(0);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(376);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await editor.getByRole('button', { name: 'Lưu cấu hình' }).click();
+  await expect(editor).toHaveCount(0);
+  expect(writes[0]).toEqual({ method: 'PUT', body: { configValue: '8', reason: 'Test update' } });
+  await detail.getByRole('button', { name: 'Khôi phục', exact: true }).click();
+  const rollback = page.getByRole('dialog', { name: 'Xác nhận khôi phục cấu hình', exact: true });
+  await expect(rollback).toContainText('giá trị trước');
+  await rollback.getByRole('button', { name: 'Xác nhận khôi phục', exact: true }).click();
+  await expect(rollback).toHaveCount(0);
+  expect(writes[1]).toEqual({ method: 'POST', body: { historyId, reason: null } });
+  expect(config.configValue).toBe('5');
+  fail = true;
+  await detail.getByRole('button', { name: 'Điều chỉnh', exact: true }).click();
+  await editor.getByLabel('Giá trị mới').fill('9');
+  await editor.getByRole('button', { name: 'Lưu cấu hình' }).click();
+  await expect(editor.getByRole('alert')).toContainText('Chưa xác nhận');
+  await expect(editor.getByRole('button', { name: 'Lưu cấu hình' })).toHaveCount(0);
+  expect(writes).toHaveLength(3);
+});
 test('12b: organization report totals, UTC days, member pagination and scope errors', async ({
   page,
 }) => {

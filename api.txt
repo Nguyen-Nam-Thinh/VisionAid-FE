@@ -3,7 +3,7 @@ Cập nhật kế hoạch: 2026-10-11. Danh sách 001–107 là snapshot OpenAPI
 Swagger: https://api.visionaid.net/swagger/index.html
 OpenAPI: https://api.visionaid.net/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 12b: 103/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau đợt 13a: 108/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid chưa nối.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
@@ -879,9 +879,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 087. GET /api/system-configs
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: page, pageSize, category, isPublic, search
@@ -889,9 +889,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/SystemConfigsController.cs
 
 088. GET /api/system-configs/{id}
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: Không có
@@ -899,9 +899,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/SystemConfigsController.cs
 
 089. PUT /api/system-configs/{id}
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: Không có
@@ -909,9 +909,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/SystemConfigsController.cs
 
 090. POST /api/system-configs/{id}/rollback
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: Không có
@@ -919,9 +919,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/SystemConfigsController.cs
 
 091. GET /api/system-configs/{id}/history
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: page, pageSize
@@ -1279,3 +1279,5 @@ BỔ SUNG ĐỢT 12b — 2026-10-11
 - GET activity-summary mới, tái sử dụng GET members, tổng 103/144 operations có caller Web.
 - /center-admin/reports có sidebar; lấy orgId từ session. Summary dùng ngày UTC, members có search/role/isActive/page riêng. Không cộng tổng bằng số dòng trang đầu.
 - geofenceBreachCount đếm mọi boundary event; ocrRequestCount bao gồm QR. Xem docs/API_STAGE_12B_TEST.md để test nguồn dữ liệu và ý nghĩa số liệu.
+
+Đợt 13a: 5 system-configs operations, tổng 108/144. Admin list/detail/update/history/rollback; rollback khôi phục oldValue của lịch sử, không phải newValue. Chỉ khóa đã duyệt được hiện giá trị và chỉnh sửa. BE vẫn cần che secret trong response, kiểm soát version nguyên tử và validate rollback. Checklist: docs/API_STAGE_13A_TEST.md. Chưa ghi cấu hình live.
