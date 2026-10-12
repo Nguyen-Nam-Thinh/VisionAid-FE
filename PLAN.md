@@ -213,7 +213,7 @@ Mỗi dòng là một checkpoint riêng, không triển khai chung rồi mới c
 
 - U8a — ĐÃ LÀM, checklist docs/API_STAGE_U8A_TEST.md. Landing/nội dung sản phẩm: cập nhật landing mô tả Hybrid AI, gói Personal/Business, hỗ trợ gọi, Standalone theo chức năng đã nghiệm thu. Gói/giá lấy API public nếu có, nếu chưa có contract thì không tạo checkout công khai giả.
 - Ghi chest strap bắt buộc theo báo cáo, camera có điểm mù/hạn chế ánh sáng/mưa và cần dùng cùng gậy trắng/IoT; không quảng bá thay thế hoàn toàn dụng cụ hỗ trợ.
-- U8b — CHƯA LÀM, đợt14 cũ: dashboard theo role tổng hợp dữ liệu thật, trial/grace/quota, alert open và payment pending từ nguồn authoritative. Không bịa /api/dashboard hoặc số liệu từ trang đầu. Staff không thấy billing cá nhân không liên quan.
+- U8b — ĐÃ NỐI FE, chờ test live: dashboard theo role dùng subscription/pool/emergency/payment/delivery API hiện có. Không bịa /api/dashboard hoặc số liệu từ trang đầu. Staff không thấy billing cá nhân; emergency đếm riêng từng trạng thái; payment chỉ xét 10 bản ghi mới nhất vì BE chưa có status filter. Checklist docs/API_STAGE_U8B_TEST.md.
 - Test desktop/tablet, keyboard/focus/contrast, form/modal/dialog pending, empty/error; thông tin marketing khớp feature flags và trạng thái triển khai.
 
 ### U9 — Nghiệm thu liên thông và phát hành [CHƯA LÀM; thay phần đóng đợt 14]

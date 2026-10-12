@@ -1,4 +1,135 @@
 import { test, expect, type Page } from '@playwright/test';
+for (const [role, org] of [
+  ['Caregiver', null],
+  ['Caregiver', '01900000-0000-7000-8000-000000000002'],
+  ['CenterAdmin', '01900000-0000-7000-8000-000000000002'],
+  ['Admin', null],
+] as const) {
+  test(`U8b: dashboard ${role} ${org ? 'organization' : 'personal'} scope and counts`, async ({
+    page,
+  }) => {
+    const calls = await stubApi(page, role, org);
+    const seen: string[] = [];
+    let failed = false;
+    await page.route('http://localhost:5176/api/**', (route) => {
+      const url = new URL(route.request().url());
+      const path = url.pathname;
+      if (
+        ![
+          '/api/emergency-events',
+          '/api/licenses/subscription',
+          '/api/licenses/pool',
+          '/api/payments/history',
+          '/api/notifications/status',
+        ].includes(path)
+      )
+        return route.fallback();
+      seen.push(path);
+      expect(route.request().method()).toBe('GET');
+      if (failed) return route.fulfill({ status: 500, json: { detail: 'Dashboard tạm thời lỗi' } });
+      const paged = {
+        items: [],
+        page: 1,
+        pageSize: 20,
+        totalCount: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
+      let data: unknown;
+      if (path === '/api/emergency-events')
+        data = {
+          ...paged,
+          totalCount: url.searchParams.get('status') === 'Sent' ? 45 : 0,
+          totalPages: url.searchParams.get('status') === 'Sent' ? 3 : 0,
+        };
+      if (path === '/api/licenses/subscription')
+        data = {
+          id,
+          status: 'Trial',
+          package: { id, name: 'Gói gia đình', code: 'PERSONAL', packageType: 'Personal' },
+          startedAt: '2026-10-12T00:00:00Z',
+          trialEndsAt: null,
+          currentPeriodStart: null,
+          currentPeriodEnd: null,
+          autoRenew: false,
+          daysRemaining: null,
+        };
+      if (path === '/api/licenses/pool')
+        data = {
+          id,
+          organizationId: org,
+          package: { id, name: 'Gói trung tâm', code: 'BUSINESS', packageType: 'Business' },
+          totalLicenses: 50,
+          usedLicenses: 50,
+          availableLicenses: 0,
+          status: 'Active',
+          purchasedAt: '2026-10-12T00:00:00Z',
+          expiresAt: null,
+        };
+      if (path === '/api/payments/history')
+        data = { ...paged, pageSize: 10, totalCount: 11, totalPages: 2, hasNextPage: true };
+      if (path === '/api/notifications/status') {
+        const period = { totalSent: 7, totalFailed: 0, totalPending: 2, byChannel: [] };
+        data = { last24Hours: period, last7Days: period };
+      }
+      return route.fulfill({ json: { success: true, data } });
+    });
+    await login(page);
+    if (role === 'Admin') {
+      await expect(page.getByRole('heading', { name: 'Gửi cảnh báo trong 24 giờ' })).toBeVisible();
+      await expect(page.getByText('Đã gửi không xác nhận', { exact: false })).toBeVisible();
+      expect([...new Set(seen)]).toEqual(['/api/notifications/status']);
+    } else {
+      await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).toContainText(
+        '45 cảnh báo',
+      );
+      await expect(page.getByRole('group', { name: 'Đã tiếp nhận', exact: true })).toContainText(
+        '0 cảnh báo',
+      );
+      if (role === 'Caregiver' && org) {
+        await expect(page.getByRole('heading', { name: 'Phạm vi chăm sóc' })).toBeVisible();
+        expect(seen.every((path) => path === '/api/emergency-events')).toBe(true);
+      } else {
+        await expect(page.getByRole('region', { name: 'Thanh toán gần đây' })).toContainText(
+          'Còn giao dịch cũ hơn',
+        );
+        await expect(page.getByRole('region', { name: 'Thanh toán gần đây' })).toContainText(
+          '10 giao dịch gần nhất',
+        );
+        if (org)
+          await expect(page.getByRole('region', { name: 'Kho license tổ chức' })).toContainText(
+            'Gói trung tâm',
+          );
+        else
+          await expect(page.getByRole('region', { name: 'License cá nhân' })).toContainText(
+            'Chưa có dữ liệu',
+          );
+      }
+      failed = true;
+      await page.getByRole('button', { name: 'Tải lại đã gửi', exact: true }).click();
+      await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).toContainText(
+        'Dashboard tạm thời lỗi',
+      );
+      await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).not.toContainText(
+        '0 cảnh báo',
+      );
+    }
+    expect(calls.some((path) => /locations|face-registry/.test(path))).toBe(false);
+    await page.screenshot({
+      path: `test-results/U8b-${role}-${org ? 'org' : 'personal'}.png`,
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 375, height: 812 });
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+      .toBe(true);
+    await page.screenshot({
+      path: `test-results/U8b-${role}-${org ? 'org' : 'personal'}-mobile.png`,
+      fullPage: true,
+    });
+  });
+}
 test('U8a: public landing states integration limits without requesting protected packages', async ({
   page,
 }) => {
@@ -1676,7 +1807,17 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
     ).toBeVisible();
     expect(
       calls.every((p) =>
-        ['/api/auth/login', '/api/users/me', '/api/auth/refresh', '/api/ai-metrics'].includes(p),
+        [
+          '/api/auth/login',
+          '/api/users/me',
+          '/api/auth/refresh',
+          '/api/ai-metrics',
+          ...(role === 'Caregiver'
+            ? ['/api/licenses/subscription', '/api/payments/history', '/api/emergency-events']
+            : role === 'Admin'
+              ? ['/api/notifications/status']
+              : []),
+        ].includes(p),
       ),
     ).toBe(true);
     await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
