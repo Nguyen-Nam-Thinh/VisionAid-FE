@@ -1292,3 +1292,5 @@ U7b — 2026-10-11: 1 GET caller mới, tổng 117/144.
 - Popup dùng metadata của dòng list, không bịa GET detail. Loại detectedObjectsJson/ttsText khỏi cache/UI; raw response vẫn có. Không gửi POST guidance của Mobile.
 - Link /admin/metrics dùng GET /api/ai-metrics đã có; modelName JEV/Groq/RuleBased, DateOnly UTC. Link /admin/configurations dùng 5 operations13a đã có cho 3 khóa Hybrid, không đếm lại callers.
 - latency null không hiển thị 0; fallback không chứng minh Mobile offline; failed metric của nguồn này đếm latency null. Checklist docs/API_STAGE_U7B_TEST.md. Tiếp U8, chờ nghiệm thu Mobile/engine thật.
+
+U8a — 2026-10-12: landing / chỉ cập nhật nội dung, không thêm REST caller; tổng117/144 giữ nguyên. LicensePackagesController yêu cầu đăng nhập nên không gọi GET packages trên trang công khai. CTA đi /auth/login, gói/giá thật xem sau đăng nhập ở luồng U2. Không POST guidance/payment từ landing. Checklist docs/API_STAGE_U8A_TEST.md; tiếp U8b dashboard.

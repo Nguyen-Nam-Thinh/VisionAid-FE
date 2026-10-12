@@ -1,4 +1,34 @@
 import { test, expect, type Page } from '@playwright/test';
+test('U8a: public landing states integration limits without requesting protected packages', async ({
+  page,
+}) => {
+  const calls: string[] = [];
+  await page.route('**/api/**', (route) => {
+    if (!new URL(route.request().url()).pathname.startsWith('/api/')) return route.continue();
+    calls.push(route.request().url());
+    return route.fulfill({ status: 401, json: { message: 'Not authenticated' } });
+  });
+  await page.goto('/');
+  await expect(
+    page.getByText('Bản thử nghiệm · Các tính năng liên thông đang được kiểm thử.', {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Bản trải nghiệm sử dụng dữ liệu mô phỏng.', { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: 'Nhận biết trên thiết bị. Kết nối khi cần.' }),
+  ).toBeVisible();
+  await expect(page.getByText('Bắt buộc dùng đai đeo ngực.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('main')).not.toContainText('99.000');
+  await expect(page.getByRole('main')).not.toContainText('4.500.000');
+  expect(calls).toEqual([]);
+  await page.getByRole('link', { name: 'Đăng nhập để xem gói', exact: true }).click();
+  await expect(page).toHaveURL(/\/auth\/login$/);
+  expect(calls.some((url) => /packages|payments|guidance/.test(url))).toBe(false);
+});
+
 test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ page }) => {
   await stubApi(page, 'Admin');
   const requests: URL[] = [];
