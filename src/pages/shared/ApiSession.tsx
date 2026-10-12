@@ -3,6 +3,7 @@ import { PageHead } from '../../components/UI';
 import { useSession } from '../../hooks/useService';
 import { roles } from '../../constants/labels';
 import { HeartHandshake, ArrowRight, UserRound, ShieldCheck } from 'lucide-react';
+import { DashboardOverview } from './DashboardOverview';
 
 export function ApiSession() {
   const session = useSession();
@@ -27,6 +28,7 @@ export function ApiSession() {
             <HeartHandshake size={48} />
           </span>
         </section>
+        {user && <DashboardOverview key={user.id + user.orgId + user.role} actor={user} />}
         <div className="overview-grid">
           <section className="glass card stack">
             <h2>Đã đăng nhập bằng tài khoản BE</h2>
