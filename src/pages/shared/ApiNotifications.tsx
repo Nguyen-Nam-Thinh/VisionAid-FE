@@ -1,6 +1,8 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { useOwnOrgName } from '../../hooks/useOrgPeople';
 import { Form, type FieldSpec } from '../../components/Form';
 import { Confirm, Dialog, PageHead, State } from '../../components/UI';
 import { roles } from '../../constants/labels';
@@ -75,10 +77,13 @@ function Notifications({ actor }: { actor: Person }) {
     refetchInterval: 30000,
   });
   const query = personal ? prefs : rules;
-  async function changed() {
-    setNotice(
-      'Đã lưu trên máy chủ. Việc gửi thông báo còn phụ thuộc quy tắc và dịch vụ phân phối.',
-    );
+  const orgName = useOwnOrgName(actor);
+  const scope = (orgId: string | null) =>
+    orgId ? (orgId === actor.orgId && orgName) || orgId : 'Toàn hệ thống';
+  async function changed(
+    message = 'Đã lưu trên máy chủ. Việc gửi thông báo còn phụ thuộc quy tắc và dịch vụ phân phối.',
+  ) {
+    setNotice(message);
     await cache.invalidateQueries({ queryKey: prefix });
   }
   const close = () => {
@@ -118,14 +123,11 @@ function Notifications({ actor }: { actor: Person }) {
       </p>
       {personal && (
         <p className="muted">
-          Lưu tùy chọn Push chưa đăng ký nhận push trên trình duyệt. Phần FCM sẽ tích hợp ở đợt 8c.
+          Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và
+          chọn Bật thông báo trình duyệt.
         </p>
       )}
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {!personal && (
         <div className="row">
           {(
@@ -227,9 +229,9 @@ function Notifications({ actor }: { actor: Person }) {
                         <td>
                           {item.organizationId ? (
                             <>
-                              Trung tâm
+                              Riêng trung tâm
                               <br />
-                              <small>{item.organizationId}</small>
+                              <small>{scope(item.organizationId)}</small>
                             </>
                           ) : (
                             'Toàn hệ thống'
@@ -272,7 +274,7 @@ function Notifications({ actor }: { actor: Person }) {
                 </table>
               </div>
               {rules.data && (
-                <div className="row">
+                <div className="row pagination">
                   <span>
                     {rules.data.totalCount} kết quả · Trang {page}/
                     {Math.max(1, rules.data.totalPages)}
@@ -385,13 +387,13 @@ function Notifications({ actor }: { actor: Person }) {
             ' · ' +
             targetRoles[deleting.targetRole] +
             ' · ' +
-            (deleting.organizationId || 'Toàn hệ thống') +
+            scope(deleting.organizationId) +
             '. Việc gửi thông báo có thể thay đổi sau khi xóa; quy tắc toàn hệ thống có thể được áp dụng lại.'
           }
           onClose={() => setDeleting(null)}
           onConfirm={async () => {
             await notificationsApi.removeRule(actor, deleting);
-            await changed();
+            await changed('Đã xóa quy tắc trên máy chủ.');
           }}
         />
       )}

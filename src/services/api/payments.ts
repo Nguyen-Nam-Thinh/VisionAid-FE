@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { createPackagesApi, type LicensePackage } from './packages';
-import { isPersonalCaregiver } from './licenses';
+import { isPersonalCaregiver, isOrganizationBuyer, getOrganizationPool } from './licenses';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 
@@ -59,9 +59,12 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
     );
   return result.data;
 }
+export const canPay = (actor: Person) => isPersonalCaregiver(actor) || isOrganizationBuyer(actor);
+export const paymentHistoryPath = (actor: Person) =>
+  isOrganizationBuyer(actor) ? '/center-admin/payments' : '/caregiver/payments';
 function check(actor: Person) {
-  if (!isPersonalCaregiver(actor))
-    throw new ServiceError('Đợt này chỉ hỗ trợ thanh toán cho Caregiver cá nhân.', 403);
+  if (!canPay(actor))
+    throw new ServiceError('Tài khoản không có quyền thanh toán gói dịch vụ.', 403);
 }
 export function safeCheckoutUrl(value: string | null): string | null {
   try {
@@ -88,14 +91,23 @@ export function orderCode(value: string | null): string | null {
 export function paymentResumeTarget(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const [path, search = ''] = value.split('?');
-  if (!['/payments/return', '/payments/cancel', '/caregiver/payments'].includes(path)) return null;
+  if (
+    ![
+      '/payments/return',
+      '/payments/cancel',
+      '/caregiver/payments',
+      '/center-admin/payments',
+    ].includes(path)
+  )
+    return null;
   const code = orderCode(new URLSearchParams(search).get('orderCode'));
   return path + (code ? '?orderCode=' + code : '');
 }
-export function canCheckout(item: LicensePackage) {
+export function canCheckout(item: LicensePackage, actor?: Person) {
   return (
     item.isActive &&
-    item.packageType === 'Personal' &&
+    (!actor || canPay(actor)) &&
+    item.packageType === (actor && isOrganizationBuyer(actor) ? 'Business' : 'Personal') &&
     item.currency === 'VND' &&
     Number.isInteger(item.priceMonthly) &&
     item.priceMonthly > 0 &&
@@ -131,9 +143,9 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
     find,
     async create(actor: Person, selected: LicensePackage, origin: string) {
       check(actor);
-      if (!canCheckout(selected))
+      if (!canCheckout(selected, actor))
         throw new ServiceError(
-          'Gói này chưa hỗ trợ thanh toán Personal bằng VND nguyên dương.',
+          'Gói không phù hợp với tài khoản hoặc chưa hỗ trợ thanh toán bằng VND nguyên dương.',
           422,
         );
       const base = new URL(origin);
@@ -151,7 +163,7 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
       }
       if (
         !current ||
-        !canCheckout(current) ||
+        !canCheckout(current, actor) ||
         current.updatedAt !== selected.updatedAt ||
         current.priceMonthly !== selected.priceMonthly ||
         current.currency !== selected.currency
@@ -160,6 +172,18 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
           'Gói đã thay đổi hoặc ngừng mở. Đóng hộp thoại và tải lại danh mục để kiểm tra.',
           409,
         );
+      if (isOrganizationBuyer(actor)) {
+        try {
+          const pool = await getOrganizationPool(actor, undefined, get);
+          if (pool.status !== 'Suspended' && pool.package.id !== current.id)
+            throw new ServiceError(
+              'Kho hiện tại dùng gói khác. Chưa hỗ trợ đổi gói Business qua thanh toán; chọn đúng gói của kho hoặc liên hệ hỗ trợ.',
+              409,
+            );
+        } catch (error) {
+          if (!(error instanceof ServiceError && error.status === 404)) throw error;
+        }
+      }
       const result = parse(
         paymentLink,
         await write('/api/payments/create-link', {

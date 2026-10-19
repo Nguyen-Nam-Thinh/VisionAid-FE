@@ -12,6 +12,8 @@ const accountSchema = z.object({
   role: roleSchema,
   organizationId: z.string().uuid().nullable(),
   isActive: z.boolean(),
+  licenseStatus: z.string().nullable().optional(),
+  licenseExpiresAt: z.iso.datetime({ offset: true }).nullable().optional(),
   avatarUrl: z.string().nullable(),
   deletedAt: z.string().nullable(),
   lastLoginAt: z.string().nullable(),
@@ -82,7 +84,7 @@ const profile = (values: unknown) =>
   parse(
     profileSchema,
     values,
-    'Kiểm tra họ tên (tối đa 200 ký tự), điện thoại Việt Nam và URL ảnh (500 ký tự).',
+    'Kiểm tra họ tên tối đa 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.',
     400,
   );
 export function createAccountsApi(get = apiGet, write = apiWrite) {
@@ -131,6 +133,32 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
           throw new ServiceError('Danh sách trả về không khớp vai trò đã chọn.', 502);
       });
       return result;
+    },
+    // Active accounts of one role in the CenterAdmin's organization, for pickers instead of typed UUIDs.
+    // complete=false means the org has more than the pages read; callers fall back to manual entry.
+    async options(actor: Scope, role: 'Caregiver' | 'VisuallyImpaired', signal?: AbortSignal) {
+      if (actor.role !== 'CenterAdmin' || !actor.orgId)
+        throw new ServiceError('Chỉ quản trị trung tâm chọn từ danh sách tổ chức.', 403);
+      const items: Account[] = [];
+      for (let page = 1; page <= 5; page++) {
+        const query = new URLSearchParams({
+          page: String(page),
+          pageSize: '100',
+          role,
+          isActive: 'true',
+          isDeleted: 'false',
+          organizationId: validId(actor.orgId),
+        });
+        const result = parse(pageSchema, await get('/api/users?' + query, signal));
+        result.items.forEach((target) => {
+          authorize(actor, target);
+          if (target.role !== role)
+            throw new ServiceError('Danh sách trả về không khớp vai trò đã chọn.', 502);
+        });
+        items.push(...result.items.filter((target) => target.isActive && !target.deletedAt));
+        if (!result.hasNextPage) return { items, complete: true };
+      }
+      return { items, complete: false };
     },
     async create(actor: Scope, values: AccountInput) {
       authorize(actor);

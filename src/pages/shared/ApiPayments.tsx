@@ -1,16 +1,21 @@
+import { RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { OrganizationPool } from './ApiLicensePool';
 import { useSession } from '../../hooks/useService';
 import { Dialog, Confirm, PageHead, State } from '../../components/UI';
 import {
   getMySubscription,
   isPersonalCaregiver,
+  isOrganizationBuyer,
   subscriptionLabels,
 } from '../../services/api/licenses';
 import { packagePrice, type LicensePackage } from '../../services/api/packages';
 import {
   paymentsApi,
+  canPay,
+  paymentHistoryPath,
   safeCheckoutUrl,
   paymentLabels,
   orderCode,
@@ -18,7 +23,7 @@ import {
 } from '../../services/api/payments';
 import type { Person } from '../../models/domain';
 
-export function PersonalCheckout({
+export function PackageCheckout({
   actor,
   item,
   onClose,
@@ -35,16 +40,23 @@ export function PersonalCheckout({
   const cache = useQueryClient();
   return (
     <Dialog
-      title="Thanh toán gói Personal"
+      title={isOrganizationBuyer(actor) ? 'Thanh toán gói Business' : 'Thanh toán gói Personal'}
       onClose={() => {
         if (!busy.current) onClose();
       }}
     >
       <div className="stack">
-        <strong>{item.name}</strong>
-        <p>
-          Giá đang xem: {packagePrice(item.priceMonthly, item.currency)} · {item.durationDays} ngày.
-        </p>
+        <dl className="record-details">
+          <div><dt>Gói đã chọn</dt><dd><strong>{item.name}</strong></dd></div>
+          <div><dt>Giá đang xem</dt><dd><strong>{packagePrice(item.priceMonthly, item.currency)}</strong></dd></div>
+          <div><dt>Thời hạn</dt><dd>{item.durationDays} ngày</dd></div>
+        </dl>
+        {isOrganizationBuyer(actor) && (
+          <p>
+            Mua mới hoặc bổ sung license do máy chủ quyết định. Khi gia hạn kho hiện có, thời hạn
+            được tính lại từ ngày thanh toán; chưa hỗ trợ đổi sang gói khác.
+          </p>
+        )}
         <p>
           Máy chủ sẽ kiểm tra lại gói và tạo đơn. Chỉ thanh toán khi bạn tiếp tục sang PayOS và xác
           nhận chuyển tiền.
@@ -97,7 +109,7 @@ export function PersonalCheckout({
         {failure && (
           <p>Yêu cầu có thể đã tạo giao dịch trên máy chủ. Kiểm tra lịch sử trước khi tạo lại.</p>
         )}
-        <Link to="/caregiver/payments">Lịch sử thanh toán</Link>
+        <Link to={paymentHistoryPath(actor)}>Lịch sử thanh toán</Link>
       </div>
     </Dialog>
   );
@@ -107,22 +119,21 @@ export function ApiPayments({ result = false }: { result?: boolean }) {
   const [search] = useSearchParams();
   const location = useLocation();
   if (!actor) return null;
-  if (!isPersonalCaregiver(actor))
+  if (!canPay(actor))
     return (
       <p className="notice">
-        Luồng thanh toán này dành cho Caregiver cá nhân. Thanh toán tổ chức được triển khai ở đợt
-        sau.
+        Luồng thanh toán này dành cho Caregiver cá nhân hoặc quản trị trung tâm có tổ chức.
       </p>
     );
   return result ? (
     <PaymentResult
-      key={actor.id + location.pathname + search.toString()}
+      key={actor.id + actor.orgId + location.pathname + search.toString()}
       actor={actor}
       code={orderCode(search.get('orderCode'))}
       cancelled={location.pathname === '/payments/cancel'}
     />
   ) : (
-    <PaymentHistory key={actor.id} actor={actor} />
+    <PaymentHistory key={actor.id + actor.orgId} actor={actor} />
   );
 }
 function PaymentHistory({ actor }: { actor: Person }) {
@@ -137,15 +148,22 @@ function PaymentHistory({ actor }: { actor: Person }) {
         title="Lịch sử thanh toán"
         description="Trạng thái do máy chủ xác nhận cho tài khoản của bạn."
         actions={
-          <Link className="btn" to="/packages">
-            Chọn gói Personal
-          </Link>
+          <>
+            <button
+              className="btn small"
+              aria-label="Tải lại lịch sử"
+              disabled={query.isFetching}
+              onClick={() => void query.refetch()}
+            >
+              <RefreshCw size={16} aria-hidden="true" /> Tải lại
+            </button>
+            <Link className="btn" to="/packages">
+              {isOrganizationBuyer(actor) ? 'Chọn gói Business' : 'Chọn gói Personal'}
+            </Link>
+          </>
         }
       />
       <section className="glass card stack">
-        <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-          Tải lại lịch sử
-        </button>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           <div className="table-scroll">
             <table>
@@ -178,7 +196,7 @@ function PaymentHistory({ actor }: { actor: Person }) {
           </div>
           {query.data?.items.length === 0 && <p>Chưa có giao dịch trên trang này.</p>}
           {query.data && (
-            <footer className="pagination">
+            <footer className="row pagination">
               <span>
                 {query.data.totalCount} giao dịch · Trang {page}/
                 {Math.max(1, query.data.totalPages)}
@@ -242,13 +260,14 @@ function PaymentResult({
     if (success) {
       void cache.invalidateQueries({ queryKey: ['session'] });
       void cache.invalidateQueries({ queryKey: ['license-subscription', actor.id] });
+      void cache.invalidateQueries({ queryKey: ['license-pool', actor.id, actor.orgId] });
       void cache.invalidateQueries({ queryKey: ['payments', actor.id, actor.orgId, 'history'] });
     }
   }, [success, actor.id, actor.orgId, cache]);
   const subscription = useQuery({
     queryKey: ['license-subscription', actor.id, actor.orgId],
     queryFn: ({ signal }) => getMySubscription(actor, signal),
-    enabled: success,
+    enabled: success && isPersonalCaregiver(actor),
     retry: false,
   });
   const checkout = payment?.status === 'Pending' ? safeCheckoutUrl(payment.payosCheckoutUrl) : null;
@@ -256,7 +275,7 @@ function PaymentResult({
     <>
       <PageHead
         title="Kiểm tra thanh toán"
-        description="Kết quả chỉ được xác nhận qua API của VisionAid."
+        description="Theo dõi trạng thái đơn và xác nhận thanh toán từ VisionAid."
       />
       <section className="glass card stack">
         {cancelled && (
@@ -288,16 +307,16 @@ function PaymentResult({
               )}
               {payment && (
                 <>
-                  <p role="status">
+                  <p role="status" className="payment-status">
                     <strong>{paymentLabels[payment.status]}</strong>
                   </p>
-                  <p>{packagePrice(payment.amount, payment.currency)}</p>
+                  <p className="payment-amount">{packagePrice(payment.amount, payment.currency)}</p>
                   {payment.status === 'Pending' && (
                     <>
                       <p>
                         {expired
                           ? 'Đã hết thời gian chờ tự động. Nếu đã trả tiền, hãy kiểm tra lại sau; không tạo đơn khác để trả thêm.'
-                          : 'Đang chờ máy chủ xác nhận. Webhook có thể đến chậm; không cần thanh toán lại.'}
+                          : 'Đang chờ xác nhận thanh toán. Việc cập nhật có thể mất một lúc; không cần thanh toán lại.'}
                       </p>
                       {checkout && !query.isFetching && (
                         <a className="btn primary" href={checkout} rel="noreferrer">
@@ -334,7 +353,7 @@ function PaymentResult({
             {!payment && expired && !query.isError && (
               <p>Đã dừng chờ tự động. Dùng Kiểm tra lại thanh toán hoặc tra cứu lịch sử.</p>
             )}
-            {success && (
+            {success && isPersonalCaregiver(actor) && (
               <State
                 loading={subscription.isPending}
                 error={subscription.error}
@@ -342,7 +361,7 @@ function PaymentResult({
               >
                 {subscription.data && (
                   <p>
-                    Subscription hiện tại: {subscriptionLabels[subscription.data.status]}. Quyền sử
+                    Gói sử dụng hiện tại: {subscriptionLabels[subscription.data.status]}. Quyền sử
                     dụng do máy chủ quyết định.
                   </p>
                 )}
@@ -350,8 +369,11 @@ function PaymentResult({
             )}
           </>
         )}
-        <Link to="/license">Xem license</Link>
-        <Link to="/caregiver/payments">Lịch sử thanh toán</Link>
+        {success && isOrganizationBuyer(actor) && <OrganizationPool actor={actor} />}
+        <Link to={isOrganizationBuyer(actor) ? '/center-admin/licenses' : '/license'}>
+          Xem license
+        </Link>
+        <Link to={paymentHistoryPath(actor)}>Lịch sử thanh toán</Link>
       </section>
       {confirmCancel && payment && (
         <Confirm

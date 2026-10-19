@@ -1,16 +1,16 @@
 VISIONAID WEB — API DÙNG Ở ĐÂU
-Cập nhật kế hoạch: 2026-10-04. Danh sách 001–107 là snapshot OpenAPI cũ (2026-09-25), controller BE/code FE và ảnh Swagger; đã bổ sung đối chiếu 140 operations trong phụ lục U0 và docs/U0_OPENAPI_2026-10-03.md.
-Swagger: http://51.210.176.94:5002/swagger/index.html
-OpenAPI: http://51.210.176.94:5002/swagger/v1/swagger.json
+Cập nhật kế hoạch: 2026-10-11. Danh sách 001–107 là snapshot OpenAPI cũ (2026-09-25), controller BE/code FE và ảnh Swagger; đã bổ sung đối chiếu 140 operations trong phụ lục U0 và docs/U0_OPENAPI_2026-10-03.md.
+Swagger: https://api.visionaid.net/swagger/index.html
+OpenAPI: https://api.visionaid.net/swagger/v1/swagger.json
 
-Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U2/U3a: 52/140 operations có caller Web. Personal Payment đã nối; Business/WebRTC/Hybrid chưa nối.
+Snapshot cũ 107 operations; 44 đã nối Web (DA_NOI): 10 auth/profile, 6 users/links ở 4a–4b, 8 organizations ở 5a, 5 users mới ở 5b, 2 links mới ở 5c, 2 locations ở 6, 5 emergency-events ở 7, 6 notifications ở 8b. U1 bổ sung 1 caller GET subscription: tổng sau U1 là 45/140. Hiện tại sau U7b: 117/144 operations có caller Web; snapshot mới docs/OPENAPI_2026-10-10.md. Personal/Business Payment đã nối; WebRTC có 5 REST callers và signaling/media, chờ test live; Hybrid metadata logs đã nối U7b; metrics/config tái sử dụng 13b/13a.
 DA_NOI: có caller thật; CHUA_NOI: mapping dự kiến, chưa có HTTP call từ màn đó.
 MOBILE: ngoài phạm vi triển khai Web hiện tại, không đánh dấu là Web còn thiếu.
 Quyền controller không thay kiểm tra scope/link/tenant trong handler.
 File FE của CHUA_NOI là UI dự kiến tái sử dụng, không phải caller đang hoạt động.
 10 API auth/profile: src/services/api/auth.ts -> api/adapter.ts -> hooks/useService.ts.
 6 API users/links: src/services/api/caregiving.ts -> apiGet/apiWrite/auth; UI ApiLinkedUsers.tsx và ApiCreateLinkedUser.tsx.
-8 API organizations: src/services/api/organizations.ts -> apiGet/apiWrite; UI src/pages/shared/ApiOrganizations.tsx. Activity-summary chưa nối.
+8 API organizations: src/services/api/organizations.ts -> apiGet/apiWrite; UI src/pages/shared/ApiOrganizations.tsx. Activity-summary đã nối tại /center-admin/reports ở đợt 12b.
 7 operation quản lý users: src/services/api/accounts.ts -> apiGet/apiWrite; UI src/pages/shared/ApiAccounts.tsx.
 6 operation caregiver-links: src/services/api/links.ts -> apiGet/apiWrite; UI src/pages/shared/ApiLinks.tsx (5c).
 2 operation locations: locations.ts -> ApiTracking.tsx; GET live polling 30 giây, history phân trang 20; POST GPS chỉ Mobile. Bản đồ nền chờ Mapbox token. Đợt 8a SignalR kích hoạt REST refetch; polling vẫn dự phòng.
@@ -20,9 +20,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
 
 
 001. GET /api/ai-metrics
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13b
   Màn/luồng: /admin/metrics
-  File FE: src/pages/super-admin/Metrics.tsx
+  File FE: src/services/api/monitoring.ts -> src/pages/super-admin/ApiMonitoring.tsx
   Dùng để: Hiệu năng AI, kiểm tra đơn vị và cách tổng hợp.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: modelName, dateFrom, dateTo, page, pageSize
@@ -30,9 +30,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/AiMetricsController.cs
 
 002. GET /api/audit-logs
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13b
   Màn/luồng: /admin/audit
-  File FE: src/pages/super-admin/Audit.tsx
+  File FE: src/services/api/monitoring.ts -> src/pages/super-admin/ApiMonitoring.tsx
   Dùng để: Tra cứu audit theo actor/filter/phân trang.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: page, pageSize, actorId, actionType, targetTable, targetRecordId, dateFrom, dateTo
@@ -280,140 +280,140 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/EmergencyContactsController.cs
 
 027. GET /api/users/{userId}/emergency-contacts
-  Trạng thái: CHUA_NOI | Đợt: 11a
+  Trạng thái: DA_NOI | Đợt: 11a
   Màn/luồng: /caregiver/contacts
-  File FE: src/pages/caregiver/Contacts.tsx
-  Dùng để: Danh bạ khẩn cấp của VIU được chọn; cần userId và scope hợp lệ. Luồng me dành cho người dùng xem chính mình.
+  File FE: src/services/api/contacts.ts -> apiGet/apiWrite; src/pages/caregiver/ApiContacts.tsx
+  Dùng để: Danh bạ VIU được chọn; Web kiểm tra active caregiver link trước đọc/ghi. Thêm/sửa bằng Dialog; xóa/đổi trạng thái bằng Confirm.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/EmergencyContactsController.cs
 
 028. POST /api/users/{userId}/emergency-contacts
-  Trạng thái: CHUA_NOI | Đợt: 11a
+  Trạng thái: DA_NOI | Đợt: 11a
   Màn/luồng: /caregiver/contacts
-  File FE: src/pages/caregiver/Contacts.tsx
-  Dùng để: Danh bạ khẩn cấp của VIU được chọn; cần userId và scope hợp lệ. Luồng me dành cho người dùng xem chính mình.
+  File FE: src/services/api/contacts.ts -> apiGet/apiWrite; src/pages/caregiver/ApiContacts.tsx
+  Dùng để: Danh bạ VIU được chọn; Web kiểm tra active caregiver link trước đọc/ghi. Thêm/sửa bằng Dialog; xóa/đổi trạng thái bằng Confirm.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: application/json: CreateEmergencyContactRequest; text/json: CreateEmergencyContactRequest; application/*+json: CreateEmergencyContactRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/EmergencyContactsController.cs
 
 029. GET /api/users/{userId}/emergency-contacts/{contactId}
-  Trạng thái: CHUA_NOI | Đợt: 11a
+  Trạng thái: DA_NOI | Đợt: 11a
   Màn/luồng: /caregiver/contacts
-  File FE: src/pages/caregiver/Contacts.tsx
-  Dùng để: Danh bạ khẩn cấp của VIU được chọn; cần userId và scope hợp lệ. Luồng me dành cho người dùng xem chính mình.
+  File FE: src/services/api/contacts.ts -> apiGet/apiWrite; src/pages/caregiver/ApiContacts.tsx
+  Dùng để: Danh bạ VIU được chọn; Web kiểm tra active caregiver link trước đọc/ghi. Thêm/sửa bằng Dialog; xóa/đổi trạng thái bằng Confirm.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/EmergencyContactsController.cs
 
 030. PUT /api/users/{userId}/emergency-contacts/{contactId}
-  Trạng thái: CHUA_NOI | Đợt: 11a
+  Trạng thái: DA_NOI | Đợt: 11a
   Màn/luồng: /caregiver/contacts
-  File FE: src/pages/caregiver/Contacts.tsx
-  Dùng để: Danh bạ khẩn cấp của VIU được chọn; cần userId và scope hợp lệ. Luồng me dành cho người dùng xem chính mình.
+  File FE: src/services/api/contacts.ts -> apiGet/apiWrite; src/pages/caregiver/ApiContacts.tsx
+  Dùng để: Danh bạ VIU được chọn; Web kiểm tra active caregiver link trước đọc/ghi. Thêm/sửa bằng Dialog; xóa/đổi trạng thái bằng Confirm.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: application/json: UpdateEmergencyContactRequest; text/json: UpdateEmergencyContactRequest; application/*+json: UpdateEmergencyContactRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/EmergencyContactsController.cs
 
 031. DELETE /api/users/{userId}/emergency-contacts/{contactId}
-  Trạng thái: CHUA_NOI | Đợt: 11a
+  Trạng thái: DA_NOI | Đợt: 11a
   Màn/luồng: /caregiver/contacts
-  File FE: src/pages/caregiver/Contacts.tsx
-  Dùng để: Danh bạ khẩn cấp của VIU được chọn; cần userId và scope hợp lệ. Luồng me dành cho người dùng xem chính mình.
+  File FE: src/services/api/contacts.ts -> apiGet/apiWrite; src/pages/caregiver/ApiContacts.tsx
+  Dùng để: Danh bạ VIU được chọn; Web kiểm tra active caregiver link trước đọc/ghi. Thêm/sửa bằng Dialog; xóa/đổi trạng thái bằng Confirm.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/EmergencyContactsController.cs
 
 032. PATCH /api/users/{userId}/emergency-contacts/{contactId}/status
-  Trạng thái: CHUA_NOI | Đợt: 11a
+  Trạng thái: DA_NOI | Đợt: 11a
   Màn/luồng: /caregiver/contacts
-  File FE: src/pages/caregiver/Contacts.tsx
-  Dùng để: Danh bạ khẩn cấp của VIU được chọn; cần userId và scope hợp lệ. Luồng me dành cho người dùng xem chính mình.
+  File FE: src/services/api/contacts.ts -> apiGet/apiWrite; src/pages/caregiver/ApiContacts.tsx
+  Dùng để: Danh bạ VIU được chọn; Web kiểm tra active caregiver link trước đọc/ghi. Thêm/sửa bằng Dialog; xóa/đổi trạng thái bằng Confirm.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: application/json: UpdateEmergencyContactStatusRequest; text/json: UpdateEmergencyContactStatusRequest; application/*+json: UpdateEmergencyContactStatusRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/EmergencyContactsController.cs
 
 033. POST /api/face-registry/persons
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: application/json: AddPersonRequest; text/json: AddPersonRequest; application/*+json: AddPersonRequest
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 034. GET /api/face-registry/persons
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: viuId, isActive
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 035. GET /api/face-registry/persons/{id}
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 036. PUT /api/face-registry/persons/{id}
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: application/json: EditPersonInfoRequest; text/json: EditPersonInfoRequest; application/*+json: EditPersonInfoRequest
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 037. DELETE /api/face-registry/persons/{id}
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 038. POST /api/face-registry/persons/{personId}/photos
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: multipart/form-data: photo,setAsPrimary,captureAngle,imageQualityScore,embeddingVector,embeddingModel
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 039. DELETE /api/face-registry/persons/{personId}/photos/{photoId}
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 040. PATCH /api/face-registry/persons/{personId}/photos/{photoId}/primary
-  Trạng thái: CHUA_NOI | Đợt: 10
+  Trạng thái: DA_NOI | Đợt: 10
   Màn/luồng: /caregiver/registry
-  File FE: src/pages/caregiver/Registry.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/registry.ts -> src/pages/caregiver/ApiRegistry.tsx
+  Dùng để: Danh bạ/ảnh trong popup. Xem cần active link; ghi cần canManageRegistry. Preview qua GET có Bearer, không dùng storagePath. Chi tiết từng nút ở phụ lục đợt 10.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
@@ -430,29 +430,29 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 042. GET /api/face-registry/recognition-logs
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
+  Dùng để: Đọc lịch sử nhận diện và chi tiết; Caregiver active link, không yêu cầu CanManageRegistry. Không trả gallery hoặc storagePath.
   Quyền controller: Roles = "Caregiver"
   Query: page, pageSize, viuId, result, dateFrom, dateTo
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 043. GET /api/face-registry/recognition-logs/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
-  Dùng để: Quản lý người quen/ảnh; cần CanManageRegistry. Luồng recognition-logs là lịch sử ở Activity. Chưa xác nhận API đọc ảnh mã hóa.
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
+  Dùng để: Đọc lịch sử nhận diện và chi tiết; Caregiver active link, không yêu cầu CanManageRegistry. Không trả gallery hoặc storagePath.
   Quyền controller: Roles = "Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.FaceRecognition/Presentation/FaceRegistryController.cs
 
 044. POST /api/geofences
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -460,9 +460,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/GeofencesController.cs
 
 045. GET /api/geofences
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: viuId, isActive, page, pageSize
@@ -470,9 +470,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/GeofencesController.cs
 
 046. GET /api/geofences/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -480,9 +480,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/GeofencesController.cs
 
 047. PUT /api/geofences/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -490,9 +490,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/GeofencesController.cs
 
 048. DELETE /api/geofences/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
   Dùng để: Vùng an toàn của VIU; cần quyền và tọa độ; test cảnh báo cần GPS và worker.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
@@ -540,9 +540,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Navigation/Presentation/NavigationController.cs
 
 053. GET /api/navigation/sessions
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử phiên di chuyển; lấy sessionId từ list rồi detail/events. Thao tác ghi thuộc Mobile.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, userId, dateFrom, dateTo, detectionMode, isActive
@@ -570,9 +570,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Navigation/Presentation/NavigationController.cs
 
 056. GET /api/navigation/sessions/{id}/events
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử phiên di chuyển; lấy sessionId từ list rồi detail/events. Thao tác ghi thuộc Mobile.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, objectClass, alertIssued, distanceRange, dateFrom, dateTo
@@ -580,9 +580,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Navigation/Presentation/NavigationController.cs
 
 057. GET /api/navigation/sessions/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử phiên di chuyển; lấy sessionId từ list rồi detail/events. Thao tác ghi thuộc Mobile.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -660,9 +660,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 065. GET /api/notifications/status
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13b
   Màn/luồng: /admin/delivery
-  File FE: src/pages/super-admin/Delivery.tsx
+  File FE: src/services/api/monitoring.ts -> src/pages/super-admin/ApiMonitoring.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: Không có
@@ -670,9 +670,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Notifications/Presentation/NotificationsController.cs
 
 066. GET /api/notifications/failed
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13b
   Màn/luồng: /admin/delivery
-  File FE: src/pages/super-admin/Delivery.tsx
+  File FE: src/services/api/monitoring.ts -> src/pages/super-admin/ApiMonitoring.tsx
   Dùng để: Rules: /admin/rules và /center-admin/routing. Preference cá nhân: /caregiver/notifications. Status/failed: /admin/delivery. Không phải API inbox.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: page, pageSize, channel, dateFrom, dateTo
@@ -690,9 +690,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Ocr/Presentation/OcrController.cs
 
 068. GET /api/ocr/requests
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử OCR/QR và detail; thao tác ghi thuộc Mobile. QR này không phải mời liên kết.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, userId, requestType, resultStatus, dateFrom, dateTo
@@ -710,9 +710,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Ocr/Presentation/OcrController.cs
 
 070. GET /api/ocr/qr-scans
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử OCR/QR và detail; thao tác ghi thuộc Mobile. QR này không phải mời liên kết.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, userId, isUrl, dateFrom, dateTo
@@ -720,9 +720,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Ocr/Presentation/OcrController.cs
 
 071. GET /api/ocr/requests/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử OCR/QR và detail; thao tác ghi thuộc Mobile. QR này không phải mời liên kết.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -730,9 +730,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Ocr/Presentation/OcrController.cs
 
 072. GET /api/ocr/qr-scans/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử OCR/QR và detail; thao tác ghi thuộc Mobile. QR này không phải mời liên kết.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -801,8 +801,8 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
 
 079. GET /api/organizations/{id}/members
   Trạng thái: DA_NOI | Đợt: 5a
-  Màn/luồng: /admin/organizations; /center-admin/organization
-  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx
+  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
+  File FE: src/services/api/organizations.ts -> src/pages/shared/ApiOrganizations.tsx và src/pages/center-admin/ApiReports.tsx
   Dùng để: Danh sách thành viên theo org, phân trang/search/role/isActive; chỉ đọc ở 5a.
   Quyền controller: Roles = "Admin,CenterAdmin"
   Query: page, pageSize, search, isActive, role
@@ -810,15 +810,14 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 080. GET /api/organizations/{id}/activity-summary
-  Trạng thái: CHUA_NOI | Đợt: 5a/12
-  Màn/luồng: /admin/organizations; /center-admin/organization; /center-admin/reports
-  File FE: src/pages/super-admin/Organizations.tsx; src/pages/center-admin/Organization.tsx; src/pages/center-admin/Reports.tsx
-  Dùng để: Tổ chức, thành viên và activity-summary. Admin quản lý tổ chức; CenterAdmin theo scope org.
-  Quyền controller: Roles = "Admin,CenterAdmin"
-  Query: dateFrom, dateTo
-  Body/schema: Không khai báo request body
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12b
+  Màn/luồng: /center-admin/reports
+  File FE: src/services/api/organizations.ts -> src/pages/center-admin/ApiReports.tsx
+  Dùng để: 4 số tổng hoạt động theo VIU hiện thuộc org; DateOnly UTC. Không có response-time nhân viên.
+  Quyền controller: Admin,CenterAdmin; UI chỉ CenterAdmin org hiện tại, handler kiểm tra scope.
+  Query: dateFrom, dateTo dạng YYYY-MM-DD, bỏ trống để không giới hạn.
+  Body/schema: OrganizationActivitySummaryResponse, kiểm tra orgId và ngày phản hồi.
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
-
 081. PATCH /api/organizations/{id}/status
   Trạng thái: DA_NOI | Đợt: 5a
   Màn/luồng: /admin/organizations
@@ -830,59 +829,59 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Organizations/Presentation/OrganizationsController.cs
 
 082. POST /api/saved-locations
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
   Body/schema: application/json: AddSavedLocationRequest; text/json: AddSavedLocationRequest; application/*+json: AddSavedLocationRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 083. GET /api/saved-locations
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: viuId, isActive, page, pageSize
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 084. GET /api/saved-locations/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 085. PUT /api/saved-locations/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
   Body/schema: application/json: EditSavedLocationRequest; text/json: EditSavedLocationRequest; application/*+json: EditSavedLocationRequest
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 086. DELETE /api/saved-locations/{id}
-  Trạng thái: CHUA_NOI | Đợt: 9
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 9
   Màn/luồng: /caregiver/locations
-  File FE: src/pages/caregiver/Locations.tsx
-  Dùng để: Địa điểm đã lưu của VIU; cần CanManageLocations; đây là resource khác geofence.
+  File FE: src/pages/caregiver/ApiPlaces.tsx; src/services/api/places.ts
+  Dùng để: Địa điểm đã lưu của VIU; GET cần active link, ghi cần canManageLocations; đây là resource khác geofence.
   Quyền controller: Roles = "Caregiver,CenterAdmin"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/SavedLocationsController.cs
 
 087. GET /api/system-configs
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: page, pageSize, category, isPublic, search
@@ -890,9 +889,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/SystemConfigsController.cs
 
 088. GET /api/system-configs/{id}
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: Không có
@@ -900,9 +899,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/SystemConfigsController.cs
 
 089. PUT /api/system-configs/{id}
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: Không có
@@ -910,9 +909,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/SystemConfigsController.cs
 
 090. POST /api/system-configs/{id}/rollback
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: Không có
@@ -920,9 +919,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Administration/Presentation/SystemConfigsController.cs
 
 091. GET /api/system-configs/{id}/history
-  Trạng thái: CHUA_NOI | Đợt: 13
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 13a
   Màn/luồng: /admin/configurations
-  File FE: src/pages/super-admin/Configurations.tsx
+  File FE: src/services/api/configurations.ts -> src/pages/super-admin/ApiConfigurations.tsx
   Dùng để: Cấu hình hệ thống, lịch sử và rollback; chỉ Admin.
   Quyền controller: Policy = AuthPolicies.AdminOnly
   Query: page, pageSize
@@ -950,20 +949,20 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/TtsPreferencesController.cs
 
 094. GET /api/users/{userId}/tts-preferences
-  Trạng thái: CHUA_NOI | Đợt: 11b
+  Trạng thái: DA_NOI | Đợt: 11b
   Màn/luồng: /caregiver/tts
-  File FE: src/pages/caregiver/Tts.tsx
-  Dùng để: Cài đặt TTS của VIU. BE volume 0–1, UI mock 0–100 cần map. PUT thành công chưa chứng minh Mobile đã đọc lại.
+  File FE: src/services/api/tts.ts -> src/pages/caregiver/ApiTts.tsx
+  Dùng để: Cài đặt TTS của VIU có active link. Volume UI 0–100% map BE 0–1. Popup tạo/sửa, lưu rồi GET lại; Mobile cần tải lại cấu hình.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Users/Presentation/TtsPreferencesController.cs
 
 095. PUT /api/users/{userId}/tts-preferences
-  Trạng thái: CHUA_NOI | Đợt: 11b
+  Trạng thái: DA_NOI | Đợt: 11b
   Màn/luồng: /caregiver/tts
-  File FE: src/pages/caregiver/Tts.tsx
-  Dùng để: Cài đặt TTS của VIU. BE volume 0–1, UI mock 0–100 cần map. PUT thành công chưa chứng minh Mobile đã đọc lại.
+  File FE: src/services/api/tts.ts -> src/pages/caregiver/ApiTts.tsx
+  Dùng để: Cài đặt TTS của VIU có active link. Volume UI 0–100% map BE 0–1. Popup tạo/sửa, lưu rồi GET lại; Mobile cần tải lại cấu hình.
   Quyền controller: Roles = "Admin,CenterAdmin,Caregiver"
   Query: Không có
   Body/schema: application/json: UpsertTtsPreferenceRequest; text/json: UpsertTtsPreferenceRequest; application/*+json: UpsertTtsPreferenceRequest
@@ -1070,9 +1069,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.VoiceCommands/Presentation/VoiceCommandsController.cs
 
 106. GET /api/voice-commands
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử lệnh giọng nói; dữ liệu ghi từ Mobile, Web đọc list/detail theo scope.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: page, pageSize, userId, matchedCommand, executionStatus, isOffline, dateFrom, dateTo
@@ -1080,9 +1079,9 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Nguồn BE: src/Modules/VisionAid.Modules.VoiceCommands/Presentation/VoiceCommandsController.cs
 
 107. GET /api/voice-commands/{id}
-  Trạng thái: CHUA_NOI | Đợt: 12
+  Trạng thái: DA_NOI_FE_CHO_TEST_LIVE | Đợt: 12a
   Màn/luồng: /caregiver/activity
-  File FE: src/pages/caregiver/Activity.tsx
+  File FE: src/services/api/activity.ts -> src/pages/caregiver/ApiActivity.tsx
   Dùng để: Lịch sử lệnh giọng nói; dữ liệu ghi từ Mobile, Web đọc list/detail theo scope.
   Quyền controller: Đã đăng nhập; cần kiểm tra quyền resource trong handler
   Query: Không có
@@ -1130,9 +1129,9 @@ Mapping mới:
 - SERVER ONLY: POST /api/payments/payos-webhook; không gọi từ FE.
 - U3b/U4: GET /api/licenses/pool; GET /api/licenses/assignments; POST /api/licenses/assignments/{viuUserId}/assign (poolId); POST /api/licenses/assignments/{viuUserId}/revoke. Sửa path/method bản TXT: revoke là POST theo VIU ID, không DELETE theo assignment ID.
 - U5: POST /api/licenses/distribute (poolId, note?); POST /api/licenses/activate-key (licenseKey). Trừ pool khi distribute; chưa thấy API list distributed keys.
-- 8c: PUT /api/auth/fcm-token (fcmToken, clientDeviceId, deviceType?, deviceModel?, appVersion?). Đã có upsert, không cần login lại chỉ để cập nhật token; logout deactivate theo user/device, chưa revoke riêng để tắt push. Chưa nối FE.
+- 8c: PUT /api/auth/fcm-token (fcmToken, clientDeviceId, deviceType?, deviceModel?, appVersion?). Đã có upsert, không cần login lại chỉ để cập nhật token; logout deactivate theo user/device, chưa revoke riêng để tắt push. Đã nối FE tại Hồ sơ qua src/services/api/push.ts; xem docs/API_STAGE_8C_TEST.md.
 - U6: POST/GET /api/webrtc/sessions; POST /api/webrtc/sessions/{id}/accept, /reject, /end; GET /api/webrtc/ice-servers/public. Role/quyền theo handler, không suy quyền gọi từ ICE role.
-- U7a: GET/POST /api/webrtc/ice-servers; PUT/DELETE /api/webrtc/ice-servers/{id}.
+- U7a DA_NOI_FE_CHO_TEST_LIVE: GET/POST /api/webrtc/ice-servers; PUT/DELETE /api/webrtc/ice-servers/{id}. src/services/api/iceServers.ts -> src/pages/super-admin/ApiIceServers.tsx, /admin/ice-servers.
 - SIGNALR /hubs/location: RelayOffer -> WebRtcOffer; RelayAnswer -> WebRtcAnswer; RelayIceCandidate -> WebRtcIceCandidate. Không tính là REST.
 - Các API mới khác trong snapshot (called, public configs, faces me/identify, GPS me/batch, navigation batch) cần đối chiếu role/handler trước khi phân loại Web/Mobile chính thức; không tự mở UI chỉ vì Swagger có path.
 
@@ -1188,3 +1187,112 @@ Tổng hiện tại: 52/140 operations có caller Web (49 sau U2 + 3 payment). W
   Caller: paymentsApi.cancel -> PaymentResult.
 - POST /api/payments/payos-webhook: SERVER ONLY, FE không gọi.
 - Business/CenterAdmin payment chưa triển khai (U3b). Checklist và giới hạn: docs/API_STAGE_U3A_TEST.md.
+
+U3b — TRIỂN KHAI FE 2026-10-06, chờ test live
+Tổng hiện tại: 53/140 operations có caller Web; thêm 1 GET pool, tái sử dụng 3 payment U3a.
+- GET /api/licenses/pool
+  Caller: src/services/api/licenses.ts:getOrganizationPool.
+  UI: src/pages/shared/ApiLicensePool.tsx -> /center-admin/licenses; ApiPayments.tsx đọc lại sau Success; payments.ts kiểm tra gói pool trước tạo checkout Business.
+  Chỉ CenterAdmin có org, kiểm tra organizationId response khớp phiên. 404 chưa có pool; lỗi khác không giả thành 0 license.
+- POST create-link, GET history, DELETE payment cancel: thêm scope CenterAdmin tại /packages, /center-admin/payments và callback /payments/return|cancel.
+  Không gửi organizationId, giá, quota hoặc loại giao dịch tự tính. BE xác định từ phiên. Staff/Admin không dùng checkout.
+  History DTO không có organizationId; quyền transaction cuối cùng do BE bảo vệ. Kho Active/Expired không được checkout gói khác vì webhook BE dùng gói kho cũ.
+- GET assignments/POST assign/revoke đã nối trong U4. Test và lưu ý BE: docs/API_STAGE_U3B_TEST.md.
+
+
+U4 — TRIỂN KHAI FE 2026-10-07, chờ test live
+- GET /api/licenses/assignments: DA_NOI; CenterAdmin; page/pageSize=20/isActive; LicenseAssignments.tsx tại /center-admin/licenses; service licenseAssignments.ts. Danh sách tổ chức và lịch sử đã thu hồi.
+- POST /api/licenses/assignments/{viuUserId}/assign: DA_NOI; popup cấp/cấp lại; body {poolId}; data GUID; GET users/{id} và pool preflight.
+- POST /api/licenses/assignments/{viuUserId}/revoke: DA_NOI; popup xác nhận thu hồi; không body; data null. Không xóa user hoặc caregiver link.
+- ApiAccounts.tsx refresh pool/assignments sau tạo; 402/422 giữ form. ApiLinkedUsers.tsx và chi tiết account hiển thị licenseStatus/licenseExpiresAt theo BE.
+- Tổng 56/140 operations có caller Web. U5 đã nối ở phụ lục tiếp theo. Contract, test và guard BE còn thiếu: docs/API_STAGE_U4_TEST.md.
+
+
+U5 — TRIỂN KHAI FE 2026-10-07, chờ test live
+- POST /api/licenses/distribute: DA_NOI; CenterAdmin; body {poolId,note}; data {subscriptionId,licenseKey,expiresAt}. licenseKeys.ts -> LicenseKeys.tsx popup tại /center-admin/licenses. GET pool preflight; refetch quota sau request, không tự cộng trừ.
+- POST /api/licenses/activate-key: DA_NOI; Caregiver gia đình; body {licenseKey}; data SubscriptionDetailResponse. licenseKeys.ts -> LicenseKeys.tsx popup tại /license. Refetch session/subscription/users; không thay org/link.
+- Key không lưu URL/storage/Query cache; clipboard chỉ sau bấm. Lỗi không rõ kết quả không tự retry. Chưa có API xem lịch sử hoặc thu hồi key, không dùng revoke assignment thay thế.
+- Tổng 58/140 operations có caller Web. Test và chênh lệch BE: docs/API_STAGE_U5_TEST.md. Đợt kế tiếp 11a khi user yêu cầu.
+
+11a — Contract và giới hạn
+6 callers 027–032: GET list trả mảng, DTO contactType Phone/Zalo/Both, priorityOrder số nguyên dương không trùng, tối đa 5 kể cả inactive. PUT dùng chuỗi rỗng để xóa phone/Zalo/notes; null giữ giá trị cũ. DELETE 204.
+Caregiver có active link được quản lý, không yêu cầu primary hoặc permission flags; cùng org chưa đủ. BE vẫn là nơi quyết định quyền. /me dành cho Mobile, chưa có caller Web.
+BE local chỉ nhận số di động Việt Nam; 112/115 chưa hỗ trợ. Không tự gọi điện/Zalo/SOS khi xem hoặc lưu. Checklist: docs/API_STAGE_11A_TEST.md.
+
+8c — DA_NOI PUT /api/auth/fcm-token
+Màn /profile -> PushSettings; nền PushSync trong Shell. Payload fcmToken, clientDeviceId khớp auth, deviceType Web, deviceModel, appVersion. Permission chỉ sau click; Web Locks tránh đồng thời nhiều tab; một owner/browser. Native unsubscribe khi tắt/logout, BE chưa revoke riêng.
+Foreground refetch REST, background lời nhắc chung; click /dashboard qua guards. 93 unit/6 E2E fixture đạt, chưa xác minh FCM live. BE job SELECT device_token khác mapping fcm_token: cần đối chiếu deploy.
+
+U6a — DA_NOI FE, chờ test Mobile/TURN/deploy; BE source 48a7346
+- POST /api/webrtc/sessions: calls.ts:initiate -> CallButton tại /caregiver/users (ApiLinkedUsers). Body viuUserId + triggerType CaregiverInitiated; preflight active links. Xin micro trước POST, không camera Web.
+- POST /api/webrtc/sessions/{id}/accept: calls.ts:accept -> popup CallPanel trong Shell sau WebRtcIncomingCall được đối chiếu history.receiverId. User bấm Nhận, không auto-accept.
+- POST /api/webrtc/sessions/{id}/reject: calls.ts:reject -> Từ chối/Escape popup incoming. Không xin micro.
+- POST /api/webrtc/sessions/{id}/end: calls.ts:end -> nút Kết thúc/đóng popup, lỗi media/signaling, cleanup best-effort. Body reason. Không auto-retry thao tác ghi.
+- GET /api/webrtc/sessions: calls.ts:history -> /caregiver/calls (ApiCalls); page/pageSize=20/viuUserId/dateFrom/dateTo; popup chi tiết. Dùng thêm để xác minh incoming và poll phiên hoạt động 10 giây. Query cache scope actor/org/filter.
+- ICE lấy từ response initiate/accept, myRole video_viewer_audio_sender; GET /api/webrtc/ice-servers/public vẫn CHUA_NOI Web vì không cần caller thừa.
+- SignalR /hubs/location dùng chung kết nối ApiRealtime. Nhận WebRtcIncomingCall/CallAccepted/CallEnded/CallRejected/Offer/IceCandidate. Mobile tạo offer; Web invoke RelayAnswer(sessionId,sdp), RelayIceCandidate(sessionId,candidateJson). Không invoke RelayOffer từ Web ở luồng này.
+- src/services/realtime/calls.ts giữ lifecycle/SDP/ICE; CallPanel chỉ UI/media element. Không lưu SDP/ICE/video/credentials vào storage. Dọn khi logout; một browser lock theo account; mất signaling đóng media, không tự khôi phục.
+- Đã nối tổng 70/140; không coi U6b SOS/FCM/Mobile đã nghiệm thu. Checklist/giới hạn: docs/API_STAGE_U6A_TEST.md.
+U6b — FE đã nối recovery, chờ test live
+GET /api/webrtc/sessions: ngoài history còn được ApiRealtime gọi qua CallClient.recover khi connected/focus/push, xác minh receiver và trạng thái trước popup. Không thêm REST operation. Bấm push focus cửa sổ hiện tại. Payload/history chưa có emergencyEventId nên chưa ghép cảnh báo cụ thể. Chi tiết: docs/API_STAGE_U6B_TEST.md.
+
+
+Đợt 9 — ĐÃ NỐI FE, chờ test BE/Mobile thật
+/api/saved-locations và /api/geofences: mỗi resource gồm GET list, GET id, POST, PUT id, DELETE id. Dùng tại /caregiver/locations, hai tab riêng, popup thêm/sửa/xóa; list có viuId/isActive/page/pageSize. Tổng 80/140. Contract và chuỗi test: docs/API_STAGE_9_TEST.md. Mapbox picker chưa nối; nhập tọa độ chính xác.
+
+Đợt 10 — LỊCH SỬ blocker trước BE f277b6a, đã gỡ theo cập nhật bên dưới
+Source BE 48a7346 và Swagger deploy chưa có GET preview/content ảnh đã giải mã; upload lưu .enc, storagePath không phải URL preview. Chưa thêm caller, tổng vẫn 80/140. Đề xuất BE và điểm tiếp tục: docs/API_STAGE_10_CONTRACT.md.
+
+Đợt 10 — DA_NOI FE 2026-10-10; BE f277b6a, chờ test live
+Tổng 89/144 operations có caller Web. Registry service: src/services/api/registry.ts.
+UI: src/pages/caregiver/ApiRegistry.tsx, route /caregiver/registry. Chỉ Caregiver có active link; query cache theo actor/org/VIU. Không dùng API Mobile persons/me hoặc identify.
+- GET /api/face-registry/persons?viuId=: list -> bảng người thân, lọc tên/trạng thái tại FE. BE trả mảng không phân trang, tối đa 20 người.
+- POST /api/face-registry/persons: save -> popup Thêm người thân. JSON visuallyImpairedUserId, displayName, relationship|null, notes|null.
+- GET /api/face-registry/persons/{id}: detail/read -> popup sửa/ảnh và xác minh VIU trước thao tác. DTO FE loại storagePath/embedding.
+- PUT /api/face-registry/persons/{id}: save -> popup Chỉnh sửa. JSON displayName, relationship|null, notes|null; null xóa nội dung.
+- DELETE /api/face-registry/persons/{id}: remove -> popup Xóa người thân, 204; refresh danh bạ sau kết quả.
+- POST /api/face-registry/persons/{personId}/photos: upload -> popup Quản lý ảnh, một ảnh mỗi lần. FormData photo,setAsPrimary; browser tự đặt boundary. Không gửi embedding/vector/model/quality tự tạo. JPEG/PNG/WebP <=10 MiB, không rỗng, kiểm chữ ký. Timeout 90 giây, không replay POST.
+- GET /api/face-registry/persons/{personId}/photos/{photoId}: photo -> RegistryPreview (CALLER MỚI so với snapshot140). Bearer + no-store, auth refresh một lần nếu401, trả Blob. Chỉ dùng object URL trong component; revoke khi đóng/đổi scope/logout. BE hardcode image/jpeg, FE nhận dạng chữ ký raster; không biến lỗi JSON thành ảnh.
+- DELETE /api/face-registry/persons/{personId}/photos/{photoId}: removePhoto -> popup Xóa ảnh; xác minh ảnh thuộc person, quyền mới nhất; 204; lỗi giữ ảnh, không optimistic delete.
+- PATCH /api/face-registry/persons/{personId}/photos/{photoId}/primary: primary -> Đặt ảnh chính; không body, trả image DTO; refresh dữ liệu server.
+- GET /api/users và GET /api/caregiver-links tái sử dụng để chọn VIU và kiểm quyền đọc/ghi. canManageRegistry=false chỉ xem; revoked link chặn trước download/write. Count/isActive đọc BE, không tự cộng trừ hay suy đoán FaceNet đã sẵn sàng.
+- Auth binary dùng client.ts -> auth.blob -> adapter.apiBlob; giữ nguyên lỗi JSON/402, không đưa token lên URL. Response đến sau logout bị loại.
+- GET/POST recognition-logs giữ trạng thái đợt12/Mobile. Privacy policy vẫn chờ, không gọi accept-privacy-policy. Test và dependencies: docs/API_STAGE_10_TEST.md.
+- Swagger mới 144: ngoài GET photo còn PUT /api/emergency-events/{id}/snapshot, POST /api/navigation/guidance, GET /api/navigation/guidance/logs; chưa nối Web, cần đối chiếu role/DTO ở đợt liên quan. Không tự mở rộng phạm vi đợt10.
+
+Đợt 11b — DA_NOI FE 2026-10-11; tổng 91/144 callers Web
+- GET /api/users/{userId}/tts-preferences: ttsApi.read -> /caregiver/tts, sau khi chọn VIU và sau lưu/tải lại/poll30s ngoài popup. DTO id,userId,voiceGender,speedRate,volumeLevel,detectionMode,primaryLanguage,secondaryLanguage,updatedAt. Xác minh userId; sai DTO/enum/range báo lỗi.
+- PUT /api/users/{userId}/tts-preferences: ttsApi.save -> popup Tạo/Chỉnh sửa giọng đọc. Upsert JSON voiceGender Male/Female, speedRate 0.5–2, volumeLevel 0–1, detectionMode Minimal/Full, primaryLanguage, secondaryLanguage. UI chuyển percent/100; không gửi volumePercent hay userId trong body.
+- GET caregiver-links kiểm lại active link trước đọc/ghi. Không dựa vào primary hoặc quyền ảnh/vị trí. GET404 preferences thì GET users/{id} xác minh VIU tồn tại trước hiển thị trạng thái chưa có cấu hình; lỗi user/403/402/5xx không giả default.
+- Ngôn ngữ phụ trống gửi "" để xóa; null giữ nguyên theo BE. Không gọi /me cho VIU được chọn; không có DELETE. Không tự gửi PUT khi chỉ mở trang, không retry ghi hoặc đánh dấu Mobile đã áp dụng.
+- Query scope actor/org/VIU; popup giữ dữ liệu khi lỗi, đổi VIU/unmount loại response cũ. Route chỉ Caregiver, chưa mở UI TTS toàn tổ chức/Admin.
+- Test: docs/API_STAGE_11B_TEST.md. Mobile cần GET /api/users/me/tts-preferences rồi áp dụng TTS để nghiệm thu liên thông.
+
+BỔ SUNG ĐỢT 12a — 2026-10-11
+- 11 GET callers tại /caregiver/activity: navigation list/detail/events, OCR list/detail, QR list/detail, recognition list/detail, voice list/detail. Tổng 102/144.
+- activity.ts -> ApiActivity.tsx; chọn VIU qua caregiving.users, authorize qua caregiver-links trước mỗi request, check owner/id/session ở DTO, không gửi POST Mobile.
+- UI loại + ngày UTC+7 + pagination BE20; events trong popup phân trang riêng, toàn phiên và cũ nhất trước. Không trộn các trang đầu thành một timeline/tổng số giả.
+- Query nhận diện: viuId; các loại khác: userId. Raw text/QR/transcript chỉ text, không mở link, không fetch imageStoragePath.
+- Kiểm thử fixture không thay nghiệm thu BE/Mobile. Checklist/dependencies: docs/API_STAGE_12A_TEST.md. Tiếp theo 12b theo PLAN.
+
+BỔ SUNG ĐỢT 12b — 2026-10-11
+- GET activity-summary mới, tái sử dụng GET members, tổng 103/144 operations có caller Web.
+- /center-admin/reports có sidebar; lấy orgId từ session. Summary dùng ngày UTC, members có search/role/isActive/page riêng. Không cộng tổng bằng số dòng trang đầu.
+- geofenceBreachCount đếm mọi boundary event; ocrRequestCount bao gồm QR. Xem docs/API_STAGE_12B_TEST.md để test nguồn dữ liệu và ý nghĩa số liệu.
+
+Đợt 13a: 5 system-configs operations, tổng 108/144. Admin list/detail/update/history/rollback; rollback khôi phục oldValue của lịch sử, không phải newValue. Chỉ khóa đã duyệt được hiện giá trị và chỉnh sửa. BE vẫn cần che secret trong response, kiểm soát version nguyên tử và validate rollback. Checklist: docs/API_STAGE_13A_TEST.md. Chưa ghi cấu hình live.
+
+Đợt 13b: 4 GET callers mới, tổng 112/144. Metrics DateOnly UTC, audit và failed lọc ngày Việt Nam; status 24h/7d không theo filter failed. Audit chỉ giữ metadata, raw response cần BE redaction. Không có mutation/retry delivery. Checklist docs/API_STAGE_13B_TEST.md; tiếp U7a khi được yêu cầu.
+
+U7a: 4 ICE admin operations đã nối, tổng 116/144. GET page/pageSize/isActive, POST tạo luôn bật, PUT phải nhập credential TURN mỗi lần, DELETE204. Credential bị loại khỏi cache/UI nhưng raw BE response vẫn chứa. Không rotate TURN server hay test cuộc gọi tự động. Checklist docs/API_STAGE_U7A_TEST.md.
+
+U7b — 2026-10-11: 1 GET caller mới, tổng 117/144.
+- GET /api/navigation/guidance/logs -> services/api/monitoring.ts -> pages/super-admin/ApiMonitoring.tsx -> /admin/hybrid, menu Nhật ký Hybrid, Admin-only.
+- Query page/pageSize20, userId, sessionId, engineUsed Jev/Groq/RuleBased, isOfflineFallback true/false, dateFrom/dateTo bao gồm trọn ngày Việt Nam.
+- Popup dùng metadata của dòng list, không bịa GET detail. Loại detectedObjectsJson/ttsText khỏi cache/UI; raw response vẫn có. Không gửi POST guidance của Mobile.
+- Link /admin/metrics dùng GET /api/ai-metrics đã có; modelName JEV/Groq/RuleBased, DateOnly UTC. Link /admin/configurations dùng 5 operations13a đã có cho 3 khóa Hybrid, không đếm lại callers.
+- latency null không hiển thị 0; fallback không chứng minh Mobile offline; failed metric của nguồn này đếm latency null. Checklist docs/API_STAGE_U7B_TEST.md. Tiếp U8, chờ nghiệm thu Mobile/engine thật.
+
+U8a — 2026-10-12: landing / chỉ cập nhật nội dung, không thêm REST caller; tổng117/144 giữ nguyên. LicensePackagesController yêu cầu đăng nhập nên không gọi GET packages trên trang công khai. CTA đi /auth/login, gói/giá thật xem sau đăng nhập ở luồng U2. Không POST guidance/payment từ landing. Checklist docs/API_STAGE_U8A_TEST.md; tiếp U8b dashboard.
+
+U8b — 2026-10-12: dashboard reuses existing callers (no new REST operation): GET /api/licenses/subscription -> Caregiver personal dashboard; GET /api/licenses/pool -> CenterAdmin organization dashboard; GET /api/emergency-events?status=Sent|Acknowledged|Escalated&page=1 -> Caregiver/CenterAdmin alert counts; GET /api/payments/history?page=1&pageSize=10 -> recent pending view for personal Caregiver/CenterAdmin; GET /api/notifications/status -> Admin delivery panel. Staff Caregiver has no personal billing call. Counts use BE totalCount per status; payment status is filtered only within the newest 10 because BE has no status query filter. Checklist docs/API_STAGE_U8B_TEST.md; live acceptance pending.

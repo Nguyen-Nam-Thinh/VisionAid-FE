@@ -1,50 +1,72 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { runtime } from '../configs/runtime';
 import { apiAccessToken } from '../services/api/adapter';
-import {
-  hubUrl,
-  startSignalR,
-  refreshRealtimeQueries,
-  type RealtimeState,
-} from '../services/realtime/signalr';
+import { hubUrl, startSignalR, refreshRealtimeQueries } from '../services/realtime/signalr';
 import type { Person } from '../models/domain';
-export function ApiRealtime({ actor }: { actor: Person }) {
+import { createCallClient } from '../services/realtime/calls';
+import { callsApi } from '../services/api/calls';
+import { pushOwner } from '../services/notifications/push';
+import { onSessionEnded } from '../services/sessionLifecycle';
+import { CallContext, CallPanel } from './CallPanel';
+export function ApiRealtime({
+  actor,
+  children,
+  enabled = true,
+}: {
+  actor: Person;
+  children?: ReactNode;
+  enabled?: boolean;
+}) {
   const cache = useQueryClient();
-  const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState<RealtimeState>('connecting');
+  const [client] = useState(() =>
+    createCallClient({
+      api: callsApi,
+      actor,
+      changed: () => {
+        void cache.invalidateQueries({ queryKey: ['api-calls', actor.id, actor.orgId] });
+      },
+    }),
+  );
   const url = hubUrl(runtime.signalRUrl, runtime.apiBaseUrl, window.location.protocol);
   useEffect(() => {
-    if (!url) return;
-    return startSignalR(
+    if (!url || !enabled || !['Caregiver', 'CenterAdmin'].includes(actor.role)) return;
+    const stop = startSignalR(
       url,
       apiAccessToken,
       () => {
         void refreshRealtimeQueries(cache, { id: actor.id, orgId: actor.orgId });
       },
       (next) => {
-        setState(next);
-        if (next === 'connected')
+        client.network(next);
+        if (next === 'connected') {
           void cache.invalidateQueries({ queryKey: ['session'] }, { cancelRefetch: false });
+          void client.recover();
+        }
       },
+      actor.role === 'Caregiver' ? (connection) => client.attach(connection) : undefined,
     );
-  }, [url, cache, actor.id, actor.orgId, attempt]);
-  const labels = {
-    connecting: 'Đang kết nối realtime…',
-    connected: 'Đã kết nối realtime · Độ mới GPS theo thời gian thiết bị ghi nhận.',
-    reconnecting: 'Đang nối lại realtime · Vẫn tải dữ liệu định kỳ.',
-    disconnected: 'Realtime chưa kết nối · Vẫn tải dữ liệu định kỳ.',
-  };
+    const recover = () => {
+      void client.recover();
+    };
+    const push = (event: MessageEvent) => {
+      if (event.data?.type === 'visionaid-push' && pushOwner()?.split(':')[0] === actor.id)
+        recover();
+    };
+    window.addEventListener('focus', recover);
+    navigator.serviceWorker?.addEventListener('message', push);
+    const unsubscribe = onSessionEnded(stop);
+    return () => {
+      window.removeEventListener('focus', recover);
+      navigator.serviceWorker?.removeEventListener('message', push);
+      unsubscribe();
+      stop();
+    };
+  }, [url, cache, actor.id, actor.orgId, actor.role, enabled, client]);
   return (
-    <div className="demo-strip">
-      <span aria-live="polite">
-        {url ? labels[state] : 'Chưa có địa chỉ SignalR hợp lệ · Vẫn tải dữ liệu định kỳ.'}
-      </span>
-      {url && state === 'disconnected' && (
-        <button className="btn small" onClick={() => setAttempt((v) => v + 1)}>
-          Kết nối lại realtime
-        </button>
-      )}
-    </div>
+    <CallContext.Provider value={actor.role === 'Caregiver' ? client : null}>
+      {children}
+      {enabled && actor.role === 'Caregiver' && <CallPanel client={client} />}
+    </CallContext.Provider>
   );
 }

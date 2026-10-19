@@ -70,7 +70,7 @@ export function historyRange(from: string, to: string): HistoryRange {
 export function locationAge(cachedAt: string, now: number) {
   const age = now - Date.parse(cachedAt);
   if (!Number.isFinite(age) || age < -60000) return 'Cần kiểm tra thời gian thiết bị';
-  return age > 120000 ? 'Dữ liệu cũ (>2 phút)' : 'Ghi nhận trong 2 phút gần đây';
+  return age > 120000 ? 'Dữ liệu cũ hơn 2 phút' : 'Ghi nhận trong 2 phút gần đây';
 }
 export function createLocationsApi(get = apiGet) {
   return {

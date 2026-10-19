@@ -1,6 +1,8 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { personField, useOrgPeople } from '../../hooks/useOrgPeople';
 import { linksApi, canManageLink, type CareLink, type LinkFilters } from '../../services/api/links';
 import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
@@ -53,6 +55,8 @@ function Links({ actor }: { actor: Person }) {
           'api-links',
           'api-link-detail',
           'api-users',
+          'api-accounts',
+          'api-account',
         ].includes(String(q.queryKey[0])) && q.queryKey[1] === actor.id,
     });
   };
@@ -71,11 +75,7 @@ function Links({ actor }: { actor: Person }) {
           </button>
         }
       />
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {create && (
         <LinkEditor
           actor={actor}
@@ -135,7 +135,7 @@ function Links({ actor }: { actor: Person }) {
               <option value="">Tất cả</option>
             </select>
           </label>
-          <button className="btn">Lọc liên kết</button>
+          <button className="btn primary">Lọc liên kết</button>
           <button
             className="btn"
             type="button"
@@ -149,8 +149,13 @@ function Links({ actor }: { actor: Person }) {
           {list.data && (
             <>
               {!list.data.items.length && <p>Không có liên kết phù hợp.</p>}
-              <div style={{ overflowX: 'auto' }}>
-                <table>
+              <div
+                className="table-scroll"
+                tabIndex={0}
+                role="region"
+                aria-label="Danh sách liên kết chăm sóc"
+              >
+                <table className="care-links-table">
                   <thead>
                     <tr>
                       <th>Caregiver</th>
@@ -164,14 +169,12 @@ function Links({ actor }: { actor: Person }) {
                     {list.data.items.map((link) => (
                       <tr key={link.id}>
                         <td>
-                          {link.caregiverFullName}
-                          <br />
-                          {link.caregiverEmail}
+                          <strong>{link.caregiverFullName}</strong>
+                          <p className="care-secondary">{link.caregiverEmail}</p>
                         </td>
                         <td>
-                          {link.viuFullName}
-                          <br />
-                          {link.viuEmail}
+                          <strong>{link.viuFullName}</strong>
+                          <p className="care-secondary">{link.viuEmail}</p>
                         </td>
                         <td>{link.linkType === 'Personal' ? 'Cá nhân' : 'Tổ chức'}</td>
                         <td>
@@ -191,7 +194,7 @@ function Links({ actor }: { actor: Person }) {
                   </tbody>
                 </table>
               </div>
-              <div className="row">
+              <div className="row pagination">
                 <span>
                   {list.data.totalCount} kết quả · Trang {list.data.page}/
                   {Math.max(1, list.data.totalPages)}
@@ -257,25 +260,36 @@ function LinkEditor({
   saved: (link: CareLink) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  const picking = !link && actor.role === 'CenterAdmin';
+  const staff = useOrgPeople(actor, 'Caregiver', picking);
+  const vius = useOrgPeople(actor, 'VisuallyImpaired', picking);
   const fields: FieldSpec[] = [
     ...(!link
       ? [
           ...(actor.role !== 'Caregiver'
             ? [
-                {
-                  key: 'caregiverId',
-                  label: 'Mã Caregiver',
-                  required: true,
-                  hint: 'UUID từ chi tiết tài khoản nhân viên.',
-                },
+                personField(
+                  {
+                    key: 'caregiverId',
+                    label: picking ? 'Nhân viên chăm sóc' : 'Mã Caregiver',
+                    required: true,
+                    hint: 'UUID từ chi tiết tài khoản nhân viên.',
+                  },
+                  staff,
+                  'Trung tâm chưa có nhân viên đang hoạt động. Tạo nhân viên trước.',
+                ),
               ]
             : []),
-          {
-            key: 'viuId',
-            label: 'Mã VIU',
-            required: true,
-            hint: 'UUID từ tài khoản người được chăm sóc đã tạo.',
-          },
+          personField(
+            {
+              key: 'viuId',
+              label: picking ? 'Người được chăm sóc' : 'Mã VIU',
+              required: true,
+              hint: 'UUID từ tài khoản người được chăm sóc đã tạo.',
+            },
+            vius,
+            'Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản VIU trước.',
+          ),
           ...(actor.role === 'Admin'
             ? [
                 {
@@ -315,46 +329,53 @@ function LinkEditor({
             ? 'Tạo liên kết cá nhân cho chính bạn, không mời hoặc cấp quyền cho người chăm sóc khác.'
             : 'Hai tài khoản phải hoạt động. Liên kết tổ chức yêu cầu Caregiver và VIU cùng tổ chức.'}
       </p>
-      <Form
-        fields={fields}
-        initial={{
-          canReceiveAlerts: link?.canReceiveAlerts ?? true,
-          canManageRegistry: link?.canManageRegistry ?? false,
-          canManageLocations: link?.canManageLocations ?? false,
-          linkType: 'Organization',
-        }}
-        submit={link ? 'Lưu quyền liên kết' : 'Tạo liên kết'}
-        onSubmit={async (values) => {
-          if (!values.confirmed) throw new Error('Vui lòng xác nhận thao tác.');
-          setBusy(true);
-          try {
-            const permissions = {
-              canReceiveAlerts: !!values.canReceiveAlerts,
-              canManageRegistry: !!values.canManageRegistry,
-              canManageLocations: !!values.canManageLocations,
-            };
-            const result = link
-              ? await linksApi.permissions(actor, link.id, permissions)
-              : await linksApi.create(actor, {
-                  ...permissions,
-                  caregiverId: String(values.caregiverId || ''),
-                  viuId: String(values.viuId || ''),
-                  linkType: String(values.linkType || ''),
-                });
-            await saved(result);
-          } catch (error) {
-            const status = (error as { status?: number }).status || 0;
-            if (status === 409 || status >= 500)
-              throw new Error(
-                'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo mã hai tài khoản và tải lại trước khi gửi lại.',
-                { cause: error },
-              );
-            throw error;
-          } finally {
-            setBusy(false);
-          }
-        }}
-      />
+      {picking && (staff.isLoading || vius.isLoading) ? (
+        <p role="status">Đang tải danh sách nhân viên và người được chăm sóc…</p>
+      ) : (
+        <Form
+          fields={fields}
+          initial={{
+            canReceiveAlerts: link?.canReceiveAlerts ?? true,
+            canManageRegistry: link?.canManageRegistry ?? false,
+            canManageLocations: link?.canManageLocations ?? false,
+            linkType: 'Organization',
+          }}
+          submit={link ? 'Lưu quyền liên kết' : 'Tạo liên kết'}
+          onSubmit={async (values) => {
+            if (!values.confirmed) throw new Error('Vui lòng xác nhận thao tác.');
+            setBusy(true);
+            try {
+              const permissions = {
+                canReceiveAlerts: !!values.canReceiveAlerts,
+                canManageRegistry: !!values.canManageRegistry,
+                canManageLocations: !!values.canManageLocations,
+              };
+              const result = link
+                ? await linksApi.permissions(actor, link.id, permissions)
+                : await linksApi.create(actor, {
+                    ...permissions,
+                    caregiverId: String(values.caregiverId || ''),
+                    viuId: String(values.viuId || ''),
+                    linkType: String(values.linkType || ''),
+                  });
+              await saved(result);
+            } catch (error) {
+              const status = (error as { status?: number }).status || 0;
+              if (status === 409 || status >= 500)
+                throw new Error(
+                  'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo mã hai tài khoản và tải lại trước khi gửi lại.',
+                  { cause: error },
+                );
+              throw error;
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+      )}
+      {picking && (staff.isError || vius.isError) && (
+        <p className="muted">Không tải được danh sách tổ chức; nhập mã UUID thay thế.</p>
+      )}
     </Dialog>
   );
 }
@@ -374,29 +395,44 @@ function LinkDetails({
   const [notice, setNotice] = useState('');
   const manage = canManageLink(actor, link);
   return (
-    <section className="glass card stack">
+    <section className="stack">
       <h2>Chi tiết liên kết</h2>
       <LinkStatus link={link} />
-      <p>
-        Caregiver: {link.caregiverFullName} · {link.caregiverEmail} · {link.caregiverId}
-      </p>
-      <p>
-        VIU: {link.viuFullName} · {link.viuEmail} · {link.visuallyImpairedUserId}
-      </p>
-      <p>Mã liên kết: {link.id}</p>
-      <dl>
-        <dt>Nhận cảnh báo</dt>
-        <dd>{link.canReceiveAlerts ? 'Có' : 'Không'}</dd>
-        <dt>Quản lý gương mặt</dt>
-        <dd>{link.canManageRegistry ? 'Có' : 'Không'}</dd>
-        <dt>Quản lý địa điểm</dt>
-        <dd>{link.canManageLocations ? 'Có' : 'Không'}</dd>
+      <dl className="record-details">
+        <div>
+          <dt>Người chăm sóc</dt>
+          <dd>
+            <strong>{link.caregiverFullName}</strong>
+            <p>{link.caregiverEmail}</p>
+            <p className="care-secondary">Mã: {link.caregiverId}</p>
+          </dd>
+        </div>
+        <div>
+          <dt>Người được chăm sóc</dt>
+          <dd>
+            <strong>{link.viuFullName}</strong>
+            <p>{link.viuEmail}</p>
+            <p className="care-secondary">Mã: {link.visuallyImpairedUserId}</p>
+          </dd>
+        </div>
+        <div>
+          <dt>Mã liên kết</dt>
+          <dd>{link.id}</dd>
+        </div>
+        <div>
+          <dt>Nhận cảnh báo</dt>
+          <dd>{link.canReceiveAlerts ? 'Có' : 'Không'}</dd>
+        </div>
+        <div>
+          <dt>Quản lý gương mặt</dt>
+          <dd>{link.canManageRegistry ? 'Có' : 'Không'}</dd>
+        </div>
+        <div>
+          <dt>Quản lý địa điểm</dt>
+          <dd>{link.canManageLocations ? 'Có' : 'Không'}</dd>
+        </div>
       </dl>
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {manage && (
         <div className="row">
           <button className="btn" onClick={() => setEdit(true)}>

@@ -8,7 +8,7 @@ test('login, dashboard and dialog have no automated WCAG AA violations', async (
     .analyze();
   expect(result.violations).toEqual([]);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'An tâm hơn khi luôn có nhau.' })).toBeVisible();
+  await expect(page.locator('.dashboard-stats')).toBeVisible();
   result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
     .analyze();
@@ -33,6 +33,7 @@ test('registration, password recovery and session logout work without reload', a
   await page.getByLabel('Mật khẩu *', { exact: true }).fill('Password@1');
   await page.getByRole('button', { name: 'Tạo tài khoản' }).click();
   await expect(page.getByRole('heading', { name: /Xin chào/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Chào mừng trở lại.' })).toBeVisible();
   await page.getByRole('link', { name: 'Quên mật khẩu?' }).click();

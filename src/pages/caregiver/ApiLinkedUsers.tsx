@@ -5,6 +5,8 @@ import { caregivingApi, type LinkedUser } from '../../services/api/caregiving';
 import { PageHead, State, Badge, Confirm, Dialog } from '../../components/UI';
 
 import { ApiCreateLinkedUser } from './ApiCreateLinkedUser';
+import { viuLicenseLabel } from '../../services/api/licenses';
+import { CallButton, CallAvailability } from '../../components/CallPanel';
 
 export function ApiLinkedUsers() {
   const { data: user } = useSession();
@@ -36,19 +38,23 @@ export function ApiLinkedUsers() {
       <PageHead
         title="Người được chăm sóc"
         description="Danh sách người dùng được liên kết với tài khoản của bạn."
+        actions={
+          user?.role === 'Caregiver' &&
+          !user.orgId && (
+            <ApiCreateLinkedUser
+              key={user.id}
+              caregiverId={user.id}
+              onLinked={() => {
+                setPage(1);
+                setInput('');
+                setSearch('');
+                refresh();
+              }}
+            />
+          )
+        }
       />
-      {user?.role === 'Caregiver' && !user.orgId && (
-        <ApiCreateLinkedUser
-          key={user.id}
-          caregiverId={user.id}
-          onLinked={() => {
-            setPage(1);
-            setInput('');
-            setSearch('');
-            refresh();
-          }}
-        />
-      )}
+      <CallAvailability />
       <section className="glass card stack">
         <form
           className="row"
@@ -104,21 +110,29 @@ export function ApiLinkedUsers() {
                       ))}
                     </select>
                   </label>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table>
+                  <div
+                    className="table-scroll"
+                    tabIndex={0}
+                    role="region"
+                    aria-label="Danh sách người được chăm sóc"
+                  >
+                    <table className="care-people-table">
                       <thead>
                         <tr>
                           <th>Họ và tên</th>
                           <th>Email</th>
                           <th>Điện thoại</th>
                           <th>Tài khoản</th>
+                          <th>License</th>
                           <th>Thao tác</th>
                         </tr>
                       </thead>
                       <tbody>
                         {query.data.items.map((p) => (
                           <tr key={p.id}>
-                            <td>{p.fullName}</td>
+                            <td>
+                              <strong>{p.fullName}</strong>
+                            </td>
                             <td>{p.email}</td>
                             <td>{p.phoneNumber || 'Chưa có'}</td>
                             <td>
@@ -127,13 +141,24 @@ export function ApiLinkedUsers() {
                               </Badge>
                             </td>
                             <td>
-                              <button
-                                className="btn"
-                                onClick={() => setSelected(p.id)}
-                                aria-label={'Xem liên kết của ' + p.fullName}
-                              >
-                                Xem liên kết
-                              </button>
+                              {viuLicenseLabel(p.licenseStatus)}
+                              {p.licenseExpiresAt && (
+                                <p>
+                                  Hết hạn: {new Date(p.licenseExpiresAt).toLocaleString('vi-VN')}
+                                </p>
+                              )}
+                            </td>
+                            <td>
+                              <div className="care-row-actions">
+                                <CallButton viuId={p.id} name={p.fullName} disabled={!p.isActive} />
+                                <button
+                                  className="btn"
+                                  onClick={() => setSelected(p.id)}
+                                  aria-label={'Xem liên kết của ' + p.fullName}
+                                >
+                                  Xem liên kết
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -142,7 +167,7 @@ export function ApiLinkedUsers() {
                   </div>
                 </>
               )}
-              <div className="row">
+              <div className="row pagination">
                 <button
                   className="btn"
                   disabled={!query.data.hasPreviousPage || query.isFetching}
@@ -216,7 +241,7 @@ function UserLinks({
     refetchInterval: 30000,
   });
   return (
-    <section className="glass card stack">
+    <section className="stack">
       <h2>Liên kết với {person.fullName}</h2>
       {unlinkId && (
         <Confirm
@@ -289,7 +314,7 @@ function UserLinks({
             ) : (
               <>
                 <h3>Quyền liên kết</h3>
-                <dl className="stack">
+                <dl className="record-details">
                   <div>
                     <dt>Nhận cảnh báo</dt>
                     <dd>{detail.data.canReceiveAlerts ? 'Có' : 'Không'}</dd>

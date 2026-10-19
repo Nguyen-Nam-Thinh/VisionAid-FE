@@ -4,7 +4,7 @@ import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 
 const date = z.iso.datetime({ offset: true });
-const subscription = z.object({
+export const subscription = z.object({
   id: z.string().uuid(),
   status: z.enum(['Trial', 'Active', 'Expired', 'Cancelled', 'Suspended']),
   package: z.object({
@@ -27,7 +27,40 @@ export const subscriptionLabels = {
   Cancelled: 'Đã hủy',
   Suspended: 'Tạm ngưng',
 };
+export function viuLicenseLabel(status?: string | null) {
+  return status === 'None'
+    ? 'Chưa có license'
+    : subscriptionLabels[status as keyof typeof subscriptionLabels] ||
+        'Chưa có thông tin license từ máy chủ';
+}
 export const isPersonalCaregiver = (user: Person) => user.role === 'Caregiver' && !user.orgId;
+export const isOrganizationBuyer = (user: Person) => user.role === 'CenterAdmin' && !!user.orgId;
+const pool = z.object({
+  id: z.string().uuid(),
+  organizationId: z.string().uuid(),
+  package: z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    code: z.string(),
+    packageType: z.literal('Business'),
+  }),
+  totalLicenses: z.number().int().nonnegative(),
+  usedLicenses: z.number().int().nonnegative(),
+  availableLicenses: z.number().int().nonnegative(),
+  status: z.enum(['Active', 'Expired', 'Suspended']),
+  purchasedAt: date,
+  expiresAt: date.nullable(),
+});
+export async function getOrganizationPool(user: Person, signal?: AbortSignal, get = apiGet) {
+  if (!isOrganizationBuyer(user))
+    throw new ServiceError('Chỉ quản trị trung tâm có tổ chức được xem kho license.', 403);
+  const parsed = pool.safeParse(await get('/api/licenses/pool', signal));
+  if (!parsed.success)
+    throw new ServiceError('Dữ liệu kho license không hợp lệ. Hãy tải lại.', 502);
+  if (parsed.data.organizationId !== user.orgId)
+    throw new ServiceError('Máy chủ trả về kho license không thuộc tổ chức của bạn.', 403);
+  return parsed.data;
+}
 
 export async function getMySubscription(user: Person, signal?: AbortSignal, get = apiGet) {
   if (!isPersonalCaregiver(user))

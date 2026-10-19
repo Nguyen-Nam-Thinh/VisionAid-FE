@@ -1,9 +1,10 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
-import { PersonalCheckout } from './ApiPayments';
+import { PackageCheckout } from './ApiPayments';
 import { isPersonalCaregiver } from '../../services/api/licenses';
-import { canCheckout } from '../../services/api/payments';
+import { canCheckout, canPay } from '../../services/api/payments';
 import { Form, type FieldSpec } from '../../components/Form';
 import { Dialog, PageHead, State } from '../../components/UI';
 import {
@@ -65,6 +66,7 @@ export function ApiPackages({ admin = false }: { admin?: boolean }) {
 }
 function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
   const personal = isPersonalCaregiver(actor);
+  const buyer = canPay(actor);
   const [checkout, setCheckout] = useState<LicensePackage | null>(null);
   const allowed = canBrowsePackages(actor) && (!admin || actor.role === 'Admin');
   const [page, setPage] = useState(1);
@@ -93,7 +95,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
             ? 'Tạo và cập nhật cấu hình gói trên máy chủ.'
             : personal
               ? 'Chọn gói Personal và tạo đơn thanh toán qua PayOS.'
-              : 'Thông tin gói hiện hành từ máy chủ. Thanh toán tổ chức sẽ được mở ở đợt tiếp theo.'
+              : 'Chọn gói Business và tạo đơn thanh toán qua PayOS.'
         }
         actions={
           admin && (
@@ -117,9 +119,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
         </p>
       )}
       {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
+        <Toast message={notice} onDismiss={() => setNotice('')} />
       )}
       <section className="glass card stack">
         <div className="row">
@@ -145,7 +145,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
         </div>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           <div className="table-scroll">
-            <table>
+            <table className="package-table">
               <caption className="sr-only">Danh sách gói license</caption>
               <thead>
                 <tr>
@@ -153,7 +153,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                   <th>Giá tháng</th>
                   <th>Thời hạn</th>
                   <th>License</th>
-                  {(admin || personal) && <th>Thao tác</th>}
+                  {(admin || buyer) && <th>Thao tác</th>}
                 </tr>
               </thead>
               <tbody>
@@ -161,28 +161,28 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                   <tr key={p.id}>
                     <td>
                       <strong>{p.name}</strong>
-                      <p>
+                      <p className="package-meta">
                         {p.code} · {p.packageType}
                       </p>
-                      <p>{p.isActive ? 'Đang mở' : 'Ngừng mở'}</p>
+                      <p className="package-meta">{p.isActive ? 'Đang mở' : 'Ngừng mở'}</p>
                     </td>
                     <td>
-                      {packagePrice(p.priceMonthly, p.currency)}
+                      <strong className="package-price">{packagePrice(p.priceMonthly, p.currency)}</strong>
                       {p.priceYearly !== null && (
-                        <p>Giá năm tham khảo: {packagePrice(p.priceYearly, p.currency)}</p>
+                        <p className="package-meta">Giá năm tham khảo: {packagePrice(p.priceYearly, p.currency)}</p>
                       )}
                     </td>
                     <td>
-                      {p.durationDays} ngày<p>Dùng thử: {p.trialDays} ngày</p>
+                      {p.durationDays} ngày<p className="package-meta">Dùng thử: {p.trialDays} ngày</p>
                     </td>
                     <td>
                       {p.packageType === 'Personal'
                         ? 'Tối đa 3 VIU theo chính sách B2C'
                         : `${p.includedLicenses} license bao gồm`}
                     </td>
-                    {personal && (
+                    {buyer && (
                       <td>
-                        {canCheckout(p) ? (
+                        {canCheckout(p, actor) ? (
                           <button className="btn primary" onClick={() => setCheckout(p)}>
                             Chọn gói {p.name}
                           </button>
@@ -242,8 +242,8 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
           )}
         </State>
       </section>
-      {checkout && personal && (
-        <PersonalCheckout actor={actor} item={checkout} onClose={() => setCheckout(null)} />
+      {checkout && buyer && (
+        <PackageCheckout actor={actor} item={checkout} onClose={() => setCheckout(null)} />
       )}
       {selected && admin && (
         <PackageEditor
@@ -321,7 +321,7 @@ function PackageEditor({
           <>
             {current && (
               <p>
-                Mã: {current.code} · Loại: {current.packageType} (không thể thay đổi)
+                Mã: {current.code} · Loại: {current.packageType} · không thể thay đổi
               </p>
             )}
             <Form

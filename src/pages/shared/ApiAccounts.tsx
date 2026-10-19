@@ -1,3 +1,4 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth, useSession } from '../../hooks/useService';
@@ -11,6 +12,9 @@ import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import { roles } from '../../constants/labels';
 import type { Person } from '../../models/domain';
+import { Link } from 'react-router-dom';
+import { viuLicenseLabel } from '../../services/api/licenses';
+import { useOwnOrgName } from '../../hooks/useOrgPeople';
 
 const profileFields: FieldSpec[] = [
   { key: 'fullName', label: 'Họ và tên', required: true, max: 200 },
@@ -79,6 +83,8 @@ function Accounts({
           'api-organization',
           'api-organizations',
           'api-users',
+          'license-pool',
+          'license-assignments',
         ].includes(String(q.queryKey[0])) && q.queryKey[1] === actor.id,
     });
   };
@@ -99,11 +105,7 @@ function Accounts({
           </button>
         }
       />
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {creating && (
         <AccountEditor
           actor={actor}
@@ -112,7 +114,9 @@ function Accounts({
           saved={async (account) => {
             setCreating(false);
             setSelected(account.id);
-            setNotice('Đã tạo tài khoản. Phân công chăm sóc được thực hiện ở đợt 5c.');
+            setNotice(
+              'Đã tạo tài khoản. Kiểm tra thông tin license và phân công chăm sóc cho người dùng.',
+            );
             await refresh();
           }}
         />
@@ -186,7 +190,7 @@ function Accounts({
           {list.data && (
             <>
               {!list.data.items.length && <p>Không có tài khoản phù hợp.</p>}
-              <div style={{ overflowX: 'auto' }}>
+              <div className="table-scroll">
                 <table>
                   <thead>
                     <tr>
@@ -220,7 +224,7 @@ function Accounts({
                   </tbody>
                 </table>
               </div>
-              <div className="row">
+              <div className="row pagination">
                 <span>
                   {list.data.totalCount} kết quả · Trang {list.data.page}/
                   {Math.max(1, list.data.totalPages)}
@@ -286,6 +290,8 @@ function AccountEditor({
   saved: (account: Account) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  const cache = useQueryClient();
+  const orgName = useOwnOrgName(actor);
   const fields: FieldSpec[] = account
     ? profileFields
     : [
@@ -331,9 +337,16 @@ function AccountEditor({
         </p>
       )}
       {!account && actor.role === 'CenterAdmin' && (
-        <p>
-          Tổ chức: {actor.orgId} · Vai trò: {roles[fixedRole || 'Caregiver']}
-        </p>
+        <div className="stack">
+          <p>
+            Tổ chức: {orgName ?? actor.orgId} · Vai trò: {roles[fixedRole || 'Caregiver']}
+          </p>
+          <p>
+            Nhân viên không dùng suất license. Để tạo người được chăm sóc, tổ chức cần gói license
+            đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.{' '}
+            <Link to="/center-admin/licenses">Xem kho license</Link>.
+          </p>
+        </div>
       )}
       <Form
         fields={fields}
@@ -368,6 +381,16 @@ function AccountEditor({
                 });
             await saved(result);
           } catch (error) {
+            if (
+              !account &&
+              actor.role === 'CenterAdmin' &&
+              (fixedRole || values.role) === 'VisuallyImpaired' &&
+              [402, 422].includes((error as { status?: number }).status || 0)
+            )
+              throw new Error(
+                `${error instanceof Error ? error.message : 'Không thể tạo tài khoản.'} Kiểm tra dữ liệu và kho license; nếu hết suất, mua thêm gói Business rồi thử lại.`,
+                { cause: error },
+              );
             if ((error as { status?: number }).status! >= 500)
               throw new Error(
                 'Chưa xác nhận được kết quả lưu. Đóng form và tải lại/tìm email trước khi gửi lại để tránh tạo trùng tài khoản.',
@@ -375,6 +398,12 @@ function AccountEditor({
               );
             throw error;
           } finally {
+            if (!account && actor.role === 'CenterAdmin')
+              await cache.invalidateQueries({
+                predicate: (q) =>
+                  ['license-pool', 'license-assignments'].includes(String(q.queryKey[0])) &&
+                  q.queryKey[1] === actor.id,
+              });
             setBusy(false);
           }
         }}
@@ -400,6 +429,7 @@ function AccountDetails({
   const [busy, setBusy] = useState(false);
   const [action, setAction] = useState<'activate' | 'deactivate' | 'delete' | null>(null);
   const [notice, setNotice] = useState('');
+  const orgName = useOwnOrgName(actor);
   return (
     <section className="glass card stack">
       <h2>{account.fullName}</h2>
@@ -408,14 +438,26 @@ function AccountDetails({
         {account.email} · {account.phoneNumber || 'Chưa có điện thoại'} · {roles[account.role]}
       </p>
       <p>
-        Mã tài khoản: {account.id} · Tổ chức: {account.organizationId || 'Không thuộc tổ chức'}
+        Mã tài khoản: {account.id} · Tổ chức:{' '}
+        {account.organizationId
+          ? (account.organizationId === actor.orgId && orgName) || account.organizationId
+          : 'Không thuộc tổ chức'}
       </p>
       <p>URL ảnh: {account.avatarUrl || 'Chưa có'}</p>
-      {notice && (
-        <p role="status" className="notice">
-          {notice}
+      {account.role === 'VisuallyImpaired' && (
+        <p>
+          License: {viuLicenseLabel(account.licenseStatus)}
+          {account.licenseExpiresAt &&
+            ` · Hết hạn: ${new Date(account.licenseExpiresAt).toLocaleString('vi-VN')}`}
+          {actor.role === 'CenterAdmin' && (
+            <>
+              {' '}
+              · <Link to="/center-admin/licenses">Quản lý cấp và thu hồi</Link>
+            </>
+          )}
         </p>
       )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {account.deletedAt ? (
         <p>Tài khoản đã xóa. Chưa có API khôi phục tài khoản.</p>
       ) : (

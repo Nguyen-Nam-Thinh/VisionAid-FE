@@ -18,15 +18,15 @@ export function Contacts() {
             { value: 'BOTH', label: 'Điện thoại và Zalo' },
           ],
         },
-        { key: 'phone', label: 'Số điện thoại', hint: 'PHONE/BOTH bắt buộc; ZALO để trống.' },
-        { key: 'zalo', label: 'Định danh Zalo', hint: 'ZALO/BOTH bắt buộc; PHONE để trống.' },
+        { key: 'phone', label: 'Số điện thoại', hint: 'Bắt buộc khi liên hệ qua điện thoại. Để trống nếu chỉ dùng Zalo.' },
+        { key: 'zalo', label: 'Định danh Zalo', hint: 'Bắt buộc khi liên hệ qua Zalo. Để trống nếu chỉ dùng điện thoại.' },
         { key: 'priority', label: 'Thứ tự ưu tiên', type: 'number', min: 1, step: 1 },
       ]}
       details={(e) => (
         <>
           <strong>Ưu tiên {String(e.fields.priority)}</strong>
           <p>{String(e.fields.phone || e.fields.zalo)}</p>
-          <small>{String(e.fields.type)}</small>
+          <small>{e.fields.type === 'PHONE' ? 'Điện thoại' : e.fields.type === 'ZALO' ? 'Zalo' : 'Điện thoại và Zalo'}</small>
         </>
       )}
     />

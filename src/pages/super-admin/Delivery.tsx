@@ -9,9 +9,9 @@ export function Delivery() {
   const [selected, setSelected] = useState('');
   const delivery = db?.deliveries.find((d) => d.id === selected);
   const labels = {
-    SENT: 'Đã gửi (mô phỏng)',
-    FAILED: 'Thất bại (mô phỏng)',
-    PENDING: 'Đang chờ (mô phỏng)',
+    SENT: 'Đã gửi · mô phỏng',
+    FAILED: 'Thất bại · mô phỏng',
+    PENDING: 'Đang chờ · mô phỏng',
   };
   return (
     <>

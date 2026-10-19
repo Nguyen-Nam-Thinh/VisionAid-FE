@@ -111,3 +111,37 @@ it('sends pagination/filters and rejects a CenterAdmin list from another organiz
   get.mockResolvedValue({ ...data, items: [{ ...target, organizationId: id }] });
   await expect(api.list(center, filters)).rejects.toMatchObject({ status: 403 });
 });
+it('lists active organization accounts for CenterAdmin pickers and stops at the last page', async () => {
+  const page = (items: unknown[], hasNextPage: boolean) => ({
+    items,
+    page: 1,
+    pageSize: 100,
+    totalCount: items.length,
+    totalPages: 1,
+    hasPreviousPage: false,
+    hasNextPage,
+  });
+  const get = vi.fn<NonNullable<Parameters<typeof createAccountsApi>[0]>>(async (path) =>
+    String(path).includes('page=1&')
+      ? page([target, { ...target, id: id, isActive: false }], true)
+      : page([{ ...target, id: orgId, deletedAt: '2026-10-01' }], false),
+  );
+  const result = await createAccountsApi(get).options(center, 'Caregiver');
+  expect(result).toEqual({ items: [target], complete: true });
+  const query = new URL('https://test' + get.mock.calls[0][0]).searchParams;
+  expect(Object.fromEntries(query)).toMatchObject({
+    pageSize: '100',
+    role: 'Caregiver',
+    isActive: 'true',
+    isDeleted: 'false',
+    organizationId: orgId,
+  });
+  expect(get).toHaveBeenCalledTimes(2);
+  await expect(createAccountsApi(get).options(admin, 'Caregiver')).rejects.toMatchObject({
+    status: 403,
+  });
+  get.mockResolvedValue(page([{ ...target, organizationId: id }], false));
+  await expect(createAccountsApi(get).options(center, 'Caregiver')).rejects.toMatchObject({
+    status: 403,
+  });
+});

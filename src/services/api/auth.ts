@@ -30,6 +30,7 @@ export function createApiAuth(
   baseUrl: string,
   storage?: AuthStorage,
   transport: typeof fetch = fetch,
+  onSessionEnd: () => void = () => {},
 ) {
   let tokens: Tokens | null = null;
   let deviceId = '';
@@ -46,6 +47,7 @@ export function createApiAuth(
   if (!deviceId) deviceId = crypto.randomUUID();
 
   function clear() {
+    onSessionEnd();
     generation++;
     tokens = null;
     try {
@@ -69,7 +71,11 @@ export function createApiAuth(
     }
     tokens = parsed.data;
   }
-  async function call(path: string, init: RequestInit = {}) {
+  async function call(
+    path: string,
+    init: RequestInit = {},
+    responseType: 'json' | 'blob' = 'json',
+  ) {
     if (!baseUrl) throw new ServiceError('Chưa cấu hình VITE_API_BASE_URL.', 501);
     let response: unknown;
     try {
@@ -80,15 +86,14 @@ export function createApiAuth(
           signal: init.signal ?? AbortSignal.timeout(15000),
         },
         transport,
+        responseType,
       );
     } catch (error) {
       if (error instanceof ServiceError) throw error;
-      throw new ServiceError(
-        'Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web (localhost:5173).',
-        503,
-      );
+      throw new ServiceError('Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web.', 503);
     }
     if (response === undefined) return undefined;
+    if (responseType === 'blob') return response;
     const envelope = z
       .object({
         success: z.boolean(),
@@ -137,6 +142,12 @@ export function createApiAuth(
       } catch (error) {
         // A lost refresh response may already have rotated the token. Never replay it.
         if (generation === epoch) clear();
+        // BE answers a revoked/expired refresh token with 403; this is an ended session, not missing permission.
+        if (error instanceof ServiceError && (error.status === 401 || error.status === 403))
+          throw new ServiceError(
+            'Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất. Vui lòng đăng nhập lại.',
+            401,
+          );
         throw error;
       } finally {
         refreshFlight = null;
@@ -144,19 +155,32 @@ export function createApiAuth(
     })();
     return refreshFlight;
   }
-  async function authorized(path: string, init: RequestInit = {}, retry401 = true) {
+  async function authorized(
+    path: string,
+    init: RequestInit = {},
+    retry401 = true,
+    responseType: 'json' | 'blob' = 'json',
+  ) {
     if (!tokens) throw new ServiceError('Vui lòng đăng nhập.', 401);
     const epoch = generation;
     if (expiresSoon()) await refresh();
     const usedToken = tokens?.accessToken;
-    const send = () =>
-      call(path, {
-        ...init,
-        headers: {
-          ...Object.fromEntries(new Headers(init.headers).entries()),
-          Authorization: `Bearer ${tokens?.accessToken}`,
+    const send = async () => {
+      if (generation !== epoch) throw new ServiceError('Phiên đã kết thúc.', 401);
+      const result = await call(
+        path,
+        {
+          ...init,
+          headers: {
+            ...Object.fromEntries(new Headers(init.headers).entries()),
+            Authorization: `Bearer ${tokens?.accessToken}`,
+          },
         },
-      });
+        responseType,
+      );
+      if (generation !== epoch) throw new ServiceError('Phiên đã kết thúc.', 401);
+      return result;
+    };
     try {
       return await send();
     } catch (error) {
@@ -224,7 +248,10 @@ export function createApiAuth(
     }
   }
   return {
+    deviceId: () => deviceId,
     get: (path: string, signal?: AbortSignal) => authorized(path, { signal }),
+    blob: (path: string, signal?: AbortSignal) =>
+      authorized(path, { signal, cache: 'no-store' }, true, 'blob'),
     write: (path: string, init: RequestInit) => authorized(path, init, false),
     async accessToken() {
       if (!tokens) throw new ServiceError('Vui lòng đăng nhập.', 401);
@@ -318,7 +345,14 @@ export function createApiAuth(
           'Mật khẩu mới cần 8–100 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt và khác mật khẩu cũ.',
           400,
         );
-      await authorized('/api/auth/change-password', json({ currentPassword, newPassword }));
+      try {
+        await authorized('/api/auth/change-password', json({ currentPassword, newPassword }));
+      } catch (error) {
+        // BE reports a wrong current password as 403; the shared transport would say "no permission".
+        if (error instanceof ServiceError && error.status === 403)
+          throw new ServiceError('Mật khẩu hiện tại không đúng.', 403);
+        throw error;
+      }
       clear();
     },
     login(email: string, password: string) {

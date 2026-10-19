@@ -28,6 +28,17 @@ const member = z.object({
   lastLoginAt: z.string().nullable(),
   createdAt: z.string(),
 });
+const summaryDates = z.object({
+  dateFrom: z.iso.date().nullable(),
+  dateTo: z.iso.date().nullable(),
+});
+const summary = summaryDates.extend({
+  organizationId: z.string().uuid(),
+  emergencyEventCount: z.number().int().nonnegative(),
+  geofenceBreachCount: z.number().int().nonnegative(),
+  ocrRequestCount: z.number().int().nonnegative(),
+  faceRecognitionCount: z.number().int().nonnegative(),
+});
 const paged = <T extends z.ZodType>(item: T) =>
   z.object({
     items: z.array(item),
@@ -77,11 +88,21 @@ function input(values: OrganizationInput, create: boolean) {
       taxCode: z.string().trim().max(50).optional(),
     })
     .safeParse(values);
-  if (!result.success)
-    throw new ServiceError(
-      'Kiểm tra tên (tối đa 200 ký tự), địa chỉ (500), mã số thuế (50), email và số điện thoại Việt Nam.',
-      400,
+  if (!result.success) {
+    // Point at the offending fields; the phone rule mirrors the BE validator (mobile numbers only).
+    const messages: Record<string, string> = {
+      name: 'Tên tổ chức từ 1 đến 200 ký tự.',
+      address: 'Địa chỉ tối đa 500 ký tự.',
+      phoneNumber:
+        'Nhập số di động Việt Nam 10 chữ số (03, 05, 07, 08, 09). Máy chủ chưa nhận số bàn.',
+      contactEmail: 'Email không hợp lệ.',
+      taxCode: 'Mã số thuế tối đa 50 ký tự.',
+    };
+    const fields = Object.fromEntries(
+      result.error.issues.map((issue) => [String(issue.path[0]), messages[String(issue.path[0])]]),
     );
+    throw new ServiceError(Object.values(fields).join(' '), 400, fields);
+  }
   const { taxCode, ...rest } = result.data;
   return create ? { ...rest, taxCode: taxCode || null } : rest;
 }
@@ -92,6 +113,33 @@ export function createOrganizationsApi(get = apiGet, write = apiWrite) {
     body: JSON.stringify(body),
   });
   return {
+    async summary(
+      scope: Scope,
+      id: string,
+      dateFrom: string,
+      dateTo: string,
+      signal?: AbortSignal,
+    ) {
+      scopeCheck(scope, id);
+      const dates = summaryDates.safeParse({ dateFrom: dateFrom || null, dateTo: dateTo || null });
+      if (!dates.success || (dateFrom && dateTo && dateFrom > dateTo))
+        throw new ServiceError(
+          'Kiểm tra ngày lọc; ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
+          400,
+        );
+      const query = new URLSearchParams();
+      if (dateFrom) query.set('dateFrom', dateFrom);
+      if (dateTo) query.set('dateTo', dateTo);
+      const result = parse(
+        summary,
+        await get(`/api/organizations/${id}/activity-summary?${query}`, signal),
+      );
+      if (result.organizationId !== id)
+        throw new ServiceError('Báo cáo không thuộc tổ chức hiện tại.', 403);
+      if (result.dateFrom !== dates.data.dateFrom || result.dateTo !== dates.data.dateTo)
+        throw new ServiceError('Khoảng ngày báo cáo không khớp bộ lọc.', 502);
+      return result;
+    },
     async list(
       scope: Scope,
       page: number,

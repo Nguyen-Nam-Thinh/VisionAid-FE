@@ -90,7 +90,7 @@ function Alerts({ actor }: { actor: Person }) {
             Đến thời gian
             <input name="to" type="datetime-local" />
           </label>
-          <button className="btn">Lọc cảnh báo</button>
+          <button className="btn primary">Lọc cảnh báo</button>
           <button
             type="button"
             className="btn"
@@ -113,8 +113,8 @@ function Alerts({ actor }: { actor: Person }) {
           {query.data && (
             <>
               {!query.data.items.length && <p>Không có cảnh báo phù hợp.</p>}
-              <div style={{ overflowX: 'auto' }}>
-                <table>
+              <div className="table-scroll" tabIndex={0} role="region" aria-label="Danh sách cảnh báo">
+                <table className="alerts-table">
                   <thead>
                     <tr>
                       <th>VIU</th>
@@ -129,7 +129,7 @@ function Alerts({ actor }: { actor: Person }) {
                       <tr key={event.id}>
                         <td>{event.visuallyImpairedUserId}</td>
                         <td>{methods[event.detectionMethod] || event.detectionMethod}</td>
-                        <td>{alertLabels[event.currentStatus]}</td>
+                        <td><strong>{alertLabels[event.currentStatus]}</strong></td>
                         <td>{time(event.detectedAt)}</td>
                         <td>
                           <button className="btn" onClick={() => setSelected(event.id)}>
@@ -141,7 +141,7 @@ function Alerts({ actor }: { actor: Person }) {
                   </tbody>
                 </table>
               </div>
-              <div className="row">
+              <div className="row pagination">
                 <span>
                   {query.data.totalCount} cảnh báo · Trang {query.data.page}/
                   {Math.max(1, query.data.totalPages)}
@@ -211,16 +211,13 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
             {event && (
               <>
                 <strong>{alertLabels[event.currentStatus]}</strong>
-                <p>Mã VIU: {event.visuallyImpairedUserId}</p>
-                <p>
-                  Phát hiện: {methods[event.detectionMethod] || event.detectionMethod} ·{' '}
-                  {time(event.detectedAt)}
-                </p>
-                <p>
-                  Vĩ độ: {event.latitude ?? 'Không có dữ liệu'} · Kinh độ:{' '}
-                  {event.longitude ?? 'Không có dữ liệu'}
-                </p>
-                <p>Ghi chú: {event.notes || 'Không có'}</p>
+                <dl className="record-details">
+                  <div><dt>Mã VIU</dt><dd>{event.visuallyImpairedUserId}</dd></div>
+                  <div><dt>Phát hiện</dt><dd>{methods[event.detectionMethod] || event.detectionMethod}</dd></div>
+                  <div><dt>Thời gian</dt><dd>{time(event.detectedAt)}</dd></div>
+                  <div><dt>Vị trí ghi nhận</dt><dd>Vĩ độ: {event.latitude ?? 'Không có dữ liệu'} · Kinh độ: {event.longitude ?? 'Không có dữ liệu'}</dd></div>
+                  <div><dt>Ghi chú</dt><dd>{event.notes || 'Không có'}</dd></div>
+                </dl>
                 <p>
                   {event.snapshotPath
                     ? 'Có thông tin ảnh trên máy chủ nhưng API chưa cung cấp URL tải ảnh được xác thực.'
@@ -260,7 +257,7 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                 </State>
                 {contacts && !permission.isError && permission.data && (
                   <section className="stack">
-                    <h3>Liên hệ khẩn cấp do BE trả về</h3>
+                    <h3>Liên hệ khẩn cấp</h3>
                     <p>
                       Chuyển cấp không có nghĩa cuộc gọi đã diễn ra. Web không tự gọi hoặc mở Zalo.
                     </p>

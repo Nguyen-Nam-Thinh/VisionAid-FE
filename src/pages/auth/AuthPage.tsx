@@ -8,7 +8,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { paymentResumeTarget } from '../../services/api/payments';
-import { Eye, ShieldCheck, ArrowUpRight } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { Form, type FieldSpec } from '../../components/Form';
 import { useAuth, useDemoAccounts, useSession } from '../../hooks/useService';
 import { roles } from '../../constants/labels';
@@ -84,11 +84,11 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
     <div className="auth">
       <aside className="auth-story">
         <div className="row">
-          <Eye size={36} />
+          <img className="brand-icon" src="/branding/visionaid-icon.png" alt="" width={40} height={40} />
           <strong style={{ fontSize: 24 }}>VisionAid.</strong>
         </div>
         <div className="stack">
-          <span className="eyebrow" style={{ color: '#d5e0ff' }}>
+          <span className="eyebrow" style={{ color: 'var(--on-primary)' }}>
             Một kết nối. Nhiều an tâm.
           </span>
           <h1>
@@ -101,7 +101,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
             dụng.
           </p>
           <div className="auth-mark">
-            <Eye size={110} strokeWidth={1} />
+            <img src="/branding/visionaid-icon.png" alt="" width={110} height={110} />
           </div>
         </div>
         <div className="row">
@@ -125,7 +125,6 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
               Không khôi phục được phiên. Bạn có thể đăng nhập lại. {session.error.message}
             </p>
           )}
-          <span className="badge blue">VISIONAID WEB DASHBOARD</span>
           <h1>{titles[action]}</h1>
           <p className="muted">
             {action === 'register'
@@ -192,7 +191,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
                   setMessage(
                     auth.mode === 'api'
                       ? code
-                      : 'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo (chỉ dùng với email tồn tại): ' +
+                      : 'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo chỉ dùng với email tồn tại: ' +
                           code,
                   );
                 }
