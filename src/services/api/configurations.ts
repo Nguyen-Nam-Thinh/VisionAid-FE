@@ -63,6 +63,9 @@ const historySchema = z.object({
   oldValue: z.string().nullable(),
   newValue: z.string(),
   changedBy: uuid.nullable(),
+  // Added by BE f6df5b3; optional so older deploys still parse.
+  changedByName: z.string().nullable().optional(),
+  changedByEmail: z.string().nullable().optional(),
   changedAt: z.iso.datetime({ offset: true }),
   reason: z.string().nullable(),
 });

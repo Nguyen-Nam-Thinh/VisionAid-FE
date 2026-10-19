@@ -80,7 +80,8 @@ function input(values: OrganizationInput, create: boolean) {
       phoneNumber: z
         .string()
         .trim()
-        .refine((v) => !v || /^0[35789][0-9]{8}$/.test(v)),
+        // Mirrors BE f6df5b3: mobile, landline 02x (10–11 digits) or 1800/1900 hotline.
+        .refine((v) => !v || /^(0[35789]\d{8}|02\d{8,9}|1[89]00\d{4,6})$/.test(v)),
       contactEmail: z
         .string()
         .trim()
@@ -93,8 +94,7 @@ function input(values: OrganizationInput, create: boolean) {
     const messages: Record<string, string> = {
       name: 'Tên tổ chức từ 1 đến 200 ký tự.',
       address: 'Địa chỉ tối đa 500 ký tự.',
-      phoneNumber:
-        'Nhập số di động Việt Nam 10 chữ số (03, 05, 07, 08, 09). Máy chủ chưa nhận số bàn.',
+      phoneNumber: 'Nhập số di động (03, 05, 07, 08, 09), số bàn 02x hoặc tổng đài 1800/1900.',
       contactEmail: 'Email không hợp lệ.',
       taxCode: 'Mã số thuế tối đa 50 ký tự.',
     };

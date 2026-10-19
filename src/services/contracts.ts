@@ -4,6 +4,8 @@ export class ServiceError extends Error {
     message: string,
     public status = 422,
     public fields: Record<string, string> = {},
+    /** Machine-readable BE `errorCode` from ProblemDetails, when provided. */
+    public code?: string,
   ) {
     super(message);
   }

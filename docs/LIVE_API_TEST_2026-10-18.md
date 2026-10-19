@@ -226,6 +226,60 @@ Caregiver/VIU QA tạo bằng script trong trung tâm HCM (BE bắt buộc tài 
 | G17 | Lưu/khôi phục cấu hình không có thông báo thành công | Đã thêm toast “Đã lưu cấu hình trên máy chủ…” |
 | — | Lịch sử cấu hình và audit chỉ hiện UUID người thay đổi | Góp ý (cần API trả tên hoặc tra cứu), chưa sửa |
 
+
+## Lượt 8 — test lại sau bản sửa BE (19/10/2026)
+
+BE `main` 5b31a5a (deploy thành công 09:04 19/10) và e10928b. Test bằng script gọi API thật với tài khoản QA mới (đã dọn: xóa người + ảnh, gỡ link, xóa mềm 2 tài khoản).
+
+| Mã | Kết quả | Ghi chú |
+|---|---|---|
+| N1 | **Đạt** — audit-logs, notifications/failed, guidance/logs với `+07:00` đều 200 | FE vẫn gửi UTC, không ảnh hưởng |
+| N2 | **Đạt** — ảnh 1×1 không mặt 422 “No face detected…”, không lưu; 3 ảnh thật 201 có embedding, đủ 3 ảnh thì active | FE đã Việt hóa thông báo 422 này |
+| N3 | **Đạt phía BE** — 422 “Current password is incorrect.” | FE trước chỉ bắt 403 nên sẽ hiện tiếng Anh; đã sửa để bắt cả 422 |
+| N4 | **Chưa sửa** — `caregiver@gmail.com` vẫn `licenseStatus=null`, subscription 404, links/prefs 402 | Dữ liệu seed |
+| N5 | **Chưa sửa** — 429 vẫn không có `Retry-After` | Program.cs chỉ đặt header khi lease có metadata; SlidingWindow không có |
+| N6 | **Đạt** — Manual, VoiceCommand, Gesture đều phát `EmergencyAlert` (có detectionMethod, tọa độ, sentAt) | |
+| N7 | **Đạt một phần** — refresh sau logout trả 401 | Phát hiện N8 bên dưới |
+| #55 EndCall | **Đạt** — cúp khi chưa nghe: không gửi reason → Missed/Cancelled; gửi `user_hangup` → Missed/user_hangup; đã nghe → Ended/user_hangup | |
+
+### N8 — Token bị thu hồi do đăng xuất bị coi là “dùng lại token”, thu hồi mọi phiên — BE
+
+**Nhu cầu / lỗi / API nào:** Sau `POST /api/auth/logout`, gọi `POST /api/auth/refresh` bằng refresh token cũ (ví dụ tab khác còn giữ) trả 401 “Refresh token reuse detected. All sessions have been revoked.”. Theo `RefreshTokenHandler`, token đã thu hồi mà `ReplacedBy == null` (thu hồi do logout) rơi vào nhánh reuse và chạy lệnh thu hồi **toàn bộ** refresh token của user.
+
+**Thêm mới / bổ sung / chỉnh sửa gì:** Phân biệt token bị thu hồi do đăng xuất (lưu lý do thu hồi, ví dụ `RevokedReason = Logout`) với token đã được xoay vòng. Token thu hồi do logout chỉ trả 401 “Invalid refresh token.” và không đụng các phiên khác; chỉ token đã xoay vòng bị dùng lại sau 60 giây mới bị coi là reuse.
+
+**Kết quả kỳ vọng:** Đăng xuất trên một trình duyệt không làm đăng xuất các thiết bị khác của cùng tài khoản; vẫn chặn đúng trường hợp token bị đánh cắp và dùng lại.
+
+
+## Lượt 9 — test lại BE f6df5b3 (19/10/2026)
+
+Danh sách gửi BE được đánh số lại N1–N7 (N1 seed caregiver, N2 Retry-After, N3 logout cô lập phiên, N4 số bàn tổ chức, N5 errorCode, N6 phiên gọi treo, N7 tên người thực hiện). BE `main` f6df5b3 deploy thành công. Test bằng script API thật; dữ liệu QA (2 tài khoản, 5 tổ chức QA, liên hệ, người) đã xóa.
+
+| Mã | Kết quả |
+|---|---|
+| N1 seed `caregiver@gmail.com` | **Bỏ (người dùng chốt 19/10):** tài khoản này phải mua gói Personal như người dùng thật; bị 402 khi chưa có license là đúng nghiệp vụ. Ghi chú cũ: — vẫn licenseStatus null, subscription 404, liên kết/tùy chọn 402. `DbSeeder.MigrateAndSeedAsync` thoát sớm khi không phải môi trường Development (`if (!env.IsDevelopment()) return;`), nên `EnsureDevCaregiverLicenseAsync` không chạy trên production |
+| N2 429 Retry-After | **Đạt** — `Retry-After: 10` |
+| N3 đăng xuất cô lập | **Đạt** — token đã logout: 401 “Session has been logged out…”; thiết bị khác của cùng tài khoản vẫn refresh 200 |
+| N4 số điện thoại tổ chức | **Đạt** — 02812345678, 0241234567, 19001234, di động: 201; 12345: 400 |
+| N5 errorCode | **Đạt phần chính** — WRONG_CURRENT_PASSWORD, CONTACT_PRIORITY_TAKEN, FACE_NOT_DETECTED có `errorCode`. Các BusinessRule khác (ví dụ tạo user thiếu tổ chức, 422) chưa có mã |
+| N6 phiên gọi treo | **Đạt** — sau ~57 giây cả phiên SosAuto và CaregiverInitiated thành Missed/RingTimeout, có WebRtcCallEnded |
+| N7 tên người thực hiện | **Đạt** — audit có actorName/actorEmail, lịch sử cấu hình có changedByName/changedByEmail |
+
+FE (nhánh `fix/be-retest-2026-10-19`): đọc `errorCode` vào `ServiceError.code` và dịch mã đã biết tại transport; contacts/registry/auth ưu tiên mã, vẫn giữ dò câu cho deploy cũ; số điện thoại tổ chức theo đúng validator BE mới; Nhật ký kiểm toán hiện cột Người thực hiện (fallback mã), lịch sử cấu hình hiện tên + email.
+
+
+## Lượt 10 — N5 errorCode (BE 6c704e8) và màn yêu cầu gói dịch vụ (19/10/2026)
+
+**N5 đạt.** Gọi API thật 14 tình huống: ORG_ID_REQUIRED, EMAIL_ALREADY_REGISTERED (tạo user và tự đăng ký), ORG_STATUS_UNCHANGED, NOTIFICATION_RULE_DUPLICATE, LICENSE_KEY_INVALID, WRONG_CURRENT_PASSWORD, LINK_ALREADY_EXISTS, CONTACT_PRIORITY_TAKEN, CONTACT_STATUS_UNCHANGED, FACE_NOT_DETECTED, INVALID_CALL_STATUS_TRANSITION đều có `errorCode`. Lỗi validation 400 (theo từng trường) và 403 không có mã — đúng thiết kế. Dữ liệu QA đã xóa. FE dịch toàn bộ mã BE đang phát ra (khoảng 55 mã) sang tiếng Việt tại `client.ts`.
+
+**Màn yêu cầu gói dịch vụ.** Theo `LicenseValidationMiddleware`, Caregiver cá nhân không có license (hoặc hết hạn quá 3 ngày) bị 402 ở mọi API trừ auth, `users/me`, emergency-events, webrtc/sessions, payments, licenses. FE ánh xạ sang trang:
+
+| Cần gói (hiện màn “Cần gói dịch vụ”, khóa trên sidebar) | Không cần gói |
+|---|---|
+| Người được chăm sóc, Bản đồ theo dõi, Gương mặt thân quen, Địa điểm & vùng an toàn, Liên hệ khẩn cấp, Liên kết của tôi, Nhật ký hoạt động, Giọng đọc hỗ trợ, Tùy chọn thông báo | Tổng quan, Cảnh báo khẩn cấp, Lịch sử cuộc gọi, License, Thanh toán, Gói dịch vụ, Hồ sơ |
+
+Màn có nút “Chọn gói Personal” (/packages) và “Kích hoạt bằng key” (/license); hết hạn quá 3 ngày thì nút là “Gia hạn gói Personal”. Nhân viên thuộc tổ chức, Active, Trial và Expired trong 3 ngày gia hạn không bị khóa. Nếu hồ sơ không có trường license (BE cũ) thì không khóa để tránh đoán sai; BE vẫn chặn 402 và màn lỗi 402 có thêm nút “Chọn gói dịch vụ”. Tài khoản kiểm tra: `caregiver@gmail.com` (chưa thanh toán) và `thinh0754@gmail.com` (đã thanh toán).
+
 ## Đã đạt (API thật)
 
 | Nhóm | Kết quả |
@@ -283,3 +337,6 @@ Phát key (tốn 1 suất không hoàn lại), FCM token (cần trình duyệt),
 - `src/services/api/contacts.ts` (+ test): thông báo tiếng Việt khi trùng thứ tự ưu tiên (G12).
 - `src/hooks/useOrgPeople.ts`, `src/pages/shared/ApiNotifications.tsx`, `ApiAccounts.tsx`, `ApiLinks.tsx`: tên trung tâm ở quy tắc thông báo (G13), thông báo xóa (G14), bớt tải lại danh sách.
 - `src/pages/shared/ApiOrganizations.tsx`, `ApiSession.tsx`: bỏ chữ nội bộ “đợt” (G15). `src/services/api/organizations.ts`: lỗi theo từng ô (G16). `src/pages/super-admin/ApiConfigurations.tsx`: toast lưu cấu hình (G17).
+- Lượt 8 (nhánh `fix/be-retest-2026-10-19`): `src/services/api/auth.ts` (+ test) bắt cả 422 sai mật khẩu; `src/services/api/registry.ts` (+ test) Việt hóa 422 ảnh không có khuôn mặt.
+- Lượt 9: `src/services/contracts.ts`, `src/services/http/client.ts` (+ test) errorCode; `auth.ts`, `contacts.ts`, `registry.ts` dùng mã; `organizations.ts` (+ test), `ApiOrganizations.tsx` số bàn/tổng đài; `monitoring.ts`, `ApiMonitoring.tsx`, `configurations.ts`, `ApiConfigurations.tsx` tên người thực hiện.
+- Lượt 10: `src/services/http/client.ts` dịch mã lỗi BE; `src/services/api/licenses.ts` (+ test) quy tắc khóa; `src/pages/shared/LicenseGate.tsx` (mới), `StatusPage.tsx`, `src/app/App.tsx`, `src/components/UI.tsx`, `src/styles/workspace.css` màn yêu cầu gói và khóa sidebar; `src/app/e2e/api-auth.spec.ts` test khóa, `redesign.spec.ts` sửa test chờ đăng nhập.

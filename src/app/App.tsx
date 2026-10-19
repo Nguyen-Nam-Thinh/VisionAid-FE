@@ -41,6 +41,7 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   LogOut,
+  Lock,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
@@ -73,6 +74,8 @@ import { roles } from '../constants/labels';
 import { uiStore, useUI } from '../stores/ui';
 import { ErrorBoundary } from './ErrorBoundary';
 import { StatusPage } from '../pages/shared/StatusPage';
+import { LicenseGate } from '../pages/shared/LicenseGate';
+import { licensedCaregiverPaths, personalLicenseBlock } from '../services/api/licenses';
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 });
@@ -215,6 +218,9 @@ function Shell() {
   const [signingOut, setSigningOut] = useState(false);
   const { notice } = useUI();
   if (!user) return null;
+  const block = runtime.mode === 'api' ? personalLicenseBlock(user) : null;
+  const locked = (path: string) =>
+    !!block && (licensedCaregiverPaths as readonly string[]).includes(path);
   const content = (
     <div className={'shell' + (collapsed ? ' sidebar-collapsed' : '')}>
       <a className="skip" href="#main">
@@ -303,6 +309,12 @@ function Shell() {
                       ? 'Liên kết của tôi'
                       : item.label}
                   </span>
+                  {locked(item.path) && (
+                    <span className="nav-lock" title="Cần gói dịch vụ">
+                      <Lock size={14} aria-hidden="true" />
+                      <span className="sr-only">(cần gói dịch vụ)</span>
+                    </span>
+                  )}
                 </NavLink>
               ))}
           </nav>
@@ -593,49 +605,58 @@ export function App() {
                     path={roleBase(f.role) + '/' + f.path}
                     element={
                       runtime.mode === 'api' ? (
-                        f.role === 'Caregiver' && f.path === 'users' ? (
-                          <ApiLinkedUsers />
-                        ) : f.role === 'Caregiver' && f.path === 'contacts' ? (
-                          <ApiContacts />
-                        ) : f.role === 'Caregiver' && f.path === 'locations' ? (
-                          <ApiPlaces />
-                        ) : f.role === 'Caregiver' && f.path === 'registry' ? (
-                          <ApiRegistry />
-                        ) : f.role === 'Caregiver' && f.path === 'tts' ? (
-                          <ApiTts />
-                        ) : f.role === 'Caregiver' && f.path === 'activity' ? (
-                          <ApiActivity />
-                        ) : f.role === 'CenterAdmin' && f.path === 'reports' ? (
-                          <ApiReports />
-                        ) : f.role === 'Admin' &&
-                          (f.path === 'metrics' || f.path === 'audit' || f.path === 'delivery') ? (
-                          <ApiMonitoring kind={f.path} />
-                        ) : f.role === 'Admin' && f.path === 'configurations' ? (
-                          <ApiConfigurations />
-                        ) : (f.role === 'Admin' && f.path === 'organizations') ||
-                          (f.role === 'CenterAdmin' && f.path === 'organization') ? (
-                          <ApiOrganizations />
-                        ) : f.role === 'Admin' && f.path === 'accounts' ? (
-                          <ApiAccounts />
-                        ) : f.role === 'CenterAdmin' && ['staff', 'users'].includes(f.path) ? (
-                          <ApiAccounts
-                            fixedRole={f.path === 'staff' ? 'Caregiver' : 'VisuallyImpaired'}
-                          />
-                        ) : (f.role === 'Admin' && f.path === 'links') ||
-                          (f.role === 'CenterAdmin' && f.path === 'assignments') ||
-                          (f.role === 'Caregiver' && f.path === 'caregivers') ? (
-                          <ApiLinks />
-                        ) : ['Caregiver', 'CenterAdmin'].includes(f.role) && f.path === 'map' ? (
-                          <ApiTracking />
-                        ) : f.role === 'Caregiver' && f.path === 'alerts' ? (
-                          <ApiAlerts />
-                        ) : (f.role === 'Caregiver' && f.path === 'notifications') ||
-                          (f.role === 'Admin' && f.path === 'rules') ||
-                          (f.role === 'CenterAdmin' && f.path === 'routing') ? (
-                          <ApiNotifications />
-                        ) : (
-                          <ApiPending />
-                        )
+                        <LicenseGate
+                          licensed={
+                            f.role === 'Caregiver' &&
+                            (licensedCaregiverPaths as readonly string[]).includes(f.path)
+                          }
+                        >
+                          {f.role === 'Caregiver' && f.path === 'users' ? (
+                            <ApiLinkedUsers />
+                          ) : f.role === 'Caregiver' && f.path === 'contacts' ? (
+                            <ApiContacts />
+                          ) : f.role === 'Caregiver' && f.path === 'locations' ? (
+                            <ApiPlaces />
+                          ) : f.role === 'Caregiver' && f.path === 'registry' ? (
+                            <ApiRegistry />
+                          ) : f.role === 'Caregiver' && f.path === 'tts' ? (
+                            <ApiTts />
+                          ) : f.role === 'Caregiver' && f.path === 'activity' ? (
+                            <ApiActivity />
+                          ) : f.role === 'CenterAdmin' && f.path === 'reports' ? (
+                            <ApiReports />
+                          ) : f.role === 'Admin' &&
+                            (f.path === 'metrics' ||
+                              f.path === 'audit' ||
+                              f.path === 'delivery') ? (
+                            <ApiMonitoring kind={f.path} />
+                          ) : f.role === 'Admin' && f.path === 'configurations' ? (
+                            <ApiConfigurations />
+                          ) : (f.role === 'Admin' && f.path === 'organizations') ||
+                            (f.role === 'CenterAdmin' && f.path === 'organization') ? (
+                            <ApiOrganizations />
+                          ) : f.role === 'Admin' && f.path === 'accounts' ? (
+                            <ApiAccounts />
+                          ) : f.role === 'CenterAdmin' && ['staff', 'users'].includes(f.path) ? (
+                            <ApiAccounts
+                              fixedRole={f.path === 'staff' ? 'Caregiver' : 'VisuallyImpaired'}
+                            />
+                          ) : (f.role === 'Admin' && f.path === 'links') ||
+                            (f.role === 'CenterAdmin' && f.path === 'assignments') ||
+                            (f.role === 'Caregiver' && f.path === 'caregivers') ? (
+                            <ApiLinks />
+                          ) : ['Caregiver', 'CenterAdmin'].includes(f.role) && f.path === 'map' ? (
+                            <ApiTracking />
+                          ) : f.role === 'Caregiver' && f.path === 'alerts' ? (
+                            <ApiAlerts />
+                          ) : (f.role === 'Caregiver' && f.path === 'notifications') ||
+                            (f.role === 'Admin' && f.path === 'rules') ||
+                            (f.role === 'CenterAdmin' && f.path === 'routing') ? (
+                            <ApiNotifications />
+                          ) : (
+                            <ApiPending />
+                          )}
+                        </LicenseGate>
                       ) : (
                         <f.component />
                       )

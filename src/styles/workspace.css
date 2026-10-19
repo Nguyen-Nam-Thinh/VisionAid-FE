@@ -917,3 +917,15 @@ tbody tr:hover {
     width: 100%;
   }
 }
+.status-note {
+  max-width: 46ch;
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.nav-lock {
+  margin-left: auto;
+  color: var(--muted);
+  flex-shrink: 0;
+}

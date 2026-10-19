@@ -1,5 +1,10 @@
 import { expect, it, vi } from 'vitest';
-import { getMySubscription, getOrganizationPool, licenseSummary } from './licenses';
+import {
+  getMySubscription,
+  getOrganizationPool,
+  licenseSummary,
+  personalLicenseBlock,
+} from './licenses';
 import type { Person } from '../../models/domain';
 const actor: Person = {
   id: '01900000-0000-7000-8000-000000000001',
@@ -92,4 +97,24 @@ it('reads subscription only for a personal caregiver and rejects malformed data'
     daysRemaining: null,
   });
   expect((await getMySubscription(actor, undefined, get)).status).toBe('Trial');
+});
+
+it('blocks licensed screens only for personal caregivers without license or past grace', () => {
+  const day = 86400000;
+  expect(personalLicenseBlock(actor, now)).toBeNull(); // field absent: unknown, do not guess
+  expect(personalLicenseBlock({ ...actor, licenseStatus: null }, now)).toBe('none');
+  expect(personalLicenseBlock({ ...actor, licenseStatus: 'None' }, now)).toBe('none');
+  expect(personalLicenseBlock({ ...actor, licenseStatus: 'Trial' }, now)).toBeNull();
+  expect(personalLicenseBlock({ ...actor, licenseStatus: 'Active' }, now)).toBeNull();
+  const expired = (daysAgo: number) => ({
+    ...actor,
+    licenseStatus: 'Expired',
+    licenseExpiresAt: new Date(now - daysAgo * day).toISOString(),
+  });
+  expect(personalLicenseBlock(expired(2), now)).toBeNull(); // grace period
+  expect(personalLicenseBlock(expired(4), now)).toBe('expired');
+  expect(personalLicenseBlock({ ...actor, licenseStatus: null, orgId: actor.id }, now)).toBeNull();
+  expect(
+    personalLicenseBlock({ ...actor, role: 'CenterAdmin', licenseStatus: null }, now),
+  ).toBeNull();
 });

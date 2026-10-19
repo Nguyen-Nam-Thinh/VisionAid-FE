@@ -18,7 +18,7 @@ const fields: FieldSpec[] = [
   {
     key: 'phoneNumber',
     label: 'Điện thoại liên hệ',
-    hint: 'Để trống hoặc nhập số Việt Nam có 10 chữ số.',
+    hint: 'Để trống, hoặc nhập số di động, số bàn 02x hay tổng đài 1800/1900.',
   },
   // Optional email is validated in the API adapter; the shared Form email rule requires a value.
   { key: 'contactEmail', label: 'Email liên hệ' },

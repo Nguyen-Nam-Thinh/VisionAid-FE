@@ -141,3 +141,16 @@ it('sends server filters, forwards cancellation and rejects malformed result dat
   get.mockResolvedValue({ ...org, isActive: 'true' });
   await expect(api.me(center)).rejects.toMatchObject({ status: 502 });
 });
+it('accepts mobile, 02x landline and 1800/1900 numbers like the BE validator', async () => {
+  const write = vi.fn<NonNullable<Parameters<typeof createOrganizationsApi>[1]>>(async () => org);
+  const api = createOrganizationsApi(async () => org, write);
+  for (const phoneNumber of ['0912345678', '02812345678', '0241234567', '19001234', '18001234'])
+    await api.create(admin, { ...input, phoneNumber });
+  expect(write).toHaveBeenCalledTimes(5);
+  for (const phoneNumber of ['12345', '0112345678', '028123'])
+    await expect(api.create(admin, { ...input, phoneNumber })).rejects.toMatchObject({
+      status: 400,
+      fields: { phoneNumber: expect.stringContaining('số bàn 02x') },
+    });
+  expect(write).toHaveBeenCalledTimes(5);
+});

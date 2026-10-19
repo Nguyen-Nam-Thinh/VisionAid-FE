@@ -42,13 +42,23 @@ export function Toast({ message, onDismiss }: { message: string; onDismiss: () =
     return () => clearTimeout(timer);
   }, [message, onDismiss, paused]);
   return (
-    <div ref={ref} popover="manual" className="feedback-toast"
-      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)} onBlur={(event) => {
+    <div
+      ref={ref}
+      popover="manual"
+      className="feedback-toast"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
-      }}>
-      <span role="status" aria-live="polite" aria-atomic="true">{message}</span>
-      <button type="button" aria-label="Đóng thông báo" onClick={onDismiss}><X size={18} aria-hidden="true" /></button>
+      }}
+    >
+      <span role="status" aria-live="polite" aria-atomic="true">
+        {message}
+      </span>
+      <button type="button" aria-label="Đóng thông báo" onClick={onDismiss}>
+        <X size={18} aria-hidden="true" />
+      </button>
     </div>
   );
 }
@@ -74,7 +84,14 @@ export function State({
       <div className="notice error stack" role="alert">
         <strong>{error.message}</strong>
         {error instanceof ServiceError && error.status === 402 && (
-          <Link to="/license">Xem trạng thái license</Link>
+          <div className="row">
+            <Link className="btn primary" to="/packages">
+              Chọn gói dịch vụ
+            </Link>
+            <Link className="btn" to="/license">
+              Xem trạng thái license
+            </Link>
+          </div>
         )}
         {retry && (
           <button className="btn" onClick={retry}>

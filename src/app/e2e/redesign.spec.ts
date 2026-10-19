@@ -5,7 +5,8 @@ test('success toast can close, pause while reading and expire', async ({ page })
   await page.goto('/auth/login');
   await page.getByLabel('Địa chỉ email').fill('caregiver@demo.vn');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.locator('main h1')).toBeVisible();
+  // The login page also has a main h1; wait for the redirect so the session exists before goto.
+  await expect(page).toHaveURL(/\/dashboard$/);
   await page.goto('/profile');
   const save = async () => {
     await page.getByRole('button', { name: 'Chỉnh sửa hồ sơ' }).click();
@@ -53,7 +54,8 @@ test('account dropdown: keyboard, dismiss, profile and logout', async ({ page })
   await page.goto('/auth/login');
   await page.getByLabel('Địa chỉ email').fill('caregiver@demo.vn');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.locator('main h1')).toBeVisible();
+  // The login page also has a main h1; wait for the redirect so the session exists before goto.
+  await expect(page).toHaveURL(/\/dashboard$/);
   const trigger = page.getByRole('button', { name: 'Menu tài khoản' });
   const popup = page.locator('#account-menu');
   for (const width of [1440, 390]) {
@@ -250,7 +252,8 @@ test('status pages: standalone 404, in-shell 404, 403 and a crashed screen recov
   await page.goto('/auth/login');
   await page.getByLabel('Địa chỉ email').fill('caregiver@demo.vn');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.locator('main h1')).toBeVisible();
+  // The login page also has a main h1; wait for the redirect so the session exists before goto.
+  await expect(page).toHaveURL(/\/dashboard$/);
 
   // Signed in: 404 keeps the sidebar so the user can continue.
   await page.goto('/caregiver/khong-ton-tai');

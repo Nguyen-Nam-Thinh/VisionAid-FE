@@ -105,11 +105,11 @@ export function createContactsApi(get = apiGet, write = apiWrite) {
           id,
         );
       } catch (error) {
-        // BE reports a taken priority as 409 with an English message.
+        // BE: 409 errorCode CONTACT_PRIORITY_TAKEN (older deploys: English message only).
         if (
           error instanceof ServiceError &&
           error.status === 409 &&
-          /priority/i.test(error.message)
+          (error.code === 'CONTACT_PRIORITY_TAKEN' || /priority/i.test(error.message))
         )
           throw new ServiceError(
             `Thứ tự ưu tiên ${data.priorityOrder} đã được dùng cho liên hệ khác. Chọn số khác.`,
