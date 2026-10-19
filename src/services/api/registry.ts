@@ -145,13 +145,27 @@ export function createRegistryApi(get = apiGet, write = apiWrite, blob = apiBlob
       const body = new FormData();
       body.set('photo', photo, file.name);
       body.set('setAsPrimary', String(primary));
-      const result = imageSchema.safeParse(
-        await write(`${root}/${id}/photos`, {
+      let raw: unknown;
+      try {
+        raw = await write(`${root}/${id}/photos`, {
           method: 'POST',
           body,
           signal: AbortSignal.timeout(90000),
-        }),
-      );
+        });
+      } catch (error) {
+        // BE rejects photos where FaceNet finds no face (422 FACE_NOT_DETECTED); nothing was saved.
+        if (
+          error instanceof ServiceError &&
+          (error.code === 'FACE_NOT_DETECTED' ||
+            (error.status === 422 && /no face/i.test(error.message)))
+        )
+          throw new ServiceError(
+            'Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
+            422,
+          );
+        throw error;
+      }
+      const result = imageSchema.safeParse(raw);
       if (!result.success || result.data.personId !== id)
         throw new ServiceError('Kết quả tải ảnh không hợp lệ. Tải lại trước khi gửi lại.', 502);
       return result.data;

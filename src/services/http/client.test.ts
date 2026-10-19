@@ -49,3 +49,26 @@ it('preserves specific business and validation errors', async () => {
     fields: { name: 'Tên không hợp lệ' },
   });
 });
+
+it('keeps the BE errorCode and translates known codes, leaving unknown ones as sent', async () => {
+  const reply = (body: object, status: number) => async () =>
+    new Response(JSON.stringify(body), { status });
+  await expect(
+    request(
+      '/test',
+      {},
+      reply({ detail: 'Current password is incorrect.', errorCode: 'WRONG_CURRENT_PASSWORD' }, 422),
+    ),
+  ).rejects.toMatchObject({
+    status: 422,
+    code: 'WRONG_CURRENT_PASSWORD',
+    message: 'Mật khẩu hiện tại không đúng.',
+  });
+  await expect(
+    request('/test', {}, reply({ detail: 'Something new.', errorCode: 'NEW_CODE' }, 409)),
+  ).rejects.toMatchObject({ code: 'NEW_CODE', message: 'Something new.' });
+  await expect(request('/test', {}, reply({ detail: 'No code.' }, 422))).rejects.toMatchObject({
+    code: undefined,
+    message: 'No code.',
+  });
+});

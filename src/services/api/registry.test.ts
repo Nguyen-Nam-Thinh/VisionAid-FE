@@ -153,6 +153,15 @@ it('registry rejects malformed input, no retry on upload or delete failure, no f
     f.api.upload(actor, viuId, id, new File([png], 'p.png'), false),
   ).rejects.toMatchObject({ status: 503 });
   expect(f.write).toHaveBeenCalledTimes(1);
+  f.write.mockRejectedValue(
+    new ServiceError('No face detected in the uploaded photo. Please upload a clear photo.', 422),
+  );
+  await expect(
+    f.api.upload(actor, viuId, id, new File([png], 'p.png'), false),
+  ).rejects.toMatchObject({
+    status: 422,
+    message: 'Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
+  });
   f.write.mockRejectedValue(new ServiceError('license', 402));
   await expect(f.api.removePhoto(actor, viuId, id, photoId)).rejects.toMatchObject({ status: 402 });
   expect(f.person.images).toHaveLength(1);

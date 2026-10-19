@@ -43,6 +43,8 @@ const labels: Record<string, string> = {
   errorCount: 'Số lỗi',
   aggregatedBy: 'Nguồn tổng hợp',
   recordedAt: 'Tổng hợp lúc',
+  actorName: 'Người thực hiện',
+  actorEmail: 'Email người thực hiện',
   actorId: 'Mã người thực hiện',
   actionType: 'Hành động',
   targetTable: 'Bảng đối tượng',
@@ -69,7 +71,7 @@ const columns = {
     'failedRequests',
     'avgLatencyMs',
   ],
-  audit: ['performedAt', 'actorId', 'actionType', 'targetTable'],
+  audit: ['performedAt', 'actorName', 'actionType', 'targetTable'],
   delivery: ['createdAt', 'channel', 'notificationType', 'status'],
 };
 const channelLabels: Record<string, string> = {
@@ -84,7 +86,10 @@ const decisions = new Map([
   ['PROCEED', 'Tiếp tục'],
 ]);
 function valueText(key: string, value: string | number | boolean | null) {
-  if (value === null) return key === 'actorId' ? 'Hệ thống hoặc chưa ghi nhận' : 'Chưa có dữ liệu';
+  if (value === null || value === undefined)
+    return key === 'actorId' || key === 'actorName'
+      ? 'Hệ thống hoặc chưa ghi nhận'
+      : 'Chưa có dữ liệu';
   if (key === 'isOfflineFallback') return value ? 'Có' : 'Không';
   if (key === 'decision') return decisions.get(String(value)) ?? String(value);
   if (key.endsWith('At')) return formatTime(String(value)) + ' · UTC+7';
@@ -309,7 +314,15 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                         {query.data.items.map((row) => (
                           <tr key={row.id}>
                             {columns[kind].map((key) => (
-                              <td key={key}>{valueText(key, row[key])}</td>
+                              <td key={key}>
+                                {valueText(
+                                  key,
+                                  // Older BE deploys have no actorName: fall back to the actor ID.
+                                  key === 'actorName'
+                                    ? (row.actorName ?? row.actorId ?? null)
+                                    : row[key],
+                                )}
+                              </td>
                             ))}
                             <td>
                               <button className="btn small" onClick={() => setSelected(row)}>

@@ -71,6 +71,35 @@ export async function getMySubscription(user: Person, signal?: AbortSignal, get 
   return parsed.data;
 }
 
+// Caregiver screens whose APIs the BE LicenseValidationMiddleware blocks (402) without a personal
+// license. Alerts and calls stay open (SOS/WebRTC are exempt); license, packages and payments too.
+export const licensedCaregiverPaths = [
+  'users',
+  'map',
+  'registry',
+  'locations',
+  'contacts',
+  'caregivers',
+  'activity',
+  'tts',
+  'notifications',
+] as const;
+export const GRACE_DAYS = 3;
+/**
+ * Mirrors the BE rule for a personal Caregiver: None/unknown, or Expired past the 3-day grace,
+ * blocks licensed screens. UI hint only — the BE still answers 402 if this view is stale.
+ */
+export function personalLicenseBlock(user: Person, now = Date.now()): 'none' | 'expired' | null {
+  if (!isPersonalCaregiver(user)) return null;
+  // Field absent (older BE / profile not loaded): do not guess; null or 'None' means no license.
+  if (user.licenseStatus === undefined) return null;
+  if (user.licenseStatus === 'Active' || user.licenseStatus === 'Trial') return null;
+  if (user.licenseStatus === 'Expired') {
+    const expiry = user.licenseExpiresAt ? Date.parse(user.licenseExpiresAt) : NaN;
+    return Number.isFinite(expiry) && now - expiry <= GRACE_DAYS * 86400000 ? null : 'expired';
+  }
+  return 'none';
+}
 // Display only: the backend controls access, including grace and safety exceptions.
 export function licenseSummary(user: Person, now = Date.now()) {
   if (!isPersonalCaregiver(user))
