@@ -134,6 +134,32 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
       });
       return result;
     },
+    // Active accounts of one role in the CenterAdmin's organization, for pickers instead of typed UUIDs.
+    // complete=false means the org has more than the pages read; callers fall back to manual entry.
+    async options(actor: Scope, role: 'Caregiver' | 'VisuallyImpaired', signal?: AbortSignal) {
+      if (actor.role !== 'CenterAdmin' || !actor.orgId)
+        throw new ServiceError('Chỉ quản trị trung tâm chọn từ danh sách tổ chức.', 403);
+      const items: Account[] = [];
+      for (let page = 1; page <= 5; page++) {
+        const query = new URLSearchParams({
+          page: String(page),
+          pageSize: '100',
+          role,
+          isActive: 'true',
+          isDeleted: 'false',
+          organizationId: validId(actor.orgId),
+        });
+        const result = parse(pageSchema, await get('/api/users?' + query, signal));
+        result.items.forEach((target) => {
+          authorize(actor, target);
+          if (target.role !== role)
+            throw new ServiceError('Danh sách trả về không khớp vai trò đã chọn.', 502);
+        });
+        items.push(...result.items.filter((target) => target.isActive && !target.deletedAt));
+        if (!result.hasNextPage) return { items, complete: true };
+      }
+      return { items, complete: false };
+    },
     async create(actor: Scope, values: AccountInput) {
       authorize(actor);
       const basic = profile(values);

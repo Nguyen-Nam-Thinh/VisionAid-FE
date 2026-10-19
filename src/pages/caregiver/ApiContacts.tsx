@@ -1,3 +1,4 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -6,6 +7,7 @@ import { contactsApi, contactTypes, type EmergencyContact } from '../../services
 import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
 import { Form } from '../../components/Form';
 import type { Person } from '../../models/domain';
+import { uiStore, useUI } from '../../stores/ui';
 
 export function ApiContacts() {
   const { data: actor } = useSession();
@@ -16,13 +18,18 @@ export function ApiContacts() {
 function Contacts({ actor }: { actor: Person }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState('');
+  // Shared with the other care-recipient pages; cleared on logout via uiStore.clear().
+  const { selectedViu: selected } = useUI();
+  const setSelected = (id: string) => uiStore.set({ selectedViu: id });
   const users = useQuery({
     queryKey: ['api-contact-users', actor.id, actor.orgId, page, search],
     queryFn: ({ signal }) => caregivingApi.users(page, search, signal),
     refetchInterval: 30000,
   });
-  const person = users.data?.items.find((item) => item.id === selected);
+  const person =
+    users.data?.items.find((item) => item.id === selected) ??
+    // Only one care recipient in scope: select them instead of asking.
+    (!selected && users.data?.totalCount === 1 ? users.data.items[0] : undefined);
   return (
     <>
       <PageHead
@@ -43,7 +50,7 @@ function Contacts({ actor }: { actor: Person }) {
             Tìm người được chăm sóc
             <input name="search" />
           </label>
-          <button className="btn">Tìm kiếm</button>
+          <button className="btn primary">Tìm kiếm</button>
           <button
             type="button"
             className="btn"
@@ -65,8 +72,13 @@ function Contacts({ actor }: { actor: Person }) {
               ))}
             </select>
           </label>
+          {!person && (
+            <p className="notice">
+              Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.
+            </p>
+          )}
           {users.data && (
-            <div className="row">
+            <div className="row pagination">
               <span>
                 {users.data.totalCount} người · Trang {page}/{Math.max(1, users.data.totalPages)}
               </span>
@@ -128,11 +140,7 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
         Tối đa 5 liên hệ kể cả liên hệ tạm ngưng. Ưu tiên là số nguyên dương và không trùng; số nhỏ
         hơn được ưu tiên trước.
       </p>
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {error && (
         <p className="notice error" role="alert">
           {error.message}
@@ -152,8 +160,8 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
           </button>
         </div>
         {!query.data?.length && <p>Chưa có liên hệ khẩn cấp.</p>}
-        <div className="table-scroll">
-          <table>
+        <div className="table-scroll" tabIndex={0} role="region" aria-label="Danh bạ khẩn cấp">
+          <table className="care-contacts-table">
             <thead>
               <tr>
                 <th>Liên hệ</th>
@@ -167,10 +175,10 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
                 <tr key={item.id}>
                   <td>
                     <strong>{item.contactName}</strong>
-                    <p>{contactTypes[item.contactType]}</p>
+                    <p className="care-secondary">{contactTypes[item.contactType]}</p>
                     <p>{item.phoneNumber}</p>
                     <p style={{ overflowWrap: 'anywhere' }}>{item.zaloDeepLink}</p>
-                    <p>{item.notes}</p>
+                    <p className="care-secondary">{item.notes}</p>
                   </td>
                   <td>{item.priorityOrder}</td>
                   <td>
@@ -223,8 +231,8 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
             onClose={() => setEditing(null)}
           >
             <p>
-              BE hiện chỉ chấp nhận số di động Việt Nam; số ngắn và hotline có thể bị từ chối. Liên
-              kết Zalo được lưu như văn bản, không tự mở.
+              Chấp nhận số di động Việt Nam (0… hoặc +84…), hotline 112–115 và tổng đài 1800/1900.
+              Liên kết Zalo được lưu như văn bản, không tự mở.
             </p>
             <Form
               fields={[

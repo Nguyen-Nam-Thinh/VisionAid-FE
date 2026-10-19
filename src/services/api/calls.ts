@@ -12,6 +12,22 @@ export const callStatuses = {
   Missed: 'Nhỡ',
   Rejected: 'Đã từ chối',
 };
+// BE stores free-text end reasons; unknown values are shown as-is.
+const endReasons: Record<string, string> = {
+  user_hangup: 'Người dùng cúp máy',
+  Cancelled: 'Hủy trước khi được nghe máy',
+  client_cancelled: 'Hủy trước khi được nghe máy',
+  Missed: 'Không ai nghe máy',
+  Failed: 'Kết nối thất bại',
+  connection_failed: 'Kết nối âm thanh/hình ảnh thất bại',
+  client_setup_failed: 'Không khởi tạo được cuộc gọi',
+  client_setup_timeout: 'Chờ kết nối quá lâu',
+  microphone_lost: 'Mất micro',
+  session_unavailable: 'Không còn xác minh được phiên gọi',
+  client_left: 'Rời trang khi đang gọi',
+};
+export const callEndReason = (reason: string | null) =>
+  reason ? (endReasons[reason] ?? reason) : 'Chưa có';
 export const callTriggers = {
   CaregiverInitiated: 'Người chăm sóc gọi',
   ViuVoiceCommand: 'Lệnh giọng nói',

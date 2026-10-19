@@ -56,6 +56,20 @@ it('rejects malformed, duplicate and older events without synthesizing state', (
   expect(accept('EmergencyAlert', { viuId: id, eventId: id, sentAt: payload.recordedAt })).toBe(
     true,
   );
+  // Manual/voice/gesture SOS now also emit EmergencyAlert with the full BE payload.
+  ['AccelerometerCamera', 'Manual', 'VoiceCommand', 'Gesture'].forEach((detectionMethod, i) =>
+    expect(
+      accept('EmergencyAlert', {
+        eventId: `01900000-0000-7000-8000-00000000010${i}`,
+        viuId: id,
+        detectionMethod,
+        latitude: null,
+        longitude: null,
+        detectedAt: payload.recordedAt,
+        sentAt: payload.recordedAt,
+      }),
+    ).toBe(true),
+  );
   expect(hubUrl('', 'https://api.visionaid.net', 'https:')).toBe(
     'https://api.visionaid.net/hubs/location',
   );

@@ -1,3 +1,4 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -67,9 +68,7 @@ function Servers({ actor }: { actor: Person }) {
           </button>
         </div>
         {notice && (
-          <p className="notice" role="status">
-            {notice}
-          </p>
+          <Toast message={notice} onDismiss={() => setNotice('')} />
         )}
         <State loading={query.isPending} error={query.error} retry={() => void query.refetch()}>
           {query.data && (
@@ -127,7 +126,7 @@ function Servers({ actor }: { actor: Person }) {
                   </table>
                 </div>
               )}
-              <div className="row between">
+              <div className="row pagination">
                 <span>
                   {query.data.totalCount} máy chủ · Trang {query.data.page}/
                   {Math.max(1, query.data.totalPages)}

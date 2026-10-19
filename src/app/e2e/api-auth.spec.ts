@@ -109,7 +109,7 @@ for (const [role, org] of [
       failed = true;
       await page.getByRole('button', { name: 'Tải lại đã gửi', exact: true }).click();
       await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).toContainText(
-        'Dashboard tạm thời lỗi',
+        'Máy chủ đang gặp sự cố',
       );
       await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).not.toContainText(
         '0 cảnh báo',
@@ -216,7 +216,7 @@ test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ pag
   await expect.poll(() => requests.at(-1)?.searchParams.get('userId')).toBe(id);
   expect(requests.at(-1)?.searchParams.get('engineUsed')).toBe('RuleBased');
   expect(requests.at(-1)?.searchParams.get('isOfflineFallback')).toBe('true');
-  expect(requests.at(-1)?.searchParams.get('dateTo')).toBe('2026-10-11T23:59:59.9999999+07:00');
+  expect(requests.at(-1)?.searchParams.get('dateTo')).toBe('2026-10-11T16:59:59.9999999Z');
   await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Trang 2/2');
   await page.screenshot({ path: 'test-results/stageU7b-desktop.png', fullPage: true });
@@ -247,7 +247,7 @@ test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ pag
   );
   failed = true;
   await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Nhật ký tạm thời lỗi');
+  await expect(page.getByRole('alert')).toContainText('Máy chủ đang gặp sự cố');
 });
 
 test('U7b: non-admin cannot open Hybrid administration', async ({ page }) => {
@@ -511,7 +511,7 @@ test('13b: metrics, audit and delivery filters, details and independent errors',
   await page.getByLabel('Đến ngày Việt Nam').fill('2026-10-11');
   await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
   await expect(page.getByRole('cell', { name: 'ConfigChanged', exact: true })).toBeVisible();
-  expect(calls.at(-1)?.searchParams.get('dateTo')).toBe('2026-10-11T23:59:59.9999999+07:00');
+  expect(calls.at(-1)?.searchParams.get('dateTo')).toBe('2026-10-11T16:59:59.9999999Z');
   await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('ConfigChanged');
   await expect(page.getByText('DO_NOT_DISPLAY_SECRET')).toHaveCount(0);
@@ -533,7 +533,7 @@ test('13b: metrics, audit and delivery filters, details and independent errors',
   await page.keyboard.press('Escape');
   statusError = true;
   await page.getByRole('button', { name: 'Tải lại thống kê' }).click();
-  await expect(page.getByRole('alert')).toContainText('Thống kê tạm thời lỗi');
+  await expect(page.getByRole('alert')).toContainText('Máy chủ đang gặp sự cố');
   await expect(page.getByRole('cell', { name: 'FallDetected', exact: true })).toBeVisible();
 });
 
@@ -765,7 +765,7 @@ test('12b: organization report totals, UTC days, member pagination and scope err
   wrongOrg = false;
   failure = 403;
   await page.getByRole('button', { name: 'Tải lại báo cáo', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Báo cáo tạm thời');
+  await expect(page.getByRole('alert')).toContainText('Bạn không có quyền thực hiện thao tác này.');
 });
 test('12a: scoped activity history, dates, pagination, all details and revoked access', async ({
   page,
@@ -1250,6 +1250,32 @@ test('U6a: outgoing call negotiates native local media, mutes, ends and refreshe
       page.locator('video').evaluate((element) => (element as HTMLVideoElement).videoWidth),
     )
     .toBe(320);
+  const originalVideo = await page.locator('video').elementHandle();
+  await expect(page.locator('#main')).toHaveAttribute('inert', '');
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
+  await page.getByRole('link', { name: 'Hồ sơ của tôi', exact: true }).click();
+  await expect(page.locator('.call-workspace')).toHaveClass(/is-minimized/);
+  await expect(page.locator('#main')).not.toHaveAttribute('inert', '');
+  await page.goBack();
+  await expect(page.locator('.call-workspace')).toHaveClass(/is-minimized/);
+  await page.getByRole('button', { name: 'Mở rộng cuộc gọi', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.call-workspace')).toHaveClass(/is-minimized/);
+  expect(f.writes.some((path) => path.endsWith('/end'))).toBe(false);
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
+  await page.getByRole('link', { name: 'Hồ sơ của tôi', exact: true }).click();
+  await expect(page).toHaveURL(/profile$/);
+  expect(
+    await originalVideo!.evaluate(
+      (node) => node === document.querySelector('.call-workspace video'),
+    ),
+  ).toBe(true);
+  expect(await page.evaluate(() => window.callHarness.mic.getAudioTracks()[0].readyState)).toBe(
+    'live',
+  );
+  await page.screenshot({ path: 'test-results/call-workspace-minimized-1440.png', fullPage: true });
+  await page.getByRole('button', { name: 'Mở rộng cuộc gọi', exact: true }).click();
+  await expect(page.locator('.call-workspace')).not.toHaveClass(/is-minimized/);
   await page.getByRole('button', { name: 'Tắt micro', exact: true }).click();
   expect(await page.evaluate(() => window.callHarness.mic.getAudioTracks()[0].enabled)).toBe(false);
   await page.screenshot({ path: 'test-results/u6a-call-desktop.png', fullPage: true });
@@ -1265,9 +1291,22 @@ test('U6a: outgoing call negotiates native local media, mutes, ends and refreshe
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('link', { name: 'Lịch sử cuộc gọi', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Đã kết thúc', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Chi tiết', exact: true }).first().click();
+  const historyDialog = page.getByRole('dialog', { name: 'Chi tiết cuộc gọi' });
+  await expect(historyDialog.locator('.record-details dd')).toHaveCount(7);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(historyDialog).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+      .toBe(true);
+    await page.screenshot({ path: `test-results/redesign-call-detail-${width}.png` });
+  }
+  await page.keyboard.press('Escape');
+  await expect(historyDialog).toHaveCount(0);
 });
 
-test('U6a: incoming SOS stays silent until accept, duplicate does not reopen and Escape rejects', async ({
+test('U6a: incoming SOS stays silent, Escape does not reject and explicit rejection closes it', async ({
   page,
 }) => {
   const f = await callFixture(page, true);
@@ -1282,10 +1321,42 @@ test('U6a: incoming SOS stays silent until accept, duplicate does not reopen and
   f.notify('WebRtcIncomingCall', payload);
   await expect(page.getByRole('button', { name: 'Nhận cuộc gọi', exact: true })).toBeVisible();
   expect(await page.evaluate(() => window.callHarness.mediaRequests)).toBe(0);
+  await expect(page.locator('video')).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/call-workspace-incoming-1440.png', fullPage: true });
   await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Nhận cuộc gọi', exact: true })).toBeVisible();
+  expect(f.writes.some((path) => path.endsWith('/reject'))).toBe(false);
+  await page.getByRole('button', { name: 'Từ chối', exact: true }).click();
   await expect.poll(() => f.writes.some((path) => path.endsWith('/reject'))).toBe(true);
   f.notify('WebRtcIncomingCall', payload);
   await expect(page.getByRole('button', { name: 'Nhận cuộc gọi', exact: true })).toHaveCount(0);
+});
+
+test('U6a: accepting incoming call opens workspace and minimize keeps microphone live', async ({
+  page,
+}) => {
+  const f = await callFixture(page, true);
+  await login(page);
+  await page.getByRole('button', { name: 'Nhận cuộc gọi', exact: true }).click();
+  await expect(page.locator('.incoming-call')).toHaveCount(0);
+  await expect(page.locator('.call-workspace')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.callHarness.mediaRequests)).toBe(1);
+  await page.getByRole('button', { name: 'Thu nhỏ cuộc gọi', exact: true }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('button', { name: 'Kết thúc cuộc gọi', exact: true })).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true);
+  await page.screenshot({ path: 'test-results/call-workspace-minimized-390.png', fullPage: true });
+  expect(await page.evaluate(() => window.callHarness.mic.getAudioTracks()[0].readyState)).toBe(
+    'live',
+  );
+  expect(f.writes.some((path) => path.endsWith('/end'))).toBe(false);
+  await page.getByRole('button', { name: 'Kết thúc cuộc gọi', exact: true }).click();
+  await expect.poll(() => f.writes.some((path) => path.endsWith('/end'))).toBe(true);
+  expect(await page.evaluate(() => window.callHarness.mic.getAudioTracks()[0].readyState)).toBe(
+    'ended',
+  );
 });
 
 test('U6a: microphone denial never creates a call', async ({ page }) => {
@@ -1361,6 +1432,7 @@ test('8c: opt-in push registers the login device, survives reload and revokes on
   await expect(
     page.getByText('Đã đăng ký nhận push cho phiên này.', { exact: true }),
   ).toBeVisible();
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page).toHaveURL(/auth\/login/);
   await expect
@@ -1488,6 +1560,14 @@ test('11b: TTS create/update, percent mapping, cleared language, revoked link an
     secondaryLanguage: 'en-US',
   });
   expect(bodies[0]).not.toHaveProperty('volumePercent');
+  await expect(page.locator('.settings-details dd')).toHaveCount(6);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+      .toBe(true);
+    await page.screenshot({ path: `test-results/redesign-tts-${width}.png`, fullPage: true });
+  }
   await page.reload();
   await page
     .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
@@ -1693,7 +1773,7 @@ test('10: registry CRUD, authenticated photos, revoked permissions and recoverab
   await dialog.getByRole('button', { name: 'Xóa ảnh', exact: true }).first().click();
   const confirm = page.getByRole('dialog', { name: 'Xóa ảnh người thân', exact: true });
   await confirm.getByRole('button', { name: 'Xác nhận', exact: true }).click();
-  await expect(confirm.getByRole('alert')).toContainText('Không thể xóa');
+  await expect(confirm.getByRole('alert')).toContainText('Máy chủ đang gặp sự cố');
   expect(person.images).toHaveLength(3);
   failDelete = false;
   await confirm.getByRole('button', { name: 'Xác nhận', exact: true }).click();
@@ -1820,6 +1900,7 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
         ].includes(p),
       ),
     ).toBe(true);
+    await page.getByRole('button', { name: 'Menu tài khoản' }).click();
     await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
     await expect(page).toHaveURL(/\/auth\/login$/);
     expect(
@@ -1844,6 +1925,7 @@ test('API login errors do not fall back to demo and failed logout still clears t
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đã đăng nhập bằng tài khoản BE' })).toBeVisible();
   await page.route('**/api/auth/logout', (route) => route.abort('failed'));
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
   await expect(page.getByRole('status')).toContainText('chưa xác nhận');
@@ -1891,14 +1973,27 @@ test('profile save, reload, password rejection and successful change', async ({ 
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
   await expect(page.getByRole('status')).toContainText('Đã cập nhật hồ sơ');
   await page.reload();
-  await expect(page.getByText('Tên mới · 0901234567', { exact: true })).toBeVisible();
+  await expect(page.locator('.profile-details dd').filter({ hasText: 'Tên mới' })).toBeVisible();
+  await expect(page.locator('.profile-details dd').filter({ hasText: '0901234567' })).toBeVisible();
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+      .toBe(true);
+    await page.screenshot({ path: `test-results/redesign-profile-${width}.png`, fullPage: true });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
   await expect(page.locator('input[type=file]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
+  await expect(page.getByLabel('Nhập lại mật khẩu mới')).toHaveAttribute(
+    'autocomplete',
+    'new-password',
+  );
   await page.getByLabel('Mật khẩu hiện tại').fill('WrongPassword@1');
   await page.getByLabel('Mật khẩu mới', { exact: false }).first().fill('NewPassword@2');
   await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
   await actionDialog(page).getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Current password is incorrect.');
+  await expect(page.getByRole('alert')).toContainText('Mật khẩu hiện tại không đúng.');
   await expect(page).toHaveURL(/profile$/);
   accepted = true;
   await actionDialog(page).getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
@@ -2078,6 +2173,12 @@ test('caregiver reads paginated users, link permissions, search and revoked acce
   await expect(page).toHaveURL(/dashboard$/);
   await page.getByRole('link', { name: 'Người được chăm sóc', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Người thân BE', exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: 'test-results/care-users-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/care-users-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.setViewportSize({ width: 1440, height: 900 });
   await expect(page.getByRole('button', { name: 'Thêm người thân' })).toHaveCount(0);
   await page.getByLabel('Người được chăm sóc trên trang này').selectOption(viuId);
   await page.getByRole('button', { name: 'Xem quyền liên kết' }).click();
@@ -2089,10 +2190,14 @@ test('caregiver reads paginated users, link permissions, search and revoked acce
     .click();
   await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Quyền liên kết', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('status')).toContainText('Không có người dùng phù hợp');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Không có người dùng phù hợp' }),
+  ).toBeVisible();
   await page.getByLabel('Tìm người được chăm sóc').fill('Không tìm thấy');
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Không có người dùng phù hợp');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Không có người dùng phù hợp' }),
+  ).toBeVisible();
   await page.getByLabel('Tìm người được chăm sóc').fill('');
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
   await page.getByLabel('Người được chăm sóc trên trang này').selectOption(viuId);
@@ -2112,7 +2217,7 @@ test('caregiver users 403 is visible with retry and no demo fallback', async ({ 
   await login(page);
   await expect(page).toHaveURL(/dashboard$/);
   await page.goto('/caregiver/users');
-  await expect(page.getByRole('alert')).toContainText('Access denied.');
+  await expect(page.getByRole('alert')).toContainText('Bạn không có quyền thực hiện thao tác này.');
   await expect(page.getByRole('button', { name: 'Thử lại', exact: true })).toBeVisible();
   await expect(page.locator('tbody tr')).toHaveCount(0);
 });
@@ -2320,7 +2425,9 @@ test('5a Admin: create, detail, update, status, delete and restore with confirma
   expect(writes).toBe(2);
   await page.getByRole('button', { name: 'Vô hiệu hóa tổ chức', exact: true }).click();
   await dialog.getByRole('button', { name: 'Xác nhận' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('Không đủ quyền');
+  await expect(dialog.getByRole('alert')).toContainText(
+    'Bạn không có quyền thực hiện thao tác này.',
+  );
   await dialog.getByRole('button', { name: 'Xác nhận' }).click();
   await expect(dialog).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Kích hoạt tổ chức', exact: true })).toBeVisible();
@@ -2508,7 +2615,9 @@ test('5b Admin: create/edit/status/reset/delete accounts without changing identi
   expect(deletes).toBe(0);
   await page.getByRole('button', { name: 'Xóa tài khoản', exact: true }).click();
   await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
-  await expect(dialog.getByRole('alert')).toContainText('Không cho phép');
+  await expect(dialog.getByRole('alert')).toContainText(
+    'Bạn không có quyền thực hiện thao tác này.',
+  );
   await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Xem tài khoản ' + account.email })).toHaveCount(0);
@@ -2597,11 +2706,45 @@ const managedLink = {
   linkedAt: '2026-09-26',
   unlinkedAt: null as string | null,
 };
+
+// CenterAdmin pickers read active organization accounts from GET /api/users?role=...
+async function stubOrgPeople(page: Page, people: { id: string; role: string; orgId: string }[]) {
+  await page.route(
+    (url) => url.pathname === '/api/users' && url.searchParams.get('pageSize') === '100',
+    (route) => {
+      const role = new URL(route.request().url()).searchParams.get('role');
+      const items = people
+        .filter((p) => p.role === role)
+        .map((p) => ({
+          id: p.id,
+          fullName: role === 'Caregiver' ? 'Nhân viên mẫu' : 'VIU mẫu',
+          email: p.id.slice(-4) + '@example.test',
+          phoneNumber: null,
+          role,
+          organizationId: p.orgId,
+          isActive: true,
+          avatarUrl: null,
+          deletedAt: null,
+          lastLoginAt: null,
+          createdAt: '2026-10-01T00:00:00Z',
+          updatedAt: '2026-10-01T00:00:00Z',
+        }));
+      return route.fulfill({
+        json: { success: true, data: { ...organizationPage(items), pageSize: 100 } },
+      });
+    },
+  );
+}
+
 for (const actorRole of ['Admin', 'CenterAdmin']) {
   test(
     '5c ' + actorRole + ': create, permission errors, primary promotion and unlink',
     async ({ page }) => {
       await stubApi(page, actorRole, actorRole === 'CenterAdmin' ? organizationId : null);
+      await stubOrgPeople(page, [
+        { id, role: 'Caregiver', orgId: organizationId },
+        { id: linkedViuId, role: 'VisuallyImpaired', orgId: organizationId },
+      ]);
       let current = { ...managedLink },
         exists = false,
         failPermission = true,
@@ -2659,17 +2802,29 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
       await page.goto(actorRole === 'Admin' ? '/admin/links' : '/center-admin/assignments');
       await page.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();
       const dialog = actionDialog(page);
-      await dialog.getByLabel('Mã Caregiver').fill(id);
-      await dialog.getByLabel('Mã VIU').fill(linkedViuId);
+      if (actorRole === 'CenterAdmin') {
+        await dialog.getByLabel('Nhân viên chăm sóc').selectOption(id);
+        await dialog.getByLabel('Người được chăm sóc').selectOption(linkedViuId);
+      } else {
+        await dialog.getByLabel('Mã Caregiver').fill(id);
+        await dialog.getByLabel('Mã VIU').fill(linkedViuId);
+      }
       await dialog.getByLabel('Tôi xác nhận tạo liên kết giữa các tài khoản trên').check();
       await dialog.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();
       await expect(dialog).toHaveCount(0);
       await expect(page.getByRole('heading', { name: 'Chi tiết liên kết' })).toBeVisible();
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.screenshot({ path: `test-results/care-link-${actorRole}-desktop.png` });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.screenshot({ path: `test-results/care-link-${actorRole}-mobile.png` });
+      await page.setViewportSize({ width: 1440, height: 900 });
       await page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true }).click();
       await dialog.getByLabel('Quản lý gương mặt').check();
       await dialog.getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
       await dialog.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
-      await expect(dialog.getByRole('alert')).toContainText('Quyền đã thay đổi');
+      await expect(dialog.getByRole('alert')).toContainText(
+        'Bạn không có quyền thực hiện thao tác này.',
+      );
       await dialog.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
       await expect(dialog).toHaveCount(0);
       await page.getByRole('button', { name: 'Chuyển thành chăm sóc chính' }).click();
@@ -2948,7 +3103,7 @@ for (const simulateConflict of [false, true]) {
           ? 'Resolved'
           : 'Acknowledged';
       history.push({
-        id: viu,
+        id: `01900000-0000-7000-8000-${String(history.length + 10).padStart(12, '0')}`,
         fromStatus: from,
         toStatus: state,
         changedBy: id,
@@ -2983,6 +3138,11 @@ for (const simulateConflict of [false, true]) {
     await page.goto('/caregiver/alerts');
     await page.getByRole('button', { name: 'Xem chi tiết' }).click();
     await expect(page.getByText('Không có ảnh chụp sự kiện.', { exact: true })).toBeVisible();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: 'test-results/refactor-alert-desktop.png' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: 'test-results/refactor-alert-mobile.png' });
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.getByRole('button', { name: 'Tiếp nhận cảnh báo', exact: true }).click();
     expect(writes).toBe(0);
     conflict = simulateConflict;
@@ -3072,6 +3232,7 @@ test('8a SignalR: receives event, refreshes REST and stops after logout', async 
   await page.waitForTimeout(400);
   expect(reads).toBe(after);
   closed = false;
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page).toHaveURL(/auth\/login$/);
   await expect.poll(() => closed).toBe(true);
@@ -3119,7 +3280,9 @@ test('stage 8b preferences save false, reload and surface failure without succes
   fail = true;
   await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
   await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
-  await expect(actionDialog(page).getByRole('alert')).toHaveText('Preference denied');
+  await expect(actionDialog(page).getByRole('alert')).toHaveText(
+    'Bạn không có quyền thực hiện thao tác này.',
+  );
 });
 for (const role of ['Admin', 'CenterAdmin']) {
   test('stage 8b ' + role + ' rule scope, create conflict, flags and delete', async ({ page }) => {
@@ -3317,6 +3480,7 @@ test('U1: trial, 402 keeps session, subscription recovery and refreshed status',
     'License đang hoạt động',
   );
   await expect(page.getByText('Personal', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
   await expect(page.getByText('Personal', { exact: true })).toHaveCount(0);
@@ -3333,7 +3497,7 @@ for (const role of ['Staff', 'Admin', 'CenterAdmin']) {
     await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
       'không yêu cầu license cá nhân',
     );
-    await expect(page.getByRole('heading', { name: 'Subscription cá nhân' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Gói sử dụng cá nhân' })).toHaveCount(0);
     expect(calls).not.toContain('/api/licenses/subscription');
   });
 }
@@ -3373,14 +3537,15 @@ test('U1: missing license, expired grace and failed subscription never display f
     'gia hạn 3 ngày',
   );
   await expect(
-    page.getByText('Máy chủ chưa tìm thấy subscription cho tài khoản này.'),
+    page.getByText('Máy chủ chưa tìm thấy thông tin gói sử dụng cho tài khoản này.'),
   ).toBeVisible();
   await page.route('**/api/licenses/subscription', (route) =>
     route.fulfill({ status: 503, json: { detail: 'Server unavailable' } }),
   );
   await page.getByRole('button', { name: 'Tải lại thông tin license' }).click();
-  await expect(page.getByRole('alert')).toContainText('Server unavailable');
+  await expect(page.getByRole('alert')).toContainText('Máy chủ đang gặp sự cố');
   await expect(page.getByText('Đang hoạt động', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('link', { name: 'Hồ sơ của tôi' }).click();
   await expect(page).toHaveURL(/\/profile$/);
 });
@@ -3526,6 +3691,8 @@ for (const role of ['Caregiver', 'CenterAdmin']) {
     ).toHaveCount(0);
     await expect(page.getByText('Hidden inactive')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Thêm gói' })).toHaveCount(0);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: `test-results/redesign-packages-${role}.png`, fullPage: true });
     available = false;
     await page.getByRole('button', { name: 'Tải lại danh mục' }).click();
     await expect(page.getByText(name, { exact: true })).toHaveCount(0);
@@ -3662,6 +3829,11 @@ test('U3a: one create, safe checkout, spoofed PAID ignored, delayed success refr
   await login(page);
   await page.goto('/packages');
   await page.getByRole('button', { name: 'Chọn gói Personal test' }).click();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: 'test-results/redesign-checkout-1440.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/redesign-checkout-390.png', fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page
     .getByRole('button', { name: 'Tạo đơn thanh toán', exact: true })
     .evaluate((button: HTMLButtonElement) => {
@@ -3673,16 +3845,17 @@ test('U3a: one create, safe checkout, spoofed PAID ignored, delayed success refr
     'https://pay.payos.vn/web/test-payment',
   );
   expect(created).toBe(1);
+  const subscriptionReadsBeforeReturn = subReads;
   await page.goto('/payments/return?orderCode=' + u3Order + '&status=PAID');
   await expect(page.getByRole('status')).toHaveText('Đang chờ thanh toán');
-  expect(subReads).toBe(0);
+  expect(subReads).toBe(subscriptionReadsBeforeReturn);
   const before = profileReads;
   status = 'Success';
   await page.getByRole('button', { name: 'Kiểm tra lại thanh toán' }).click();
   await expect(page.getByText('Thanh toán thành công', { exact: true })).toBeVisible();
-  await expect(page.getByText(/Subscription hiện tại: Đang hoạt động/)).toBeVisible();
+  await expect(page.getByText(/Gói sử dụng hiện tại: Đang hoạt động/)).toBeVisible();
   await expect.poll(() => profileReads).toBeGreaterThan(before);
-  expect(subReads).toBeGreaterThan(0);
+  expect(subReads).toBeGreaterThan(subscriptionReadsBeforeReturn);
   await page.reload();
   await expect(page.getByText('Thanh toán thành công', { exact: true })).toBeVisible();
   expect(created).toBe(1);
@@ -3901,6 +4074,12 @@ test('11a: staff manages contacts with conflict recovery, confirmations and revo
   await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
   await expect(dialog).toHaveCount(0);
   expect(contact.zaloDeepLink).toBe('');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: 'test-results/care-contacts-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/care-contacts-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('button', { name: 'Tạm ngưng', exact: true }).click();
   await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
   expect(writes).not.toContain('PATCH');
@@ -3984,6 +4163,7 @@ test('U5: distribute once, mask/copy key, then family activates and refreshes en
   await page.getByRole('button', { name: 'Xem key vừa tạo' }).click();
   await expect(page.getByLabel('Key vừa tạo')).toHaveValue('••••-••••-••••-••••');
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await page.unrouteAll();
   await stubApi(page);
@@ -4133,6 +4313,7 @@ test('U4: revoke confirmation and reassign refresh server quota; quota errors re
 }) => {
   await stubApi(page, 'CenterAdmin', id);
   const viuId = '01900000-0000-7000-8000-000000000044';
+  await stubOrgPeople(page, [{ id: viuId, role: 'VisuallyImpaired', orgId: id }]);
   let active = true;
   let conflict = false;
   const writes: string[] = [];
@@ -4199,6 +4380,12 @@ test('U4: revoke confirmation and reassign refresh server quota; quota errors re
   await login(page);
   await page.goto('/center-admin/licenses');
   const pool = page.getByRole('region', { name: 'Kho license tổ chức' });
+  await expect(page.getByRole('cell', { name: /VIU U4/ })).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: 'test-results/redesign-license-pool-1440.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/redesign-license-pool-390.png', fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('button', { name: 'Thu hồi', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText(
     'Tài khoản và phân công chăm sóc vẫn được giữ',
@@ -4216,11 +4403,11 @@ test('U4: revoke confirmation and reassign refresh server quota; quota errors re
   await page.getByLabel('Trạng thái cấp').selectOption('false');
   await expect(page.getByRole('cell', { name: /Đã thu hồi/ })).toBeVisible();
   await page.getByRole('button', { name: 'Cấp license', exact: true }).click();
-  await page.getByLabel('Mã người được chăm sóc').fill(viuId);
+  await page.getByLabel('Người được chăm sóc').selectOption(viuId);
   conflict = true;
   await page.getByRole('button', { name: 'Xác nhận cấp license' }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Suất cuối');
-  await expect(page.getByLabel('Mã người được chăm sóc')).toHaveValue(viuId);
+  await expect(page.getByLabel('Người được chăm sóc')).toHaveValue(viuId);
   conflict = false;
   await page.getByRole('button', { name: 'Xác nhận cấp license' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -4343,7 +4530,7 @@ test('U3b: foreign pool and server errors are visible without exposing data; res
   await expect(page.getByText('Business test', { exact: true })).toHaveCount(0);
   mode = 'error';
   await page.getByRole('button', { name: 'Tải lại kho license' }).click();
-  await expect(page.getByRole('alert')).toContainText('Không đọc được kho');
+  await expect(page.getByRole('alert')).toContainText('Máy chủ đang gặp sự cố');
   mode = 'valid';
   await page.getByRole('button', { name: 'Tải lại kho license' }).click();
   await expect(page.getByText('Business test', { exact: true })).toBeVisible();

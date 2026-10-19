@@ -1,3 +1,4 @@
+import { Toast } from '../../components/UI';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -7,6 +8,7 @@ import { onSessionEnded } from '../../services/sessionLifecycle';
 import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
 import { Form, type FieldSpec } from '../../components/Form';
 import type { Person, Fields } from '../../models/domain';
+import { uiStore, useUI } from '../../stores/ui';
 
 export function ApiRegistry() {
   const { data: actor } = useSession();
@@ -17,13 +19,18 @@ export function ApiRegistry() {
 function Registry({ actor }: { actor: Person }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState('');
+  // Shared with the other care-recipient pages; cleared on logout via uiStore.clear().
+  const { selectedViu: selected } = useUI();
+  const setSelected = (id: string) => uiStore.set({ selectedViu: id });
   const users = useQuery({
     queryKey: ['api-registry-users', actor.id, actor.orgId, page, search],
     queryFn: ({ signal }) => caregivingApi.users(page, search, signal),
     refetchInterval: 30000,
   });
-  const person = users.data?.items.find((item) => item.id === selected);
+  const person =
+    users.data?.items.find((item) => item.id === selected) ??
+    // Only one care recipient in scope: select them instead of asking.
+    (!selected && users.data?.totalCount === 1 ? users.data.items[0] : undefined);
   return (
     <>
       <PageHead
@@ -44,7 +51,7 @@ function Registry({ actor }: { actor: Person }) {
             Tìm người được chăm sóc
             <input name="search" />
           </label>
-          <button className="btn">Tìm kiếm</button>
+          <button className="btn primary">Tìm kiếm</button>
           <button
             type="button"
             className="btn"
@@ -66,6 +73,11 @@ function Registry({ actor }: { actor: Person }) {
               ))}
             </select>
           </label>
+          {!person && (
+            <p className="notice">
+              Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.
+            </p>
+          )}
           {users.data && (
             <div className="row">
               <span>
@@ -135,15 +147,11 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
   return (
     <section className="glass card stack">
       <h2>Danh bạ của {name}</h2>
-      <p>
+      <p className="notice">
         Tối đa 20 người. Cần ít nhất 3 ảnh để kích hoạt mỗi người. Trạng thái nhận từ máy chủ; khả
         năng nhận diện còn phụ thuộc chất lượng ảnh và hệ thống AI.
       </p>
-      {notice && (
-        <p role="status" className="notice">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <div className="row">
         <label className="field">
           Tìm người thân
@@ -177,8 +185,13 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
               </p>
             )}
             {!items.length && <p>Chưa có người thân phù hợp.</p>}
-            <div className="table-scroll">
-              <table>
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label="Danh sách gương mặt thân quen"
+            >
+              <table className="registry-table">
                 <thead>
                   <tr>
                     <th>Tên</th>
@@ -191,8 +204,8 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
                   {items.map((item) => (
                     <tr key={item.id}>
                       <td>
-                        {item.displayName}
-                        <p>{item.imageCount} ảnh</p>
+                        <strong>{item.displayName}</strong>
+                        <p className="care-secondary">{item.imageCount} ảnh</p>
                       </td>
                       <td>{item.relationship || '—'}</td>
                       <td>
@@ -339,7 +352,7 @@ function RegistryEditor({
               }}
             />
           ) : (
-            <dl>
+            <dl className="record-details">
               {fields.map((field) => (
                 <div key={field.key}>
                   <dt>{field.label}</dt>
@@ -386,15 +399,11 @@ function RegistryPhotos({
         <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
           {person && (
             <>
-              <p>
+              <p className="notice">
                 {person.imageCount} ảnh · {person.isActive ? 'Hoạt động' : 'Chưa hoạt động'}. Xóa
                 ảnh khiến số lượng dưới 3 sẽ ngừng kích hoạt người này.
               </p>
-              {notice && (
-                <p className="notice" role="status">
-                  {notice}
-                </p>
-              )}
+              {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
               {error && (
                 <p className="notice error" role="alert">
                   {error}
@@ -402,7 +411,7 @@ function RegistryPhotos({
               )}
               {detail.data?.canManage ? (
                 <form
-                  className="stack"
+                  className="stack registry-upload"
                   aria-busy={pending}
                   onSubmit={async (e) => {
                     e.preventDefault();
@@ -447,10 +456,15 @@ function RegistryPhotos({
                     JPEG, PNG hoặc WebP, tối đa 10 MB mỗi ảnh. Chỉ tải ảnh bạn được phép sử dụng.
                     Ảnh được gửi lên máy chủ để xử lý nhận diện.
                   </p>
-                  <label className="row">
-                    <input type="checkbox" name="primary" disabled={pending} />
-                    Đặt ảnh vừa tải làm ảnh chính
-                  </label>
+                  <div className="field field-checkbox">
+                    <input
+                      id="registry-upload-primary"
+                      type="checkbox"
+                      name="primary"
+                      disabled={pending}
+                    />
+                    <label htmlFor="registry-upload-primary">Đặt ảnh vừa tải làm ảnh chính</label>
+                  </div>
                   <button className="btn primary" disabled={pending}>
                     {pending ? 'Đang xử lý…' : 'Tải ảnh lên'}
                   </button>

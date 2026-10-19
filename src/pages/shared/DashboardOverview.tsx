@@ -23,33 +23,32 @@ const time = (value: string | null) =>
 export function DashboardOverview({ actor }: { actor: Person }) {
   return (
     <div className="overview-grid">
+      {(actor.role === 'Caregiver' || isOrganizationBuyer(actor)) && (
+        <section className="glass card stack overview-alerts" aria-label="Cảnh báo đang mở">
+          <h2>Cảnh báo đang mở</h2>
+          <p>
+            Theo dõi cảnh báo trong phạm vi chăm sóc của bạn. Mỗi nhóm cập nhật riêng, tự tải lại sau 30 giây.
+          </p>
+          <div className="overview-alert-counts">
+            {(['Sent', 'Acknowledged', 'Escalated'] as const).map((status) => (
+              <AlertCount key={status} actor={actor} status={status} />
+            ))}
+          </div>
+          <Link
+            className="btn primary"
+            to={actor.role === 'Caregiver' ? '/caregiver/alerts' : '/center-admin/reports'}
+          >
+            {actor.role === 'Caregiver' ? 'Mở trung tâm cảnh báo' : 'Xem báo cáo trung tâm'}
+          </Link>
+        </section>
+      )}
       {isPersonalCaregiver(actor) && <Personal actor={actor} />}
       {isOrganizationBuyer(actor) && <Pool actor={actor} />}
       {actor.role === 'Caregiver' && actor.orgId && (
         <section className="glass card stack">
           <h2>Phạm vi chăm sóc</h2>
           <p>{licenseSummary(actor)}</p>
-          <Link className="btn" to="/caregiver/users">
-            Người được phân công
-          </Link>
-        </section>
-      )}
-      {(actor.role === 'Caregiver' || isOrganizationBuyer(actor)) && (
-        <section className="glass card stack">
-          <h2>Cảnh báo đang mở</h2>
-          <p>
-            Số bản ghi trong phạm vi được phép xem, theo từng trạng thái. Các nhóm cập nhật riêng
-            qua SignalR và tải lại mỗi 30 giây.
-          </p>
-          {(['Sent', 'Acknowledged', 'Escalated'] as const).map((status) => (
-            <AlertCount key={status} actor={actor} status={status} />
-          ))}
-          <Link
-            className="btn"
-            to={actor.role === 'Caregiver' ? '/caregiver/alerts' : '/center-admin/reports'}
-          >
-            {actor.role === 'Caregiver' ? 'Mở trung tâm cảnh báo' : 'Xem báo cáo trung tâm'}
-          </Link>
+          <Link className="btn" to="/caregiver/users">Người được phân công</Link>
         </section>
       )}
       {canPay(actor) && <PendingPayments actor={actor} />}
@@ -84,7 +83,7 @@ function Personal({ actor }: { actor: Person }) {
                 <dd>{query.data.package.name}</dd>
               </div>
               <div>
-                <dt>Subscription</dt>
+                <dt>Trạng thái gói</dt>
                 <dd>{subscriptionLabels[query.data.status]}</dd>
               </div>
               <div>

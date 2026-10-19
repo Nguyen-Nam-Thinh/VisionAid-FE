@@ -19,7 +19,8 @@ const ok = (data: unknown) => Response.json({ success: true, data });
 
 it('authenticated binary photos refresh once, use no-store, preserve HTTP errors and discard late logout responses', async () => {
   const storage = memory();
-  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  const initial = pair();
+  storage.setItem(authSessionKey, JSON.stringify(initial));
   let attempts = 0;
   let release!: (response: Response) => void;
   const fetcher = vi.fn<typeof fetch>(async (url) => {
@@ -40,7 +41,7 @@ it('authenticated binary photos refresh once, use no-store, preserve HTTP errors
   expect(attempts).toBe(2);
   expect(fetcher.mock.calls[0][1]).toMatchObject({
     cache: 'no-store',
-    headers: { Authorization: `Bearer ${jwt()}` },
+    headers: { Authorization: `Bearer ${initial.accessToken}` },
   });
   await expect(auth.blob('/forbidden')).rejects.toMatchObject({ status: 403 });
   const late = auth.blob('/late');
@@ -144,6 +145,34 @@ it('refreshes once after 401 then stops and clears a rejected session', async ()
   await expect(auth.session()).rejects.toMatchObject({ status: 401 });
   expect(refreshes).toBe(1);
   expect(await auth.session()).toBeNull();
+});
+it('treats a revoked refresh token (403) as an ended session, not a permission error', async () => {
+  const storage = memory();
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  const auth = createApiAuth('http://example.test', storage, async (url) =>
+    String(url).endsWith('/refresh')
+      ? Response.json({ detail: 'Invalid refresh token.' }, { status: 403 })
+      : Response.json({ detail: 'Expired' }, { status: 401 }),
+  );
+  await expect(auth.session()).rejects.toMatchObject({
+    status: 401,
+    message: expect.stringContaining('Phiên đăng nhập đã hết hạn'),
+  });
+  expect(await auth.session()).toBeNull();
+});
+it('reports a wrong current password instead of a permission error', async () => {
+  const storage = memory();
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  const auth = createApiAuth('http://example.test', storage, async (url) =>
+    String(url).endsWith('/change-password')
+      ? Response.json({ detail: 'Current password is incorrect.' }, { status: 403 })
+      : ok(user),
+  );
+  await expect(auth.changePassword('Wrong-Pass1!', 'New-Pass1!')).rejects.toMatchObject({
+    status: 403,
+    message: 'Mật khẩu hiện tại không đúng.',
+  });
+  expect(await auth.session()).not.toBeNull();
 });
 it('never refreshes on profile 403 and rejects mobile/unknown roles', async () => {
   for (const role of ['VisuallyImpaired', 'UnexpectedRole']) {

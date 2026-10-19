@@ -147,6 +147,14 @@ it('answers Mobile offers, queues early ICE, ignores foreign sessions and dedupl
   f.stop();
   expect(f.handlers.size).toBe(0);
 });
+it('hanging up before the VIU answers ends the session as Cancelled', async () => {
+  const f = fixture();
+  await f.client.start(viuId, 'VIU');
+  expect(f.client.snapshot().phase).toBe('ringing');
+  await f.client.end();
+  expect(f.api.end).toHaveBeenCalledWith(sessionId, 'Cancelled');
+  f.stop();
+});
 it('stops late microphone grants after cancel without creating a server session', async () => {
   const f = fixture();
   let grant!: (stream: MediaStream) => void;
@@ -179,7 +187,7 @@ it('closes a session whose create response arrives after cancellation', async ()
   await f.client.end();
   resolve(session);
   await pending;
-  expect(f.api.end).toHaveBeenCalledWith(sessionId, 'client_cancelled');
+  expect(f.api.end).toHaveBeenCalledWith(sessionId, 'Cancelled');
   expect(f.peer).not.toHaveBeenCalled();
   f.stop();
 });

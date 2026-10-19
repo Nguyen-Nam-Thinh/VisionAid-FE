@@ -60,7 +60,13 @@ export function ApiCreateLinkedUser({
                 Bỏ tiến độ trong tab
               </button>
             )}
-            <h2>Thêm người được chăm sóc</h2>
+            <p className="notice" role="status">
+              {!pending
+                ? 'Bước 1/2: Tạo tài khoản'
+                : pending === 'unknown'
+                  ? 'Cần xác minh tài khoản trước khi tiếp tục'
+                  : 'Bước 2/2: Thiết lập liên kết chăm sóc'}
+            </p>
             <p>
               Tạo tài khoản trước, sau đó tạo liên kết chăm sóc. Hai bước được lưu riêng trên hệ
               thống.

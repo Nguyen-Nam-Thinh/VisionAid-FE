@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { PageHead } from '../../components/UI';
 import { useSession } from '../../hooks/useService';
 import { roles } from '../../constants/labels';
-import { HeartHandshake, ArrowRight, UserRound, ShieldCheck } from 'lucide-react';
+import { ArrowRight, UserRound, ShieldCheck } from 'lucide-react';
 import { DashboardOverview } from './DashboardOverview';
 
 export function ApiSession() {
@@ -15,19 +15,6 @@ export function ApiSession() {
         description="Một nơi để kết nối, chăm sóc và cùng nhau an tâm hơn."
       />
       <div className="stack">
-        <section className="overview-hero">
-          <div>
-            <p className="eyebrow">Đồng hành mỗi ngày</p>
-            <h2>Sự quan tâm bắt đầu từ kết nối.</h2>
-            <p>
-              Chọn chức năng trong thanh điều hướng để bắt đầu. Thông tin và thao tác được hiển thị
-              theo quyền tài khoản của bạn.
-            </p>
-          </div>
-          <span className="overview-emblem" aria-hidden="true">
-            <HeartHandshake size={48} />
-          </span>
-        </section>
         {user && <DashboardOverview key={user.id + user.orgId + user.role} actor={user} />}
         <div className="overview-grid">
           <section className="glass card stack">
@@ -89,8 +76,8 @@ export function ApiSession() {
 export function ApiPending() {
   return (
     <section className="glass card stack">
-      <h1>Chưa tích hợp trong đợt này</h1>
-      <p>Màn hình này sẽ được ghép API ở đợt tiếp theo.</p>
+      <h1>Chức năng chưa sẵn sàng</h1>
+      <p>Màn hình này chưa được kết nối với máy chủ.</p>
       <Link className="btn" to="/dashboard">
         Về thông tin phiên
       </Link>

@@ -112,33 +112,6 @@ export function Dashboard() {
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <div className="stack">
-          <section className="dashboard-hero">
-            <div className="stack">
-              <span className="eyebrow" style={{ color: 'var(--on-primary)' }}>
-                ĐỒNG HÀNH MỖI NGÀY
-              </span>
-              <h2>
-                {admin ? 'Vận hành minh bạch. Kết nối bền vững.' : 'An tâm hơn khi luôn có nhau.'}
-              </h2>
-              <p>
-                {admin
-                  ? 'Quản lý tổ chức, theo dõi hiệu năng và kiểm soát thay đổi trong một không gian thống nhất.'
-                  : 'Theo dõi những cập nhật quan trọng, phản hồi kịp thời và giữ kết nối với người bạn quan tâm.'}
-              </p>
-              <Link className="btn" to={base + (admin ? '/metrics' : '/map')}>
-                {admin ? 'Xem hiệu năng AI' : 'Mở bản đồ theo dõi'}
-                <ArrowUpRight size={17} />
-              </Link>
-            </div>
-            <div className="hero-orbit" aria-hidden="true">
-              <div>
-                <HeartHandshake size={60} strokeWidth={1.2} />
-              </div>
-              <span className="orbit-dot one" />
-              <span className="orbit-dot two" />
-              <span className="orbit-dot three" />
-            </div>
-          </section>
           <div className="grid dashboard-stats">
             {cards.map((c) => (
               <Link to={base + '/' + c.path} className="glass card stat-card" key={c.label}>
@@ -158,7 +131,7 @@ export function Dashboard() {
           <div className="dashboard-columns">
             <section className="glass card stack">
               <div className="row between">
-                <h2>{admin ? 'Tổ chức đồng hành' : 'Kết nối trong tầm tay'}</h2>
+                <h2>{admin ? 'Tổ chức đồng hành' : 'Vị trí người thân'}</h2>
                 <Link to={base + (admin ? '/organizations' : '/map')} className="row">
                   Xem tất cả <ArrowUpRight size={16} />
                 </Link>
@@ -197,6 +170,36 @@ export function Dashboard() {
                     <small>Sơ đồ mô phỏng · Không dùng để chỉ đường</small>
                   </div>
                 </>
+              )}
+              {!admin && (
+                <section className="stack dashboard-people">
+                  <div className="row between">
+                    <h2>Những người đang đồng hành</h2>
+                    <Link to={base + '/users'}>Quản lý danh sách →</Link>
+                  </div>
+                  <div className="grid">
+                    {vius.map((p) => (
+                      <Link
+                        key={p.id}
+                        className="dashboard-person row"
+                        to={base + '/map'}
+                        onClick={() => setSelected(p.id)}
+                      >
+                        <span className="avatar">{p.name.split(' ').at(-1)?.slice(0, 1)}</span>
+                        <div>
+                          <strong>{p.name}</strong>
+                          <p className="muted">{p.phone || 'Chưa có số điện thoại'}</p>
+                        </div>
+                        <ArrowUpRight size={16} />
+                      </Link>
+                    ))}
+                  </div>
+                  {!vius.length && (
+                    <p className="empty">
+                      Chưa có người được chăm sóc. Thêm hoặc phân công ở trang người dùng.
+                    </p>
+                  )}
+                </section>
               )}
             </section>
             <section className="glass card stack">
@@ -252,36 +255,6 @@ export function Dashboard() {
               </div>
             </section>
           </div>
-          {!admin && (
-            <section className="glass card stack">
-              <div className="row between">
-                <h2>Những người đang đồng hành</h2>
-                <Link to={base + '/users'}>Quản lý danh sách →</Link>
-              </div>
-              <div className="grid">
-                {vius.map((p) => (
-                  <Link
-                    key={p.id}
-                    className="dashboard-person row"
-                    to={base + '/map'}
-                    onClick={() => setSelected(p.id)}
-                  >
-                    <span className="avatar">{p.name.split(' ').at(-1)?.slice(0, 1)}</span>
-                    <div>
-                      <strong>{p.name}</strong>
-                      <p className="muted">{p.phone || 'Chưa có số điện thoại'}</p>
-                    </div>
-                    <ArrowUpRight size={16} />
-                  </Link>
-                ))}
-              </div>
-              {!vius.length && (
-                <p className="empty">
-                  Chưa có người được chăm sóc. Thêm hoặc phân công ở trang người dùng.
-                </p>
-              )}
-            </section>
-          )}
         </div>
       </State>
     </>

@@ -1,8 +1,10 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Confirm, Dialog, State } from '../../components/UI';
 import { Form } from '../../components/Form';
+import { personField, useOrgPeople } from '../../hooks/useOrgPeople';
 import {
   licenseAssignmentsApi,
   type LicenseAssignment,
@@ -14,6 +16,7 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
   const [page, setPage] = useState(1);
   const [active, setActive] = useState('true');
   const [assigning, setAssigning] = useState(false);
+  const vius = useOrgPeople(actor, 'VisuallyImpaired', assigning);
   const [revoking, setRevoking] = useState<LicenseAssignment | null>(null);
   const [notice, setNotice] = useState('');
   const query = useQuery({
@@ -40,7 +43,7 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
         sử dụng suất license.
       </p>
       <div className="row page-head-actions">
-        <label>
+        <label className="field">
           Trạng thái cấp
           <select
             value={active}
@@ -62,16 +65,13 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
         </button>
         <Link to="/packages">Mua thêm license</Link>
       </div>
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {query.data && (
           <>
             <div className="table-scroll">
-              <table>
+              <table className="assignment-table">
+                <caption className="sr-only">License đã cấp cho người được chăm sóc</caption>
                 <thead>
                   <tr>
                     <th>Người được chăm sóc</th>
@@ -84,9 +84,9 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
                   {query.data.items.map((item) => (
                     <tr key={item.id}>
                       <td>
-                        {item.viuUser.fullName}
-                        <p>{item.viuUser.email}</p>
-                        <small>{item.viuUser.id}</small>
+                        <strong>{item.viuUser.fullName}</strong>
+                        <p className="assignment-meta">{item.viuUser.email}</p>
+                        <small className="assignment-meta">Mã: {item.viuUser.id}</small>
                       </td>
                       <td>{new Date(item.assignedAt).toLocaleString('vi-VN')}</td>
                       <td>
@@ -111,7 +111,7 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
               Chưa thu hồi không đồng nghĩa còn hạn sử dụng; thời hạn và quyền truy cập do máy chủ
               kiểm tra.
             </p>
-            <div className="row">
+            <div className="row pagination">
               <span>
                 {query.data.totalCount} kết quả · Trang {page}/{Math.max(1, query.data.totalPages)}
               </span>
@@ -136,22 +136,37 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
       {assigning && (
         <Dialog title="Cấp license" onClose={() => setAssigning(false)}>
           <p>
-            Nhập mã tài khoản VIU của tổ chức. Thao tác sử dụng một suất trong kho hiện tại; có thể
-            cấp lại cho người đã bị thu hồi.
+            Chọn người được chăm sóc của tổ chức. Thao tác sử dụng một suất trong kho hiện tại; có
+            thể cấp lại cho người đã bị thu hồi.
           </p>
-          <Form
-            fields={[{ key: 'viuId', label: 'Mã người được chăm sóc', required: true }]}
-            submit="Xác nhận cấp license"
-            onSubmit={async (values) => {
-              try {
-                await licenseAssignmentsApi.assign(actor, String(values.viuId).trim());
-                setNotice('Đã cấp license. Số lượng trong kho được tải lại từ máy chủ.');
-                setAssigning(false);
-              } finally {
-                await refresh();
-              }
-            }}
-          />
+          {vius.isLoading ? (
+            <p role="status">Đang tải danh sách người được chăm sóc…</p>
+          ) : (
+            <Form
+              fields={[
+                personField(
+                  {
+                    key: 'viuId',
+                    label: 'Người được chăm sóc',
+                    required: true,
+                    hint: 'Nhập mã UUID tài khoản VIU của tổ chức.',
+                  },
+                  vius,
+                  'Trung tâm chưa có người được chăm sóc đang hoạt động.',
+                ),
+              ]}
+              submit="Xác nhận cấp license"
+              onSubmit={async (values) => {
+                try {
+                  await licenseAssignmentsApi.assign(actor, String(values.viuId).trim());
+                  setNotice('Đã cấp license. Số lượng trong kho được tải lại từ máy chủ.');
+                  setAssigning(false);
+                } finally {
+                  await refresh();
+                }
+              }}
+            />
+          )}
           <p>
             Nếu báo lỗi hoặc mất kết nối, kiểm tra lại danh sách trước khi gửi lại. Hết suất hoặc
             hết hạn: <Link to="/packages">xem gói Business</Link>.

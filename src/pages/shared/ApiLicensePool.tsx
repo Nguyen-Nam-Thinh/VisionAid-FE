@@ -103,10 +103,10 @@ export function ApiLicensePool() {
         }
       />
       <OrganizationPool key={'pool-' + actor.id + actor.orgId} actor={actor} />
-      <LicenseKeys key={'keys-' + actor.id + actor.orgId} actor={actor} mode="distribute" />
       {isOrganizationBuyer(actor) && (
         <LicenseAssignments key={'assignments-' + actor.id + actor.orgId} actor={actor} />
       )}
+      <LicenseKeys key={'keys-' + actor.id + actor.orgId} actor={actor} mode="distribute" />
     </>
   );
 }

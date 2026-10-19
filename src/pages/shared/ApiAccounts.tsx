@@ -1,3 +1,4 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth, useSession } from '../../hooks/useService';
@@ -13,6 +14,7 @@ import { roles } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 import { Link } from 'react-router-dom';
 import { viuLicenseLabel } from '../../services/api/licenses';
+import { useOwnOrgName } from '../../hooks/useOrgPeople';
 
 const profileFields: FieldSpec[] = [
   { key: 'fullName', label: 'Họ và tên', required: true, max: 200 },
@@ -103,11 +105,7 @@ function Accounts({
           </button>
         }
       />
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {creating && (
         <AccountEditor
           actor={actor}
@@ -192,7 +190,7 @@ function Accounts({
           {list.data && (
             <>
               {!list.data.items.length && <p>Không có tài khoản phù hợp.</p>}
-              <div style={{ overflowX: 'auto' }}>
+              <div className="table-scroll">
                 <table>
                   <thead>
                     <tr>
@@ -226,7 +224,7 @@ function Accounts({
                   </tbody>
                 </table>
               </div>
-              <div className="row">
+              <div className="row pagination">
                 <span>
                   {list.data.totalCount} kết quả · Trang {list.data.page}/
                   {Math.max(1, list.data.totalPages)}
@@ -293,6 +291,7 @@ function AccountEditor({
 }) {
   const [busy, setBusy] = useState(false);
   const cache = useQueryClient();
+  const orgName = useOwnOrgName(actor);
   const fields: FieldSpec[] = account
     ? profileFields
     : [
@@ -340,11 +339,11 @@ function AccountEditor({
       {!account && actor.role === 'CenterAdmin' && (
         <div className="stack">
           <p>
-            Tổ chức: {actor.orgId} · Vai trò: {roles[fixedRole || 'Caregiver']}
+            Tổ chức: {orgName ?? actor.orgId} · Vai trò: {roles[fixedRole || 'Caregiver']}
           </p>
           <p>
-            Nhân viên không dùng suất license. Khi tạo VIU, máy chủ quyết định việc cấp license; hãy
-            kiểm tra trạng thái sau khi tạo.{' '}
+            Nhân viên không dùng suất license. Để tạo người được chăm sóc, tổ chức cần gói license
+            đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.{' '}
             <Link to="/center-admin/licenses">Xem kho license</Link>.
           </p>
         </div>
@@ -430,6 +429,7 @@ function AccountDetails({
   const [busy, setBusy] = useState(false);
   const [action, setAction] = useState<'activate' | 'deactivate' | 'delete' | null>(null);
   const [notice, setNotice] = useState('');
+  const orgName = useOwnOrgName(actor);
   return (
     <section className="glass card stack">
       <h2>{account.fullName}</h2>
@@ -438,7 +438,10 @@ function AccountDetails({
         {account.email} · {account.phoneNumber || 'Chưa có điện thoại'} · {roles[account.role]}
       </p>
       <p>
-        Mã tài khoản: {account.id} · Tổ chức: {account.organizationId || 'Không thuộc tổ chức'}
+        Mã tài khoản: {account.id} · Tổ chức:{' '}
+        {account.organizationId
+          ? (account.organizationId === actor.orgId && orgName) || account.organizationId
+          : 'Không thuộc tổ chức'}
       </p>
       <p>URL ảnh: {account.avatarUrl || 'Chưa có'}</p>
       {account.role === 'VisuallyImpaired' && (
@@ -454,11 +457,7 @@ function AccountDetails({
           )}
         </p>
       )}
-      {notice && (
-        <p role="status" className="notice">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {account.deletedAt ? (
         <p>Tài khoản đã xóa. Chưa có API khôi phục tài khoản.</p>
       ) : (

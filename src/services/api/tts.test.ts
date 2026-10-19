@@ -51,7 +51,25 @@ function fixture() {
         }
       : path.endsWith('/tts-preferences')
         ? preference
-        : { id: viuId, role: 'VisuallyImpaired' },
+        : {
+            items: [
+              {
+                id: viuId,
+                role: 'VisuallyImpaired',
+                fullName: 'VIU',
+                email: 'viu@example.com',
+                phoneNumber: null,
+                organizationId: null,
+                isActive: true,
+              },
+            ],
+            page: 1,
+            pageSize: 10,
+            totalCount: 1,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
   );
   const write = vi.fn<NonNullable<Parameters<typeof createTtsApi>[1]>>(async () => preference);
   return { api: createTtsApi(get, write), get, write, link, preference };
@@ -82,12 +100,26 @@ it('TTS missing preference requires a valid VIU; 403/402/500 never become defaul
     return original(path, signal);
   });
   expect(await f.api.read(actor, viuId)).toBeNull();
+  expect(f.get.mock.calls.some(([path]) => path === `/api/users/${viuId}`)).toBe(false);
   expect(f.write).not.toHaveBeenCalled();
+  await f.api.save(actor, viuId, ttsDefaults);
+  f.get.mockImplementation(original);
+  expect(await f.api.read(actor, viuId)).toEqual(f.preference);
   f.get.mockImplementation(async (path, signal) => {
-    if (path.includes('/api/users/')) throw new ServiceError('deleted', 404);
+    if (path.endsWith('/tts-preferences')) throw new ServiceError('missing', 404);
+    if (path.startsWith('/api/users?'))
+      return {
+        items: [],
+        page: 1,
+        pageSize: 10,
+        totalCount: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
     return original(path, signal);
   });
-  await expect(f.api.read(actor, viuId)).rejects.toMatchObject({ status: 404 });
+  await expect(f.api.read(actor, viuId)).rejects.toMatchObject({ status: 403 });
   for (const status of [403, 402, 500]) {
     f.get.mockImplementation(async (path, signal) => {
       if (path.endsWith('/tts-preferences')) throw new ServiceError('error', status);
@@ -95,6 +127,26 @@ it('TTS missing preference requires a valid VIU; 403/402/500 never become defaul
     });
     await expect(f.api.read(actor, viuId)).rejects.toMatchObject({ status });
   }
+});
+it('TTS checks later pages of the scoped user list when preferences are missing', async () => {
+  const f = fixture();
+  const original = f.get.getMockImplementation()!;
+  f.get.mockImplementation(async (path, signal) => {
+    if (path.endsWith('/tts-preferences')) throw new ServiceError('missing', 404);
+    if (path.startsWith('/api/users?page=1&'))
+      return {
+        items: [],
+        page: 1,
+        pageSize: 10,
+        totalCount: 11,
+        totalPages: 2,
+        hasNextPage: true,
+        hasPreviousPage: false,
+      };
+    return original(path, signal);
+  });
+  expect(await f.api.read(actor, viuId)).toBeNull();
+  expect(f.get.mock.calls.some(([path]) => path.startsWith('/api/users?page=2&'))).toBe(true);
 });
 it('TTS rejects cross-user data and revoked links before write; never retries failures', async () => {
   const f = fixture();

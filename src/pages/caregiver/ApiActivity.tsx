@@ -13,6 +13,7 @@ import {
 import { PageHead, State, Dialog } from '../../components/UI';
 import { formatTime } from '../../constants/labels';
 import type { Person } from '../../models/domain';
+import { uiStore, useUI } from '../../stores/ui';
 
 const labels: Record<string, string> = {
   startedAt: 'Bắt đầu',
@@ -100,7 +101,7 @@ function Pager({
   onPage: (page: number) => void;
 }) {
   return (
-    <div className="row">
+    <div className="row pagination">
       <span>
         {data.totalCount} kết quả · Trang {data.page}/{Math.max(1, data.totalPages)}
       </span>
@@ -197,17 +198,13 @@ function Detail({
         {query.data && (
           <div className="stack">
             <p>Thời gian hiển thị theo giờ Việt Nam.</p>
-            <dl className="stack">
+            <dl className="record-details">
               {Object.entries(query.data)
                 .filter(([key]) => labels[key])
                 .map(([key, value]) => (
                   <div key={key}>
-                    <dt>
-                      <strong>{labels[key]}</strong>
-                    </dt>
-                    <dd style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                      {display(key, value)}
-                    </dd>
+                    <dt>{labels[key]}</dt>
+                    <dd>{display(key, value)}</dd>
                   </div>
                 ))}
             </dl>
@@ -362,13 +359,18 @@ export function ApiActivity() {
 function Activity({ actor }: { actor: Person }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState('');
+  // Shared with the other care-recipient pages; cleared on logout via uiStore.clear().
+  const { selectedViu: selected } = useUI();
+  const setSelected = (id: string) => uiStore.set({ selectedViu: id });
   const users = useQuery({
     queryKey: ['api-activity-users', actor.id, actor.orgId, page, search],
     queryFn: ({ signal }) => caregivingApi.users(page, search, signal),
     refetchInterval: 30000,
   });
-  const person = users.data?.items.find((item) => item.id === selected);
+  const person =
+    users.data?.items.find((item) => item.id === selected) ??
+    // Only one care recipient in scope: select them instead of asking.
+    (!selected && users.data?.totalCount === 1 ? users.data.items[0] : undefined);
   return (
     <>
       <PageHead

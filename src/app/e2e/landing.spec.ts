@@ -12,11 +12,12 @@ test('public home, signup, login and protected dashboard stay separate', async (
   await expect(page).toHaveURL(/\/auth\/login$/);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole('heading', { name: 'An tâm hơn khi luôn có nhau.' })).toBeVisible();
+  await expect(page.locator('.dashboard-stats')).toBeVisible();
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Thêm tự tin.');
   await page.getByRole('banner').getByRole('link', { name: 'Đăng nhập' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
 });
