@@ -234,7 +234,12 @@ function ConfigPanel({
                     </td>
                     <td style={{ overflowWrap: 'anywhere' }}>
                       {entry.reason || 'Không ghi lý do'}
-                      <p>{entry.changedBy || 'Hệ thống'}</p>
+                      <p>
+                        {entry.changedByName
+                          ? entry.changedByName +
+                            (entry.changedByEmail ? ' · ' + entry.changedByEmail : '')
+                          : entry.changedBy || 'Hệ thống'}
+                      </p>
                     </td>
                     <td>
                       <button

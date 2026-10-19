@@ -174,6 +174,25 @@ it('reports a wrong current password instead of a permission error', async () =>
   });
   expect(await auth.session()).not.toBeNull();
 });
+it('maps the current BE 422 wrong-password response and keeps other 422 messages', async () => {
+  const storage = memory();
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  let detail = 'Current password is incorrect.';
+  const auth = createApiAuth('http://example.test', storage, async (url) =>
+    String(url).endsWith('/change-password')
+      ? Response.json({ detail }, { status: 422 })
+      : ok(user),
+  );
+  await expect(auth.changePassword('Wrong-Pass1!', 'New-Pass1!')).rejects.toMatchObject({
+    status: 422,
+    message: 'Mật khẩu hiện tại không đúng.',
+  });
+  detail = 'Password was used recently.';
+  await expect(auth.changePassword('Wrong-Pass1!', 'New-Pass1!')).rejects.toMatchObject({
+    message: 'Password was used recently.',
+  });
+  expect(await auth.session()).not.toBeNull();
+});
 it('never refreshes on profile 403 and rejects mobile/unknown roles', async () => {
   for (const role of ['VisuallyImpaired', 'UnexpectedRole']) {
     const auth = createApiAuth('http://example.test', memory(), async (url) =>

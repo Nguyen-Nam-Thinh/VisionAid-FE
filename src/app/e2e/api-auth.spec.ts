@@ -4764,3 +4764,73 @@ for (const kind of ['saved-locations', 'geofences'] as const) {
     await expect(page).toHaveURL(/caregiver\/locations/);
   });
 }
+
+test('license gate: unpaid caregiver is sent to plans, paid caregiver opens licensed screens', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let license: { licenseStatus: string | null; licenseExpiresAt: string | null } = {
+    licenseStatus: null,
+    licenseExpiresAt: null,
+  };
+  const linkedCalls: string[] = [];
+  await page.route('**/api/users/me', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          email: 'api@example.test',
+          fullName: 'Người dùng API',
+          role: 'Caregiver',
+          isActive: true,
+          organizationId: null,
+          ...license,
+        },
+      },
+    }),
+  );
+  await page.route('**/api/caregiver-links?*', (route) => {
+    linkedCalls.push(route.request().url());
+    return route.fulfill({ json: { success: true, data: organizationPage([]) } });
+  });
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  // Unpaid: licensed screen shows the plan screen and calls no blocked API.
+  await page.goto('/caregiver/contacts');
+  await expect(
+    page.getByRole('heading', { name: 'Cần gói dịch vụ để dùng chức năng này' }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Chọn gói Personal' })).toHaveAttribute(
+    'href',
+    '/packages',
+  );
+  await expect(page.getByRole('link', { name: 'Kích hoạt bằng key' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /Liên hệ khẩn cấp \(cần gói dịch vụ\)/ }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: /Cảnh báo khẩn cấp \(cần gói/ })).toHaveCount(0);
+  expect(linkedCalls).toHaveLength(0);
+  await page.screenshot({ path: 'test-results/license-gate-unpaid.png' });
+
+  // Expired past grace: renewal wording.
+  license = {
+    licenseStatus: 'Expired',
+    licenseExpiresAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+  };
+  await page.reload();
+  await expect(page.getByRole('link', { name: 'Gia hạn gói Personal' })).toBeVisible();
+
+  // Paid: the same screen loads normally.
+  license = {
+    licenseStatus: 'Active',
+    licenseExpiresAt: new Date(Date.now() + 20 * 86400000).toISOString(),
+  };
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Liên hệ khẩn cấp' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Cần gói dịch vụ để dùng chức năng này' }),
+  ).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /\(cần gói dịch vụ\)/ })).toHaveCount(0);
+});

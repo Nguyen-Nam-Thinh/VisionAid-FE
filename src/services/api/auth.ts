@@ -348,9 +348,15 @@ export function createApiAuth(
       try {
         await authorized('/api/auth/change-password', json({ currentPassword, newPassword }));
       } catch (error) {
-        // BE reports a wrong current password as 403; the shared transport would say "no permission".
-        if (error instanceof ServiceError && error.status === 403)
-          throw new ServiceError('Mật khẩu hiện tại không đúng.', 403);
+        // BE now answers 422 "Current password is incorrect." (older deploys: 403, which the shared
+        // transport turns into "no permission"). Either way show the Vietnamese field message.
+        if (
+          error instanceof ServiceError &&
+          (error.code === 'WRONG_CURRENT_PASSWORD' ||
+            error.status === 403 ||
+            (error.status === 422 && /current password/i.test(error.message)))
+        )
+          throw new ServiceError('Mật khẩu hiện tại không đúng.', error.status);
         throw error;
       }
       clear();

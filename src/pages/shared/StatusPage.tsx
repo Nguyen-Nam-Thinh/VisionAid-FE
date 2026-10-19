@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Compass, RotateCw, ShieldAlert, TriangleAlert, UserX } from 'lucide-react';
+import { Compass, CreditCard, RotateCw, ShieldAlert, TriangleAlert, UserX } from 'lucide-react';
 
-export type StatusKind = 'not-found' | 'forbidden' | 'error' | 'unsupported';
+export type StatusKind = 'not-found' | 'forbidden' | 'error' | 'unsupported' | 'license';
 
 const content: Record<
   StatusKind,
@@ -27,6 +27,12 @@ const content: Record<
     description:
       'Một lỗi bất ngờ khiến màn hình không hiển thị được. Thao tác đang gửi có thể chưa hoàn tất — hãy tải lại và kiểm tra trước khi làm lại.',
   },
+  license: {
+    icon: CreditCard,
+    title: 'Cần gói dịch vụ để dùng chức năng này',
+    description:
+      'Tài khoản của bạn chưa có gói Personal. Đăng ký gói qua PayOS hoặc kích hoạt key do trung tâm cấp để mở chức năng này.',
+  },
   unsupported: {
     icon: UserX,
     title: 'Tài khoản này không dùng trên Web',
@@ -44,13 +50,20 @@ export function StatusPage({
   standalone = false,
   actions,
   detail,
+  description: descriptionOverride,
+  children,
 }: {
   kind: StatusKind;
   standalone?: boolean;
   actions: ReactNode;
   detail?: string;
+  /** Replaces the default explanation for this kind. */
+  description?: string;
+  /** Extra content shown under the actions. */
+  children?: ReactNode;
 }) {
-  const { code, icon: Icon, title, description } = content[kind];
+  const { code, icon: Icon, title } = content[kind];
+  const description = descriptionOverride ?? content[kind].description;
   const heading = useRef<HTMLHeadingElement>(null);
   // Move focus to the explanation so keyboard and screen-reader users land on what happened.
   useEffect(() => heading.current?.focus(), [kind]);
@@ -79,6 +92,7 @@ export function StatusPage({
         </details>
       )}
       <div className="status-actions">{actions}</div>
+      {children}
     </section>
   );
   if (!standalone) return body;
