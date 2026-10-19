@@ -1,3 +1,4 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -6,6 +7,7 @@ import { placesApi, type Place, type PlaceKind } from '../../services/api/places
 import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
 import { Form, type FieldSpec } from '../../components/Form';
 import type { Person, Fields } from '../../models/domain';
+import { uiStore, useUI } from '../../stores/ui';
 
 export function ApiPlaces() {
   const { data: actor } = useSession();
@@ -14,13 +16,18 @@ export function ApiPlaces() {
 function Places({ actor }: { actor: Person }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState('');
+  // Shared with the other care-recipient pages; cleared on logout via uiStore.clear().
+  const { selectedViu: selected } = useUI();
+  const setSelected = (id: string) => uiStore.set({ selectedViu: id });
   const users = useQuery({
     queryKey: ['api-place-users', actor.id, actor.orgId, page, search],
     queryFn: ({ signal }) => caregivingApi.users(page, search, signal),
     refetchInterval: 30000,
   });
-  const person = users.data?.items.find((item) => item.id === selected);
+  const person =
+    users.data?.items.find((item) => item.id === selected) ??
+    // Only one care recipient in scope: select them instead of asking.
+    (!selected && users.data?.totalCount === 1 ? users.data.items[0] : undefined);
   return (
     <>
       <PageHead
@@ -41,7 +48,7 @@ function Places({ actor }: { actor: Person }) {
             Tìm người được chăm sóc
             <input name="search" />
           </label>
-          <button className="btn">Tìm kiếm</button>
+          <button className="btn primary">Tìm kiếm</button>
           <button
             type="button"
             className="btn"
@@ -63,8 +70,13 @@ function Places({ actor }: { actor: Person }) {
               ))}
             </select>
           </label>
+          {!person && (
+            <p className="notice">
+              Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.
+            </p>
+          )}
           {users.data && (
-            <div className="row">
+            <div className="row pagination">
               <span>
                 {users.data.totalCount} người · Trang {page}/{Math.max(1, users.data.totalPages)}
               </span>
@@ -125,7 +137,7 @@ function PlaceList({ actor, viuId, name }: { actor: Person; viuId: string; name:
           Vùng an toàn
         </button>
       </div>
-      <p className="muted">
+      <p className="notice">
         Nhập tọa độ chính xác để xác định vị trí. Cảnh báo vào, ra và lời nhắc đến nơi phụ thuộc GPS
         trên điện thoại và hệ thống xử lý.
       </p>
@@ -152,11 +164,7 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
   const zone = kind === 'geofences';
   return (
     <div className="stack">
-      {notice && (
-        <p role="status" className="notice">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <div className="row">
         <label className="field">
           Trạng thái
@@ -195,8 +203,13 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
             )}
             {!zone && <p>Tối đa 20 địa điểm cho mỗi người, bao gồm địa điểm tạm ngưng.</p>}
             {!query.data.items.length && <p>Chưa có địa điểm phù hợp.</p>}
-            <div className="table-scroll">
-              <table>
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label="Danh sách địa điểm"
+            >
+              <table className="places-table">
                 <thead>
                   <tr>
                     <th>Tên</th>
@@ -211,17 +224,18 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                       <td>
                         <strong>{item.name}</strong>
                         {'alertOnExit' in item && (
-                          <p>
+                          <p className="care-secondary">
                             Vào: {item.alertOnEnter ? 'bật' : 'tắt'} · Ra:{' '}
                             {item.alertOnExit ? 'bật' : 'tắt'}
                           </p>
                         )}
                       </td>
                       <td>
-                        <span className="mono">
-                          {item.latitude}, {item.longitude}
+                        <span>
+                          Vĩ độ: {item.latitude} · Kinh độ: {item.longitude}
                         </span>
                         <p>
+                          Bán kính:{' '}
                           {'radiusMeters' in item ? item.radiusMeters : item.arrivalRadiusMeters} m
                         </p>
                       </td>
@@ -247,7 +261,7 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                 </tbody>
               </table>
             </div>
-            <div className="row">
+            <div className="row pagination">
               <span>
                 {query.data.totalCount} kết quả · Trang {query.data.page}/
                 {Math.max(1, query.data.totalPages)}
@@ -408,7 +422,7 @@ function PlaceEditor({
               }}
             />
           ) : (
-            <dl>
+            <dl className="record-details">
               {fields.map((field) => (
                 <div key={field.key}>
                   <dt>{field.label}</dt>

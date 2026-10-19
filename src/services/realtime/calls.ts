@@ -135,6 +135,9 @@ export function createCallClient({
   async function end(message = 'Đã kết thúc cuộc gọi.', reason = 'user_hangup') {
     if (!active()) return;
     const sessionId = view.sessionId;
+    // Hanging up an outgoing call nobody answered is a cancellation: BE records it as Missed.
+    if (reason === 'user_hangup' && (view.phase === 'ringing' || view.phase === 'preparing'))
+      reason = 'Cancelled';
     finish(message);
     const epoch = generation;
     if (sessionId) {
@@ -407,7 +410,7 @@ export function createCallClient({
         : await api.initiate(actor, viuId);
       if (!current(epoch)) {
         // The request can commit after the user cancels; do not leave it ringing.
-        if (enabled) void api.end(session.sessionId, 'client_cancelled').catch(() => {});
+        if (enabled) void api.end(session.sessionId, 'Cancelled').catch(() => {});
         return;
       }
       confirmed = true;

@@ -1,3 +1,4 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -118,9 +119,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
         </p>
       )}
       {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
+        <Toast message={notice} onDismiss={() => setNotice('')} />
       )}
       <section className="glass card stack">
         <div className="row">
@@ -146,7 +145,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
         </div>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           <div className="table-scroll">
-            <table>
+            <table className="package-table">
               <caption className="sr-only">Danh sách gói license</caption>
               <thead>
                 <tr>
@@ -162,19 +161,19 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                   <tr key={p.id}>
                     <td>
                       <strong>{p.name}</strong>
-                      <p>
+                      <p className="package-meta">
                         {p.code} · {p.packageType}
                       </p>
-                      <p>{p.isActive ? 'Đang mở' : 'Ngừng mở'}</p>
+                      <p className="package-meta">{p.isActive ? 'Đang mở' : 'Ngừng mở'}</p>
                     </td>
                     <td>
-                      {packagePrice(p.priceMonthly, p.currency)}
+                      <strong className="package-price">{packagePrice(p.priceMonthly, p.currency)}</strong>
                       {p.priceYearly !== null && (
-                        <p>Giá năm tham khảo: {packagePrice(p.priceYearly, p.currency)}</p>
+                        <p className="package-meta">Giá năm tham khảo: {packagePrice(p.priceYearly, p.currency)}</p>
                       )}
                     </td>
                     <td>
-                      {p.durationDays} ngày<p>Dùng thử: {p.trialDays} ngày</p>
+                      {p.durationDays} ngày<p className="package-meta">Dùng thử: {p.trialDays} ngày</p>
                     </td>
                     <td>
                       {p.packageType === 'Personal'

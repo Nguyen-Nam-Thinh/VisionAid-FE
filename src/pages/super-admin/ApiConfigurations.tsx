@@ -6,7 +6,7 @@ import {
   type SystemConfig,
   type ConfigHistory,
 } from '../../services/api/configurations';
-import { PageHead, State, Dialog } from '../../components/UI';
+import { PageHead, State, Dialog, Toast } from '../../components/UI';
 import { Form } from '../../components/Form';
 import { formatTime } from '../../constants/labels';
 import type { Person } from '../../models/domain';
@@ -28,7 +28,7 @@ function Pager({
   change: (page: number) => void;
 }) {
   return (
-    <div className="row">
+    <div className="row pagination">
       <span>
         {data.totalCount} kết quả · Trang {data.page}/{Math.max(1, data.totalPages)}
       </span>
@@ -69,18 +69,29 @@ function Change({
     <Dialog title={history ? 'Xác nhận khôi phục cấu hình' : 'Điều chỉnh cấu hình'} onClose={close}>
       <div className="stack">
         <strong>{config.configKey}</strong>
-        <p>Hiện tại: {config.configValue}</p>
-        <p>
-          Kiểu: {config.valueType} · Giới hạn: {config.minValue ?? 'Không có'} —{' '}
-          {config.maxValue ?? 'Không có'}
-        </p>
+        <dl className="record-details">
+          <div>
+            <dt>Giá trị hiện tại</dt>
+            <dd>{config.configValue}</dd>
+          </div>
+          <div>
+            <dt>Kiểu dữ liệu</dt>
+            <dd>{config.valueType}</dd>
+          </div>
+          <div>
+            <dt>Giới hạn</dt>
+            <dd>
+              {config.minValue ?? 'Không có'} — {config.maxValue ?? 'Không có'}
+            </dd>
+          </div>
+        </dl>
         {history && (
           <p>
             Khôi phục về giá trị trước lần thay đổi lúc {formatTime(history.changedAt)}:{' '}
             <strong>{history.oldValue}</strong>. Một bản ghi lịch sử mới sẽ được tạo.
           </p>
         )}
-        <p>
+        <p className="notice">
           Thay đổi có thể ảnh hưởng toàn hệ thống. Lưu trên máy chủ không xác nhận thiết bị đã áp
           dụng.
         </p>
@@ -172,7 +183,7 @@ function ConfigPanel({
       <p style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
         {config.description || 'Chưa có mô tả.'}
       </p>
-      <dl className="stack">
+      <dl className="record-details">
         <div>
           <dt>Giá trị hiện tại</dt>
           <dd style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>{config.configValue}</dd>
@@ -259,6 +270,7 @@ function ConfigPanel({
 }
 function ConfigDetail({ actor, id, close }: { actor: Person; id: string; close: () => void }) {
   const cache = useQueryClient();
+  const [notice, setNotice] = useState('');
   const query = useQuery({
     queryKey: ['api-config-detail', actor.id, id],
     queryFn: ({ signal }) => configurationsApi.detail(actor, id, signal),
@@ -279,10 +291,12 @@ function ConfigDetail({ actor, id, close }: { actor: Person; id: string; close: 
                 cache.invalidateQueries({ queryKey: ['api-config-history', actor.id, id] }),
                 query.refetch(),
               ]);
+              setNotice('Đã lưu cấu hình trên máy chủ. Thiết bị áp dụng khi đồng bộ lại.');
             }}
           />
         )}
       </State>
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
     </Dialog>
   );
 }
@@ -329,7 +343,7 @@ function Configurations({ actor }: { actor: Person }) {
             Nhóm cấu hình
             <input name="category" placeholder="Ví dụ: AI, WEBRTC" />
           </label>
-          <button className="btn">Tìm kiếm</button>
+          <button className="btn primary">Tìm kiếm</button>
           <button
             type="button"
             className="btn"
@@ -359,7 +373,7 @@ function Configurations({ actor }: { actor: Person }) {
                   {query.data.items.map((item) => (
                     <tr key={item.id}>
                       <td style={{ overflowWrap: 'anywhere' }}>
-                        {item.configKey}
+                        <strong>{item.configKey}</strong>
                         <p>{item.category}</p>
                       </td>
                       <td style={{ overflowWrap: 'anywhere' }}>

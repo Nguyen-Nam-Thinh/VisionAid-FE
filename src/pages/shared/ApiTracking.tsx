@@ -72,7 +72,7 @@ function Tracking({ actor }: { actor: Person }) {
               placeholder="Tên, email, điện thoại"
             />
           </label>
-          <button className="btn">Tìm kiếm</button>
+          <button className="btn primary">Tìm kiếm</button>
           <button
             type="button"
             className="btn"
@@ -148,8 +148,8 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
       >
         Tải lại vị trí
       </button>
-      <div style={{ overflowX: 'auto' }}>
-        <table>
+      <div className="table-scroll" tabIndex={0} role="region" aria-label="Dữ liệu vị trí">
+        <table className="tracking-table">
           <thead>
             <tr>
               <th>Người được theo dõi</th>
@@ -292,7 +292,7 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
           Đến thời gian
           <input type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
         </label>
-        <button className="btn">Lọc lịch sử</button>
+        <button className="btn primary">Lọc lịch sử</button>
         <button
           type="button"
           className="btn"
@@ -311,8 +311,8 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
         {query.data && (
           <>
             {!query.data.items.length && <p>Không có lịch sử trong khoảng thời gian này.</p>}
-            <div style={{ overflowX: 'auto' }}>
-              <table>
+            <div className="table-scroll" tabIndex={0} role="region" aria-label="Dữ liệu vị trí">
+              <table className="tracking-table">
                 <thead>
                   <tr>
                     <th>Ghi nhận ({timezone})</th>

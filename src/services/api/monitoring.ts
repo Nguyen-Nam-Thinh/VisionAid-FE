@@ -144,8 +144,14 @@ export function createMonitoringApi(get = apiGet) {
       )
         throw new ServiceError('Khoảng ngày không hợp lệ. Kiểm tra ngày bắt đầu và kết thúc.', 400);
       const query = new URLSearchParams({ page: String(page), pageSize: '20' });
-      if (from) query.set('dateFrom', kind === 'metrics' ? from : from + 'T00:00:00+07:00');
-      if (to) query.set('dateTo', kind === 'metrics' ? to : to + 'T23:59:59.9999999+07:00');
+      // Vietnam day bounds sent as UTC: the deployed BE returns 500 for a non-zero offset.
+      const utc = (date: string, time: string) => new Date(`${date}T${time}+07:00`).toISOString();
+      if (from) query.set('dateFrom', kind === 'metrics' ? from : utc(from, '00:00:00'));
+      if (to)
+        query.set(
+          'dateTo',
+          kind === 'metrics' ? to : utc(to, '23:59:59').replace('.000Z', '.9999999Z'),
+        );
       const allowed =
         kind === 'metrics'
           ? (['modelName'] as const)

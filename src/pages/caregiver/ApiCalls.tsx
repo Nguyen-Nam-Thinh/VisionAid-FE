@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import {
   callsApi,
+  callEndReason,
   callStatuses,
   callTriggers,
   type CallFilters,
@@ -109,7 +110,7 @@ function History({ actor }: { actor: Person }) {
               </tbody>
             </table>
           </div>
-          <div className="row">
+          <div className="row pagination">
             <span>
               {result.data?.totalCount ?? 0} cuộc gọi · Trang {page}/
               {Math.max(1, result.data?.totalPages ?? 1)}
@@ -138,13 +139,36 @@ function History({ actor }: { actor: Person }) {
           {selected && (
             <Dialog title="Chi tiết cuộc gọi" onClose={() => setSelected(null)}>
               <div className="stack" style={{ overflowWrap: 'anywhere' }}>
-                <p>Mã phiên: {selected.sessionId}</p>
-                <p>Người được chăm sóc: {selected.viuUserId || 'Không còn thông tin'}</p>
-                <p>Trạng thái: {callStatuses[selected.status]}</p>
-                <p>Bắt đầu: {time(selected.startedAt)}</p>
-                <p>Chấp nhận: {time(selected.connectedAt)}</p>
-                <p>Kết thúc: {time(selected.endedAt)}</p>
-                <p>Lý do: {selected.endReason || 'Chưa có'}</p>
+                <dl className="record-details">
+                  <div>
+                    <dt>Mã phiên</dt>
+                    <dd>{selected.sessionId}</dd>
+                  </div>
+                  <div>
+                    <dt>Người được chăm sóc</dt>
+                    <dd>{selected.viuUserId || 'Không còn thông tin'}</dd>
+                  </div>
+                  <div>
+                    <dt>Trạng thái</dt>
+                    <dd>{callStatuses[selected.status]}</dd>
+                  </div>
+                  <div>
+                    <dt>Bắt đầu</dt>
+                    <dd>{time(selected.startedAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>Chấp nhận</dt>
+                    <dd>{time(selected.connectedAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>Kết thúc</dt>
+                    <dd>{time(selected.endedAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>Lý do</dt>
+                    <dd>{callEndReason(selected.endReason)}</dd>
+                  </div>
+                </dl>
                 <p className="muted">
                   Trạng thái chấp nhận do máy chủ ghi nhận không chứng minh âm thanh hoặc hình ảnh
                   đã kết nối.

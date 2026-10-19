@@ -88,11 +88,21 @@ function input(values: OrganizationInput, create: boolean) {
       taxCode: z.string().trim().max(50).optional(),
     })
     .safeParse(values);
-  if (!result.success)
-    throw new ServiceError(
-      'Kiểm tra tên tối đa 200 ký tự, địa chỉ tối đa 500 ký tự, mã số thuế tối đa 50 ký tự, email và số điện thoại Việt Nam.',
-      400,
+  if (!result.success) {
+    // Point at the offending fields; the phone rule mirrors the BE validator (mobile numbers only).
+    const messages: Record<string, string> = {
+      name: 'Tên tổ chức từ 1 đến 200 ký tự.',
+      address: 'Địa chỉ tối đa 500 ký tự.',
+      phoneNumber:
+        'Nhập số di động Việt Nam 10 chữ số (03, 05, 07, 08, 09). Máy chủ chưa nhận số bàn.',
+      contactEmail: 'Email không hợp lệ.',
+      taxCode: 'Mã số thuế tối đa 50 ký tự.',
+    };
+    const fields = Object.fromEntries(
+      result.error.issues.map((issue) => [String(issue.path[0]), messages[String(issue.path[0])]]),
     );
+    throw new ServiceError(Object.values(fields).join(' '), 400, fields);
+  }
   const { taxCode, ...rest } = result.data;
   return create ? { ...rest, taxCode: taxCode || null } : rest;
 }

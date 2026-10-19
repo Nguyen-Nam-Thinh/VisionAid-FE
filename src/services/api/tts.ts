@@ -54,12 +54,14 @@ export function createTtsApi(get = apiGet, write = apiWrite) {
         return checked(await get(path(viuId), signal), viuId);
       } catch (error) {
         if (!(error instanceof ServiceError) || error.status !== 404) throw error;
-        // A 404 can also mean a deleted user; verify the target before offering creation.
-        const user = z
-          .object({ id: z.literal(viuId), role: z.literal('VisuallyImpaired') })
-          .safeParse(await get(`/api/users/${viuId}`, signal));
-        if (!user.success) throw new ServiceError('Không xác minh được người được chăm sóc.', 403);
-        return null;
+        // A 404 may mean a deleted user; Caregivers can read the scoped list, not user detail.
+        const caregiving = createCaregivingApi(get, write);
+        for (let page = 1; ; page++) {
+          const users = await caregiving.users(page, '', signal);
+          if (users.items.some((user) => user.id === viuId && user.isActive)) return null;
+          if (!users.hasNextPage) break;
+        }
+        throw new ServiceError('Không xác minh được người được chăm sóc đang hoạt động.', 403);
       }
     },
     async save(actor: Person, viuId: string, values: unknown) {

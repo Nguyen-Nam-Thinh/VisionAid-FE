@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { X, Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ServiceError } from '../services/contracts';
 export const Brand = () => (
   <Link className="brand" to="/">
-    <Eye size={32} />
+    <img className="brand-icon" src="/branding/visionaid-icon.png" alt="" width={40} height={40} />
     <span>
       VisionAid<span style={{ color: 'var(--primary)' }}>.</span>
     </span>
@@ -21,7 +21,6 @@ export const PageHead = ({
 }) => (
   <header className="page-head">
     <div>
-      <p className="eyebrow no-margin">Không gian đồng hành</p>
       <h1>{title}</h1>
       <p>{description}</p>
     </div>
@@ -31,6 +30,28 @@ export const PageHead = ({
 export const Badge = ({ children, tone = 'blue' }: { children: ReactNode; tone?: string }) => (
   <span className={'badge ' + tone}>{children}</span>
 );
+export function Toast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    ref.current?.showPopover();
+  }, []);
+  useEffect(() => {
+    if (paused) return;
+    const timer = setTimeout(onDismiss, 8000);
+    return () => clearTimeout(timer);
+  }, [message, onDismiss, paused]);
+  return (
+    <div ref={ref} popover="manual" className="feedback-toast"
+      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)} onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
+      }}>
+      <span role="status" aria-live="polite" aria-atomic="true">{message}</span>
+      <button type="button" aria-label="Đóng thông báo" onClick={onDismiss}><X size={18} aria-hidden="true" /></button>
+    </div>
+  );
+}
 export function State({
   loading,
   error,
@@ -185,12 +206,11 @@ export function DataTable<T extends { id: string }>({
       <div className="row between">
         <h2>{title}</h2>
         <div className="row">
-          <label className="row">
-            <Search size={17} />
+          <label className="table-search">
+            <Search size={17} aria-hidden="true" />
             <span className="sr-only">Tìm kiếm {title}</span>
             <input
               className="search"
-              style={{ width: 220, maxWidth: '100%' }}
               placeholder="Tìm kiếm…"
               value={search}
               onChange={(e) => {

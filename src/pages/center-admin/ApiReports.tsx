@@ -66,7 +66,7 @@ function Reports({ actor }: { actor: Person }) {
             Đến ngày UTC
             <input type="date" name="to" />
           </label>
-          <button className="btn">Xem báo cáo</button>
+          <button className="btn primary">Xem báo cáo</button>
           <button
             type="button"
             className="btn"
@@ -76,7 +76,7 @@ function Reports({ actor }: { actor: Person }) {
             Tải lại báo cáo
           </button>
         </form>
-        <p>
+        <p className="notice">
           Máy chủ tính theo ngày UTC: một ngày bắt đầu lúc 07:00 giờ Việt Nam và kết thúc ngay trước
           07:00 hôm sau. Để trống ngày để xem toàn bộ dữ liệu còn lưu.
         </p>
@@ -88,7 +88,8 @@ function Reports({ actor }: { actor: Person }) {
                 {summary.data.dateTo || 'Không giới hạn cuối kỳ'}
               </p>
               <div className="table-scroll">
-                <table>
+                <table className="report-totals">
+                  <caption className="sr-only">Số bản ghi hoạt động trong kỳ báo cáo</caption>
                   <thead>
                     <tr>
                       <th>Hoạt động</th>
@@ -115,7 +116,7 @@ function Reports({ actor }: { actor: Person }) {
                   </tbody>
                 </table>
               </div>
-              <p>
+              <p className="report-note">
                 Số liệu do máy chủ tổng hợp cho các thành viên khiếm thị hiện thuộc trung tâm, chưa
                 bị xóa. Các nhóm có thể trùng sự kiện nên không cộng thành một tổng chung.
               </p>
@@ -162,7 +163,7 @@ function Reports({ actor }: { actor: Person }) {
               <option value="false">Vô hiệu hóa</option>
             </select>
           </label>
-          <button className="btn">Lọc thành viên</button>
+          <button className="btn primary">Lọc thành viên</button>
           <button
             type="button"
             className="btn"
@@ -187,7 +188,7 @@ function Reports({ actor }: { actor: Person }) {
                 <tbody>
                   {members.data.items.map((member) => (
                     <tr key={member.id}>
-                      <td>{member.fullName}</td>
+                      <td><strong>{member.fullName}</strong></td>
                       <td style={{ overflowWrap: 'anywhere' }}>{member.email}</td>
                       <td>{roles[member.role]}</td>
                       <td>
@@ -204,7 +205,7 @@ function Reports({ actor }: { actor: Person }) {
             <p>Chưa có thành viên phù hợp.</p>
           )}
           {members.data && (
-            <div className="row">
+            <div className="row pagination">
               <span>
                 {members.data.totalCount} thành viên · Trang {page}/
                 {Math.max(1, members.data.totalPages)}

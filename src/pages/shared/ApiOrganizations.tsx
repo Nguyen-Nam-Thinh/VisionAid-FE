@@ -1,3 +1,4 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -38,7 +39,7 @@ function Pagination({
   change: (page: number) => void;
 }) {
   return (
-    <div className="row">
+    <div className="row pagination">
       <span>
         {data.totalCount} kết quả · Trang {data.page}/{Math.max(1, data.totalPages)}
       </span>
@@ -110,11 +111,7 @@ function Organizations({ user }: { user: Person }) {
           )
         }
       />
-      {notice && (
-        <p role="status" className="notice">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {create && (
         <OrganizationEditor
           user={user}
@@ -122,7 +119,9 @@ function Organizations({ user }: { user: Person }) {
           saved={async (org) => {
             setCreate(false);
             setSelected(org.id);
-            setNotice('Đã tạo tổ chức. Tạo tài khoản Center Admin thuộc đợt 5b.');
+            setNotice(
+              'Đã tạo tổ chức. Tiếp theo, tạo tài khoản Quản trị trung tâm tại Quản lý tài khoản.',
+            );
             await refresh();
           }}
         />
@@ -192,7 +191,7 @@ function Organizations({ user }: { user: Person }) {
             {list.data && (
               <>
                 {!list.data.items.length && <p>Không có tổ chức phù hợp.</p>}
-                <div style={{ overflowX: 'auto' }}>
+                <div className="table-scroll">
                   <table>
                     <thead>
                       <tr>
@@ -388,11 +387,7 @@ function OrganizationDetails({
         Quản trị trung tâm: {org.centerAdminName || 'Chưa có'} · Nhân viên: {org.staffCount} · Người
         khiếm thị: {org.viuCount}
       </p>
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <div className="row">
         {!org.deletedAt && (
           <button className="btn" onClick={() => setEdit(true)}>
@@ -512,7 +507,7 @@ function OrganizationDetails({
             {members.data && (
               <>
                 {!members.data.items.length && <p>Chưa có thành viên phù hợp.</p>}
-                <div style={{ overflowX: 'auto' }}>
+                <div className="table-scroll">
                   <table>
                     <thead>
                       <tr>

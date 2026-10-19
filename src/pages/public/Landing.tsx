@@ -392,7 +392,9 @@ export function Landing() {
       </main>
       <footer className="landing-footer landing-wrap">
         <div>
-          <Brand />
+          <Link to="/" aria-label="VisionAid — Trang chủ">
+            <img className="brand-full" src="/branding/visionaid-logo.png" alt="VisionAid — AI solutions for visually impaired" width={200} height={200} loading="lazy" />
+          </Link>
           <p>Đồng hành cùng sự tự lập mỗi ngày.</p>
         </div>
         <p>

@@ -96,3 +96,19 @@ it('validates integer priority and required fields without imposing mobile-only 
   await api.save(actor, viuId, { ...contact, phoneNumber: '115' });
   expect(JSON.parse(String(write.mock.calls[0][1].body)).phoneNumber).toBe('115');
 });
+it('explains a taken priority (409) in Vietnamese and keeps other conflicts unchanged', async () => {
+  const { ServiceError } = await import('../contracts');
+  const get = vi.fn<NonNullable<Parameters<typeof createContactsApi>[0]>>(async () => links);
+  const write = vi.fn<NonNullable<Parameters<typeof createContactsApi>[1]>>(async () => {
+    throw new ServiceError('Priority order 1 is already used by another contact.', 409);
+  });
+  const api = createContactsApi(get, write);
+  await expect(api.save(actor, viuId, contact)).rejects.toMatchObject({
+    status: 409,
+    message: 'Thứ tự ưu tiên 1 đã được dùng cho liên hệ khác. Chọn số khác.',
+  });
+  write.mockRejectedValue(new ServiceError('Contact limit reached.', 409));
+  await expect(api.save(actor, viuId, contact)).rejects.toMatchObject({
+    message: 'Contact limit reached.',
+  });
+});

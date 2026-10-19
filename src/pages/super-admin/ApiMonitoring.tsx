@@ -227,7 +227,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
               {kind === 'metrics' ? 'Đến ngày UTC' : 'Đến ngày Việt Nam'}
               <input type="date" name="to" />
             </label>
-            <button className="btn">Lọc bản ghi</button>
+            <button className="btn primary">Lọc bản ghi</button>
             <button
               className="btn"
               type="button"
@@ -322,7 +322,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                     </table>
                   </div>
                 )}
-                <div className="row between">
+                <div className="row pagination">
                   <span role="status">
                     {query.data.totalCount} bản ghi · Trang {query.data.page}/
                     {Math.max(1, query.data.totalPages)}
@@ -357,7 +357,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
       </div>
       {selected && (
         <Dialog title="Chi tiết bản ghi" onClose={() => setSelected(null)}>
-          <dl className="stack" style={{ overflowWrap: 'anywhere' }}>
+          <dl className="record-details">
             {Object.entries(selected).map(([key, value]) => (
               <div key={key}>
                 <dt>{labels[key] ?? key}</dt>

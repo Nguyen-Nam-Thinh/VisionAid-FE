@@ -5,7 +5,7 @@ async function login(page: Page, email = 'caregiver@demo.vn') {
   await page.getByLabel('Địa chỉ email').fill(email);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Xin chào/ })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /An tâm hơn|Vận hành minh bạch/ })).toBeVisible();
+  await expect(page.locator('.dashboard-stats')).toBeVisible();
 }
 async function screen(page: Page, path: string, title: string) {
   await page.goto(path);
@@ -95,12 +95,15 @@ test('linked user creation, QR and secondary flags', async ({ page }) => {
   await dialog(page).getByLabel('Quản lý danh bạ khuôn mặt').check();
   await dialog(page).getByRole('button', { name: 'Lưu thay đổi' }).click();
   await expect(row).toContainText('Registry');
+  await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await login(page, 'secondary@demo.vn');
   await screen(page, '/caregiver/registry', 'Gương mặt thân quen');
   await expect(page.getByRole('button', { name: 'Thêm mới' })).toBeVisible();
   await page.goto('/admin/accounts');
-  await expect(page.getByRole('heading', { name: 'Không có quyền truy cập' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Bạn không có quyền xem trang này' }),
+  ).toBeVisible();
 });
 test('center staff, VIU, assignments and org scoping', async ({ page }) => {
   await login(page, 'center@demo.vn');
@@ -131,7 +134,9 @@ test('center staff, VIU, assignments and org scoping', async ({ page }) => {
   await screen(page, '/center-admin/map', 'Bản đồ toàn trung tâm');
   await expect(page.getByText('Người dùng tổ chức khác')).toHaveCount(0);
   await page.goto('/caregiver/registry');
-  await expect(page.getByRole('heading', { name: 'Không có quyền truy cập' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Bạn không có quyền xem trang này' }),
+  ).toBeVisible();
 });
 test('admin configuration history rollback and no GPS access', async ({ page }) => {
   await login(page, 'admin@demo.vn');
@@ -150,7 +155,9 @@ test('admin configuration history rollback and no GPS access', async ({ page }) 
   await screen(page, '/admin/audit', 'Nhật ký kiểm toán');
   await expect(page.getByRole('cell', { name: 'Khôi phục cấu hình', exact: true })).toBeVisible();
   await page.goto('/caregiver/map');
-  await expect(page.getByRole('heading', { name: 'Không có quyền truy cập' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Bạn không có quyền xem trang này' }),
+  ).toBeVisible();
 });
 test('notifications, TTS, geofence and form keyboard focus', async ({ page }) => {
   await login(page);
@@ -237,6 +244,7 @@ test('every role route renders on tablet without console errors or document over
       ).toBe(true);
       await expect(page.getByRole('alert')).toHaveCount(0);
     }
+    await page.getByRole('button', { name: 'Menu tài khoản' }).click();
     await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   }
   expect(errors).toEqual([]);

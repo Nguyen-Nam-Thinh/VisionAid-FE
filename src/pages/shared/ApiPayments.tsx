@@ -46,16 +46,17 @@ export function PackageCheckout({
       }}
     >
       <div className="stack">
-        <strong>{item.name}</strong>
+        <dl className="record-details">
+          <div><dt>Gói đã chọn</dt><dd><strong>{item.name}</strong></dd></div>
+          <div><dt>Giá đang xem</dt><dd><strong>{packagePrice(item.priceMonthly, item.currency)}</strong></dd></div>
+          <div><dt>Thời hạn</dt><dd>{item.durationDays} ngày</dd></div>
+        </dl>
         {isOrganizationBuyer(actor) && (
           <p>
             Mua mới hoặc bổ sung license do máy chủ quyết định. Khi gia hạn kho hiện có, thời hạn
             được tính lại từ ngày thanh toán; chưa hỗ trợ đổi sang gói khác.
           </p>
         )}
-        <p>
-          Giá đang xem: {packagePrice(item.priceMonthly, item.currency)} · {item.durationDays} ngày.
-        </p>
         <p>
           Máy chủ sẽ kiểm tra lại gói và tạo đơn. Chỉ thanh toán khi bạn tiếp tục sang PayOS và xác
           nhận chuyển tiền.
@@ -195,7 +196,7 @@ function PaymentHistory({ actor }: { actor: Person }) {
           </div>
           {query.data?.items.length === 0 && <p>Chưa có giao dịch trên trang này.</p>}
           {query.data && (
-            <footer className="pagination">
+            <footer className="row pagination">
               <span>
                 {query.data.totalCount} giao dịch · Trang {page}/
                 {Math.max(1, query.data.totalPages)}
@@ -274,7 +275,7 @@ function PaymentResult({
     <>
       <PageHead
         title="Kiểm tra thanh toán"
-        description="Kết quả chỉ được xác nhận qua API của VisionAid."
+        description="Theo dõi trạng thái đơn và xác nhận thanh toán từ VisionAid."
       />
       <section className="glass card stack">
         {cancelled && (
@@ -306,16 +307,16 @@ function PaymentResult({
               )}
               {payment && (
                 <>
-                  <p role="status">
+                  <p role="status" className="payment-status">
                     <strong>{paymentLabels[payment.status]}</strong>
                   </p>
-                  <p>{packagePrice(payment.amount, payment.currency)}</p>
+                  <p className="payment-amount">{packagePrice(payment.amount, payment.currency)}</p>
                   {payment.status === 'Pending' && (
                     <>
                       <p>
                         {expired
                           ? 'Đã hết thời gian chờ tự động. Nếu đã trả tiền, hãy kiểm tra lại sau; không tạo đơn khác để trả thêm.'
-                          : 'Đang chờ máy chủ xác nhận. Webhook có thể đến chậm; không cần thanh toán lại.'}
+                          : 'Đang chờ xác nhận thanh toán. Việc cập nhật có thể mất một lúc; không cần thanh toán lại.'}
                       </p>
                       {checkout && !query.isFetching && (
                         <a className="btn primary" href={checkout} rel="noreferrer">
@@ -360,7 +361,7 @@ function PaymentResult({
               >
                 {subscription.data && (
                   <p>
-                    Subscription hiện tại: {subscriptionLabels[subscription.data.status]}. Quyền sử
+                    Gói sử dụng hiện tại: {subscriptionLabels[subscription.data.status]}. Quyền sử
                     dụng do máy chủ quyết định.
                   </p>
                 )}

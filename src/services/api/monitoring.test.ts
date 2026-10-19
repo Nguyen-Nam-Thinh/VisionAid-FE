@@ -104,8 +104,8 @@ it('keeps audit metadata only and uses complete Vietnam dates including sub-mill
     targetRecordId: id,
   });
   const params = new URL('https://test' + get.mock.calls[0][0]).searchParams;
-  expect(params.get('dateFrom')).toBe('2026-10-11T00:00:00+07:00');
-  expect(params.get('dateTo')).toBe('2026-10-11T23:59:59.9999999+07:00');
+  expect(params.get('dateFrom')).toBe('2026-10-10T17:00:00.000Z');
+  expect(params.get('dateTo')).toBe('2026-10-11T16:59:59.9999999Z');
   expect(params.get('actorId')).toBe(id);
   expect(JSON.stringify(result)).not.toContain('secret');
   expect(result.items[0].actorId).toBeNull();
@@ -191,8 +191,8 @@ it('reads Hybrid metadata, preserves null timing and strips scene/TTS before cac
     sessionId: id,
     engineUsed: 'RuleBased',
     isOfflineFallback: 'false',
-    dateFrom: '2026-10-11T00:00:00+07:00',
-    dateTo: '2026-10-11T23:59:59.9999999+07:00',
+    dateFrom: '2026-10-10T17:00:00.000Z',
+    dateTo: '2026-10-11T16:59:59.9999999Z',
   });
   expect(get.mock.calls[0][1]).toBe(signal);
   get.mockResolvedValue(page([{ ...record, latencyMs: 0, isOfflineFallback: false }]));

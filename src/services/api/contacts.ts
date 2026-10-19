@@ -98,11 +98,26 @@ export function createContactsApi(get = apiGet, write = apiWrite) {
         phoneNumber: data.contactType === 'Zalo' ? '' : data.phoneNumber,
         zaloDeepLink: data.contactType === 'Phone' ? '' : data.zaloDeepLink,
       };
-      return checked(
-        await write(base(viuId) + (id ? `/${id}` : ''), json(id ? 'PUT' : 'POST', body)),
-        viuId,
-        id,
-      );
+      try {
+        return checked(
+          await write(base(viuId) + (id ? `/${id}` : ''), json(id ? 'PUT' : 'POST', body)),
+          viuId,
+          id,
+        );
+      } catch (error) {
+        // BE reports a taken priority as 409 with an English message.
+        if (
+          error instanceof ServiceError &&
+          error.status === 409 &&
+          /priority/i.test(error.message)
+        )
+          throw new ServiceError(
+            `Thứ tự ưu tiên ${data.priorityOrder} đã được dùng cho liên hệ khác. Chọn số khác.`,
+            409,
+            { priorityOrder: 'Thứ tự ưu tiên đã được dùng.' },
+          );
+        throw error;
+      }
     },
     async status(actor: Person, viuId: string, id: string, isActive: boolean) {
       await detail(actor, viuId, id);

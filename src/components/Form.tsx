@@ -97,7 +97,7 @@ export function Form({
             (errors[field.key] ? fieldId + '-error ' : '') + (field.hint ? fieldId + '-hint' : ''),
         };
         return (
-          <div className="field" key={field.key}>
+          <div className={field.type === 'checkbox' ? 'field field-checkbox' : 'field'} key={field.key}>
             <label htmlFor={fieldId}>
               {field.label}
               {field.required ? ' *' : ''}

@@ -73,9 +73,9 @@ export function ApiLicense() {
       </section>
       {personal && (
         <section className="glass card stack license-card">
-          <h2>Subscription cá nhân</h2>
+          <h2>Gói sử dụng cá nhân</h2>
           {detail.error instanceof ServiceError && detail.error.status === 404 ? (
-            <p className="notice">Máy chủ chưa tìm thấy subscription cho tài khoản này.</p>
+            <p className="notice">Máy chủ chưa tìm thấy thông tin gói sử dụng cho tài khoản này.</p>
           ) : (
             <State loading={detail.isPending} error={detail.error}>
               {detail.data && (
@@ -85,7 +85,7 @@ export function ApiLicense() {
                     <dd>{detail.data.package.name}</dd>
                   </div>
                   <div>
-                    <dt>Trạng thái subscription</dt>
+                    <dt>Trạng thái gói</dt>
                     <dd>{subscriptionLabels[detail.data.status]}</dd>
                   </div>
                   <div>

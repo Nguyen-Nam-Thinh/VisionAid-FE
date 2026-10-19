@@ -2,6 +2,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import '../styles/theme/index.css';
+import '../styles/workspace.css';
 import { App } from './App';
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -1,22 +1,42 @@
 import { Component, type ReactNode } from 'react';
-export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
+import { StatusPage, reloadAction } from '../pages/shared/StatusPage';
+
+type Props = {
+  children: ReactNode;
+  /** 'root' wraps the whole app (no router); 'route' wraps one screen inside the shell. */
+  scope?: 'root' | 'route';
+  /** Changing this value (e.g. the pathname) clears a caught error so navigation recovers. */
+  resetKey?: string;
+};
+type State = { error: Error | null; key?: string };
+
+export class ErrorBoundary extends Component<Props, State> {
+  state: State = { error: null, key: this.props.resetKey };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  static getDerivedStateFromProps(props: Props, state: State): Partial<State> | null {
+    return props.resetKey !== state.key ? { error: null, key: props.resetKey } : null;
   }
   render() {
-    return this.state.failed ? (
-      <main className="main">
-        <section className="glass card stack" role="alert">
-          <h1>Không thể hiển thị màn hình</h1>
-          <p>Ứng dụng gặp lỗi. Hãy tải lại trang để khôi phục phiên.</p>
-          <button className="btn primary" onClick={() => window.location.reload()}>
-            Tải lại trang
-          </button>
-        </section>
-      </main>
-    ) : (
-      this.props.children
+    const { error } = this.state;
+    if (!error) return this.props.children;
+    const root = this.props.scope !== 'route';
+    return (
+      <StatusPage
+        kind="error"
+        standalone={root}
+        // Raw messages can contain user data; show them only in development builds.
+        detail={import.meta.env.DEV ? error.message : undefined}
+        actions={
+          <>
+            {reloadAction}
+            <a className="btn" href={root ? '/' : '/dashboard'}>
+              {root ? 'Về trang chủ' : 'Về tổng quan'}
+            </a>
+          </>
+        }
+      />
     );
   }
 }

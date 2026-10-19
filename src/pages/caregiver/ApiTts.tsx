@@ -1,3 +1,4 @@
+import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -6,6 +7,7 @@ import { ttsApi, ttsDefaults } from '../../services/api/tts';
 import { PageHead, State, Dialog } from '../../components/UI';
 import { Form, type FieldSpec } from '../../components/Form';
 import type { Person, Fields } from '../../models/domain';
+import { uiStore, useUI } from '../../stores/ui';
 
 const fields: FieldSpec[] = [
   {
@@ -89,18 +91,14 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
   return (
     <section className="glass card stack">
       <h2>Giọng đọc của {name}</h2>
-      <p>
+      <p className="notice">
         Mobile cần tải lại cấu hình để áp dụng. Lưu thành công không xác nhận thiết bị đã đổi giọng
         đọc.
       </p>
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {data ? (
-          <dl className="stack">
+          <dl className="settings-details">
             {fields.map((field) => (
               <div key={field.key}>
                 <dt>{field.label}</dt>
@@ -171,13 +169,18 @@ export function ApiTts() {
 function Tts({ actor }: { actor: Person }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState('');
+  // Shared with the other care-recipient pages; cleared on logout via uiStore.clear().
+  const { selectedViu: selected } = useUI();
+  const setSelected = (id: string) => uiStore.set({ selectedViu: id });
   const users = useQuery({
     queryKey: ['api-tts-users', actor.id, actor.orgId, page, search],
     queryFn: ({ signal }) => caregivingApi.users(page, search, signal),
     refetchInterval: 30000,
   });
-  const person = users.data?.items.find((item) => item.id === selected);
+  const person =
+    users.data?.items.find((item) => item.id === selected) ??
+    // Only one care recipient in scope: select them instead of asking.
+    (!selected && users.data?.totalCount === 1 ? users.data.items[0] : undefined);
   return (
     <>
       <PageHead
@@ -221,7 +224,7 @@ function Tts({ actor }: { actor: Person }) {
             </select>
           </label>
           {users.data && (
-            <div className="row">
+            <div className="row pagination">
               <span>
                 {users.data.totalCount} người · Trang {page}/{Math.max(1, users.data.totalPages)}
               </span>
@@ -250,6 +253,11 @@ function Tts({ actor }: { actor: Person }) {
           {!users.data?.items.length && <p>Chưa có người được chăm sóc phù hợp.</p>}
         </State>
       </section>
+      {!users.isPending && !users.error && !person && !!users.data?.items.length && (
+        <p className="notice">
+          Chọn người được chăm sóc ở trên để xem và chỉnh cấu hình giọng đọc.
+        </p>
+      )}
       {!users.error && person && (
         <TtsSettings
           key={actor.id + person.id}

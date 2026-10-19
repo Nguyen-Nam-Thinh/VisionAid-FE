@@ -27,7 +27,7 @@ import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
 import { features } from './features';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import {
   BrowserRouter,
   Routes,
@@ -39,13 +39,40 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { LogOut, Menu, LayoutDashboard, UserRound, ShieldCheck } from 'lucide-react';
+import {
+  LogOut,
+  ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  CreditCard,
+  Package,
+  Phone,
+  Menu,
+  LayoutDashboard,
+  UserRound,
+  ShieldCheck,
+  Users,
+  MapPin,
+  Bell,
+  ScanFace,
+  Contact,
+  Link2,
+  History,
+  Volume2,
+  Settings,
+  Building2,
+  Activity,
+  Send,
+  FileText,
+} from 'lucide-react';
 import { useAuth, useSession } from '../hooks/useService';
-import { Brand, Confirm, PageHead, State } from '../components/UI';
+import { Brand, Confirm, State, Toast } from '../components/UI';
 import { AuthPage } from '../pages/auth/AuthPage';
 import { Profile } from '../pages/shared/Profile';
 import { roles } from '../constants/labels';
 import { uiStore, useUI } from '../stores/ui';
+import { ErrorBoundary } from './ErrorBoundary';
+import { StatusPage } from '../pages/shared/StatusPage';
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 });
@@ -78,15 +105,15 @@ export function Guard({ role }: { role?: string }) {
     );
   if (!['Caregiver', 'CenterAdmin', 'Admin'].includes(q.data.role))
     return (
-      <main className="main">
-        <section className="glass card stack">
-          <h1>Không có quyền truy cập Web</h1>
-          <p>Vai trò này không được hỗ trợ trên Web Dashboard.</p>
-          <button className="btn" onClick={() => auth.logout()}>
+      <StatusPage
+        kind="unsupported"
+        standalone
+        actions={
+          <button className="btn primary" onClick={() => auth.logout()}>
             Đăng xuất
           </button>
-        </section>
-      </main>
+        }
+      />
     );
   if (role && q.data.role !== role) return <Navigate to="/forbidden" replace />;
   return <Outlet />;
@@ -153,34 +180,64 @@ export const menu = Object.fromEntries(
       ),
   ]),
 );
+const navigationIcons = {
+  users: Users,
+  caregivers: Link2,
+  map: MapPin,
+  alerts: Bell,
+  registry: ScanFace,
+  locations: MapPin,
+  contacts: Contact,
+  activity: History,
+  tts: Volume2,
+  notifications: Bell,
+  organizations: Building2,
+  organization: Building2,
+  accounts: Users,
+  staff: Users,
+  assignments: Link2,
+  links: Link2,
+  metrics: Activity,
+  configurations: Settings,
+  rules: Settings,
+  routing: Settings,
+  reports: FileText,
+  delivery: Send,
+  audit: History,
+};
 function Shell() {
+  const location = useLocation();
   const { data: user } = useSession();
   const auth = useAuth();
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [reset, setReset] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { notice } = useUI();
-  useEffect(() => {
-    if (!notice) return;
-    const timer = setTimeout(() => uiStore.set({ notice: '' }), 5000);
-    return () => clearTimeout(timer);
-  }, [notice]);
   if (!user) return null;
   const content = (
-    <div className="shell">
+    <div className={'shell' + (collapsed ? ' sidebar-collapsed' : '')}>
       <a className="skip" href="#main">
         Đến nội dung chính
       </a>
       <aside className={'sidebar' + (open ? ' open' : '')}>
-        <Brand />
+        <div className="sidebar-brand">
+          <Brand />
+          <button
+            className="btn sidebar-toggle"
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+            title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+            aria-expanded={!collapsed}
+          >
+            {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+          </button>
+        </div>
         <div>
-          <p className="eyebrow" style={{ padding: '0 12px 12px' }}>
-            Không gian của bạn
-          </p>
           <nav className="nav" aria-label="Điều hướng chính">
-            <NavLink to="/dashboard" end onClick={() => setOpen(false)}>
+            <NavLink to="/dashboard" title="Tổng quan" end onClick={() => setOpen(false)}>
               <LayoutDashboard size={18} />
-              Tổng quan
+              <span>Tổng quan</span>
             </NavLink>
             {menu[user.role]
               ?.filter(
@@ -195,6 +252,9 @@ function Shell() {
                       'notifications',
                       'contacts',
                       'activity',
+                      'registry',
+                      'locations',
+                      'tts',
                     ].includes(item.path)) ||
                   (user.role === 'Admin' &&
                     [
@@ -221,13 +281,28 @@ function Shell() {
               .map((item) => (
                 <NavLink
                   key={item.path}
+                  title={
+                    runtime.mode === 'api' &&
+                    user.role === 'Caregiver' &&
+                    item.path === 'caregivers'
+                      ? 'Liên kết của tôi'
+                      : item.label
+                  }
                   to={roleBase(user.role) + '/' + item.path}
                   onClick={() => setOpen(false)}
                 >
-                  <span aria-hidden="true">◦</span>
-                  {runtime.mode === 'api' && user.role === 'Caregiver' && item.path === 'caregivers'
-                    ? 'Liên kết của tôi'
-                    : item.label}
+                  {(() => {
+                    const Icon =
+                      navigationIcons[item.path as keyof typeof navigationIcons] || FileText;
+                    return <Icon size={18} aria-hidden="true" />;
+                  })()}
+                  <span>
+                    {runtime.mode === 'api' &&
+                    user.role === 'Caregiver' &&
+                    item.path === 'caregivers'
+                      ? 'Liên kết của tôi'
+                      : item.label}
+                  </span>
                 </NavLink>
               ))}
           </nav>
@@ -239,34 +314,61 @@ function Shell() {
           </div>
           <nav className="nav">
             {runtime.mode === 'api' && user.role === 'Caregiver' && (
-              <NavLink to="/caregiver/calls" onClick={() => setOpen(false)}>
-                Lịch sử cuộc gọi
+              <NavLink
+                title="Lịch sử cuộc gọi"
+                to="/caregiver/calls"
+                onClick={() => setOpen(false)}
+              >
+                <Phone size={18} aria-hidden="true" />
+                <span>Lịch sử cuộc gọi</span>
               </NavLink>
             )}
             {runtime.mode === 'api' && user.role === 'CenterAdmin' && user.orgId && (
               <>
-                <NavLink to="/center-admin/licenses" onClick={() => setOpen(false)}>
-                  Kho license
+                <NavLink
+                  title="Kho license"
+                  to="/center-admin/licenses"
+                  onClick={() => setOpen(false)}
+                >
+                  <ShieldCheck size={18} aria-hidden="true" />
+                  <span>Kho license</span>
                 </NavLink>
-                <NavLink to="/center-admin/payments" onClick={() => setOpen(false)}>
-                  Thanh toán
+                <NavLink
+                  title="Thanh toán"
+                  to="/center-admin/payments"
+                  onClick={() => setOpen(false)}
+                >
+                  <CreditCard size={18} aria-hidden="true" />
+                  <span>Thanh toán</span>
                 </NavLink>
               </>
             )}
             {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink to="/admin/hybrid" onClick={() => setOpen(false)}>
-                Nhật ký Hybrid
+              <NavLink title="Nhật ký Hybrid" to="/admin/hybrid" onClick={() => setOpen(false)}>
+                <Activity size={18} aria-hidden="true" />
+                <span>Nhật ký Hybrid</span>
               </NavLink>
             )}
             {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink to="/admin/ice-servers" onClick={() => setOpen(false)}>
-                Máy chủ cuộc gọi
+              <NavLink
+                title="Máy chủ cuộc gọi"
+                to="/admin/ice-servers"
+                onClick={() => setOpen(false)}
+              >
+                <Settings size={18} aria-hidden="true" />
+                <span>Máy chủ cuộc gọi</span>
               </NavLink>
             )}
-            {runtime.mode === 'api' && <NavLink to="/license">License</NavLink>}
+            {runtime.mode === 'api' && (
+              <NavLink title="License" to="/license">
+                <ShieldCheck size={18} aria-hidden="true" />
+                <span>License</span>
+              </NavLink>
+            )}
             {runtime.mode === 'api' && user.role === 'Caregiver' && !user.orgId && (
-              <NavLink to="/caregiver/payments" onClick={() => setOpen(false)}>
-                Thanh toán
+              <NavLink title="Thanh toán" to="/caregiver/payments" onClick={() => setOpen(false)}>
+                <CreditCard size={18} aria-hidden="true" />
+                <span>Thanh toán</span>
               </NavLink>
             )}
             {runtime.mode === 'api' &&
@@ -274,32 +376,15 @@ function Shell() {
                 user.role === 'CenterAdmin' ||
                 (user.role === 'Caregiver' && !user.orgId)) && (
                 <NavLink
+                  title="Gói dịch vụ"
                   to={user.role === 'Admin' ? '/admin/packages' : '/packages'}
                   onClick={() => setOpen(false)}
                 >
-                  Gói dịch vụ
+                  <Package size={18} aria-hidden="true" />
+                  <span>Gói dịch vụ</span>
                 </NavLink>
               )}
-            <NavLink to="/profile">
-              <UserRound size={18} />
-              Hồ sơ của tôi
-            </NavLink>
           </nav>
-          <button
-            className="btn"
-            disabled={signingOut}
-            onClick={async () => {
-              setSigningOut(true);
-              try {
-                await auth.logout();
-              } finally {
-                setSigningOut(false);
-              }
-            }}
-          >
-            <LogOut size={16} />
-            {signingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
-          </button>
         </div>
       </aside>
       <div className="workspace">
@@ -317,14 +402,45 @@ function Shell() {
               VisionAid <span aria-hidden="true">/</span> {roles[user.role]}
             </span>
           </div>
-          <Link className="row" to="/profile">
+          <button
+            className="row account-trigger"
+            popoverTarget="account-menu"
+            aria-label="Menu tài khoản"
+          >
             <span className="avatar">{user.name.split(' ').at(-1)?.slice(0, 2).toUpperCase()}</span>
             <span style={{ fontSize: 13, color: 'var(--text)' }}>
               <strong>{user.name}</strong>
               <br />
               <small>{roles[user.role]}</small>
             </span>
-          </Link>
+            <ChevronDown size={16} aria-hidden="true" />
+          </button>
+          <div id="account-menu" popover="auto" className="account-menu">
+            <Link
+              to="/profile"
+              onClick={(event) => {
+                event.currentTarget.parentElement?.hidePopover();
+                setOpen(false);
+              }}
+            >
+              <UserRound size={18} aria-hidden="true" /> Hồ sơ của tôi
+            </Link>{' '}
+            <button
+              className="btn"
+              disabled={signingOut}
+              onClick={async () => {
+                setSigningOut(true);
+                try {
+                  await auth.logout();
+                } finally {
+                  setSigningOut(false);
+                }
+              }}
+            >
+              <LogOut size={16} />
+              {signingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
+            </button>
+          </div>
         </header>
         {auth.mode === 'api' &&
           !signingOut &&
@@ -357,15 +473,13 @@ function Shell() {
               </div>
             }
           >
-            <Outlet />
+            <ErrorBoundary scope="route" resetKey={location.pathname}>
+              <Outlet />
+            </ErrorBoundary>
           </Suspense>
         </main>
       </div>
-      {notice && (
-        <div role="status" className="toast">
-          {notice}
-        </div>
-      )}
+      {notice && <Toast message={notice} onDismiss={() => uiStore.set({ notice: '' })} />}
       {reset && (
         <Confirm
           title="Reset dữ liệu demo?"
@@ -386,6 +500,53 @@ function Shell() {
     </ApiRealtime>
   ) : (
     content
+  );
+}
+function HomeActions() {
+  return (
+    <>
+      <Link className="btn primary" to="/dashboard">
+        Về tổng quan
+      </Link>
+      <button className="btn" onClick={() => window.history.back()}>
+        Quay lại trang trước
+      </button>
+    </>
+  );
+}
+// Unknown URL: inside the shell for a signed-in Web user, a standalone page otherwise
+// (no login redirect for a mistyped address).
+function UnknownRoute() {
+  const q = useSession();
+  if (q.isPending)
+    return (
+      <div className="empty" role="status">
+        Đang kiểm tra phiên…
+      </div>
+    );
+  if (q.data && ['Caregiver', 'CenterAdmin', 'Admin'].includes(q.data.role))
+    return (
+      <Routes>
+        <Route element={<Shell />}>
+          <Route path="*" element={<StatusPage kind="not-found" actions={<HomeActions />} />} />
+        </Route>
+      </Routes>
+    );
+  return (
+    <StatusPage
+      kind="not-found"
+      standalone
+      actions={
+        <>
+          <Link className="btn primary" to="/">
+            Về trang chủ
+          </Link>
+          <Link className="btn" to="/auth/login">
+            Đăng nhập
+          </Link>
+        </>
+      }
+    />
   );
 }
 export function App() {
@@ -484,34 +645,11 @@ export function App() {
               ))}
               <Route
                 path="forbidden"
-                element={
-                  <>
-                    <PageHead
-                      title="Không có quyền truy cập"
-                      description="Tài khoản của bạn không được cấp quyền cho màn hình này."
-                    />
-                    <Link className="btn" to="/dashboard">
-                      Về tổng quan
-                    </Link>
-                  </>
-                }
-              />
-              <Route
-                path="*"
-                element={
-                  <>
-                    <PageHead
-                      title="Không tìm thấy trang"
-                      description="Đường dẫn không tồn tại hoặc đã được thay đổi."
-                    />
-                    <Link className="btn" to="/dashboard">
-                      Về tổng quan
-                    </Link>
-                  </>
-                }
+                element={<StatusPage kind="forbidden" actions={<HomeActions />} />}
               />
             </Route>
           </Route>
+          <Route path="*" element={<UnknownRoute />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

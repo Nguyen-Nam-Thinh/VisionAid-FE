@@ -1,31 +1,40 @@
 import { useState } from 'react';
 import { PushSettings } from '../../components/PushSettings';
 import { Form } from '../../components/Form';
-import { Confirm, Dialog, PageHead } from '../../components/UI';
+import { Confirm, Dialog, PageHead, Toast } from '../../components/UI';
 import { useAuth, useSession } from '../../hooks/useService';
 export function Profile() {
   const { data: user } = useSession();
   const auth = useAuth();
   const [editor, setEditor] = useState<'profile' | 'password' | null>(null);
   const [message, setMessage] = useState('');
+  const [avatarError, setAvatarError] = useState('');
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
   if (!user) return null;
   return (
     <>
       <PageHead title="Hồ sơ của bạn" description="Thông tin cá nhân và bảo vệ phiên đăng nhập." />
       {message && (
-        <p role="status" className="notice">
-          {message}
-        </p>
+        <Toast message={message} onDismiss={() => setMessage('')} />
       )}
-      {auth.mode === 'api' && <PushSettings key={user.id} userId={user.id} />}
-      <div className="grid">
+      {avatarError && <p className="notice error" role="alert">{avatarError}</p>}
+      <div className="profile-layout">
         <section className="glass card stack">
           <h2>Thông tin cá nhân</h2>
-          <p>{user.email}</p>
-          <p>
-            {user.name} · {user.phone || 'Chưa có số điện thoại'}
-          </p>
+          <dl className="profile-details">
+            <div>
+              <dt>Họ và tên</dt>
+              <dd>{user.name}</dd>
+            </div>
+            <div>
+              <dt>Email</dt>
+              <dd>{user.email}</dd>
+            </div>
+            <div>
+              <dt>Số điện thoại</dt>
+              <dd>{user.phone || 'Chưa có số điện thoại'}</dd>
+            </div>
+          </dl>
           <button className="btn" onClick={() => setEditor('profile')}>
             Chỉnh sửa hồ sơ
           </button>
@@ -59,6 +68,7 @@ export function Profile() {
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
+                  setAvatarError('');
                   try {
                     if (
                       !['image/png', 'image/jpeg'].includes(file.type) ||
@@ -74,7 +84,7 @@ export function Profile() {
                     await auth.profile({ name: user.name, phone: user.phone, avatar });
                     setMessage('Đã cập nhật avatar demo.');
                   } catch (error) {
-                    setMessage(error instanceof Error ? error.message : 'Không thể đọc ảnh.');
+                    setAvatarError(error instanceof Error ? error.message : 'Không thể đọc ảnh.');
                   }
                 }}
               />
@@ -91,6 +101,9 @@ export function Profile() {
         </section>
         <section className="glass card stack">
           <h2>Đổi mật khẩu</h2>
+          <p className="muted">
+            Dùng mật khẩu riêng cho VisionAid. Bạn cần nhập mật khẩu hiện tại để thay đổi.
+          </p>
           <button className="btn" onClick={() => setEditor('password')}>
             Đổi mật khẩu
           </button>
@@ -99,12 +112,19 @@ export function Profile() {
               <Form
                 fields={[
                   { key: 'current', label: 'Mật khẩu hiện tại', type: 'password', required: true },
-                  { key: 'next', label: 'Mật khẩu mới', type: 'password', required: true },
+                  {
+                    key: 'next',
+                    label: 'Mật khẩu mới',
+                    type: 'password',
+                    required: true,
+                    autoComplete: 'new-password',
+                  },
                   {
                     key: 'confirm',
                     label: 'Nhập lại mật khẩu mới',
                     type: 'password',
                     required: true,
+                    autoComplete: 'new-password',
                   },
                 ]}
                 submit="Đổi mật khẩu"
@@ -126,6 +146,11 @@ export function Profile() {
           )}
         </section>
       </div>
+      {auth.mode === 'api' && (
+        <div className="profile-notifications">
+          <PushSettings key={user.id} userId={user.id} />
+        </div>
+      )}
       {auth.mode === 'api' && (
         <section className="glass card stack">
           <h2>Phiên đăng nhập</h2>

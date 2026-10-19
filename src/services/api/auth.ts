@@ -142,6 +142,12 @@ export function createApiAuth(
       } catch (error) {
         // A lost refresh response may already have rotated the token. Never replay it.
         if (generation === epoch) clear();
+        // BE answers a revoked/expired refresh token with 403; this is an ended session, not missing permission.
+        if (error instanceof ServiceError && (error.status === 401 || error.status === 403))
+          throw new ServiceError(
+            'Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất. Vui lòng đăng nhập lại.',
+            401,
+          );
         throw error;
       } finally {
         refreshFlight = null;
@@ -339,7 +345,14 @@ export function createApiAuth(
           'Mật khẩu mới cần 8–100 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt và khác mật khẩu cũ.',
           400,
         );
-      await authorized('/api/auth/change-password', json({ currentPassword, newPassword }));
+      try {
+        await authorized('/api/auth/change-password', json({ currentPassword, newPassword }));
+      } catch (error) {
+        // BE reports a wrong current password as 403; the shared transport would say "no permission".
+        if (error instanceof ServiceError && error.status === 403)
+          throw new ServiceError('Mật khẩu hiện tại không đúng.', 403);
+        throw error;
+      }
       clear();
     },
     login(email: string, password: string) {
