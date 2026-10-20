@@ -1,3 +1,4 @@
+import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,56 +13,56 @@ import { uiStore, useUI } from '../../stores/ui';
 const fields: FieldSpec[] = [
   {
     key: 'voiceGender',
-    label: 'Giọng đọc',
+    label: msg('Giọng đọc'),
     type: 'select',
     required: true,
     options: [
-      { value: 'Female', label: 'Nữ' },
-      { value: 'Male', label: 'Nam' },
+      { value: 'Female', label: msg('Nữ') },
+      { value: 'Male', label: msg('Nam') },
     ],
   },
   {
     key: 'speedRate',
-    label: 'Tốc độ đọc',
+    label: msg('Tốc độ đọc'),
     type: 'number',
     required: true,
     min: 0.5,
     max: 2,
     step: 0.1,
-    hint: 'Từ 0,5 đến 2 lần.',
+    hint: msg('Từ 0,5 đến 2 lần.'),
   },
   {
     key: 'volumePercent',
-    label: 'Âm lượng',
+    label: msg('Âm lượng'),
     type: 'number',
     required: true,
     min: 0,
     max: 100,
     step: 1,
-    hint: 'Từ 0 đến 100%. Mức 0 sẽ tắt âm thanh giọng đọc.',
+    hint: msg('Từ 0 đến 100%. Mức 0 sẽ tắt âm thanh giọng đọc.'),
   },
   {
     key: 'detectionMode',
-    label: 'Chế độ phát hiện',
+    label: msg('Chế độ phát hiện'),
     type: 'select',
     required: true,
     options: [
-      { value: 'Minimal', label: 'Tối giản' },
-      { value: 'Full', label: 'Đầy đủ' },
+      { value: 'Minimal', label: msg('Tối giản') },
+      { value: 'Full', label: msg('Đầy đủ') },
     ],
   },
   {
     key: 'primaryLanguage',
-    label: 'Ngôn ngữ chính',
+    label: msg('Ngôn ngữ chính'),
     required: true,
     max: 10,
-    hint: 'Mã ngôn ngữ, ví dụ vi-VN hoặc en-US. Giọng đọc khả dụng phụ thuộc thiết bị.',
+    hint: msg('Mã ngôn ngữ, ví dụ vi-VN hoặc en-US. Giọng đọc khả dụng phụ thuộc thiết bị.'),
   },
   {
     key: 'secondaryLanguage',
-    label: 'Ngôn ngữ phụ',
+    label: msg('Ngôn ngữ phụ'),
     max: 10,
-    hint: 'Để trống nếu không dùng ngôn ngữ phụ.',
+    hint: msg('Để trống nếu không dùng ngôn ngữ phụ.'),
   },
 ];
 
@@ -90,10 +91,11 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
     : ttsDefaults;
   return (
     <section className="glass card stack">
-      <h2>Giọng đọc của {name}</h2>
+      <h2>{t('Giọng đọc của {name}', { name })}</h2>
       <p className="notice">
-        Mobile cần tải lại cấu hình để áp dụng. Lưu thành công không xác nhận thiết bị đã đổi giọng
-        đọc.
+        {t(
+          'Mobile cần tải lại cấu hình để áp dụng. Lưu thành công không xác nhận thiết bị đã đổi giọng đọc.',
+        )}
       </p>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
@@ -101,39 +103,40 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
           <dl className="settings-details">
             {fields.map((field) => (
               <div key={field.key}>
-                <dt>{field.label}</dt>
+                <dt>{tText(field.label)}</dt>
                 <dd>
                   {field.options?.find((o) => o.value === initial[field.key])?.label ||
-                    String(initial[field.key] === '' ? 'Không dùng' : initial[field.key])}
-                  {field.key === 'volumePercent' ? '%' : field.key === 'speedRate' ? ' lần' : ''}
+                    String(initial[field.key] === '' ? t('Không dùng') : initial[field.key])}
+                  {field.key === 'volumePercent' ? '%' : field.key === 'speedRate' ? t(' lần') : ''}
                 </dd>
               </div>
             ))}
           </dl>
         ) : (
-          <p>Chưa có cấu hình giọng đọc. Bạn có thể tạo cấu hình cho người được chọn.</p>
+          <p>{t('Chưa có cấu hình giọng đọc. Bạn có thể tạo cấu hình cho người được chọn.')}</p>
         )}
         <div className="row">
           <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-            Tải lại cấu hình
+            {t('Tải lại cấu hình')}
           </button>
           <button
             className="btn primary"
             disabled={query.isFetching}
             onClick={() => setEditing(true)}
           >
-            {data ? 'Chỉnh sửa giọng đọc' : 'Tạo cấu hình giọng đọc'}
+            {data ? t('Chỉnh sửa giọng đọc') : t('Tạo cấu hình giọng đọc')}
           </button>
         </div>
         {editing && (
           <Dialog
-            title={data ? 'Chỉnh sửa giọng đọc' : 'Tạo cấu hình giọng đọc'}
+            title={data ? t('Chỉnh sửa giọng đọc') : t('Tạo cấu hình giọng đọc')}
             onClose={() => setEditing(false)}
           >
             {!data && (
               <p>
-                Giá trị đề xuất: giọng nữ, tốc độ 1 lần, âm lượng 80%, chế độ đầy đủ và tiếng Việt.
-                Chỉ được lưu khi bạn xác nhận.
+                {t(
+                  'Giá trị đề xuất: giọng nữ, tốc độ 1 lần, âm lượng 80%, chế độ đầy đủ và tiếng Việt. Chỉ được lưu khi bạn xác nhận.',
+                )}
               </p>
             )}
             <Form
@@ -142,13 +145,15 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
               onSubmit={async (values) => {
                 try {
                   await ttsApi.save(actor, viuId, values);
-                  setNotice('Đã lưu cấu hình trên máy chủ. Kiểm tra lại trên Mobile.');
+                  setNotice(t('Đã lưu cấu hình trên máy chủ. Kiểm tra lại trên Mobile.'));
                   setEditing(false);
                   await cache.invalidateQueries({ queryKey: key });
                 } catch (error) {
                   if ((error as { status?: number }).status! >= 500)
                     throw new Error(
-                      'Chưa xác nhận được kết quả lưu. Đóng popup và tải lại cấu hình trước khi gửi lại.',
+                      t(
+                        'Chưa xác nhận được kết quả lưu. Đóng popup và tải lại cấu hình trước khi gửi lại.',
+                      ),
                       { cause: error },
                     );
                   throw error;
@@ -184,8 +189,8 @@ function Tts({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title="Giọng đọc hỗ trợ"
-        description="Cấu hình giọng đọc được lưu trên máy chủ để ứng dụng Mobile sử dụng."
+        title={t('Giọng đọc hỗ trợ')}
+        description={t('Cấu hình giọng đọc được lưu trên máy chủ để ứng dụng Mobile sử dụng.')}
       />
       <section className="glass card stack">
         <form
@@ -198,24 +203,24 @@ function Tts({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Tìm người được chăm sóc
+            {t('Tìm người được chăm sóc')}
             <input name="search" />
           </label>
-          <button className="btn">Tìm kiếm</button>
+          <button className="btn">{t('Tìm kiếm')}</button>
           <button
             type="button"
             className="btn"
             disabled={users.isFetching}
             onClick={() => void users.refetch()}
           >
-            Tải lại người dùng
+            {t('Tải lại người dùng')}
           </button>
         </form>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           <label className="field">
-            Người được chăm sóc
+            {t('Người được chăm sóc')}
             <select value={person?.id || ''} onChange={(e) => setSelected(e.target.value)}>
-              <option value="">Chọn người được chăm sóc</option>
+              <option value="">{t('Chọn người được chăm sóc')}</option>
               {users.data?.items.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.fullName} · {item.email}
@@ -226,7 +231,11 @@ function Tts({ actor }: { actor: Person }) {
           {users.data && (
             <div className="row pagination">
               <span>
-                {users.data.totalCount} người · Trang {page}/{Math.max(1, users.data.totalPages)}
+                {t('{totalCount} người · Trang {page}/{p4}', {
+                  totalCount: users.data.totalCount,
+                  page,
+                  p4: Math.max(1, users.data.totalPages),
+                })}
               </span>
               <button
                 className="btn"
@@ -236,7 +245,7 @@ function Tts({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang trước
+                {t('Trang trước')}
               </button>
               <button
                 className="btn"
@@ -246,16 +255,16 @@ function Tts({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang sau
+                {t('Trang sau')}
               </button>
             </div>
           )}
-          {!users.data?.items.length && <p>Chưa có người được chăm sóc phù hợp.</p>}
+          {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
         </State>
       </section>
       {!users.isPending && !users.error && !person && !!users.data?.items.length && (
         <p className="notice">
-          Chọn người được chăm sóc ở trên để xem và chỉnh cấu hình giọng đọc.
+          {t('Chọn người được chăm sóc ở trên để xem và chỉnh cấu hình giọng đọc.')}
         </p>
       )}
       {!users.error && person && (

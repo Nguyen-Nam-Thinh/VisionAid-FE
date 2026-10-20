@@ -1,3 +1,4 @@
+import { t, msg } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -20,22 +21,22 @@ const options = (labels: Record<string, string>) =>
 const pairFields: FieldSpec[] = [
   {
     key: 'notificationType',
-    label: 'Loại thông báo',
+    label: msg('Loại thông báo'),
     type: 'select',
     required: true,
     options: options(notificationTypes),
   },
   {
     key: 'channel',
-    label: 'Kênh thông báo',
+    label: msg('Kênh thông báo'),
     type: 'select',
     required: true,
     options: options(channels),
   },
 ];
 const flagFields: FieldSpec[] = [
-  { key: 'isMandatory', label: 'Bắt buộc nhận', type: 'checkbox' },
-  { key: 'isActive', label: 'Đang áp dụng', type: 'checkbox' },
+  { key: 'isMandatory', label: msg('Bắt buộc nhận'), type: 'checkbox' },
+  { key: 'isActive', label: msg('Đang áp dụng'), type: 'checkbox' },
 ];
 const targetRoles = {
   Admin: roles.Admin,
@@ -79,9 +80,11 @@ function Notifications({ actor }: { actor: Person }) {
   const query = personal ? prefs : rules;
   const orgName = useOwnOrgName(actor);
   const scope = (orgId: string | null) =>
-    orgId ? (orgId === actor.orgId && orgName) || orgId : 'Toàn hệ thống';
+    orgId ? (orgId === actor.orgId && orgName) || orgId : t('Toàn hệ thống');
   async function changed(
-    message = 'Đã lưu trên máy chủ. Việc gửi thông báo còn phụ thuộc quy tắc và dịch vụ phân phối.',
+    message = t(
+      'Đã lưu trên máy chủ. Việc gửi thông báo còn phụ thuộc quy tắc và dịch vụ phân phối.',
+    ),
   ) {
     setNotice(message);
     await cache.invalidateQueries({ queryKey: prefix });
@@ -93,15 +96,17 @@ function Notifications({ actor }: { actor: Person }) {
     }
   };
   if (!allowed)
-    return <p className="notice error">Tài khoản cần thuộc một trung tâm để quản lý quy tắc.</p>;
+    return (
+      <p className="notice error">{t('Tài khoản cần thuộc một trung tâm để quản lý quy tắc.')}</p>
+    );
   return (
     <>
       <PageHead
-        title={personal ? 'Tùy chọn thông báo' : 'Quy tắc thông báo'}
+        title={personal ? t('Tùy chọn thông báo') : t('Quy tắc thông báo')}
         description={
           personal
-            ? 'Thiết lập theo loại và kênh cho tài khoản của bạn.'
-            : 'Quy tắc toàn hệ thống và quy tắc riêng của trung tâm.'
+            ? t('Thiết lập theo loại và kênh cho tài khoản của bạn.')
+            : t('Quy tắc toàn hệ thống và quy tắc riêng của trung tâm.')
         }
         actions={
           <button
@@ -112,19 +117,24 @@ function Notifications({ actor }: { actor: Person }) {
               setEditor(personal ? { isEnabled: true } : { isMandatory: false, isActive: true });
             }}
           >
-            {personal ? 'Thiết lập tùy chọn' : 'Thêm quy tắc'}
+            {personal ? t('Thiết lập tùy chọn') : t('Thêm quy tắc')}
           </button>
         }
       />
       <p className="notice">
         {personal
-          ? 'Tùy chọn chỉ áp dụng khi quy tắc không bắt buộc. Thông báo bắt buộc vẫn được gửi dù bạn chọn tắt. Máy chủ chưa cung cấp danh sách quy tắc bắt buộc cho tài khoản này.'
-          : 'Quy tắc riêng được máy chủ xử lý theo phạm vi trung tâm. Center Admin chỉ xem quy tắc toàn hệ thống, không được sửa hoặc xóa.'}
+          ? t(
+              'Tùy chọn chỉ áp dụng khi quy tắc không bắt buộc. Thông báo bắt buộc vẫn được gửi dù bạn chọn tắt. Máy chủ chưa cung cấp danh sách quy tắc bắt buộc cho tài khoản này.',
+            )
+          : t(
+              'Quy tắc riêng được máy chủ xử lý theo phạm vi trung tâm. Center Admin chỉ xem quy tắc toàn hệ thống, không được sửa hoặc xóa.',
+            )}
       </p>
       {personal && (
         <p className="muted">
-          Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và
-          chọn Bật thông báo trình duyệt.
+          {t(
+            'Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và chọn Bật thông báo trình duyệt.',
+          )}
         </p>
       )}
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
@@ -132,10 +142,14 @@ function Notifications({ actor }: { actor: Person }) {
         <div className="row">
           {(
             [
-              ['notificationType', 'Lọc loại thông báo', notificationTypes],
-              ['channel', 'Lọc kênh', channels],
-              ['targetRole', 'Lọc vai trò', targetRoles],
-              ['isActive', 'Lọc trạng thái', { true: 'Đang áp dụng', false: 'Ngừng áp dụng' }],
+              ['notificationType', t('Lọc loại thông báo'), notificationTypes],
+              ['channel', t('Lọc kênh'), channels],
+              ['targetRole', t('Lọc vai trò'), targetRoles],
+              [
+                'isActive',
+                t('Lọc trạng thái'),
+                { true: t('Đang áp dụng'), false: t('Ngừng áp dụng') },
+              ],
             ] as const
           ).map(([key, label, labels]) => (
             <label className="field" key={key}>
@@ -149,7 +163,7 @@ function Notifications({ actor }: { actor: Person }) {
                   setSelected(null);
                 }}
               >
-                <option value="">Tất cả</option>
+                <option value="">{t('Tất cả')}</option>
                 {options(labels).map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
@@ -165,16 +179,16 @@ function Notifications({ actor }: { actor: Person }) {
           {personal ? (
             <>
               {!prefs.data?.length && (
-                <p>Chưa lưu tùy chọn nào. Máy chủ áp dụng quy tắc mặc định.</p>
+                <p>{t('Chưa lưu tùy chọn nào. Máy chủ áp dụng quy tắc mặc định.')}</p>
               )}
               <div className="table-scroll">
                 <table>
                   <thead>
                     <tr>
-                      <th>Loại</th>
-                      <th>Kênh</th>
-                      <th>Tùy chọn đã lưu</th>
-                      <th>Thao tác</th>
+                      <th>{t('Loại')}</th>
+                      <th>{t('Kênh')}</th>
+                      <th>{t('Tùy chọn đã lưu')}</th>
+                      <th>{t('Thao tác')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -182,7 +196,7 @@ function Notifications({ actor }: { actor: Person }) {
                       <tr key={item.id}>
                         <td>{notificationTypes[item.notificationType]}</td>
                         <td>{channels[item.channel]}</td>
-                        <td>{item.isEnabled ? 'Bật' : 'Tắt nếu không bắt buộc'}</td>
+                        <td>{item.isEnabled ? t('Bật') : t('Tắt nếu không bắt buộc')}</td>
                         <td>
                           <button
                             className="btn small"
@@ -194,7 +208,7 @@ function Notifications({ actor }: { actor: Person }) {
                               })
                             }
                           >
-                            Chỉnh sửa
+                            {t('Chỉnh sửa')}
                           </button>
                         </td>
                       </tr>
@@ -205,16 +219,16 @@ function Notifications({ actor }: { actor: Person }) {
             </>
           ) : (
             <>
-              {!rules.data?.items.length && <p>Không có quy tắc phù hợp.</p>}
+              {!rules.data?.items.length && <p>{t('Không có quy tắc phù hợp.')}</p>}
               <div className="table-scroll">
                 <table>
                   <thead>
                     <tr>
-                      <th>Loại / Kênh</th>
-                      <th>Người nhận</th>
-                      <th>Phạm vi</th>
-                      <th>Trạng thái</th>
-                      <th>Thao tác</th>
+                      <th>{t('Loại / Kênh')}</th>
+                      <th>{t('Người nhận')}</th>
+                      <th>{t('Phạm vi')}</th>
+                      <th>{t('Trạng thái')}</th>
+                      <th>{t('Thao tác')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -229,18 +243,18 @@ function Notifications({ actor }: { actor: Person }) {
                         <td>
                           {item.organizationId ? (
                             <>
-                              Riêng trung tâm
+                              {t('Riêng trung tâm')}
                               <br />
                               <small>{scope(item.organizationId)}</small>
                             </>
                           ) : (
-                            'Toàn hệ thống'
+                            t('Toàn hệ thống')
                           )}
                         </td>
                         <td>
-                          {item.isActive ? 'Đang áp dụng' : 'Ngừng áp dụng'}
+                          {item.isActive ? t('Đang áp dụng') : t('Ngừng áp dụng')}
                           <br />
-                          {item.isMandatory ? 'Bắt buộc' : 'Theo tùy chọn'}
+                          {item.isMandatory ? t('Bắt buộc') : t('Theo tùy chọn')}
                         </td>
                         <td>
                           {canEditRule(actor, item) ? (
@@ -255,17 +269,17 @@ function Notifications({ actor }: { actor: Person }) {
                                   });
                                 }}
                               >
-                                Chỉnh sửa
+                                {t('Chỉnh sửa')}
                               </button>
                               <button
                                 className="btn danger small"
                                 onClick={() => setDeleting(item)}
                               >
-                                Xóa
+                                {t('Xóa')}
                               </button>
                             </div>
                           ) : (
-                            'Chỉ xem'
+                            t('Chỉ xem')
                           )}
                         </td>
                       </tr>
@@ -276,22 +290,25 @@ function Notifications({ actor }: { actor: Person }) {
               {rules.data && (
                 <div className="row pagination">
                   <span>
-                    {rules.data.totalCount} kết quả · Trang {page}/
-                    {Math.max(1, rules.data.totalPages)}
+                    {t('{totalCount} kết quả · Trang {page}/{p4}', {
+                      totalCount: rules.data.totalCount,
+                      page,
+                      p4: Math.max(1, rules.data.totalPages),
+                    })}
                   </span>
                   <button
                     className="btn"
                     disabled={rules.isFetching || !rules.data.hasPreviousPage}
                     onClick={() => setPage(page - 1)}
                   >
-                    Trang trước
+                    {t('Trang trước')}
                   </button>
                   <button
                     className="btn"
                     disabled={rules.isFetching || !rules.data.hasNextPage}
                     onClick={() => setPage(page + 1)}
                   >
-                    Trang sau
+                    {t('Trang sau')}
                   </button>
                 </div>
               )}
@@ -301,11 +318,13 @@ function Notifications({ actor }: { actor: Person }) {
       </State>
       {editor && !query.isError && (
         <Dialog
-          title={personal ? 'Lưu tùy chọn' : selected ? 'Sửa quy tắc' : 'Thêm quy tắc'}
+          title={personal ? t('Lưu tùy chọn') : selected ? t('Sửa quy tắc') : t('Thêm quy tắc')}
           onClose={close}
         >
           <p className="notice">
-            Nếu có lỗi hoặc mất kết nối khi lưu, hãy đóng và tải lại để kiểm tra trước khi gửi lại.
+            {t(
+              'Nếu có lỗi hoặc mất kết nối khi lưu, hãy đóng và tải lại để kiểm tra trước khi gửi lại.',
+            )}
           </p>
           {selected && (
             <p>
@@ -319,7 +338,7 @@ function Notifications({ actor }: { actor: Person }) {
               personal
                 ? [
                     ...pairFields,
-                    { key: 'isEnabled', label: 'Bật nhận khi không bắt buộc', type: 'checkbox' },
+                    { key: 'isEnabled', label: t('Bật nhận khi không bắt buộc'), type: 'checkbox' },
                   ]
                 : [
                     ...(selected
@@ -328,7 +347,7 @@ function Notifications({ actor }: { actor: Person }) {
                           ...pairFields,
                           {
                             key: 'targetRole',
-                            label: 'Vai trò nhận',
+                            label: t('Vai trò nhận'),
                             type: 'select' as const,
                             required: true,
                             options: options(targetRoles),
@@ -337,8 +356,10 @@ function Notifications({ actor }: { actor: Person }) {
                             ? [
                                 {
                                   key: 'organizationId',
-                                  label: 'Mã trung tâm (UUID)',
-                                  hint: 'Để trống để áp dụng toàn hệ thống. Lấy mã từ trang Tổ chức.',
+                                  label: t('Mã trung tâm (UUID)'),
+                                  hint: t(
+                                    'Để trống để áp dụng toàn hệ thống. Lấy mã từ trang Tổ chức.',
+                                  ),
                                 },
                               ]
                             : []),
@@ -346,7 +367,7 @@ function Notifications({ actor }: { actor: Person }) {
                     ...flagFields,
                     {
                       key: 'confirm',
-                      label: 'Tôi xác nhận thay đổi quy tắc gửi thông báo',
+                      label: t('Tôi xác nhận thay đổi quy tắc gửi thông báo'),
                       type: 'checkbox',
                     },
                   ]
@@ -356,7 +377,7 @@ function Notifications({ actor }: { actor: Person }) {
               try {
                 if (personal) await notificationsApi.savePreference(actor, values);
                 else {
-                  if (!values.confirm) throw new Error('Cần xác nhận thay đổi quy tắc.');
+                  if (!values.confirm) throw new Error(t('Cần xác nhận thay đổi quy tắc.'));
                   if (selected) await notificationsApi.updateRule(actor, selected, values);
                   else
                     await notificationsApi.createRule(actor, {
@@ -379,7 +400,7 @@ function Notifications({ actor }: { actor: Person }) {
       )}
       {deleting && !query.isError && (
         <Confirm
-          title="Xóa quy tắc thông báo?"
+          title={t('Xóa quy tắc thông báo?')}
           description={
             notificationTypes[deleting.notificationType] +
             ' · ' +
@@ -388,12 +409,14 @@ function Notifications({ actor }: { actor: Person }) {
             targetRoles[deleting.targetRole] +
             ' · ' +
             scope(deleting.organizationId) +
-            '. Việc gửi thông báo có thể thay đổi sau khi xóa; quy tắc toàn hệ thống có thể được áp dụng lại.'
+            t(
+              '. Việc gửi thông báo có thể thay đổi sau khi xóa; quy tắc toàn hệ thống có thể được áp dụng lại.',
+            )
           }
           onClose={() => setDeleting(null)}
           onConfirm={async () => {
             await notificationsApi.removeRule(actor, deleting);
-            await changed('Đã xóa quy tắc trên máy chủ.');
+            await changed(t('Đã xóa quy tắc trên máy chủ.'));
           }}
         />
       )}

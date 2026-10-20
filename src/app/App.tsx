@@ -1,3 +1,5 @@
+import { t, useI18n } from '../i18n';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ApiNotifications } from '../pages/shared/ApiNotifications';
 import { ApiPackages } from '../pages/shared/ApiPackages';
 import { ApiPayments } from '../pages/shared/ApiPayments';
@@ -86,7 +88,7 @@ export function Guard({ role }: { role?: string }) {
   if (q.isPending)
     return (
       <div className="empty" role="status">
-        Đang kiểm tra phiên…
+        {t('Đang kiểm tra phiên…')}
       </div>
     );
   if (q.isError)
@@ -95,7 +97,7 @@ export function Guard({ role }: { role?: string }) {
         <State error={q.error} retry={() => q.refetch()}>
           <span />
         </State>
-        <Link to="/auth/login">Đăng nhập</Link>
+        <Link to="/auth/login">{t('Đăng nhập')}</Link>
       </div>
     );
   if (!q.data)
@@ -113,7 +115,7 @@ export function Guard({ role }: { role?: string }) {
         standalone
         actions={
           <button className="btn primary" onClick={() => auth.logout()}>
-            Đăng xuất
+            {t('Đăng xuất')}
           </button>
         }
       />
@@ -224,7 +226,7 @@ function Shell() {
   const content = (
     <div className={'shell' + (collapsed ? ' sidebar-collapsed' : '')}>
       <a className="skip" href="#main">
-        Đến nội dung chính
+        {t('Đến nội dung chính')}
       </a>
       <aside className={'sidebar' + (open ? ' open' : '')}>
         <div className="sidebar-brand">
@@ -232,18 +234,18 @@ function Shell() {
           <button
             className="btn sidebar-toggle"
             onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
-            title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+            aria-label={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
+            title={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
             aria-expanded={!collapsed}
           >
             {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
           </button>
         </div>
         <div>
-          <nav className="nav" aria-label="Điều hướng chính">
-            <NavLink to="/dashboard" title="Tổng quan" end onClick={() => setOpen(false)}>
+          <nav className="nav" aria-label={t('Điều hướng chính')}>
+            <NavLink to="/dashboard" title={t('Tổng quan')} end onClick={() => setOpen(false)}>
               <LayoutDashboard size={18} />
-              <span>Tổng quan</span>
+              <span>{t('Tổng quan')}</span>
             </NavLink>
             {menu[user.role]
               ?.filter(
@@ -291,8 +293,8 @@ function Shell() {
                     runtime.mode === 'api' &&
                     user.role === 'Caregiver' &&
                     item.path === 'caregivers'
-                      ? 'Liên kết của tôi'
-                      : item.label
+                      ? t('Liên kết của tôi')
+                      : t(item.label)
                   }
                   to={roleBase(user.role) + '/' + item.path}
                   onClick={() => setOpen(false)}
@@ -306,13 +308,13 @@ function Shell() {
                     {runtime.mode === 'api' &&
                     user.role === 'Caregiver' &&
                     item.path === 'caregivers'
-                      ? 'Liên kết của tôi'
-                      : item.label}
+                      ? t('Liên kết của tôi')
+                      : t(item.label)}
                   </span>
                   {locked(item.path) && (
-                    <span className="nav-lock" title="Cần gói dịch vụ">
+                    <span className="nav-lock" title={t('Cần gói dịch vụ')}>
                       <Lock size={14} aria-hidden="true" />
-                      <span className="sr-only">(cần gói dịch vụ)</span>
+                      <span className="sr-only">{t('(cần gói dịch vụ)')}</span>
                     </span>
                   )}
                 </NavLink>
@@ -322,53 +324,57 @@ function Shell() {
         <div className="sidebar-foot stack">
           <div className="notice">
             <ShieldCheck size={20} />
-            <p>Mỗi kết nối là một sự an tâm.</p>
+            <p>{t('Mỗi kết nối là một sự an tâm.')}</p>
           </div>
           <nav className="nav">
             {runtime.mode === 'api' && user.role === 'Caregiver' && (
               <NavLink
-                title="Lịch sử cuộc gọi"
+                title={t('Lịch sử cuộc gọi')}
                 to="/caregiver/calls"
                 onClick={() => setOpen(false)}
               >
                 <Phone size={18} aria-hidden="true" />
-                <span>Lịch sử cuộc gọi</span>
+                <span>{t('Lịch sử cuộc gọi')}</span>
               </NavLink>
             )}
             {runtime.mode === 'api' && user.role === 'CenterAdmin' && user.orgId && (
               <>
                 <NavLink
-                  title="Kho license"
+                  title={t('Kho license')}
                   to="/center-admin/licenses"
                   onClick={() => setOpen(false)}
                 >
                   <ShieldCheck size={18} aria-hidden="true" />
-                  <span>Kho license</span>
+                  <span>{t('Kho license')}</span>
                 </NavLink>
                 <NavLink
-                  title="Thanh toán"
+                  title={t('Thanh toán')}
                   to="/center-admin/payments"
                   onClick={() => setOpen(false)}
                 >
                   <CreditCard size={18} aria-hidden="true" />
-                  <span>Thanh toán</span>
+                  <span>{t('Thanh toán')}</span>
                 </NavLink>
               </>
             )}
             {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink title="Nhật ký Hybrid" to="/admin/hybrid" onClick={() => setOpen(false)}>
+              <NavLink
+                title={t('Nhật ký Hybrid')}
+                to="/admin/hybrid"
+                onClick={() => setOpen(false)}
+              >
                 <Activity size={18} aria-hidden="true" />
-                <span>Nhật ký Hybrid</span>
+                <span>{t('Nhật ký Hybrid')}</span>
               </NavLink>
             )}
             {runtime.mode === 'api' && user.role === 'Admin' && (
               <NavLink
-                title="Máy chủ cuộc gọi"
+                title={t('Máy chủ cuộc gọi')}
                 to="/admin/ice-servers"
                 onClick={() => setOpen(false)}
               >
                 <Settings size={18} aria-hidden="true" />
-                <span>Máy chủ cuộc gọi</span>
+                <span>{t('Máy chủ cuộc gọi')}</span>
               </NavLink>
             )}
             {runtime.mode === 'api' && (
@@ -378,9 +384,13 @@ function Shell() {
               </NavLink>
             )}
             {runtime.mode === 'api' && user.role === 'Caregiver' && !user.orgId && (
-              <NavLink title="Thanh toán" to="/caregiver/payments" onClick={() => setOpen(false)}>
+              <NavLink
+                title={t('Thanh toán')}
+                to="/caregiver/payments"
+                onClick={() => setOpen(false)}
+              >
                 <CreditCard size={18} aria-hidden="true" />
-                <span>Thanh toán</span>
+                <span>{t('Thanh toán')}</span>
               </NavLink>
             )}
             {runtime.mode === 'api' &&
@@ -388,12 +398,12 @@ function Shell() {
                 user.role === 'CenterAdmin' ||
                 (user.role === 'Caregiver' && !user.orgId)) && (
                 <NavLink
-                  title="Gói dịch vụ"
+                  title={t('Gói dịch vụ')}
                   to={user.role === 'Admin' ? '/admin/packages' : '/packages'}
                   onClick={() => setOpen(false)}
                 >
                   <Package size={18} aria-hidden="true" />
-                  <span>Gói dịch vụ</span>
+                  <span>{t('Gói dịch vụ')}</span>
                 </NavLink>
               )}
           </nav>
@@ -404,7 +414,7 @@ function Shell() {
           <div className="row">
             <button
               className="btn mobile-menu"
-              aria-label="Mở điều hướng"
+              aria-label={t('Mở điều hướng')}
               aria-expanded={open}
               onClick={() => setOpen(!open)}
             >
@@ -414,19 +424,24 @@ function Shell() {
               VisionAid <span aria-hidden="true">/</span> {roles[user.role]}
             </span>
           </div>
-          <button
-            className="row account-trigger"
-            popoverTarget="account-menu"
-            aria-label="Menu tài khoản"
-          >
-            <span className="avatar">{user.name.split(' ').at(-1)?.slice(0, 2).toUpperCase()}</span>
-            <span style={{ fontSize: 13, color: 'var(--text)' }}>
-              <strong>{user.name}</strong>
-              <br />
-              <small>{roles[user.role]}</small>
-            </span>
-            <ChevronDown size={16} aria-hidden="true" />
-          </button>
+          <div className="topbar-actions">
+            <LanguageSwitch />
+            <button
+              className="row account-trigger"
+              popoverTarget="account-menu"
+              aria-label={t('Menu tài khoản')}
+            >
+              <span className="avatar">
+                {user.name.split(' ').at(-1)?.slice(0, 2).toUpperCase()}
+              </span>
+              <span style={{ fontSize: 13, color: 'var(--text)' }}>
+                <strong>{user.name}</strong>
+                <br />
+                <small>{roles[user.role]}</small>
+              </span>
+              <ChevronDown size={16} aria-hidden="true" />
+            </button>
+          </div>
           <div id="account-menu" popover="auto" className="account-menu">
             <Link
               to="/profile"
@@ -435,7 +450,7 @@ function Shell() {
                 setOpen(false);
               }}
             >
-              <UserRound size={18} aria-hidden="true" /> Hồ sơ của tôi
+              <UserRound size={18} aria-hidden="true" /> {t('Hồ sơ của tôi')}
             </Link>{' '}
             <button
               className="btn"
@@ -450,7 +465,7 @@ function Shell() {
               }}
             >
               <LogOut size={16} />
-              {signingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
+              {signingOut ? t('Đang đăng xuất…') : t('Đăng xuất')}
             </button>
           </div>
         </header>
@@ -463,7 +478,7 @@ function Shell() {
           )}
         {auth.mode === 'mock' && (
           <div className="demo-strip">
-            <span>● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối backend</span>
+            <span>{t('● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối backend')}</span>
             <button
               style={{
                 border: 0,
@@ -473,7 +488,7 @@ function Shell() {
               }}
               onClick={() => setReset(true)}
             >
-              Reset dữ liệu demo
+              {t('Reset dữ liệu demo')}
             </button>
           </div>
         )}
@@ -481,7 +496,7 @@ function Shell() {
           <Suspense
             fallback={
               <div className="glass empty" role="status">
-                Đang tải màn hình…
+                {t('Đang tải màn hình…')}
               </div>
             }
           >
@@ -494,8 +509,10 @@ function Shell() {
       {notice && <Toast message={notice} onDismiss={() => uiStore.set({ notice: '' })} />}
       {reset && (
         <Confirm
-          title="Reset dữ liệu demo?"
-          description="Xóa toàn bộ thay đổi, ảnh demo và phiên đăng nhập trên trình duyệt này để trở về dữ liệu mẫu."
+          title={t('Reset dữ liệu demo?')}
+          description={t(
+            'Xóa toàn bộ thay đổi, ảnh demo và phiên đăng nhập trên trình duyệt này để trở về dữ liệu mẫu.',
+          )}
           onClose={() => setReset(false)}
           onConfirm={auth.resetDemo}
         />
@@ -518,10 +535,10 @@ function HomeActions() {
   return (
     <>
       <Link className="btn primary" to="/dashboard">
-        Về tổng quan
+        {t('Về tổng quan')}
       </Link>
       <button className="btn" onClick={() => window.history.back()}>
-        Quay lại trang trước
+        {t('Quay lại trang trước')}
       </button>
     </>
   );
@@ -533,7 +550,7 @@ function UnknownRoute() {
   if (q.isPending)
     return (
       <div className="empty" role="status">
-        Đang kiểm tra phiên…
+        {t('Đang kiểm tra phiên…')}
       </div>
     );
   if (q.data && ['Caregiver', 'CenterAdmin', 'Admin'].includes(q.data.role))
@@ -551,10 +568,10 @@ function UnknownRoute() {
       actions={
         <>
           <Link className="btn primary" to="/">
-            Về trang chủ
+            {t('Về trang chủ')}
           </Link>
           <Link className="btn" to="/auth/login">
-            Đăng nhập
+            {t('Đăng nhập')}
           </Link>
         </>
       }
@@ -562,6 +579,8 @@ function UnknownRoute() {
   );
 }
 export function App() {
+  // Subscribing at the root re-renders the whole tree (state kept) when the language changes.
+  useI18n();
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

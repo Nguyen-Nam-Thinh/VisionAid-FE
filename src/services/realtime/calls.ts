@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import type { HubConnection } from '@microsoft/signalr';
 import type { Person } from '../../models/domain';
@@ -53,12 +54,12 @@ type Dependencies = {
 // Hold a per-account browser lock until media is closed; another tab must not answer too.
 async function browserLock(userId: string): Promise<() => void> {
   if (!navigator.locks)
-    throw Error('Trình duyệt chưa hỗ trợ khóa cuộc gọi. Hãy dùng Chrome hoặc Edge mới.');
+    throw Error(t('Trình duyệt chưa hỗ trợ khóa cuộc gọi. Hãy dùng Chrome hoặc Edge mới.'));
   return new Promise((resolve, reject) => {
     void navigator.locks
       .request(`visionaid.call.${userId}`, { ifAvailable: true }, (lock) => {
         if (!lock) {
-          reject(Error('Cuộc gọi đang được xử lý ở tab khác.'));
+          reject(Error(t('Cuộc gọi đang được xử lý ở tab khác.')));
           return;
         }
         return new Promise<void>((release) => resolve(release));
@@ -132,7 +133,7 @@ export function createCallClient({
     update({ phase: 'ended', message, remote: null, muted: false });
     changed();
   };
-  async function end(message = 'Đã kết thúc cuộc gọi.', reason = 'user_hangup') {
+  async function end(message = t('Đã kết thúc cuộc gọi.'), reason = 'user_hangup') {
     if (!active()) return;
     const sessionId = view.sessionId;
     // Hanging up an outgoing call nobody answered is a cancellation: BE records it as Missed.
@@ -146,21 +147,21 @@ export function createCallClient({
       } catch {
         if (current(epoch))
           update({
-            message: message + ' Chưa xác nhận kết thúc trên máy chủ. Kiểm tra lại lịch sử.',
+            message: message + t(' Chưa xác nhận kết thúc trên máy chủ. Kiểm tra lại lịch sử.'),
           });
       }
       changed();
     }
   }
   const fail = () =>
-    end('Không thể kết nối âm thanh hoặc hình ảnh. Hãy thử gọi lại.', 'connection_failed');
+    end(t('Không thể kết nối âm thanh hoặc hình ảnh. Hãy thử gọi lại.'), 'connection_failed');
   const relay = async (method: string, value: string, epoch: number) => {
     if (!current(epoch) || !hub || view.network !== 'connected') return;
     await hub.invoke(method, view.sessionId, value);
   };
   const filters = (viuId = '') => ({ viuUserId: viuId, dateFrom: '', dateTo: '' });
   let recovering = false;
-  async function recover(sessionId?: string, name = 'Người được chăm sóc') {
+  async function recover(sessionId?: string, name = t('Người được chăm sóc')) {
     if (!enabled || actor.role !== 'Caregiver' || view.network !== 'connected' || recovering)
       return;
     if (active() || busy) return;
@@ -187,10 +188,10 @@ export function createCallClient({
         name,
         message:
           call.triggerType === 'SosAuto'
-            ? 'Cuộc gọi SOS đến. Chọn nhận để bật micro.'
+            ? t('Cuộc gọi SOS đến. Chọn nhận để bật micro.')
             : call.triggerType === 'ViuVoiceCommand'
-              ? 'Người được chăm sóc gọi bằng giọng nói. Chọn nhận để bật micro.'
-              : 'Cuộc gọi đến. Chọn nhận để bật micro.',
+              ? t('Người được chăm sóc gọi bằng giọng nói. Chọn nhận để bật micro.')
+              : t('Cuộc gọi đến. Chọn nhận để bật micro.'),
         remote: null,
       });
       watch();
@@ -209,32 +210,33 @@ export function createCallClient({
       if (!current(epoch)) return;
       const call = result.items.find((item) => item.sessionId === view.sessionId);
       if (!call) {
-        await end('Không còn xác minh được phiên gọi.', 'session_unavailable');
+        await end(t('Không còn xác minh được phiên gọi.'), 'session_unavailable');
         return;
       }
       if (['Ended', 'Missed', 'Rejected'].includes(call.status)) {
         finish(
           call.status === 'Missed'
-            ? 'Cuộc gọi không được trả lời.'
+            ? t('Cuộc gọi không được trả lời.')
             : call.status === 'Rejected'
-              ? 'Cuộc gọi đã bị từ chối.'
-              : 'Cuộc gọi đã kết thúc.',
+              ? t('Cuộc gọi đã bị từ chối.')
+              : t('Cuộc gọi đã kết thúc.'),
         );
         return;
       }
       if (call.status === 'Connected' && view.phase === 'incoming') {
-        finish('Cuộc gọi đã được nhận trên thiết bị khác.');
+        finish(t('Cuộc gọi đã được nhận trên thiết bị khác.'));
         return;
       }
       await api.authorize(actor, view.viuId);
       if (current(epoch))
         update({
-          message: view.phase === 'connected' ? 'Âm thanh và hình ảnh đã kết nối.' : view.message,
+          message:
+            view.phase === 'connected' ? t('Âm thanh và hình ảnh đã kết nối.') : view.message,
         });
     } catch {
       if (current(epoch))
         await end(
-          'Không thể xác minh quyền hoặc trạng thái cuộc gọi.',
+          t('Không thể xác minh quyền hoặc trạng thái cuộc gọi.'),
           'permission_or_network_lost',
         );
     } finally {
@@ -250,8 +252,8 @@ export function createCallClient({
     // Local setup watchdog, not the server's configurable ring timeout or Missed status.
     timeout = setTimeout(() => {
       if (view.phase === 'incoming')
-        finish('Cuộc gọi đến đã đóng. Xem lịch sử để kiểm tra trạng thái.');
-      else void end('Chờ kết nối quá lâu. Hãy thử gọi lại.', 'client_setup_timeout');
+        finish(t('Cuộc gọi đến đã đóng. Xem lịch sử để kiểm tra trạng thái.'));
+      else void end(t('Chờ kết nối quá lâu. Hãy thử gọi lại.'), 'client_setup_timeout');
     }, 60000);
   }
   async function acquire(epoch: number) {
@@ -267,10 +269,10 @@ export function createCallClient({
       return false;
     }
     stream = tracks;
-    if (!tracks.getAudioTracks().length) throw Error('Không tìm thấy micro hoạt động.');
+    if (!tracks.getAudioTracks().length) throw Error(t('Không tìm thấy micro hoạt động.'));
     tracks.getAudioTracks().forEach((track) => {
       track.onended = () => {
-        if (current(epoch)) void end('Micro đã ngắt kết nối.', 'microphone_lost');
+        if (current(epoch)) void end(t('Micro đã ngắt kết nối.'), 'microphone_lost');
       };
     });
     return true;
@@ -304,7 +306,7 @@ export function createCallClient({
       if (!current(epoch)) return;
       if (connection.connectionState === 'connected') {
         if (timeout) clearTimeout(timeout);
-        update({ phase: 'connected', message: 'Âm thanh và hình ảnh đã kết nối.' });
+        update({ phase: 'connected', message: t('Âm thanh và hình ảnh đã kết nối.') });
       } else if (['failed', 'disconnected'].includes(connection.connectionState)) void fail();
     };
   }
@@ -324,13 +326,15 @@ export function createCallClient({
     if (name === 'WebRtcCallEnded' || name === 'WebRtcCallRejected') {
       rememberClosed(data.sessionId);
       if (active() && data.sessionId === view.sessionId)
-        finish(name === 'WebRtcCallRejected' ? 'Cuộc gọi đã bị từ chối.' : 'Cuộc gọi đã kết thúc.');
+        finish(
+          name === 'WebRtcCallRejected' ? t('Cuộc gọi đã bị từ chối.') : t('Cuộc gọi đã kết thúc.'),
+        );
       return;
     }
     if (!active() || data.sessionId !== view.sessionId) return;
     if (name === 'WebRtcCallAccepted') {
       if (view.phase === 'ringing')
-        update({ phase: 'connecting', message: 'Đã chấp nhận, đang chờ âm thanh và hình ảnh…' });
+        update({ phase: 'connecting', message: t('Đã chấp nhận, đang chờ âm thanh và hình ảnh…') });
       return;
     }
     if (!pc || view.phase === 'incoming') {
@@ -397,13 +401,13 @@ export function createCallClient({
       phase: 'preparing',
       viuId,
       name,
-      message: 'Đang xin quyền micro…',
+      message: t('Đang xin quyền micro…'),
       ...(incoming ? {} : { sessionId: '' }),
     });
     try {
       await api.authorize(actor, viuId);
       if (!current(epoch) || !(await acquire(epoch))) return;
-      update({ message: 'Đang tạo kết nối…' });
+      update({ message: t('Đang tạo kết nối…') });
       requested = true;
       const session = incoming
         ? await api.accept(view.sessionId)
@@ -417,7 +421,7 @@ export function createCallClient({
       update({
         sessionId: session.sessionId,
         phase: incoming ? 'connecting' : 'ringing',
-        message: incoming ? 'Đang chờ âm thanh và hình ảnh…' : 'Đang đổ chuông…',
+        message: incoming ? t('Đang chờ âm thanh và hình ảnh…') : t('Đang đổ chuông…'),
       });
       prepare(session, epoch);
       busy = false;
@@ -428,10 +432,10 @@ export function createCallClient({
       if (current(epoch)) {
         const message =
           error instanceof DOMException && error.name === 'NotAllowedError'
-            ? 'Bạn chưa cho phép micro. Hãy cấp quyền rồi thử lại.'
+            ? t('Bạn chưa cho phép micro. Hãy cấp quyền rồi thử lại.')
             : error instanceof Error
               ? error.message
-              : 'Không thể bắt đầu cuộc gọi.';
+              : t('Không thể bắt đầu cuộc gọi.');
         if (incoming && !confirmed) {
           // A rejected accept may belong to another device; never end its media session.
           cleanup();
@@ -482,7 +486,7 @@ export function createCallClient({
       update({ network: state });
       if (state !== 'connected' && active())
         void end(
-          'Mất kết nối cuộc gọi. Micro đã tắt; hãy gọi lại khi mạng ổn định.',
+          t('Mất kết nối cuộc gọi. Micro đã tắt; hãy gọi lại khi mạng ổn định.'),
           'signaling_lost',
         );
     },
@@ -492,13 +496,13 @@ export function createCallClient({
     async reject() {
       if (view.phase !== 'incoming' || busy) return;
       const sessionId = view.sessionId;
-      finish('Đã đóng cuộc gọi đến.');
+      finish(t('Đã đóng cuộc gọi đến.'));
       const epoch = generation;
       try {
         await api.reject(sessionId);
       } catch {
         if (current(epoch))
-          update({ message: 'Chưa xác nhận từ chối trên máy chủ. Kiểm tra lại lịch sử.' });
+          update({ message: t('Chưa xác nhận từ chối trên máy chủ. Kiểm tra lại lịch sử.') });
       }
       changed();
     },

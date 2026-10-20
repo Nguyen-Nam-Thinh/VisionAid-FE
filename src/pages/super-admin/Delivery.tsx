@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import { PageHead, State, DataTable, Badge, Dialog } from '../../components/UI';
@@ -9,19 +10,21 @@ export function Delivery() {
   const [selected, setSelected] = useState('');
   const delivery = db?.deliveries.find((d) => d.id === selected);
   const labels = {
-    SENT: 'Đã gửi · mô phỏng',
-    FAILED: 'Thất bại · mô phỏng',
-    PENDING: 'Đang chờ · mô phỏng',
+    SENT: t('Đã gửi · mô phỏng'),
+    FAILED: t('Thất bại · mô phỏng'),
+    PENDING: t('Đang chờ · mô phỏng'),
   };
   return (
     <>
       <PageHead
-        title="Theo dõi thông báo"
-        description="Giám sát trạng thái delivery theo kênh. Toàn bộ bản ghi dưới đây là dữ liệu minh họa, không phải xác nhận gửi thật."
+        title={t('Theo dõi thông báo')}
+        description={t(
+          'Giám sát trạng thái delivery theo kênh. Toàn bộ bản ghi dưới đây là dữ liệu minh họa, không phải xác nhận gửi thật.',
+        )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <DataTable
-          title="Nhật ký delivery"
+          title={t('Nhật ký delivery')}
           rows={
             db?.deliveries.filter(
               (d) =>
@@ -33,9 +36,9 @@ export function Delivery() {
           filter={
             <>
               <label className="field">
-                <span className="sr-only">Trạng thái delivery</span>
+                <span className="sr-only">{t('Trạng thái delivery')}</span>
                 <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                  <option value="all">Mọi trạng thái</option>
+                  <option value="all">{t('Mọi trạng thái')}</option>
                   {Object.entries(labels).map(([v, l]) => (
                     <option key={v} value={v}>
                       {l}
@@ -44,9 +47,9 @@ export function Delivery() {
                 </select>
               </label>
               <label className="field">
-                <span className="sr-only">Kênh delivery</span>
+                <span className="sr-only">{t('Kênh delivery')}</span>
                 <select value={channel} onChange={(e) => setChannel(e.target.value)}>
-                  <option value="all">Mọi kênh</option>
+                  <option value="all">{t('Mọi kênh')}</option>
                   <option value="PUSH">Push</option>
                   <option value="EMAIL">Email</option>
                 </select>
@@ -54,15 +57,15 @@ export function Delivery() {
             </>
           }
           columns={[
-            { label: 'Sự kiện', render: (d) => d.event },
-            { label: 'Kênh', render: (d) => d.channel },
+            { label: t('Sự kiện'), render: (d) => d.event },
+            { label: t('Kênh'), render: (d) => d.channel },
             {
-              label: 'Phạm vi',
+              label: t('Phạm vi'),
               render: (d) =>
-                db?.entities.organizations.find((o) => o.id === d.orgId)?.name ?? 'Cá nhân',
+                db?.entities.organizations.find((o) => o.id === d.orgId)?.name ?? t('Cá nhân'),
             },
             {
-              label: 'Trạng thái',
+              label: t('Trạng thái'),
               render: (d) => (
                 <Badge
                   tone={d.status === 'FAILED' ? 'red' : d.status === 'SENT' ? 'green' : 'amber'}
@@ -71,12 +74,12 @@ export function Delivery() {
                 </Badge>
               ),
             },
-            { label: 'Thời gian', render: (d) => formatTime(d.at) },
+            { label: t('Thời gian'), render: (d) => formatTime(d.at) },
             {
-              label: 'Thao tác',
+              label: t('Thao tác'),
               render: (d) => (
                 <button className="btn small" onClick={() => setSelected(d.id)}>
-                  Chi tiết
+                  {t('Chi tiết')}
                 </button>
               ),
             },
@@ -84,14 +87,16 @@ export function Delivery() {
         />
       </State>
       {delivery && (
-        <Dialog title="Chi tiết delivery mô phỏng" onClose={() => setSelected('')}>
+        <Dialog title={t('Chi tiết delivery mô phỏng')} onClose={() => setSelected('')}>
           <div className="stack">
             <p className="mono">{delivery.id}</p>
             <Badge>{labels[delivery.status]}</Badge>
             <p>
               {delivery.status === 'FAILED'
-                ? 'Kịch bản demo: nhà cung cấp tạm thời không khả dụng. Chưa có API retry được xác nhận.'
-                : 'Bản ghi trạng thái minh họa từ dịch vụ mock.'}
+                ? t(
+                    'Kịch bản demo: nhà cung cấp tạm thời không khả dụng. Chưa có API retry được xác nhận.',
+                  )
+                : t('Bản ghi trạng thái minh họa từ dịch vụ mock.')}
             </p>
             <small>{formatTime(delivery.at)} · UTC+7</small>
           </div>

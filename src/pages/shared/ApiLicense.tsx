@@ -1,3 +1,4 @@
+import { t, formatLocaleDateTime } from '../../i18n';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,9 +16,7 @@ import { canBrowsePackages } from '../../services/api/packages';
 import { LicenseKeys } from './LicenseKeys';
 
 const dateLabel = (date?: string | null) =>
-  date
-    ? new Date(date).toLocaleString('vi-VN', { timeZoneName: 'short' })
-    : 'Chưa có thời hạn từ máy chủ';
+  date ? formatLocaleDateTime(date, { timeZoneName: 'short' }) : t('Chưa có thời hạn từ máy chủ');
 
 export function ApiLicense() {
   const session = useSession();
@@ -37,11 +36,11 @@ export function ApiLicense() {
     <>
       <PageHead
         title="License"
-        description="Trạng thái và thời hạn sử dụng của tài khoản."
+        description={t('Trạng thái và thời hạn sử dụng của tài khoản.')}
         actions={
           <button
             className="btn small"
-            aria-label="Tải lại thông tin license"
+            aria-label={t('Tải lại thông tin license')}
             disabled={checking || session.isFetching || detail.isFetching}
             onClick={async () => {
               setChecking(true);
@@ -54,42 +53,44 @@ export function ApiLicense() {
               }
             }}
           >
-            <RefreshCw size={16} aria-hidden="true" /> Tải lại
+            <RefreshCw size={16} aria-hidden="true" /> {t('Tải lại')}
           </button>
         }
       />
-      <section className="glass card stack license-card" aria-label="Thông tin license">
-        <h2>Trạng thái tài khoản</h2>
+      <section className="glass card stack license-card" aria-label={t('Thông tin license')}>
+        <h2>{t('Trạng thái tài khoản')}</h2>
         <p>{licenseSummary(user)}</p>
         {canBrowsePackages(user) && (
           <Link
             className="btn small license-catalog"
             to={user.role === 'Admin' ? '/admin/packages' : '/packages'}
           >
-            Xem danh mục gói
+            {t('Xem danh mục gói')}
           </Link>
         )}
-        {personal && <p>Thời hạn hồ sơ: {dateLabel(user.licenseExpiresAt)}</p>}
+        {personal && <p>{t('Thời hạn hồ sơ: {p1}', { p1: dateLabel(user.licenseExpiresAt) })}</p>}
       </section>
       {personal && (
         <section className="glass card stack license-card">
-          <h2>Gói sử dụng cá nhân</h2>
+          <h2>{t('Gói sử dụng cá nhân')}</h2>
           {detail.error instanceof ServiceError && detail.error.status === 404 ? (
-            <p className="notice">Máy chủ chưa tìm thấy thông tin gói sử dụng cho tài khoản này.</p>
+            <p className="notice">
+              {t('Máy chủ chưa tìm thấy thông tin gói sử dụng cho tài khoản này.')}
+            </p>
           ) : (
             <State loading={detail.isPending} error={detail.error}>
               {detail.data && (
                 <dl className="license-details">
                   <div>
-                    <dt>Gói</dt>
+                    <dt>{t('Gói')}</dt>
                     <dd>{detail.data.package.name}</dd>
                   </div>
                   <div>
-                    <dt>Trạng thái gói</dt>
+                    <dt>{t('Trạng thái gói')}</dt>
                     <dd>{subscriptionLabels[detail.data.status]}</dd>
                   </div>
                   <div>
-                    <dt>Hết hạn kỳ sử dụng</dt>
+                    <dt>{t('Hết hạn kỳ sử dụng')}</dt>
                     <dd>
                       {dateLabel(
                         detail.data.status === 'Trial'
@@ -103,24 +104,26 @@ export function ApiLicense() {
             </State>
           )}
           <p>
-            Trial và Personal hỗ trợ tối đa 3 người được chăm sóc. Quyền truy cập từng người vẫn
-            theo liên kết.
+            {t(
+              'Trial và Personal hỗ trợ tối đa 3 người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.',
+            )}
           </p>
           <p className="notice">
-            Bạn có thể mua hoặc gia hạn gói Personal từ danh mục gói, hoặc kích hoạt key trung tâm
-            cấp. Nếu license đã được cập nhật qua kênh khác, hãy tải lại thông tin tại đây.
+            {t(
+              'Bạn có thể mua hoặc gia hạn gói Personal từ danh mục gói, hoặc kích hoạt key trung tâm cấp. Nếu license đã được cập nhật qua kênh khác, hãy tải lại thông tin tại đây.',
+            )}
           </p>
         </section>
       )}
       <LicenseKeys key={user.id + user.orgId} actor={user} mode="activate" />
       {user.role === 'CenterAdmin' && user.orgId ? (
         <Link className="btn" to="/center-admin/licenses">
-          Xem kho license tổ chức
+          {t('Xem kho license tổ chức')}
         </Link>
       ) : (
         !personal && (
           <p className="notice">
-            Kho license và thanh toán tổ chức do quản trị trung tâm phụ trách.
+            {t('Kho license và thanh toán tổ chức do quản trị trung tâm phụ trách.')}
           </p>
         )
       )}

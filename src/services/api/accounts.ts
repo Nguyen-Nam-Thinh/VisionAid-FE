@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -63,7 +64,7 @@ export type AccountFilters = {
 function parse<T>(
   schema: z.ZodType<T>,
   value: unknown,
-  message = 'Dữ liệu tài khoản từ máy chủ không hợp lệ.',
+  message = t('Dữ liệu tài khoản từ máy chủ không hợp lệ.'),
   status = 502,
 ): T {
   const result = schema.safeParse(value);
@@ -77,14 +78,14 @@ function authorize(actor: Scope, target?: Account) {
       !actor.orgId ||
       (target && target.organizationId !== actor.orgId))
   )
-    throw new ServiceError('Không có quyền quản lý tài khoản này.', 403);
+    throw new ServiceError(t('Không có quyền quản lý tài khoản này.'), 403);
 }
-const validId = (id: string) => parse(z.string().uuid(), id, 'Mã phải là UUID hợp lệ.', 400);
+const validId = (id: string) => parse(z.string().uuid(), id, t('Mã phải là UUID hợp lệ.'), 400);
 const profile = (values: unknown) =>
   parse(
     profileSchema,
     values,
-    'Kiểm tra họ tên tối đa 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.',
+    t('Kiểm tra họ tên tối đa 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.'),
     400,
   );
 export function createAccountsApi(get = apiGet, write = apiWrite) {
@@ -97,7 +98,7 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
     const target = parse(accountSchema, raw);
     authorize(actor, target);
     if (id && target.id !== id)
-      throw new ServiceError('Tài khoản trả về không khớp lựa chọn.', 403);
+      throw new ServiceError(t('Tài khoản trả về không khớp lựa chọn.'), 403);
     return target;
   };
   const detail = async (actor: Scope, id: string, signal?: AbortSignal) => {
@@ -108,7 +109,7 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
   const writable = async (actor: Scope, id: string) => {
     const target = await detail(actor, id);
     if (target.deletedAt)
-      throw new ServiceError('Tài khoản đã xóa; API hiện không hỗ trợ khôi phục.', 422);
+      throw new ServiceError(t('Tài khoản đã xóa; API hiện không hỗ trợ khôi phục.'), 422);
     return target;
   };
   return {
@@ -121,7 +122,7 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
         search: filters.search,
       });
       if (filters.role)
-        query.set('role', parse(roleSchema, filters.role, 'Vai trò không hợp lệ.', 400));
+        query.set('role', parse(roleSchema, filters.role, t('Vai trò không hợp lệ.'), 400));
       if (filters.active) query.set('isActive', filters.active);
       if (filters.deleted) query.set('isDeleted', filters.deleted);
       const orgId = actor.role === 'CenterAdmin' ? actor.orgId : filters.organizationId;
@@ -130,7 +131,7 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
       result.items.forEach((target) => {
         authorize(actor, target);
         if (filters.role && target.role !== filters.role)
-          throw new ServiceError('Danh sách trả về không khớp vai trò đã chọn.', 502);
+          throw new ServiceError(t('Danh sách trả về không khớp vai trò đã chọn.'), 502);
       });
       return result;
     },
@@ -138,7 +139,7 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
     // complete=false means the org has more than the pages read; callers fall back to manual entry.
     async options(actor: Scope, role: 'Caregiver' | 'VisuallyImpaired', signal?: AbortSignal) {
       if (actor.role !== 'CenterAdmin' || !actor.orgId)
-        throw new ServiceError('Chỉ quản trị trung tâm chọn từ danh sách tổ chức.', 403);
+        throw new ServiceError(t('Chỉ quản trị trung tâm chọn từ danh sách tổ chức.'), 403);
       const items: Account[] = [];
       for (let page = 1; page <= 5; page++) {
         const query = new URLSearchParams({
@@ -153,7 +154,7 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
         result.items.forEach((target) => {
           authorize(actor, target);
           if (target.role !== role)
-            throw new ServiceError('Danh sách trả về không khớp vai trò đã chọn.', 502);
+            throw new ServiceError(t('Danh sách trả về không khớp vai trò đã chọn.'), 502);
         });
         items.push(...result.items.filter((target) => target.isActive && !target.deletedAt));
         if (!result.hasNextPage) return { items, complete: true };
@@ -163,23 +164,23 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
     async create(actor: Scope, values: AccountInput) {
       authorize(actor);
       const basic = profile(values);
-      const role = parse(roleSchema, values.role, 'Vai trò không hợp lệ.', 400);
+      const role = parse(roleSchema, values.role, t('Vai trò không hợp lệ.'), 400);
       if (actor.role === 'CenterAdmin' && !['Caregiver', 'VisuallyImpaired'].includes(role))
-        throw new ServiceError('Trung tâm chỉ tạo Caregiver hoặc VIU.', 403);
+        throw new ServiceError(t('Trung tâm chỉ tạo Caregiver hoặc VIU.'), 403);
       const organizationId =
         actor.role === 'CenterAdmin' ? actor.orgId : values.organizationId.trim();
       if (role !== 'Admin' && !organizationId)
-        throw new ServiceError('Cần chọn tổ chức cho tài khoản không phải Admin.', 400);
+        throw new ServiceError(t('Cần chọn tổ chức cho tài khoản không phải Admin.'), 400);
       const email = parse(
         z.string().trim().email().max(255),
         values.email,
-        'Email không hợp lệ.',
+        t('Email không hợp lệ.'),
         400,
       );
       const password = parse(
         passwordSchema,
         values.password,
-        'Mật khẩu cần ít nhất 8 ký tự, chữ hoa/thường, số và ký tự đặc biệt.',
+        t('Mật khẩu cần ít nhất 8 ký tự, chữ hoa/thường, số và ký tự đặc biệt.'),
         400,
       );
       if (organizationId) {
@@ -193,7 +194,7 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
           await get('/api/organizations/' + (actor.role === 'CenterAdmin' ? 'me' : organizationId)),
         );
         if (org.id !== organizationId || !org.isActive || org.deletedAt)
-          throw new ServiceError('Tổ chức không hợp lệ hoặc không hoạt động.', 403);
+          throw new ServiceError(t('Tổ chức không hợp lệ hoặc không hoạt động.'), 403);
       }
       return checked(
         actor,
@@ -210,7 +211,7 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
     },
     async status(actor: Scope, id: string, isActive: boolean) {
       authorize(actor);
-      if (id === actor.id && !isActive) throw new ServiceError('Không thể tự vô hiệu hóa.', 422);
+      if (id === actor.id && !isActive) throw new ServiceError(t('Không thể tự vô hiệu hóa.'), 422);
       await writable(actor, id);
       return checked(
         actor,
@@ -222,15 +223,15 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
       const password = parse(
         passwordSchema,
         newPassword,
-        'Mật khẩu cần ít nhất 8 ký tự, chữ hoa/thường, số và ký tự đặc biệt.',
+        t('Mật khẩu cần ít nhất 8 ký tự, chữ hoa/thường, số và ký tự đặc biệt.'),
         400,
       );
       await writable(actor, id);
       await write('/api/users/' + id + '/reset-password', json('PATCH', { newPassword: password }));
     },
     async remove(actor: Scope, id: string) {
-      if (actor.role !== 'Admin') throw new ServiceError('Chỉ Admin được xóa tài khoản.', 403);
-      if (id === actor.id) throw new ServiceError('Không thể tự xóa tài khoản.', 422);
+      if (actor.role !== 'Admin') throw new ServiceError(t('Chỉ Admin được xóa tài khoản.'), 403);
+      if (id === actor.id) throw new ServiceError(t('Không thể tự xóa tài khoản.'), 422);
       await writable(actor, id);
       await write('/api/users/' + id, { method: 'DELETE' });
     },

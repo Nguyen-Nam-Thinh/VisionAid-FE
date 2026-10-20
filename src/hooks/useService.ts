@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { service } from '../services';
 import { ServiceError } from '../services/contracts';
@@ -34,7 +35,7 @@ export function useCommand() {
     mutationFn: (cmd: Command) => service.execute(cmd),
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: ['snapshot'] });
-      uiStore.set({ notice: 'Đã lưu thay đổi trong dữ liệu demo.' });
+      uiStore.set({ notice: t('Đã lưu thay đổi trong dữ liệu demo.') });
     },
     onError: async (error) => {
       if (error instanceof ServiceError && error.status === 409)
@@ -65,8 +66,9 @@ export function useAuth() {
       try {
         await service.logout();
       } catch {
-        warning =
-          'Đã thoát phiên trên trình duyệt, nhưng chưa xác nhận được thu hồi phiên trên máy chủ.';
+        warning = t(
+          'Đã thoát phiên trên trình duyệt, nhưng chưa xác nhận được thu hồi phiên trên máy chủ.',
+        );
       } finally {
         await setSession(null);
       }
@@ -77,12 +79,13 @@ export function useAuth() {
       await setSession(null);
     },
     logoutAll: async () => {
-      let notice = 'Đã thu hồi phiên đăng nhập trên các thiết bị. Vui lòng đăng nhập lại.';
+      let notice = t('Đã thu hồi phiên đăng nhập trên các thiết bị. Vui lòng đăng nhập lại.');
       try {
         await service.logoutAll();
       } catch {
-        notice =
-          'Đã thoát trên tab này, nhưng chưa xác nhận thu hồi phiên trên các thiết bị khác. Đăng nhập lại để thử lại.';
+        notice = t(
+          'Đã thoát trên tab này, nhưng chưa xác nhận thu hồi phiên trên các thiết bị khác. Đăng nhập lại để thử lại.',
+        );
       } finally {
         await setSession(null);
       }
@@ -93,13 +96,13 @@ export function useAuth() {
       await service.resetPassword(email, code, password);
       await setSession(null);
       if (service.mode === 'api')
-        uiStore.set({ notice: 'Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.' });
+        uiStore.set({ notice: t('Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.') });
     },
     changePassword: async (current: string, next: string) => {
       await service.changePassword(current, next);
       if (service.mode === 'api') {
         await setSession(null);
-        uiStore.set({ notice: 'Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.' });
+        uiStore.set({ notice: t('Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.') });
       }
     },
     profile: async (values: Pick<Person, 'name' | 'phone' | 'avatar'>) => {

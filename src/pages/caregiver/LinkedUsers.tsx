@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Link } from 'react-router-dom';
@@ -19,17 +20,17 @@ export function LinkedUsers() {
   return (
     <>
       <PageHead
-        title="Người được chăm sóc"
-        description="Mỗi kết nối là một sự an tâm. Quản lý tối đa 3 liên kết đang hoạt động."
+        title={t('Người được chăm sóc')}
+        description={t('Mỗi kết nối là một sự an tâm. Quản lý tối đa 3 liên kết đang hoạt động.')}
         actions={
           !user.orgId && (
             <>
               <button className="btn" onClick={() => setModal('accept')}>
-                Nhập mã liên kết
+                {t('Nhập mã liên kết')}
               </button>
               <button className="btn primary" onClick={() => setModal('new')}>
                 <Plus size={16} />
-                Thêm người thân
+                {t('Thêm người thân')}
               </button>
             </>
           )
@@ -51,14 +52,14 @@ export function LinkedUsers() {
                     <Users size={22} />
                   </span>
                   <Badge tone={p.active ? 'green' : 'amber'}>
-                    {p.active ? 'Đang liên kết' : 'Đã ngừng hoạt động'}
+                    {p.active ? t('Đang liên kết') : t('Đã ngừng hoạt động')}
                   </Badge>
                 </div>
                 <h2>{p.name}</h2>
-                <p className="muted">{p.phone || 'Chưa có số điện thoại'}</p>
+                <p className="muted">{p.phone || t('Chưa có số điện thoại')}</p>
                 <div className="row">
                   <Link className="btn" to="/caregiver/map" onClick={() => setSelected(p.id)}>
-                    Theo dõi <ArrowUpRight size={16} />
+                    {t('Theo dõi')} <ArrowUpRight size={16} />
                   </Link>
                   {!user.orgId &&
                     db.links.some(
@@ -74,7 +75,7 @@ export function LinkedUsers() {
                           }
                         }}
                       >
-                        Tạo mã QR demo
+                        {t('Tạo mã QR demo')}
                       </button>
                     )}
                 </div>
@@ -82,34 +83,34 @@ export function LinkedUsers() {
             ))}
         </div>
         <DataTable
-          title="Danh sách liên kết"
+          title={t('Danh sách liên kết')}
           rows={db?.people.filter((p) => p.role === 'VisuallyImpaired') ?? []}
           searchText={(p) => p.name + ' ' + p.email}
           columns={[
-            { label: 'Họ và tên', render: (p) => p.name },
+            { label: t('Họ và tên'), render: (p) => p.name },
             { label: 'Email', render: (p) => p.email },
-            { label: 'Phạm vi', render: (p) => (p.orgId ? 'Trung tâm' : 'Gia đình') },
+            { label: t('Phạm vi'), render: (p) => (p.orgId ? t('Trung tâm') : t('Gia đình')) },
             {
-              label: 'Vai trò của bạn',
+              label: t('Vai trò của bạn'),
               render: (p) =>
                 db?.links.find((l) => l.caregiverId === user.id && l.viuId === p.id)?.primary
-                  ? 'Chăm sóc chính'
-                  : 'Chăm sóc phụ',
+                  ? t('Chăm sóc chính')
+                  : t('Chăm sóc phụ'),
             },
           ]}
         />
       </State>
       {modal && (
         <Dialog
-          title={modal === 'new' ? 'Thêm người thân' : 'Nhập mã liên kết demo'}
+          title={modal === 'new' ? t('Thêm người thân') : t('Nhập mã liên kết demo')}
           onClose={() => setModal(null)}
         >
           {modal === 'new' ? (
             <Form
               fields={[
-                { key: 'name', label: 'Họ và tên', required: true, max: 200 },
+                { key: 'name', label: t('Họ và tên'), required: true, max: 200 },
                 { key: 'email', label: 'Email', type: 'email', required: true },
-                { key: 'phone', label: 'Số điện thoại' },
+                { key: 'phone', label: t('Số điện thoại') },
               ]}
               onSubmit={async (v) => {
                 await cmd.mutateAsync({
@@ -130,7 +131,7 @@ export function LinkedUsers() {
           ) : (
             <div className="stack">
               <label className="field">
-                Đọc mã từ ảnh QR · JPG/PNG dưới 5 MB
+                {t('Đọc mã từ ảnh QR · JPG/PNG dưới 5 MB')}
                 <input
                   type="file"
                   accept="image/png,image/jpeg"
@@ -150,7 +151,7 @@ export function LinkedUsers() {
                   }}
                 />
               </label>
-              {scanning && <p role="status">Đang đọc mã…</p>}
+              {scanning && <p role="status">{t('Đang đọc mã…')}</p>}
               {scanError && (
                 <p className="notice error" role="alert">
                   {scanError}
@@ -160,7 +161,7 @@ export function LinkedUsers() {
                 key={scanned}
                 initial={{ code: scanned }}
                 fields={[
-                  { key: 'code', label: 'Mã VA-DEMO từ người chăm sóc chính', required: true },
+                  { key: 'code', label: t('Mã VA-DEMO từ người chăm sóc chính'), required: true },
                 ]}
                 onSubmit={async (v) => {
                   await links.accept(String(v.code));
@@ -172,13 +173,14 @@ export function LinkedUsers() {
         </Dialog>
       )}
       {code && (
-        <Dialog title="Mời người chăm sóc phụ" onClose={() => setCode('')}>
+        <Dialog title={t('Mời người chăm sóc phụ')} onClose={() => setCode('')}>
           <div className="stack">
-            <QRCodeSVG value={code} size={190} title="Mã liên kết demo" />
+            <QRCodeSVG value={code} size={190} title={t('Mã liên kết demo')} />
             <strong className="mono">{code}</strong>
             <p>
-              Mã dùng một lần, hết hạn sau 10 phút. Đăng nhập tài khoản Caregiver khác trên trình
-              duyệt này rồi nhập mã. Đây là luồng demo, không phải QR production.
+              {t(
+                'Mã dùng một lần, hết hạn sau 10 phút. Đăng nhập tài khoản Caregiver khác trên trình duyệt này rồi nhập mã. Đây là luồng demo, không phải QR production.',
+              )}
             </p>
           </div>
         </Dialog>

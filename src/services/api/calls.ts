@@ -1,36 +1,37 @@
+import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { createCaregivingApi } from './caregiving';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 const timestamp = z.iso.datetime({ offset: true });
-export const callStatuses = {
-  Initiated: 'Đã khởi tạo',
-  Ringing: 'Đang đổ chuông',
-  Connected: 'Đã chấp nhận',
-  Ended: 'Đã kết thúc',
-  Missed: 'Nhỡ',
-  Rejected: 'Đã từ chối',
-};
+export const callStatuses = labelMap({
+  Initiated: msg('Đã khởi tạo'),
+  Ringing: msg('Đang đổ chuông'),
+  Connected: msg('Đã chấp nhận'),
+  Ended: msg('Đã kết thúc'),
+  Missed: msg('Nhỡ'),
+  Rejected: msg('Đã từ chối'),
+});
 // BE stores free-text end reasons; unknown values are shown as-is.
-const endReasons: Record<string, string> = {
-  user_hangup: 'Người dùng cúp máy',
-  Cancelled: 'Hủy trước khi được nghe máy',
-  client_cancelled: 'Hủy trước khi được nghe máy',
-  Missed: 'Không ai nghe máy',
-  Failed: 'Kết nối thất bại',
-  connection_failed: 'Kết nối âm thanh/hình ảnh thất bại',
-  client_setup_failed: 'Không khởi tạo được cuộc gọi',
-  client_setup_timeout: 'Chờ kết nối quá lâu',
-  microphone_lost: 'Mất micro',
-  session_unavailable: 'Không còn xác minh được phiên gọi',
-  client_left: 'Rời trang khi đang gọi',
-};
+const endReasons: Record<string, string> = labelMap({
+  user_hangup: msg('Người dùng cúp máy'),
+  Cancelled: msg('Hủy trước khi được nghe máy'),
+  client_cancelled: msg('Hủy trước khi được nghe máy'),
+  Missed: msg('Không ai nghe máy'),
+  Failed: msg('Kết nối thất bại'),
+  connection_failed: msg('Kết nối âm thanh/hình ảnh thất bại'),
+  client_setup_failed: msg('Không khởi tạo được cuộc gọi'),
+  client_setup_timeout: msg('Chờ kết nối quá lâu'),
+  microphone_lost: msg('Mất micro'),
+  session_unavailable: msg('Không còn xác minh được phiên gọi'),
+  client_left: msg('Rời trang khi đang gọi'),
+});
 export const callEndReason = (reason: string | null) =>
-  reason ? (endReasons[reason] ?? reason) : 'Chưa có';
+  reason ? (endReasons[reason] ?? reason) : t('Chưa có');
 export const callTriggers = {
-  CaregiverInitiated: 'Người chăm sóc gọi',
-  ViuVoiceCommand: 'Lệnh giọng nói',
+  CaregiverInitiated: msg('Người chăm sóc gọi'),
+  ViuVoiceCommand: msg('Lệnh giọng nói'),
   SosAuto: 'SOS',
 };
 const item = z.object({
@@ -73,7 +74,7 @@ export type CallSession = z.infer<typeof sessionSchema>;
 export function createCallsApi(get = apiGet, write = apiWrite) {
   const validId = (id: string) => {
     if (!z.string().uuid().safeParse(id).success)
-      throw new ServiceError('Mã cuộc gọi không hợp lệ.', 400);
+      throw new ServiceError(t('Mã cuộc gọi không hợp lệ.'), 400);
     return id;
   };
   const post = (path: string, body?: unknown) =>
@@ -86,7 +87,7 @@ export function createCallsApi(get = apiGet, write = apiWrite) {
     const parsed = sessionSchema.safeParse(raw);
     if (!parsed.success || (id && parsed.data.sessionId !== id))
       throw new ServiceError(
-        'Thông tin kết nối cuộc gọi không hợp lệ. Kiểm tra lịch sử trước khi gọi lại.',
+        t('Thông tin kết nối cuộc gọi không hợp lệ. Kiểm tra lịch sử trước khi gọi lại.'),
         502,
       );
     return parsed.data;
@@ -95,10 +96,10 @@ export function createCallsApi(get = apiGet, write = apiWrite) {
     async authorize(actor: Person, viuId: string) {
       validId(viuId);
       if (actor.role !== 'Caregiver')
-        throw new ServiceError('Chỉ người chăm sóc được thực hiện cuộc gọi.', 403);
+        throw new ServiceError(t('Chỉ người chăm sóc được thực hiện cuộc gọi.'), 403);
       const links = await createCaregivingApi(get, write).links(actor.id, viuId, 1);
       if (!links.items.some((link) => !link.unlinkedAt))
-        throw new ServiceError('Bạn không còn liên kết chăm sóc hoạt động.', 403);
+        throw new ServiceError(t('Bạn không còn liên kết chăm sóc hoạt động.'), 403);
     },
     async initiate(actor: Person, viuId: string) {
       await this.authorize(actor, viuId);
@@ -117,19 +118,20 @@ export function createCallsApi(get = apiGet, write = apiWrite) {
     },
     async history(actor: Person, page: number, filters: CallFilters, signal?: AbortSignal) {
       if (actor.role !== 'Caregiver')
-        throw new ServiceError('Màn hình này dành cho người chăm sóc.', 403);
-      if (!Number.isInteger(page) || page < 1) throw new ServiceError('Trang không hợp lệ.', 400);
+        throw new ServiceError(t('Màn hình này dành cho người chăm sóc.'), 403);
+      if (!Number.isInteger(page) || page < 1)
+        throw new ServiceError(t('Trang không hợp lệ.'), 400);
       const query = new URLSearchParams({ page: String(page), pageSize: '20' });
       if (filters.viuUserId) {
         if (!z.string().uuid().safeParse(filters.viuUserId).success)
-          throw new ServiceError('Mã người được chăm sóc phải là UUID.', 400);
+          throw new ServiceError(t('Mã người được chăm sóc phải là UUID.'), 400);
         query.set('viuUserId', filters.viuUserId);
       }
       for (const key of ['dateFrom', 'dateTo'] as const)
         if (filters[key]) {
           const date = new Date(filters[key]);
           if (!Number.isFinite(date.getTime()))
-            throw new ServiceError('Thời gian không hợp lệ.', 400);
+            throw new ServiceError(t('Thời gian không hợp lệ.'), 400);
           query.set(key, date.toISOString());
         }
       if (
@@ -137,9 +139,10 @@ export function createCallsApi(get = apiGet, write = apiWrite) {
         filters.dateTo &&
         new Date(filters.dateFrom) > new Date(filters.dateTo)
       )
-        throw new ServiceError('Thời gian bắt đầu phải trước thời gian kết thúc.', 400);
+        throw new ServiceError(t('Thời gian bắt đầu phải trước thời gian kết thúc.'), 400);
       const result = pageSchema.safeParse(await get('/api/webrtc/sessions?' + query, signal));
-      if (!result.success) throw new ServiceError('Lịch sử cuộc gọi từ máy chủ không hợp lệ.', 502);
+      if (!result.success)
+        throw new ServiceError(t('Lịch sử cuộc gọi từ máy chủ không hợp lệ.'), 502);
       if (
         result.data.items.some(
           (call) =>
@@ -147,7 +150,7 @@ export function createCallsApi(get = apiGet, write = apiWrite) {
             (filters.viuUserId && call.viuUserId !== filters.viuUserId),
         )
       )
-        throw new ServiceError('Máy chủ trả cuộc gọi ngoài phạm vi yêu cầu.', 403);
+        throw new ServiceError(t('Máy chủ trả cuộc gọi ngoài phạm vi yêu cầu.'), 403);
       return result.data;
     },
   };

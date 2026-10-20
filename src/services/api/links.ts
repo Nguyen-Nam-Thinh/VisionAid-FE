@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { linkSchema } from './caregiving';
@@ -42,7 +43,9 @@ function parse<T>(rule: z.ZodType<T>, value: unknown, status = 502): T {
   const parsed = rule.safeParse(value);
   if (!parsed.success)
     throw new ServiceError(
-      status === 400 ? 'Mã hoặc dữ liệu liên kết không hợp lệ.' : 'Phản hồi liên kết không hợp lệ.',
+      status === 400
+        ? t('Mã hoặc dữ liệu liên kết không hợp lệ.')
+        : t('Phản hồi liên kết không hợp lệ.'),
       status,
     );
   return parsed.data;
@@ -52,14 +55,14 @@ function authorize(actor: Actor) {
     !['Admin', 'CenterAdmin', 'Caregiver'].includes(actor.role) ||
     (actor.role === 'CenterAdmin' && !actor.orgId)
   )
-    throw new ServiceError('Không có quyền quản lý liên kết.', 403);
+    throw new ServiceError(t('Không có quyền quản lý liên kết.'), 403);
 }
 const uuid = (id: string) => parse(z.string().uuid(), id, 400);
 function own(actor: Actor, link: CareLink) {
   if (actor.role === 'Caregiver' && link.caregiverId !== actor.id)
-    throw new ServiceError('Chỉ được xem liên kết của chính bạn.', 403);
+    throw new ServiceError(t('Chỉ được xem liên kết của chính bạn.'), 403);
   if (actor.role === 'CenterAdmin' && link.linkType !== 'Organization')
-    throw new ServiceError('Màn phân công trung tâm chỉ quản lý liên kết tổ chức.', 403);
+    throw new ServiceError(t('Màn phân công trung tâm chỉ quản lý liên kết tổ chức.'), 403);
   return link;
 }
 export const canManageLink = (actor: Actor, link: CareLink) =>
@@ -91,20 +94,21 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
       cg.role !== 'Caregiver' ||
       viu.role !== 'VisuallyImpaired'
     )
-      throw new ServiceError('Sai tài khoản Caregiver hoặc VIU.', 403);
+      throw new ServiceError(t('Sai tài khoản Caregiver hoặc VIU.'), 403);
     if (
       actor.role === 'CenterAdmin' &&
       (cg.organizationId !== actor.orgId || viu.organizationId !== actor.orgId)
     )
-      throw new ServiceError('Hai tài khoản phải thuộc tổ chức của bạn.', 403);
+      throw new ServiceError(t('Hai tài khoản phải thuộc tổ chức của bạn.'), 403);
     if (type === 'Organization' && (!cg.organizationId || cg.organizationId !== viu.organizationId))
-      throw new ServiceError('Liên kết tổ chức yêu cầu hai tài khoản cùng tổ chức.', 422);
+      throw new ServiceError(t('Liên kết tổ chức yêu cầu hai tài khoản cùng tổ chức.'), 422);
     if (requireActive && (!cg.isActive || !viu.isActive || cg.deletedAt || viu.deletedAt))
-      throw new ServiceError('Hai tài khoản phải hoạt động và chưa bị xóa.', 422);
+      throw new ServiceError(t('Hai tài khoản phải hoạt động và chưa bị xóa.'), 422);
   };
   const checked = (actor: Actor, raw: unknown, id?: string) => {
     const link = own(actor, parse(schema, raw));
-    if (id && link.id !== id) throw new ServiceError('Liên kết trả về không khớp lựa chọn.', 403);
+    if (id && link.id !== id)
+      throw new ServiceError(t('Liên kết trả về không khớp lựa chọn.'), 403);
     return link;
   };
   const detail = async (actor: Actor, id: string, signal?: AbortSignal) => {
@@ -124,7 +128,7 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
   const writable = async (actor: Actor, id: string) => {
     const link = await detail(actor, id);
     if (!canManageLink(actor, link))
-      throw new ServiceError('Không thể sửa liên kết đã gỡ hoặc ngoài quyền của bạn.', 403);
+      throw new ServiceError(t('Không thể sửa liên kết đã gỡ hoặc ngoài quyền của bạn.'), 403);
     return link;
   };
   const permissions = (value: LinkPermissions) =>
@@ -165,7 +169,8 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
           : actor.role === 'Caregiver'
             ? 'Personal'
             : parse(z.enum(['Personal', 'Organization']), values.linkType, 400);
-      if (caregiverId === viuId) throw new ServiceError('Không thể liên kết với chính mình.', 400);
+      if (caregiverId === viuId)
+        throw new ServiceError(t('Không thể liên kết với chính mình.'), 400);
       if (actor.role !== 'Caregiver') await checkPeople(actor, caregiverId, viuId, linkType, true);
       const link = checked(
         actor,
@@ -185,7 +190,7 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
         link.visuallyImpairedUserId !== viuId ||
         link.linkType !== linkType
       )
-        throw new ServiceError('Kết quả không khớp phân công; hãy tải lại để xác minh.', 502);
+        throw new ServiceError(t('Kết quả không khớp phân công; hãy tải lại để xác minh.'), 502);
       return link;
     },
     async permissions(actor: Actor, id: string, values: LinkPermissions) {
@@ -199,10 +204,10 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
     },
     async promote(actor: Actor, id: string) {
       if (!['Admin', 'CenterAdmin'].includes(actor.role))
-        throw new ServiceError('Chỉ quản trị viên được chuyển người chăm sóc chính.', 403);
+        throw new ServiceError(t('Chỉ quản trị viên được chuyển người chăm sóc chính.'), 403);
       const link = await writable(actor, id);
       if (link.isPrimary)
-        throw new ServiceError('Liên kết đã là chăm sóc chính; hãy tải lại.', 422);
+        throw new ServiceError(t('Liên kết đã là chăm sóc chính; hãy tải lại.'), 422);
       return checked(
         actor,
         await write('/api/caregiver-links/' + id + '/promote-primary', { method: 'PATCH' }),

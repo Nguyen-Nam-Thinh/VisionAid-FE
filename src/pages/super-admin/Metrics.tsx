@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import { PageHead, State, DataTable } from '../../components/UI';
@@ -18,36 +19,38 @@ export function Metrics() {
   return (
     <>
       <PageHead
-        title="Hiệu năng AI"
-        description="Số liệu tổng hợp mô phỏng theo model và ngày. Confidence và tỷ lệ xử lý thành công không phải độ chính xác có ground truth."
+        title={t('Hiệu năng AI')}
+        description={t(
+          'Số liệu tổng hợp mô phỏng theo model và ngày. Confidence và tỷ lệ xử lý thành công không phải độ chính xác có ground truth.',
+        )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <div className="stack">
           <div className="glass card row">
             <label className="field">
-              Mô hình
+              {t('Mô hình')}
               <select value={model} onChange={(e) => setModel(e.target.value)}>
-                <option value="all">Tất cả mô hình</option>
+                <option value="all">{t('Tất cả mô hình')}</option>
                 {['YOLOv8n', 'VietOCR', 'FaceNet'].map((m) => (
                   <option key={m}>{m}</option>
                 ))}
               </select>
             </label>
             <label className="field">
-              Từ ngày
+              {t('Từ ngày')}
               <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
             </label>
             <label className="field">
-              Đến ngày
+              {t('Đến ngày')}
               <input type="date" min={from} value={to} onChange={(e) => setTo(e.target.value)} />
             </label>
           </div>
           <div className="grid">
             {[
-              ['Lượt xử lý', count],
-              ['Latency trung bình', count ? latency.toFixed(0) + ' ms' : '—'],
-              ['Xử lý thành công', count ? ((successes / count) * 100).toFixed(1) + '%' : '—'],
-              ['Confidence trung bình', count ? (confidence * 100).toFixed(1) + '%' : '—'],
+              [t('Lượt xử lý'), count],
+              [t('Latency trung bình'), count ? latency.toFixed(0) + ' ms' : '—'],
+              [t('Xử lý thành công'), count ? ((successes / count) * 100).toFixed(1) + '%' : '—'],
+              [t('Confidence trung bình'), count ? (confidence * 100).toFixed(1) + '%' : '—'],
             ].map(([label, value]) => (
               <section className="glass card" key={label}>
                 <p className="muted">{label}</p>
@@ -56,7 +59,7 @@ export function Metrics() {
             ))}
           </div>
           <section className="glass card stack">
-            <h2>Latency theo mô hình</h2>
+            <h2>{t('Latency theo mô hình')}</h2>
             <div className="bars">
               {['YOLOv8n', 'VietOCR', 'FaceNet'].map((m) => {
                 const group = rows.filter((r) => r.model === m);
@@ -67,7 +70,9 @@ export function Metrics() {
                   <div key={m}>
                     <div className="row between">
                       <span>{m}</span>
-                      <strong>{group.length ? avg.toFixed(0) + ' ms' : 'Chưa có dữ liệu'}</strong>
+                      <strong>
+                        {group.length ? avg.toFixed(0) + ' ms' : t('Chưa có dữ liệu')}
+                      </strong>
                     </div>
                     <div className="bar-track">
                       <div className="bar-fill" style={{ width: Math.min(100, avg / 10) + '%' }} />
@@ -76,17 +81,17 @@ export function Metrics() {
                 );
               })}
             </div>
-            <small>Thang hiển thị 0–1.000 ms · dữ liệu demo</small>
+            <small>{t('Thang hiển thị 0–1.000 ms · dữ liệu demo')}</small>
           </section>
           <DataTable
-            title="Chi tiết theo ngày"
+            title={t('Chi tiết theo ngày')}
             rows={rows.map((m) => ({ ...m, id: m.day + m.model }))}
             searchText={(m) => m.model + ' ' + m.day}
             columns={[
-              { label: 'Ngày', render: (m) => m.day },
-              { label: 'Mô hình', render: (m) => m.model },
+              { label: t('Ngày'), render: (m) => m.day },
+              { label: t('Mô hình'), render: (m) => m.model },
               { label: 'Latency', render: (m) => m.latency + ' ms' },
-              { label: 'Thành công / tổng', render: (m) => `${m.successes} / ${m.total}` },
+              { label: t('Thành công / tổng'), render: (m) => `${m.successes} / ${m.total}` },
               { label: 'Confidence', render: (m) => (m.confidence * 100).toFixed(1) + '%' },
             ]}
           />

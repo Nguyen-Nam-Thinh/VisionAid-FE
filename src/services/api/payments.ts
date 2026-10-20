@@ -1,3 +1,4 @@
+import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { createPackagesApi, type LicensePackage } from './packages';
@@ -5,13 +6,13 @@ import { isPersonalCaregiver, isOrganizationBuyer, getOrganizationPool } from '.
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 
-export const paymentLabels = {
-  Pending: 'Đang chờ thanh toán',
-  Success: 'Thanh toán thành công',
-  Failed: 'Thanh toán thất bại',
-  Refunded: 'Đã hoàn tiền',
-  Cancelled: 'Đã hủy',
-};
+export const paymentLabels = labelMap({
+  Pending: msg('Đang chờ thanh toán'),
+  Success: msg('Thanh toán thành công'),
+  Failed: msg('Thanh toán thất bại'),
+  Refunded: msg('Đã hoàn tiền'),
+  Cancelled: msg('Đã hủy'),
+});
 const date = z.iso.datetime({ offset: true });
 const transaction = z.object({
   id: z.string().uuid(),
@@ -54,7 +55,7 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success)
     throw new ServiceError(
-      'Dữ liệu thanh toán không hợp lệ. Kiểm tra lịch sử trước khi tạo giao dịch khác.',
+      t('Dữ liệu thanh toán không hợp lệ. Kiểm tra lịch sử trước khi tạo giao dịch khác.'),
       502,
     );
   return result.data;
@@ -64,7 +65,7 @@ export const paymentHistoryPath = (actor: Person) =>
   isOrganizationBuyer(actor) ? '/center-admin/payments' : '/caregiver/payments';
 function check(actor: Person) {
   if (!canPay(actor))
-    throw new ServiceError('Tài khoản không có quyền thanh toán gói dịch vụ.', 403);
+    throw new ServiceError(t('Tài khoản không có quyền thanh toán gói dịch vụ.'), 403);
 }
 export function safeCheckoutUrl(value: string | null): string | null {
   try {
@@ -125,7 +126,7 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
   }
   async function find(actor: Person, code: string, signal?: AbortSignal) {
     check(actor);
-    if (!orderCode(code)) throw new ServiceError('Mã đơn thanh toán không hợp lệ.', 400);
+    if (!orderCode(code)) throw new ServiceError(t('Mã đơn thanh toán không hợp lệ.'), 400);
     // Bounded fallback until BE exposes a transaction detail/status endpoint.
     for (let page = 1; page <= 10; page++) {
       const data = await list(actor, page, signal, 100);
@@ -134,7 +135,9 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
       if (!data.hasNextPage) return null;
     }
     throw new ServiceError(
-      'Chưa tìm thấy giao dịch trong 1.000 bản ghi gần nhất. Kiểm tra lịch sử hoặc liên hệ hỗ trợ.',
+      t(
+        'Chưa tìm thấy giao dịch trong 1.000 bản ghi gần nhất. Kiểm tra lịch sử hoặc liên hệ hỗ trợ.',
+      ),
       422,
     );
   }
@@ -145,7 +148,7 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
       check(actor);
       if (!canCheckout(selected, actor))
         throw new ServiceError(
-          'Gói không phù hợp với tài khoản hoặc chưa hỗ trợ thanh toán bằng VND nguyên dương.',
+          t('Gói không phù hợp với tài khoản hoặc chưa hỗ trợ thanh toán bằng VND nguyên dương.'),
           422,
         );
       const base = new URL(origin);
@@ -154,7 +157,7 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
         (base.protocol !== 'https:' &&
           !(base.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(base.hostname)))
       )
-        throw new ServiceError('Địa chỉ Web thanh toán không hợp lệ.', 400);
+        throw new ServiceError(t('Địa chỉ Web thanh toán không hợp lệ.'), 400);
       let current: LicensePackage | undefined;
       for (let page = 1; page <= 20; page++) {
         const data = await packages.list(actor, page, '');
@@ -169,7 +172,7 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
         current.currency !== selected.currency
       )
         throw new ServiceError(
-          'Gói đã thay đổi hoặc ngừng mở. Đóng hộp thoại và tải lại danh mục để kiểm tra.',
+          t('Gói đã thay đổi hoặc ngừng mở. Đóng hộp thoại và tải lại danh mục để kiểm tra.'),
           409,
         );
       if (isOrganizationBuyer(actor)) {
@@ -177,7 +180,9 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
           const pool = await getOrganizationPool(actor, undefined, get);
           if (pool.status !== 'Suspended' && pool.package.id !== current.id)
             throw new ServiceError(
-              'Kho hiện tại dùng gói khác. Chưa hỗ trợ đổi gói Business qua thanh toán; chọn đúng gói của kho hoặc liên hệ hỗ trợ.',
+              t(
+                'Kho hiện tại dùng gói khác. Chưa hỗ trợ đổi gói Business qua thanh toán; chọn đúng gói của kho hoặc liên hệ hỗ trợ.',
+              ),
               409,
             );
         } catch (error) {
@@ -198,7 +203,9 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
       );
       if (!safeCheckoutUrl(result.checkoutUrl))
         throw new ServiceError(
-          'Liên kết thanh toán không thuộc PayOS được hỗ trợ. Kiểm tra lịch sử; không tạo lại giao dịch ngay.',
+          t(
+            'Liên kết thanh toán không thuộc PayOS được hỗ trợ. Kiểm tra lịch sử; không tạo lại giao dịch ngay.',
+          ),
           502,
         );
       return result;
@@ -207,9 +214,9 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
       check(actor);
       const current = await find(actor, payment.payosOrderId);
       if (!current || current.id !== payment.id)
-        throw new ServiceError('Không tìm thấy giao dịch của tài khoản này.', 404);
+        throw new ServiceError(t('Không tìm thấy giao dịch của tài khoản này.'), 404);
       if (current.status !== 'Pending')
-        throw new ServiceError('Trạng thái giao dịch đã thay đổi. Hãy tải lại.', 409);
+        throw new ServiceError(t('Trạng thái giao dịch đã thay đổi. Hãy tải lại.'), 409);
       await write('/api/payments/' + current.id + '/cancel', { method: 'DELETE' });
     },
   };

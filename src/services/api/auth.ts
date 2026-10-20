@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { ServiceError } from '../contracts';
 import { request } from '../http/client';
@@ -58,14 +59,14 @@ export function createApiAuth(
   }
   function save(value: unknown) {
     const parsed = tokensSchema.safeParse(value);
-    if (!parsed.success) throw new ServiceError('Phản hồi phiên đăng nhập không hợp lệ.', 502);
+    if (!parsed.success) throw new ServiceError(t('Phản hồi phiên đăng nhập không hợp lệ.'), 502);
     try {
       storage?.setItem(deviceKey, deviceId);
       storage?.setItem(authSessionKey, JSON.stringify(parsed.data));
     } catch {
       clear();
       throw new ServiceError(
-        'Không thể lưu phiên. Cho phép bộ nhớ trình duyệt rồi đăng nhập lại.',
+        t('Không thể lưu phiên. Cho phép bộ nhớ trình duyệt rồi đăng nhập lại.'),
         507,
       );
     }
@@ -76,7 +77,7 @@ export function createApiAuth(
     init: RequestInit = {},
     responseType: 'json' | 'blob' = 'json',
   ) {
-    if (!baseUrl) throw new ServiceError('Chưa cấu hình VITE_API_BASE_URL.', 501);
+    if (!baseUrl) throw new ServiceError(t('Chưa cấu hình VITE_API_BASE_URL.'), 501);
     let response: unknown;
     try {
       response = await request<unknown>(
@@ -90,7 +91,7 @@ export function createApiAuth(
       );
     } catch (error) {
       if (error instanceof ServiceError) throw error;
-      throw new ServiceError('Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web.', 503);
+      throw new ServiceError(t('Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web.'), 503);
     }
     if (response === undefined) return undefined;
     if (responseType === 'blob') return response;
@@ -102,10 +103,10 @@ export function createApiAuth(
         errors: z.array(z.string()).optional(),
       })
       .safeParse(response);
-    if (!envelope.success) throw new ServiceError('Phản hồi máy chủ không đúng định dạng.', 502);
+    if (!envelope.success) throw new ServiceError(t('Phản hồi máy chủ không đúng định dạng.'), 502);
     if (!envelope.data.success)
       throw new ServiceError(
-        envelope.data.errors?.join(' ') || envelope.data.message || 'Yêu cầu không thành công.',
+        envelope.data.errors?.join(' ') || envelope.data.message || t('Yêu cầu không thành công.'),
         422,
       );
     return envelope.data.data;
@@ -128,7 +129,7 @@ export function createApiAuth(
   }
   async function refresh() {
     if (refreshFlight) return refreshFlight;
-    if (!tokens) throw new ServiceError('Phiên đã kết thúc. Vui lòng đăng nhập lại.', 401);
+    if (!tokens) throw new ServiceError(t('Phiên đã kết thúc. Vui lòng đăng nhập lại.'), 401);
     const epoch = generation;
     const token = tokens.refreshToken;
     refreshFlight = (async () => {
@@ -137,7 +138,7 @@ export function createApiAuth(
           '/api/auth/refresh',
           json({ refreshToken: token, clientDeviceId: deviceId }),
         );
-        if (generation !== epoch) throw new ServiceError('Phiên đã kết thúc.', 401);
+        if (generation !== epoch) throw new ServiceError(t('Phiên đã kết thúc.'), 401);
         save(result);
       } catch (error) {
         // A lost refresh response may already have rotated the token. Never replay it.
@@ -145,7 +146,7 @@ export function createApiAuth(
         // BE answers a revoked/expired refresh token with 403; this is an ended session, not missing permission.
         if (error instanceof ServiceError && (error.status === 401 || error.status === 403))
           throw new ServiceError(
-            'Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất. Vui lòng đăng nhập lại.',
+            t('Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất. Vui lòng đăng nhập lại.'),
             401,
           );
         throw error;
@@ -161,12 +162,12 @@ export function createApiAuth(
     retry401 = true,
     responseType: 'json' | 'blob' = 'json',
   ) {
-    if (!tokens) throw new ServiceError('Vui lòng đăng nhập.', 401);
+    if (!tokens) throw new ServiceError(t('Vui lòng đăng nhập.'), 401);
     const epoch = generation;
     if (expiresSoon()) await refresh();
     const usedToken = tokens?.accessToken;
     const send = async () => {
-      if (generation !== epoch) throw new ServiceError('Phiên đã kết thúc.', 401);
+      if (generation !== epoch) throw new ServiceError(t('Phiên đã kết thúc.'), 401);
       const result = await call(
         path,
         {
@@ -178,7 +179,7 @@ export function createApiAuth(
         },
         responseType,
       );
-      if (generation !== epoch) throw new ServiceError('Phiên đã kết thúc.', 401);
+      if (generation !== epoch) throw new ServiceError(t('Phiên đã kết thúc.'), 401);
       return result;
     };
     try {
@@ -203,10 +204,13 @@ export function createApiAuth(
   function mapProfile(value: unknown): Person {
     const parsed = profileSchema.safeParse(value);
     if (!parsed.success)
-      throw new ServiceError('Hồ sơ từ máy chủ không hợp lệ hoặc vai trò chưa được hỗ trợ.', 502);
+      throw new ServiceError(
+        t('Hồ sơ từ máy chủ không hợp lệ hoặc vai trò chưa được hỗ trợ.'),
+        502,
+      );
     const p = parsed.data;
     if (!p.isActive || p.role === 'VisuallyImpaired')
-      throw new ServiceError('Tài khoản này không được truy cập Web Dashboard.', 403);
+      throw new ServiceError(t('Tài khoản này không được truy cập Web Dashboard.'), 403);
     return {
       id: p.id,
       name: p.fullName,
@@ -238,7 +242,7 @@ export function createApiAuth(
         },
       }),
     );
-    if (generation !== epoch) throw new ServiceError('Yêu cầu đăng nhập đã bị hủy.', 401);
+    if (generation !== epoch) throw new ServiceError(t('Yêu cầu đăng nhập đã bị hủy.'), 401);
     try {
       save(result);
       return await profile();
@@ -254,30 +258,32 @@ export function createApiAuth(
       authorized(path, { signal, cache: 'no-store' }, true, 'blob'),
     write: (path: string, init: RequestInit) => authorized(path, init, false),
     async accessToken() {
-      if (!tokens) throw new ServiceError('Vui lòng đăng nhập.', 401);
+      if (!tokens) throw new ServiceError(t('Vui lòng đăng nhập.'), 401);
       const epoch = generation;
       if (expiresSoon()) await refresh();
-      if (!tokens || generation !== epoch) throw new ServiceError('Phiên đã kết thúc.', 401);
+      if (!tokens || generation !== epoch) throw new ServiceError(t('Phiên đã kết thúc.'), 401);
       return tokens.accessToken;
     },
     async recover(email: string) {
       email = email.trim();
       if (!z.string().email().max(255).safeParse(email).success)
-        throw new ServiceError('Email không hợp lệ hoặc quá dài.', 400);
+        throw new ServiceError(t('Email không hợp lệ hoặc quá dài.'), 400);
       await call('/api/auth/forgot-password', json({ email }));
-      return 'Nếu email này đã đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu. Kiểm tra hộp thư và thư rác; liên kết có hiệu lực 15 phút.';
+      return t(
+        'Nếu email này đã đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu. Kiểm tra hộp thư và thư rác; liên kết có hiệu lực 15 phút.',
+      );
     },
     async resetPassword(email: string, code: string, newPassword: string) {
       email = email.trim();
       let token = code.trim();
       if (!z.string().email().safeParse(email).success)
-        throw new ServiceError('Email không hợp lệ.', 400);
+        throw new ServiceError(t('Email không hợp lệ.'), 400);
       if (token.includes('://')) {
         let link: URL;
         try {
           link = new URL(token);
         } catch {
-          throw new ServiceError('Liên kết khôi phục không hợp lệ.', 400);
+          throw new ServiceError(t('Liên kết khôi phục không hợp lệ.'), 400);
         }
         const resetLink =
           (link.protocol === 'visionaid:' && link.hostname === 'reset-password') ||
@@ -289,10 +295,13 @@ export function createApiAuth(
           link.searchParams.get('email') !== email ||
           !link.searchParams.get('token')
         )
-          throw new ServiceError('Liên kết không hợp lệ hoặc email không khớp với liên kết.', 400);
+          throw new ServiceError(
+            t('Liên kết không hợp lệ hoặc email không khớp với liên kết.'),
+            400,
+          );
         token = link.searchParams.get('token')!;
       }
-      if (!token) throw new ServiceError('Vui lòng nhập mã hoặc liên kết trong email.', 400);
+      if (!token) throw new ServiceError(t('Vui lòng nhập mã hoặc liên kết trong email.'), 400);
       if (
         newPassword.length < 8 ||
         newPassword.length > 100 ||
@@ -302,7 +311,7 @@ export function createApiAuth(
         !/[^a-zA-Z0-9]/.test(newPassword)
       )
         throw new ServiceError(
-          'Mật khẩu cần 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.',
+          t('Mật khẩu cần 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.'),
           400,
         );
       try {
@@ -310,7 +319,7 @@ export function createApiAuth(
       } catch (error) {
         if (error instanceof ServiceError && error.status === 403)
           throw new ServiceError(
-            'Mã không hợp lệ, đã dùng hoặc hết hạn. Hãy yêu cầu email khôi phục mới.',
+            t('Mã không hợp lệ, đã dùng hoặc hết hạn. Hãy yêu cầu email khôi phục mới.'),
             403,
           );
         throw error;
@@ -321,9 +330,9 @@ export function createApiAuth(
       const fullName = values.name.trim();
       const phoneNumber = values.phone.trim();
       if (!fullName || fullName.length > 200)
-        throw new ServiceError('Họ tên phải có từ 1 đến 200 ký tự.', 400);
+        throw new ServiceError(t('Họ tên phải có từ 1 đến 200 ký tự.'), 400);
       if (phoneNumber && !/^0[35789][0-9]{8}$/.test(phoneNumber))
-        throw new ServiceError('Số điện thoại Việt Nam phải có 10 số, ví dụ 0901234567.', 400);
+        throw new ServiceError(t('Số điện thoại Việt Nam phải có 10 số, ví dụ 0901234567.'), 400);
       return mapProfile(
         await authorized('/api/users/me', {
           ...json({ fullName, phoneNumber }),
@@ -342,7 +351,9 @@ export function createApiAuth(
         currentPassword === newPassword
       )
         throw new ServiceError(
-          'Mật khẩu mới cần 8–100 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt và khác mật khẩu cũ.',
+          t(
+            'Mật khẩu mới cần 8–100 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt và khác mật khẩu cũ.',
+          ),
           400,
         );
       try {
@@ -356,7 +367,7 @@ export function createApiAuth(
             error.status === 403 ||
             (error.status === 422 && /current password/i.test(error.message)))
         )
-          throw new ServiceError('Mật khẩu hiện tại không đúng.', error.status);
+          throw new ServiceError(t('Mật khẩu hiện tại không đúng.'), error.status);
         throw error;
       }
       clear();
@@ -366,9 +377,9 @@ export function createApiAuth(
     },
     async register(name: string, email: string, password: string) {
       if (!name.trim() || name.trim().length > 200)
-        throw new ServiceError('Họ tên phải có từ 1 đến 200 ký tự.', 400);
+        throw new ServiceError(t('Họ tên phải có từ 1 đến 200 ký tự.'), 400);
       if (!z.string().email().max(255).safeParse(email.trim()).success)
-        throw new ServiceError('Email không hợp lệ hoặc quá dài.', 400);
+        throw new ServiceError(t('Email không hợp lệ hoặc quá dài.'), 400);
       if (
         password.length < 8 ||
         password.length > 100 ||
@@ -378,7 +389,7 @@ export function createApiAuth(
         !/[^a-zA-Z0-9]/.test(password)
       )
         throw new ServiceError(
-          'Mật khẩu cần 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.',
+          t('Mật khẩu cần 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.'),
           400,
         );
       try {
@@ -390,8 +401,8 @@ export function createApiAuth(
       } catch (error) {
         if (error instanceof ServiceError && error.status === 409) throw error;
         throw new ServiceError(
-          (error instanceof Error ? error.message : 'Không thể hoàn tất đăng ký.') +
-            ' Nếu tài khoản đã được tạo, hãy thử đăng nhập; không gửi lại đăng ký liên tục.',
+          (error instanceof Error ? error.message : t('Không thể hoàn tất đăng ký.')) +
+            t(' Nếu tài khoản đã được tạo, hãy thử đăng nhập; không gửi lại đăng ký liên tục.'),
           error instanceof ServiceError ? error.status : 503,
         );
       }

@@ -686,3 +686,30 @@
     font-size: clamp(2.7rem, 10vw, 4rem);
   }
 }
+/* Language switch sits with "Sign in"; on phones it moves into the opened menu. */
+.landing-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.landing-lang-menu {
+  display: none;
+}
+@media (max-width: 760px) {
+  .landing-header-actions {
+    margin-left: auto;
+  }
+  .landing-header > .btn {
+    margin-left: 0;
+  }
+}
+@media (max-width: 520px) {
+  .landing-header-actions .landing-lang {
+    display: none;
+  }
+  .landing-nav.is-open .landing-lang-menu {
+    display: inline-flex;
+    align-self: flex-start;
+    margin: 8px 12px 4px;
+  }
+}

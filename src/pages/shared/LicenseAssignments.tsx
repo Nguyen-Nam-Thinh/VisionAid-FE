@@ -1,3 +1,4 @@
+import { t, formatLocaleDateTime } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -36,15 +37,16 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
         ].includes(String(q.queryKey[0])) && q.queryKey[1] === actor.id,
     });
   return (
-    <section className="glass card stack" aria-label="Danh sách cấp license">
-      <h2>License đã cấp</h2>
+    <section className="glass card stack" aria-label={t('Danh sách cấp license')}>
+      <h2>{t('License đã cấp')}</h2>
       <p>
-        Cấp license cho người được chăm sóc đã có tài khoản trong tổ chức. Nhân viên chăm sóc không
-        sử dụng suất license.
+        {t(
+          'Cấp license cho người được chăm sóc đã có tài khoản trong tổ chức. Nhân viên chăm sóc không sử dụng suất license.',
+        )}
       </p>
       <div className="row page-head-actions">
         <label className="field">
-          Trạng thái cấp
+          {t('Trạng thái cấp')}
           <select
             value={active}
             onChange={(e) => {
@@ -52,18 +54,18 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
               setPage(1);
             }}
           >
-            <option value="true">Chưa thu hồi</option>
-            <option value="false">Đã thu hồi</option>
-            <option value="">Tất cả</option>
+            <option value="true">{t('Chưa thu hồi')}</option>
+            <option value="false">{t('Đã thu hồi')}</option>
+            <option value="">{t('Tất cả')}</option>
           </select>
         </label>
         <button className="btn primary" onClick={() => setAssigning(true)}>
-          Cấp license
+          {t('Cấp license')}
         </button>
         <button className="btn" disabled={query.isFetching} onClick={() => void refresh()}>
-          Tải lại danh sách
+          {t('Tải lại danh sách')}
         </button>
-        <Link to="/packages">Mua thêm license</Link>
+        <Link to="/packages">{t('Mua thêm license')}</Link>
       </div>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
@@ -71,13 +73,13 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
           <>
             <div className="table-scroll">
               <table className="assignment-table">
-                <caption className="sr-only">License đã cấp cho người được chăm sóc</caption>
+                <caption className="sr-only">{t('License đã cấp cho người được chăm sóc')}</caption>
                 <thead>
                   <tr>
-                    <th>Người được chăm sóc</th>
-                    <th>Ngày cấp</th>
-                    <th>Trạng thái</th>
-                    <th>Thao tác</th>
+                    <th>{t('Người được chăm sóc')}</th>
+                    <th>{t('Ngày cấp')}</th>
+                    <th>{t('Trạng thái')}</th>
+                    <th>{t('Thao tác')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -86,18 +88,22 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
                       <td>
                         <strong>{item.viuUser.fullName}</strong>
                         <p className="assignment-meta">{item.viuUser.email}</p>
-                        <small className="assignment-meta">Mã: {item.viuUser.id}</small>
+                        <small className="assignment-meta">
+                          {t('Mã: {id}', { id: item.viuUser.id })}
+                        </small>
                       </td>
-                      <td>{new Date(item.assignedAt).toLocaleString('vi-VN')}</td>
+                      <td>{formatLocaleDateTime(item.assignedAt)}</td>
                       <td>
                         {item.isActive
-                          ? 'Chưa thu hồi'
-                          : `Đã thu hồi · ${new Date(item.revokedAt!).toLocaleString('vi-VN')}`}
+                          ? t('Chưa thu hồi')
+                          : t('Đã thu hồi · {p0}', {
+                              p0: formatLocaleDateTime(item.revokedAt!),
+                            })}
                       </td>
                       <td>
                         {item.isActive && (
                           <button className="btn danger small" onClick={() => setRevoking(item)}>
-                            Thu hồi
+                            {t('Thu hồi')}
                           </button>
                         )}
                       </td>
@@ -106,60 +112,66 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
                 </tbody>
               </table>
             </div>
-            {!query.data.items.length && <p>Không có license phù hợp bộ lọc.</p>}
+            {!query.data.items.length && <p>{t('Không có license phù hợp bộ lọc.')}</p>}
             <p>
-              Chưa thu hồi không đồng nghĩa còn hạn sử dụng; thời hạn và quyền truy cập do máy chủ
-              kiểm tra.
+              {t(
+                'Chưa thu hồi không đồng nghĩa còn hạn sử dụng; thời hạn và quyền truy cập do máy chủ kiểm tra.',
+              )}
             </p>
             <div className="row pagination">
               <span>
-                {query.data.totalCount} kết quả · Trang {page}/{Math.max(1, query.data.totalPages)}
+                {t('{totalCount} kết quả · Trang {page}/{p4}', {
+                  totalCount: query.data.totalCount,
+                  page,
+                  p4: Math.max(1, query.data.totalPages),
+                })}
               </span>
               <button
                 className="btn"
                 disabled={!query.data.hasPreviousPage}
                 onClick={() => setPage(page - 1)}
               >
-                Trang trước
+                {t('Trang trước')}
               </button>
               <button
                 className="btn"
                 disabled={!query.data.hasNextPage}
                 onClick={() => setPage(page + 1)}
               >
-                Trang sau
+                {t('Trang sau')}
               </button>
             </div>
           </>
         )}
       </State>
       {assigning && (
-        <Dialog title="Cấp license" onClose={() => setAssigning(false)}>
+        <Dialog title={t('Cấp license')} onClose={() => setAssigning(false)}>
           <p>
-            Chọn người được chăm sóc của tổ chức. Thao tác sử dụng một suất trong kho hiện tại; có
-            thể cấp lại cho người đã bị thu hồi.
+            {t(
+              'Chọn người được chăm sóc của tổ chức. Thao tác sử dụng một suất trong kho hiện tại; có thể cấp lại cho người đã bị thu hồi.',
+            )}
           </p>
           {vius.isLoading ? (
-            <p role="status">Đang tải danh sách người được chăm sóc…</p>
+            <p role="status">{t('Đang tải danh sách người được chăm sóc…')}</p>
           ) : (
             <Form
               fields={[
                 personField(
                   {
                     key: 'viuId',
-                    label: 'Người được chăm sóc',
+                    label: t('Người được chăm sóc'),
                     required: true,
-                    hint: 'Nhập mã UUID tài khoản VIU của tổ chức.',
+                    hint: t('Nhập mã UUID tài khoản VIU của tổ chức.'),
                   },
                   vius,
-                  'Trung tâm chưa có người được chăm sóc đang hoạt động.',
+                  t('Trung tâm chưa có người được chăm sóc đang hoạt động.'),
                 ),
               ]}
-              submit="Xác nhận cấp license"
+              submit={t('Xác nhận cấp license')}
               onSubmit={async (values) => {
                 try {
                   await licenseAssignmentsApi.assign(actor, String(values.viuId).trim());
-                  setNotice('Đã cấp license. Số lượng trong kho được tải lại từ máy chủ.');
+                  setNotice(t('Đã cấp license. Số lượng trong kho được tải lại từ máy chủ.'));
                   setAssigning(false);
                 } finally {
                   await refresh();
@@ -168,20 +180,25 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
             />
           )}
           <p>
-            Nếu báo lỗi hoặc mất kết nối, kiểm tra lại danh sách trước khi gửi lại. Hết suất hoặc
-            hết hạn: <Link to="/packages">xem gói Business</Link>.
+            {t(
+              'Nếu báo lỗi hoặc mất kết nối, kiểm tra lại danh sách trước khi gửi lại. Hết suất hoặc hết hạn:',
+            )}{' '}
+            <Link to="/packages">{t('xem gói Business')}</Link>.
           </p>
         </Dialog>
       )}
       {revoking && (
         <Confirm
-          title="Thu hồi license"
-          description={`Thu hồi license của ${revoking.viuUser.fullName}? Người này sẽ mất quyền sử dụng theo license tổ chức. Tài khoản và phân công chăm sóc vẫn được giữ.`}
+          title={t('Thu hồi license')}
+          description={t(
+            'Thu hồi license của {fullName}? Người này sẽ mất quyền sử dụng theo license tổ chức. Tài khoản và phân công chăm sóc vẫn được giữ.',
+            { fullName: revoking.viuUser.fullName },
+          )}
           onClose={() => setRevoking(null)}
           onConfirm={async () => {
             try {
               await licenseAssignmentsApi.revoke(actor, revoking.viuUser.id);
-              setNotice('Đã thu hồi license. Số lượng trong kho được tải lại từ máy chủ.');
+              setNotice(t('Đã thu hồi license. Số lượng trong kho được tải lại từ máy chủ.'));
             } finally {
               await refresh();
             }

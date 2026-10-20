@@ -1,3 +1,4 @@
+import { t, msg } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,15 +14,15 @@ import { roles } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 
 const fields: FieldSpec[] = [
-  { key: 'name', label: 'Tên tổ chức', required: true, max: 200 },
-  { key: 'address', label: 'Địa chỉ', max: 500 },
+  { key: 'name', label: msg('Tên tổ chức'), required: true, max: 200 },
+  { key: 'address', label: msg('Địa chỉ'), max: 500 },
   {
     key: 'phoneNumber',
-    label: 'Điện thoại liên hệ',
-    hint: 'Để trống, hoặc nhập số di động, số bàn 02x hay tổng đài 1800/1900.',
+    label: msg('Điện thoại liên hệ'),
+    hint: msg('Để trống, hoặc nhập số di động, số bàn 02x hay tổng đài 1800/1900.'),
   },
   // Optional email is validated in the API adapter; the shared Form email rule requires a value.
-  { key: 'contactEmail', label: 'Email liên hệ' },
+  { key: 'contactEmail', label: msg('Email liên hệ') },
 ];
 function Pagination({
   data,
@@ -41,21 +42,25 @@ function Pagination({
   return (
     <div className="row pagination">
       <span>
-        {data.totalCount} kết quả · Trang {data.page}/{Math.max(1, data.totalPages)}
+        {t('{totalCount} kết quả · Trang {page}/{p4}', {
+          totalCount: data.totalCount,
+          page: data.page,
+          p4: Math.max(1, data.totalPages),
+        })}
       </span>
       <button
         className="btn"
         disabled={busy || !data.hasPreviousPage}
         onClick={() => change(data.page - 1)}
       >
-        Trang trước
+        {t('Trang trước')}
       </button>
       <button
         className="btn"
         disabled={busy || !data.hasNextPage}
         onClick={() => change(data.page + 1)}
       >
-        Trang sau
+        {t('Trang sau')}
       </button>
     </div>
   );
@@ -101,12 +106,12 @@ function Organizations({ user }: { user: Person }) {
   return (
     <>
       <PageHead
-        title={admin ? 'Tổ chức & trung tâm' : 'Hồ sơ trung tâm'}
-        description="Thông tin tổ chức và thành viên theo quyền tài khoản."
+        title={admin ? t('Tổ chức & trung tâm') : t('Hồ sơ trung tâm')}
+        description={t('Thông tin tổ chức và thành viên theo quyền tài khoản.')}
         actions={
           admin && (
             <button className="btn primary" onClick={() => setCreate(true)}>
-              Tạo tổ chức
+              {t('Tạo tổ chức')}
             </button>
           )
         }
@@ -120,7 +125,9 @@ function Organizations({ user }: { user: Person }) {
             setCreate(false);
             setSelected(org.id);
             setNotice(
-              'Đã tạo tổ chức. Tiếp theo, tạo tài khoản Quản trị trung tâm tại Quản lý tài khoản.',
+              t(
+                'Đã tạo tổ chức. Tiếp theo, tạo tài khoản Quản trị trung tâm tại Quản lý tài khoản.',
+              ),
             );
             await refresh();
           }}
@@ -138,15 +145,15 @@ function Organizations({ user }: { user: Person }) {
             }}
           >
             <label className="field">
-              Tìm tổ chức
+              {t('Tìm tổ chức')}
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Tên, mã số thuế, email"
+                placeholder={t('Tên, mã số thuế, email')}
               />
             </label>
             <label className="field">
-              Trạng thái
+              {t('Trạng thái')}
               <select
                 value={active}
                 onChange={(e) => {
@@ -155,13 +162,13 @@ function Organizations({ user }: { user: Person }) {
                   setSelected('');
                 }}
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="true">Đang hoạt động</option>
-                <option value="false">Ngừng hoạt động</option>
+                <option value="">{t('Tất cả trạng thái')}</option>
+                <option value="true">{t('Đang hoạt động')}</option>
+                <option value="false">{t('Ngừng hoạt động')}</option>
               </select>
             </label>
             <label className="field">
-              Dữ liệu xóa
+              {t('Dữ liệu xóa')}
               <select
                 value={deleted}
                 onChange={(e) => {
@@ -170,13 +177,13 @@ function Organizations({ user }: { user: Person }) {
                   setSelected('');
                 }}
               >
-                <option value="false">Chưa xóa</option>
-                <option value="true">Đã xóa</option>
-                <option value="">Tất cả</option>
+                <option value="false">{t('Chưa xóa')}</option>
+                <option value="true">{t('Đã xóa')}</option>
+                <option value="">{t('Tất cả')}</option>
               </select>
             </label>
             <button className="btn" type="submit">
-              Tìm kiếm
+              {t('Tìm kiếm')}
             </button>
             <button
               className="btn"
@@ -184,28 +191,28 @@ function Organizations({ user }: { user: Person }) {
               disabled={list.isFetching}
               onClick={() => void refresh()}
             >
-              Tải lại
+              {t('Tải lại')}
             </button>
           </form>
           <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
             {list.data && (
               <>
-                {!list.data.items.length && <p>Không có tổ chức phù hợp.</p>}
+                {!list.data.items.length && <p>{t('Không có tổ chức phù hợp.')}</p>}
                 <div className="table-scroll">
                   <table>
                     <thead>
                       <tr>
-                        <th>Tên tổ chức</th>
+                        <th>{t('Tên tổ chức')}</th>
                         <th>Email</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
+                        <th>{t('Trạng thái')}</th>
+                        <th>{t('Thao tác')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {list.data.items.map((org) => (
                         <tr key={org.id}>
                           <td>{org.name}</td>
-                          <td>{org.contactEmail || 'Chưa có'}</td>
+                          <td>{org.contactEmail || t('Chưa có')}</td>
                           <td>
                             <OrganizationStatus org={org} />
                           </td>
@@ -213,9 +220,9 @@ function Organizations({ user }: { user: Person }) {
                             <button
                               className="btn"
                               onClick={() => setSelected(org.id)}
-                              aria-label={'Xem tổ chức ' + org.name}
+                              aria-label={t('Xem tổ chức ') + org.name}
                             >
-                              Chi tiết
+                              {t('Chi tiết')}
                             </button>
                           </td>
                         </tr>
@@ -238,7 +245,7 @@ function Organizations({ user }: { user: Person }) {
       )}
       {(!admin || selected) &&
         (admin ? (
-          <Dialog title="Chi tiết tổ chức" onClose={() => setSelected('')}>
+          <Dialog title={t('Chi tiết tổ chức')} onClose={() => setSelected('')}>
             <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
               {detail.data && (
                 <OrganizationDetails
@@ -248,7 +255,7 @@ function Organizations({ user }: { user: Person }) {
                   refresh={refresh}
                   removed={() => {
                     setSelected('');
-                    setNotice('Đã xóa mềm tổ chức.');
+                    setNotice(t('Đã xóa mềm tổ chức.'));
                   }}
                 />
               )}
@@ -264,7 +271,7 @@ function Organizations({ user }: { user: Person }) {
                 refresh={refresh}
                 removed={() => {
                   setSelected('');
-                  setNotice('Đã xóa mềm tổ chức.');
+                  setNotice(t('Đã xóa mềm tổ chức.'));
                 }}
               />
             )}
@@ -276,7 +283,7 @@ function Organizations({ user }: { user: Person }) {
 function OrganizationStatus({ org }: { org: Organization }) {
   return (
     <Badge tone={org.isActive ? 'green' : 'amber'}>
-      {org.deletedAt ? 'Đã xóa' : org.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+      {org.deletedAt ? t('Đã xóa') : org.isActive ? t('Đang hoạt động') : t('Ngừng hoạt động')}
     </Badge>
   );
 }
@@ -294,14 +301,16 @@ function OrganizationEditor({
   const [busy, setBusy] = useState(false);
   return (
     <Dialog
-      title={org ? 'Sửa tổ chức' : 'Tạo tổ chức'}
+      title={org ? t('Sửa tổ chức') : t('Tạo tổ chức')}
       onClose={() => {
         if (!busy) close();
       }}
     >
       <Form
         fields={
-          org ? fields : [...fields, { key: 'taxCode', label: 'Mã số thuế / giấy phép', max: 50 }]
+          org
+            ? fields
+            : [...fields, { key: 'taxCode', label: t('Mã số thuế / giấy phép'), max: 50 }]
         }
         initial={
           org
@@ -313,7 +322,7 @@ function OrganizationEditor({
               }
             : {}
         }
-        submit={org ? 'Lưu tổ chức' : 'Tạo tổ chức'}
+        submit={org ? t('Lưu tổ chức') : t('Tạo tổ chức')}
         onSubmit={async (values) => {
           setBusy(true);
           try {
@@ -332,8 +341,10 @@ function OrganizationEditor({
             const err = error as { status?: number; message?: string };
             if (err.status && err.status >= 500)
               throw new Error(
-                (err.message || 'Lỗi máy chủ.') +
-                  ' Có thể thay đổi đã được lưu; đóng form và tải lại danh sách để kiểm tra trước khi gửi lại.',
+                (err.message || t('Lỗi máy chủ.')) +
+                  t(
+                    ' Có thể thay đổi đã được lưu; đóng form và tải lại danh sách để kiểm tra trước khi gửi lại.',
+                  ),
                 { cause: error },
               );
             throw error;
@@ -375,23 +386,27 @@ function OrganizationDetails({
     <section className="glass card stack">
       <h2>{org.name}</h2>
       <OrganizationStatus org={org} />
-      <p>Mã tổ chức: {org.id}</p>
+      <p>{t('Mã tổ chức: {id}', { id: org.id })}</p>
       <p>
-        Mã số thuế: {org.taxCode || 'Chưa có'} · Địa chỉ: {org.address || 'Chưa có'}
+        {t('Mã số thuế:')} {org.taxCode || t('Chưa có')} {t('· Địa chỉ:')}{' '}
+        {org.address || t('Chưa có')}
       </p>
       <p>
-        Liên hệ: {org.phoneNumber || 'Chưa có số điện thoại'} ·{' '}
-        {org.contactEmail || 'Chưa có email'}
+        {t('Liên hệ:')} {org.phoneNumber || t('Chưa có số điện thoại')} ·{' '}
+        {org.contactEmail || t('Chưa có email')}
       </p>
       <p>
-        Quản trị trung tâm: {org.centerAdminName || 'Chưa có'} · Nhân viên: {org.staffCount} · Người
-        khiếm thị: {org.viuCount}
+        {t('Quản trị trung tâm:')} {org.centerAdminName || t('Chưa có')}{' '}
+        {t('· Nhân viên: {staffCount} · Người khiếm thị: {viuCount}', {
+          staffCount: org.staffCount,
+          viuCount: org.viuCount,
+        })}
       </p>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <div className="row">
         {!org.deletedAt && (
           <button className="btn" onClick={() => setEdit(true)}>
-            Sửa tổ chức
+            {t('Sửa tổ chức')}
           </button>
         )}
         {user.role === 'Admin' && (
@@ -400,11 +415,11 @@ function OrganizationDetails({
               className="btn"
               onClick={() => setAction(org.isActive ? 'deactivate' : 'activate')}
             >
-              {org.isActive ? 'Vô hiệu hóa tổ chức' : 'Kích hoạt tổ chức'}
+              {org.isActive ? t('Vô hiệu hóa tổ chức') : t('Kích hoạt tổ chức')}
             </button>
             {!org.deletedAt && (
               <button className="btn danger" onClick={() => setAction('delete')}>
-                Xóa tổ chức
+                {t('Xóa tổ chức')}
               </button>
             )}
           </>
@@ -417,7 +432,7 @@ function OrganizationDetails({
           close={() => setEdit(false)}
           saved={async () => {
             setEdit(false);
-            setNotice('Đã cập nhật tổ chức.');
+            setNotice(t('Đã cập nhật tổ chức.'));
             await refresh();
           }}
         />
@@ -426,17 +441,17 @@ function OrganizationDetails({
         <Confirm
           title={
             action === 'delete'
-              ? 'Xóa tổ chức'
+              ? t('Xóa tổ chức')
               : action === 'activate'
-                ? 'Kích hoạt tổ chức'
-                : 'Vô hiệu hóa tổ chức'
+                ? t('Kích hoạt tổ chức')
+                : t('Vô hiệu hóa tổ chức')
           }
           description={
             org.name +
             (action === 'activate'
-              ? ': khôi phục tổ chức; thành viên vẫn cần được kích hoạt riêng.'
-              : ': thành viên đang hoạt động sẽ bị vô hiệu hóa và thu hồi phiên/FCM.' +
-                (action === 'delete' ? ' Tổ chức được đánh dấu xóa mềm.' : ''))
+              ? t(': khôi phục tổ chức; thành viên vẫn cần được kích hoạt riêng.')
+              : t(': thành viên đang hoạt động sẽ bị vô hiệu hóa và thu hồi phiên/FCM.') +
+                (action === 'delete' ? t(' Tổ chức được đánh dấu xóa mềm.') : ''))
           }
           onClose={() => setAction(null)}
           onConfirm={async () => {
@@ -447,8 +462,8 @@ function OrganizationDetails({
               await organizationsApi.status(user, org.id, action === 'activate');
               setNotice(
                 action === 'activate'
-                  ? 'Đã kích hoạt tổ chức; cần kích hoạt từng thành viên riêng.'
-                  : 'Đã vô hiệu hóa tổ chức.',
+                  ? t('Đã kích hoạt tổ chức; cần kích hoạt từng thành viên riêng.')
+                  : t('Đã vô hiệu hóa tổ chức.'),
               );
             }
             await refresh();
@@ -457,7 +472,7 @@ function OrganizationDetails({
       )}
       {!org.deletedAt && (
         <>
-          <h3>Thành viên tổ chức</h3>
+          <h3>{t('Thành viên tổ chức')}</h3>
           <form
             className="row"
             onSubmit={(e) => {
@@ -467,11 +482,11 @@ function OrganizationDetails({
             }}
           >
             <label className="field">
-              Tìm thành viên
+              {t('Tìm thành viên')}
               <input value={draft} onChange={(e) => setDraft(e.target.value)} />
             </label>
             <label className="field">
-              Vai trò
+              {t('Vai trò')}
               <select
                 value={role}
                 onChange={(e) => {
@@ -479,7 +494,7 @@ function OrganizationDetails({
                   setPage(1);
                 }}
               >
-                <option value="">Tất cả vai trò</option>
+                <option value="">{t('Tất cả vai trò')}</option>
                 {(['CenterAdmin', 'Caregiver', 'VisuallyImpaired'] as const).map((r) => (
                   <option key={r} value={r}>
                     {roles[r]}
@@ -488,7 +503,7 @@ function OrganizationDetails({
               </select>
             </label>
             <label className="field">
-              Trạng thái thành viên
+              {t('Trạng thái thành viên')}
               <select
                 value={active}
                 onChange={(e) => {
@@ -496,26 +511,26 @@ function OrganizationDetails({
                   setPage(1);
                 }}
               >
-                <option value="">Tất cả</option>
-                <option value="true">Hoạt động</option>
-                <option value="false">Vô hiệu hóa</option>
+                <option value="">{t('Tất cả')}</option>
+                <option value="true">{t('Hoạt động')}</option>
+                <option value="false">{t('Vô hiệu hóa')}</option>
               </select>
             </label>
-            <button className="btn">Tìm thành viên</button>
+            <button className="btn">{t('Tìm thành viên')}</button>
           </form>
           <State loading={members.isPending} error={members.error} retry={() => members.refetch()}>
             {members.data && (
               <>
-                {!members.data.items.length && <p>Chưa có thành viên phù hợp.</p>}
+                {!members.data.items.length && <p>{t('Chưa có thành viên phù hợp.')}</p>}
                 <div className="table-scroll">
                   <table>
                     <thead>
                       <tr>
-                        <th>Họ tên</th>
+                        <th>{t('Họ tên')}</th>
                         <th>Email</th>
-                        <th>Điện thoại</th>
-                        <th>Vai trò</th>
-                        <th>Trạng thái</th>
+                        <th>{t('Điện thoại')}</th>
+                        <th>{t('Vai trò')}</th>
+                        <th>{t('Trạng thái')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -523,9 +538,9 @@ function OrganizationDetails({
                         <tr key={m.id}>
                           <td>{m.fullName}</td>
                           <td>{m.email}</td>
-                          <td>{m.phoneNumber || 'Chưa có'}</td>
+                          <td>{m.phoneNumber || t('Chưa có')}</td>
                           <td>{roles[m.role]}</td>
-                          <td>{m.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}</td>
+                          <td>{m.isActive ? t('Hoạt động') : t('Vô hiệu hóa')}</td>
                         </tr>
                       ))}
                     </tbody>

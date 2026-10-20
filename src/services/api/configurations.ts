@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -84,25 +85,25 @@ export type ConfigHistory = z.infer<typeof historySchema>;
 type Actor = Pick<Person, 'role'>;
 function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
   const p = schema.safeParse(raw);
-  if (!p.success) throw new ServiceError('Dữ liệu cấu hình không hợp lệ.', 502);
+  if (!p.success) throw new ServiceError(t('Dữ liệu cấu hình không hợp lệ.'), 502);
   return p.data;
 }
 function authorize(actor: Actor, id?: string) {
   if (actor.role !== 'Admin')
-    throw new ServiceError('Chỉ quản trị hệ thống được quản lý cấu hình.', 403);
+    throw new ServiceError(t('Chỉ quản trị hệ thống được quản lý cấu hình.'), 403);
   if (id !== undefined && !uuid.safeParse(id).success)
-    throw new ServiceError('Mã cấu hình không hợp lệ.', 400);
+    throw new ServiceError(t('Mã cấu hình không hợp lệ.'), 400);
 }
 function review(config: SystemConfig) {
   if (!config.reviewed || !reviewedKeys.has(config.configKey))
-    throw new ServiceError('Khóa này chưa được duyệt để hiển thị hoặc sửa trên Web.', 403);
+    throw new ServiceError(t('Khóa này chưa được duyệt để hiển thị hoặc sửa trên Web.'), 403);
 }
 function pageQuery(page: number) {
-  if (!Number.isInteger(page) || page < 1) throw new ServiceError('Trang không hợp lệ.', 400);
+  if (!Number.isInteger(page) || page < 1) throw new ServiceError(t('Trang không hợp lệ.'), 400);
   return new URLSearchParams({ page: String(page), pageSize: '20' });
 }
 export function validateConfigValue(config: SystemConfig, value: string) {
-  if (!value.trim()) throw new ServiceError('Giá trị không được để trống.', 400);
+  if (!value.trim()) throw new ServiceError(t('Giá trị không được để trống.'), 400);
   if (config.valueType === 'Integer' || config.valueType === 'Decimal') {
     const valid =
       config.valueType === 'Integer'
@@ -115,7 +116,7 @@ export function validateConfigValue(config: SystemConfig, value: string) {
       (config.valueType === 'Integer' &&
         (!Number.isInteger(n) || n < -2147483648 || n > 2147483647))
     )
-      throw new ServiceError('Nhập số hợp lệ, dùng dấu chấm cho phần thập phân.', 400);
+      throw new ServiceError(t('Nhập số hợp lệ, dùng dấu chấm cho phần thập phân.'), 400);
     for (const [bound, lower] of [
       [config.minValue, true],
       [config.maxValue, false],
@@ -124,16 +125,16 @@ export function validateConfigValue(config: SystemConfig, value: string) {
         bound !== null &&
         (!Number.isFinite(Number(bound)) || (lower ? n < Number(bound) : n > Number(bound)))
       )
-        throw new ServiceError('Giá trị nằm ngoài giới hạn cấu hình.', 400);
+        throw new ServiceError(t('Giá trị nằm ngoài giới hạn cấu hình.'), 400);
     }
   }
   if (config.valueType === 'Boolean' && !['true', 'false'].includes(value))
-    throw new ServiceError('Giá trị phải là true hoặc false.', 400);
+    throw new ServiceError(t('Giá trị phải là true hoặc false.'), 400);
   if (config.valueType === 'Json') {
     try {
       JSON.parse(value);
     } catch {
-      throw new ServiceError('JSON không hợp lệ.', 400);
+      throw new ServiceError(t('JSON không hợp lệ.'), 400);
     }
   }
   const choices: Record<string, string[]> = {
@@ -141,15 +142,15 @@ export function validateConfigValue(config: SystemConfig, value: string) {
     hybrid_navigation_engine: ['JEV', 'GROQ', 'RULE_BASED'],
   };
   if (choices[config.configKey] && !choices[config.configKey].includes(value))
-    throw new ServiceError('Giá trị không nằm trong lựa chọn được hỗ trợ.', 400);
+    throw new ServiceError(t('Giá trị không nằm trong lựa chọn được hỗ trợ.'), 400);
   if (config.configKey === 'webrtc_stun_fallback_url' && !/^stuns?:[^\s@]+$/.test(value))
-    throw new ServiceError('Nhập URL STUN hợp lệ, không chứa thông tin đăng nhập.', 400);
+    throw new ServiceError(t('Nhập URL STUN hợp lệ, không chứa thông tin đăng nhập.'), 400);
 }
 export function createConfigurationsApi(get = apiGet, write = apiWrite) {
   async function detail(actor: Actor, id: string, signal?: AbortSignal) {
     authorize(actor, id);
     const data = parse(configSchema, await get(`/api/system-configs/${id}`, signal));
-    if (data.id !== id) throw new ServiceError('Cấu hình không khớp lựa chọn.', 403);
+    if (data.id !== id) throw new ServiceError(t('Cấu hình không khớp lựa chọn.'), 403);
     review(data);
     return data;
   }
@@ -160,7 +161,7 @@ export function createConfigurationsApi(get = apiGet, write = apiWrite) {
         (key) => latest[key as keyof SystemConfig] !== config[key as keyof SystemConfig],
       )
     )
-      throw new ServiceError('Cấu hình đã thay đổi. Đóng popup và tải lại trước khi sửa.', 409);
+      throw new ServiceError(t('Cấu hình đã thay đổi. Đóng popup và tải lại trước khi sửa.'), 409);
     return latest;
   }
   async function mutate(
@@ -172,7 +173,7 @@ export function createConfigurationsApi(get = apiGet, write = apiWrite) {
   ) {
     const latest = await current(actor, config);
     validateConfigValue(latest, value);
-    if (reason.length > 500) throw new ServiceError('Lý do tối đa 500 ký tự.', 400);
+    if (reason.length > 500) throw new ServiceError(t('Lý do tối đa 500 ký tự.'), 400);
     const result = parse(
       configSchema,
       await write(`/api/system-configs/${config.id}${history ? '/rollback' : ''}`, {
@@ -191,7 +192,7 @@ export function createConfigurationsApi(get = apiGet, write = apiWrite) {
       result.configValue !== value
     )
       throw new ServiceError(
-        'Chưa xác nhận được kết quả lưu. Tải lại cấu hình trước khi gửi lại.',
+        t('Chưa xác nhận được kết quả lưu. Tải lại cấu hình trước khi gửi lại.'),
         502,
       );
     return result;
@@ -218,7 +219,7 @@ export function createConfigurationsApi(get = apiGet, write = apiWrite) {
           (item) => item.configId !== config.id || item.configKey !== config.configKey,
         )
       )
-        throw new ServiceError('Lịch sử không thuộc cấu hình được chọn.', 403);
+        throw new ServiceError(t('Lịch sử không thuộc cấu hình được chọn.'), 403);
       return data;
     },
     save: (actor: Actor, config: SystemConfig, value: string, reason: string) =>
@@ -233,7 +234,7 @@ export function createConfigurationsApi(get = apiGet, write = apiWrite) {
       const entries = await this.history(actor, config, page);
       const entry = entries.items.find((item) => item.id === history.id);
       if (!entry || entry.oldValue === null || entry.oldValue !== history.oldValue)
-        throw new ServiceError('Không xác minh được giá trị khôi phục. Tải lại lịch sử.', 409);
+        throw new ServiceError(t('Không xác minh được giá trị khôi phục. Tải lại lịch sử.'), 409);
       return mutate(actor, config, entry.oldValue, reason, entry);
     },
   };
