@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { z } from 'zod';
 import { Form } from '../../components/Form';
@@ -29,47 +30,50 @@ export function ApiCreateLinkedUser({
       if (id) sessionStorage.setItem(key, id);
       else sessionStorage.removeItem(key);
     } catch {
-      setNotice('Không lưu được tiến độ trong tab. Hãy ghi lại mã VIU trước khi tải lại trang.');
+      setNotice(t('Không lưu được tiến độ trong tab. Hãy ghi lại mã VIU trước khi tải lại trang.'));
     }
   };
   return (
     <>
       <button className="btn primary" onClick={() => setOpen(true)}>
-        {pending ? 'Tiếp tục liên kết người được chăm sóc' : 'Thêm người được chăm sóc'}
+        {pending ? t('Tiếp tục liên kết người được chăm sóc') : t('Thêm người được chăm sóc')}
       </button>
       {open && (
-        <Dialog title="Thêm người được chăm sóc" onClose={() => setOpen(false)}>
+        <Dialog title={t('Thêm người được chăm sóc')} onClose={() => setOpen(false)}>
           <div className="stack">
             {discard && (
               <Confirm
-                title="Bỏ tiến độ liên kết"
+                title={t('Bỏ tiến độ liên kết')}
                 description={
-                  'Hãy lưu mã VIU trước: ' +
+                  t('Hãy lưu mã VIU trước: ') +
                   pending +
-                  '. Thao tác này chỉ bỏ tiến độ trong tab, không xóa tài khoản trên máy chủ. Chỉ tạo lại khi quản trị viên xác nhận chưa có tài khoản.'
+                  t(
+                    '. Thao tác này chỉ bỏ tiến độ trong tab, không xóa tài khoản trên máy chủ. Chỉ tạo lại khi quản trị viên xác nhận chưa có tài khoản.',
+                  )
                 }
                 onClose={() => setDiscard(false)}
                 onConfirm={async () => {
                   save('');
-                  setNotice('Đã bỏ tiến độ trong tab.');
+                  setNotice(t('Đã bỏ tiến độ trong tab.'));
                 }}
               />
             )}
             {pending && (
               <button className="btn" onClick={() => setDiscard(true)}>
-                Bỏ tiến độ trong tab
+                {t('Bỏ tiến độ trong tab')}
               </button>
             )}
             <p className="notice" role="status">
               {!pending
-                ? 'Bước 1/2: Tạo tài khoản'
+                ? t('Bước 1/2: Tạo tài khoản')
                 : pending === 'unknown'
-                  ? 'Cần xác minh tài khoản trước khi tiếp tục'
-                  : 'Bước 2/2: Thiết lập liên kết chăm sóc'}
+                  ? t('Cần xác minh tài khoản trước khi tiếp tục')
+                  : t('Bước 2/2: Thiết lập liên kết chăm sóc')}
             </p>
             <p>
-              Tạo tài khoản trước, sau đó tạo liên kết chăm sóc. Hai bước được lưu riêng trên hệ
-              thống.
+              {t(
+                'Tạo tài khoản trước, sau đó tạo liên kết chăm sóc. Hai bước được lưu riêng trên hệ thống.',
+              )}
             </p>
             {notice && (
               <p role="status" className="notice">
@@ -79,32 +83,32 @@ export function ApiCreateLinkedUser({
             {!pending ? (
               <Form
                 key="create"
-                submit="Bước 1: Tạo tài khoản VIU"
+                submit={t('Bước 1: Tạo tài khoản VIU')}
                 fields={[
-                  { key: 'fullName', label: 'Họ và tên', required: true, max: 200 },
+                  { key: 'fullName', label: t('Họ và tên'), required: true, max: 200 },
                   { key: 'email', label: 'Email', type: 'email', required: true, max: 255 },
                   {
                     key: 'phoneNumber',
-                    label: 'Số điện thoại',
-                    hint: '10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.',
+                    label: t('Số điện thoại'),
+                    hint: t('10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.'),
                   },
                   {
                     key: 'password',
-                    label: 'Mật khẩu',
+                    label: t('Mật khẩu'),
                     type: 'password',
                     required: true,
-                    hint: 'Ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.',
+                    hint: t('Ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.'),
                   },
                   {
                     key: 'confirmation',
-                    label: 'Nhập lại mật khẩu',
+                    label: t('Nhập lại mật khẩu'),
                     type: 'password',
                     required: true,
                   },
                 ]}
                 onSubmit={async (values) => {
                   if (values.password !== values.confirmation)
-                    throw new Error('Mật khẩu nhập lại không khớp.');
+                    throw new Error(t('Mật khẩu nhập lại không khớp.'));
                   try {
                     const person = await caregivingApi.createUser(
                       {
@@ -120,7 +124,9 @@ export function ApiCreateLinkedUser({
                     if (error instanceof ServiceError && error.status >= 500) {
                       save('unknown');
                       setNotice(
-                        'Chưa xác định được tài khoản đã tạo hay chưa. Nhờ quản trị viên kiểm tra email và cung cấp mã VIU trước khi tiếp tục; không gửi lại yêu cầu tạo tài khoản.',
+                        t(
+                          'Chưa xác định được tài khoản đã tạo hay chưa. Nhờ quản trị viên kiểm tra email và cung cấp mã VIU trước khi tiếp tục; không gửi lại yêu cầu tạo tài khoản.',
+                        ),
                       );
                     } else throw error;
                   }
@@ -129,21 +135,21 @@ export function ApiCreateLinkedUser({
             ) : pending !== 'unknown' ? (
               <>
                 <p>
-                  Mã VIU đang chờ liên kết: <strong>{pending}</strong>
+                  {t('Mã VIU đang chờ liên kết:')} <strong>{pending}</strong>
                 </p>
-                <p>Nếu liên kết thất bại, thử lại bước này. Không cần tạo thêm tài khoản.</p>
+                <p>{t('Nếu liên kết thất bại, thử lại bước này. Không cần tạo thêm tài khoản.')}</p>
                 <Form
                   key={pending}
-                  submit="Bước 2: Tạo liên kết"
+                  submit={t('Bước 2: Tạo liên kết')}
                   initial={{
                     canReceiveAlerts: true,
                     canManageRegistry: false,
                     canManageLocations: false,
                   }}
                   fields={[
-                    { key: 'canReceiveAlerts', label: 'Nhận cảnh báo', type: 'checkbox' },
-                    { key: 'canManageRegistry', label: 'Quản lý gương mặt', type: 'checkbox' },
-                    { key: 'canManageLocations', label: 'Quản lý địa điểm', type: 'checkbox' },
+                    { key: 'canReceiveAlerts', label: t('Nhận cảnh báo'), type: 'checkbox' },
+                    { key: 'canManageRegistry', label: t('Quản lý gương mặt'), type: 'checkbox' },
+                    { key: 'canManageLocations', label: t('Quản lý địa điểm'), type: 'checkbox' },
                   ]}
                   onSubmit={async (values) => {
                     await caregivingApi.createLink(pending, caregiverId, {
@@ -152,27 +158,28 @@ export function ApiCreateLinkedUser({
                       canManageLocations: !!values.canManageLocations,
                     });
                     save('');
-                    setNotice('Liên kết đã sẵn sàng. Danh sách đang được tải lại.');
+                    setNotice(t('Liên kết đã sẵn sàng. Danh sách đang được tải lại.'));
                     onLinked();
                   }}
                 />
               </>
             ) : (
               <p role="alert">
-                Chờ xác minh tài khoản đã tạo với quản trị viên. Nhập mã VIU đã xác minh ở bên dưới
-                để tiếp tục.
+                {t(
+                  'Chờ xác minh tài khoản đã tạo với quản trị viên. Nhập mã VIU đã xác minh ở bên dưới để tiếp tục.',
+                )}
               </p>
             )}
             {(!pending || pending === 'unknown') && (
               <details>
-                <summary>Tiếp tục bằng mã VIU đã có</summary>
+                <summary>{t('Tiếp tục bằng mã VIU đã có')}</summary>
                 <Form
-                  submit="Dùng mã VIU này"
-                  fields={[{ key: 'id', label: 'Mã VIU đã xác minh', required: true }]}
+                  submit={t('Dùng mã VIU này')}
+                  fields={[{ key: 'id', label: t('Mã VIU đã xác minh'), required: true }]}
                   onSubmit={async (values) => {
                     const id = String(values.id).trim();
                     if (!z.string().uuid().safeParse(id).success)
-                      throw new Error('Mã VIU phải là UUID hợp lệ.');
+                      throw new Error(t('Mã VIU phải là UUID hợp lệ.'));
                     save(id);
                   }}
                 />

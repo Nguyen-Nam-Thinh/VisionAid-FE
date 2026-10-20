@@ -1,3 +1,4 @@
+import { t, formatLocaleDateTime } from '../../i18n';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useSession } from '../../hooks/useService';
@@ -20,24 +21,24 @@ export function OrganizationPool({ actor }: { actor: Person }) {
     retry: false,
   });
   if (!isOrganizationBuyer(actor))
-    return <p className="notice">Chỉ quản trị trung tâm có tổ chức được xem kho license.</p>;
+    return <p className="notice">{t('Chỉ quản trị trung tâm có tổ chức được xem kho license.')}</p>;
   const item = query.data;
   return (
-    <section className="glass card stack license-card" aria-label="Kho license tổ chức">
+    <section className="glass card stack license-card" aria-label={t('Kho license tổ chức')}>
       <div className="row page-head-actions">
         <button
           className="btn small"
           disabled={query.isFetching}
           onClick={() => void query.refetch()}
         >
-          Tải lại kho license
+          {t('Tải lại kho license')}
         </button>
         <Link className="btn small" to="/packages">
-          Chọn gói Business
+          {t('Chọn gói Business')}
         </Link>
       </div>
       {query.error instanceof ServiceError && query.error.status === 404 ? (
-        <p className="notice">Tổ chức chưa có kho license. Chọn gói Business để bắt đầu.</p>
+        <p className="notice">{t('Tổ chức chưa có kho license. Chọn gói Business để bắt đầu.')}</p>
       ) : (
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           {item && (
@@ -45,39 +46,38 @@ export function OrganizationPool({ actor }: { actor: Person }) {
               <h2>{item.package.name}</h2>
               <dl className="license-details">
                 <div>
-                  <dt>Trạng thái</dt>
+                  <dt>{t('Trạng thái')}</dt>
                   <dd>{subscriptionLabels[item.status]}</dd>
                 </div>
                 <div>
-                  <dt>Tổng license</dt>
+                  <dt>{t('Tổng license')}</dt>
                   <dd>{item.totalLicenses}</dd>
                 </div>
                 <div>
-                  <dt>Đã sử dụng</dt>
+                  <dt>{t('Đã sử dụng')}</dt>
                   <dd>{item.usedLicenses}</dd>
                 </div>
                 <div>
-                  <dt>Còn lại</dt>
+                  <dt>{t('Còn lại')}</dt>
                   <dd>{item.availableLicenses}</dd>
                 </div>
                 <div>
-                  <dt>Ngày mua</dt>
-                  <dd>
-                    {new Date(item.purchasedAt).toLocaleString('vi-VN', { timeZoneName: 'short' })}
-                  </dd>
+                  <dt>{t('Ngày mua')}</dt>
+                  <dd>{formatLocaleDateTime(item.purchasedAt, { timeZoneName: 'short' })}</dd>
                 </div>
                 <div>
-                  <dt>Hết hạn</dt>
+                  <dt>{t('Hết hạn')}</dt>
                   <dd>
                     {item.expiresAt
-                      ? new Date(item.expiresAt).toLocaleString('vi-VN', { timeZoneName: 'short' })
-                      : 'Không có thời hạn từ máy chủ'}
+                      ? formatLocaleDateTime(item.expiresAt, { timeZoneName: 'short' })
+                      : t('Không có thời hạn từ máy chủ')}
                   </dd>
                 </div>
               </dl>
               <p>
-                Nhân viên chăm sóc không sử dụng license trong kho. Việc cấp license cho người được
-                chăm sóc do máy chủ kiểm tra.
+                {t(
+                  'Nhân viên chăm sóc không sử dụng license trong kho. Việc cấp license cho người được chăm sóc do máy chủ kiểm tra.',
+                )}
               </p>
             </>
           )}
@@ -92,12 +92,12 @@ export function ApiLicensePool() {
   return (
     <>
       <PageHead
-        title="Kho license tổ chức"
-        description="Số lượng và thời hạn do máy chủ xác nhận."
+        title={t('Kho license tổ chức')}
+        description={t('Số lượng và thời hạn do máy chủ xác nhận.')}
         actions={
           isOrganizationBuyer(actor) && (
             <Link className="btn" to="/center-admin/payments">
-              Lịch sử thanh toán
+              {t('Lịch sử thanh toán')}
             </Link>
           )
         }

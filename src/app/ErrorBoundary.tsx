@@ -1,5 +1,6 @@
+import { t } from '../i18n';
 import { Component, type ReactNode } from 'react';
-import { StatusPage, reloadAction } from '../pages/shared/StatusPage';
+import { StatusPage, ReloadAction } from '../pages/shared/StatusPage';
 
 type Props = {
   children: ReactNode;
@@ -30,9 +31,9 @@ export class ErrorBoundary extends Component<Props, State> {
         detail={import.meta.env.DEV ? error.message : undefined}
         actions={
           <>
-            {reloadAction}
+            <ReloadAction />
             <a className="btn" href={root ? '/' : '/dashboard'}>
-              {root ? 'Về trang chủ' : 'Về tổng quan'}
+              {root ? t('Về trang chủ') : t('Về tổng quan')}
             </a>
           </>
         }

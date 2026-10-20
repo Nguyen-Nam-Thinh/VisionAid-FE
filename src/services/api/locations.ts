@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet } from './adapter';
 import { ServiceError } from '../contracts';
@@ -42,7 +43,7 @@ export type HistoryRange = { dateFrom: string; dateTo: string };
 type Actor = Pick<Person, 'role' | 'orgId'>;
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
-  if (!result.success) throw new ServiceError('Dữ liệu GPS từ máy chủ không hợp lệ.', 502);
+  if (!result.success) throw new ServiceError(t('Dữ liệu GPS từ máy chủ không hợp lệ.'), 502);
   return result.data;
 }
 function authorize(actor: Actor, viuId: string) {
@@ -50,27 +51,27 @@ function authorize(actor: Actor, viuId: string) {
     !['Caregiver', 'CenterAdmin'].includes(actor.role) ||
     (actor.role === 'CenterAdmin' && !actor.orgId)
   )
-    throw new ServiceError('Không có quyền xem vị trí.', 403);
+    throw new ServiceError(t('Không có quyền xem vị trí.'), 403);
   if (!z.string().uuid().safeParse(viuId).success)
-    throw new ServiceError('Mã VIU không hợp lệ.', 400);
+    throw new ServiceError(t('Mã VIU không hợp lệ.'), 400);
 }
 export function historyRange(from: string, to: string): HistoryRange {
   const convert = (value: string) => {
     if (!value) return '';
     const date = new Date(value);
-    if (!Number.isFinite(date.getTime())) throw new ServiceError('Thời gian không hợp lệ.', 400);
+    if (!Number.isFinite(date.getTime())) throw new ServiceError(t('Thời gian không hợp lệ.'), 400);
     return date.toISOString();
   };
   const dateFrom = convert(from),
     dateTo = convert(to);
   if (dateFrom && dateTo && dateFrom > dateTo)
-    throw new ServiceError('Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.', 400);
+    throw new ServiceError(t('Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.'), 400);
   return { dateFrom, dateTo };
 }
 export function locationAge(cachedAt: string, now: number) {
   const age = now - Date.parse(cachedAt);
-  if (!Number.isFinite(age) || age < -60000) return 'Cần kiểm tra thời gian thiết bị';
-  return age > 120000 ? 'Dữ liệu cũ hơn 2 phút' : 'Ghi nhận trong 2 phút gần đây';
+  if (!Number.isFinite(age) || age < -60000) return t('Cần kiểm tra thời gian thiết bị');
+  return age > 120000 ? t('Dữ liệu cũ hơn 2 phút') : t('Ghi nhận trong 2 phút gần đây');
 }
 export function createLocationsApi(get = apiGet) {
   return {
@@ -80,7 +81,8 @@ export function createLocationsApi(get = apiGet) {
         liveSchema,
         await get('/api/locations/live?' + new URLSearchParams({ viuId }), signal),
       );
-      if (data.userId !== viuId) throw new ServiceError('Vị trí không thuộc VIU được chọn.', 403);
+      if (data.userId !== viuId)
+        throw new ServiceError(t('Vị trí không thuộc VIU được chọn.'), 403);
       return data;
     },
     async history(
@@ -91,7 +93,8 @@ export function createLocationsApi(get = apiGet) {
       signal?: AbortSignal,
     ) {
       authorize(actor, viuId);
-      if (!Number.isInteger(page) || page < 1) throw new ServiceError('Trang không hợp lệ.', 400);
+      if (!Number.isInteger(page) || page < 1)
+        throw new ServiceError(t('Trang không hợp lệ.'), 400);
       const dates = historyRange(range.dateFrom, range.dateTo);
       const query = new URLSearchParams({ viuId, page: String(page), pageSize: '20' });
       if (dates.dateFrom) query.set('dateFrom', dates.dateFrom);

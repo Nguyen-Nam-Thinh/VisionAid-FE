@@ -1,3 +1,5 @@
+import { t } from '../../i18n';
+import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { useState } from 'react';
 import {
   Link,
@@ -35,28 +37,28 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
   const validResetLink = !!resetToken && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail);
   if (user && action !== 'reset') return <Navigate to={returnTo} replace />;
   const titles: Record<string, string> = {
-    login: 'Chào mừng trở lại.',
-    register: 'Bắt đầu đồng hành.',
-    recover: 'Khôi phục mật khẩu',
-    reset: 'Đặt mật khẩu mới',
+    login: t('Chào mừng trở lại.'),
+    register: t('Bắt đầu đồng hành.'),
+    recover: t('Khôi phục mật khẩu'),
+    reset: t('Đặt mật khẩu mới'),
   };
   if (!titles[action]) return <Navigate to="/not-found" replace />;
   const fields: FieldSpec[] =
     action === 'reset'
       ? [
-          { key: 'email', label: 'Địa chỉ email', type: 'email', required: true },
+          { key: 'email', label: t('Địa chỉ email'), type: 'email', required: true },
           {
             key: 'code',
-            label: auth.mode === 'api' ? 'Mã hoặc liên kết khôi phục' : 'Mã khôi phục demo',
+            label: auth.mode === 'api' ? t('Mã hoặc liên kết khôi phục') : t('Mã khôi phục demo'),
             type: auth.mode === 'api' ? 'password' : 'text',
             required: true,
           },
-          { key: 'password', label: 'Mật khẩu mới', type: 'password', required: true },
+          { key: 'password', label: t('Mật khẩu mới'), type: 'password', required: true },
           ...(auth.mode === 'api'
             ? [
                 {
                   key: 'confirm',
-                  label: 'Nhập lại mật khẩu mới',
+                  label: t('Nhập lại mật khẩu mới'),
                   type: 'password' as const,
                   required: true,
                 },
@@ -64,16 +66,18 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
             : []),
         ]
       : [
-          { key: 'email', label: 'Địa chỉ email', type: 'email', required: true },
-          ...(action === 'register' ? [{ key: 'name', label: 'Họ và tên', required: true }] : []),
+          { key: 'email', label: t('Địa chỉ email'), type: 'email', required: true },
+          ...(action === 'register'
+            ? [{ key: 'name', label: t('Họ và tên'), required: true }]
+            : []),
           ...(action !== 'recover'
-            ? [{ key: 'password', label: 'Mật khẩu', type: 'password' as const, required: true }]
+            ? [{ key: 'password', label: t('Mật khẩu'), type: 'password' as const, required: true }]
             : []),
           ...(action === 'register' && auth.mode === 'api'
             ? [
                 {
                   key: 'confirm',
-                  label: 'Nhập lại mật khẩu',
+                  label: t('Nhập lại mật khẩu'),
                   type: 'password' as const,
                   required: true,
                 },
@@ -84,21 +88,28 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
     <div className="auth">
       <aside className="auth-story">
         <div className="row">
-          <img className="brand-icon" src="/branding/visionaid-icon.png" alt="" width={40} height={40} />
+          <img
+            className="brand-icon"
+            src="/branding/visionaid-icon.png"
+            alt=""
+            width={40}
+            height={40}
+          />
           <strong style={{ fontSize: 24 }}>VisionAid.</strong>
         </div>
         <div className="stack">
           <span className="eyebrow" style={{ color: 'var(--on-primary)' }}>
-            Một kết nối. Nhiều an tâm.
+            {t('Một kết nối. Nhiều an tâm.')}
           </span>
           <h1>
-            Luôn gần bên,
+            {t('Luôn gần bên,')}
             <br />
-            dù ở nơi đâu.
+            {t('dù ở nơi đâu.')}
           </h1>
           <p>
-            Kết nối người chăm sóc và người thân trong một không gian an toàn, rõ ràng và dễ sử
-            dụng.
+            {t(
+              'Kết nối người chăm sóc và người thân trong một không gian an toàn, rõ ràng và dễ sử dụng.',
+            )}
           </p>
           <div className="auth-mark">
             <img src="/branding/visionaid-icon.png" alt="" width={110} height={110} />
@@ -106,40 +117,46 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
         </div>
         <div className="row">
           <ShieldCheck size={20} />
-          <span>Đồng hành cùng sự tự lập mỗi ngày</span>
+          <span>{t('Đồng hành cùng sự tự lập mỗi ngày')}</span>
         </div>
       </aside>
       <main className="auth-form">
         <div className="stack">
-          <Link to="/">← Về trang chủ</Link>
+          <div className="row between">
+            <Link to="/">{t('← Về trang chủ')}</Link>
+            <LanguageSwitch />
+          </div>
           {notice && (
             <p className="notice" role="status">
               {notice}
             </p>
           )}
           {auth.mode === 'api' && session.isPending && (
-            <p role="status">Đang kiểm tra phiên đã lưu…</p>
+            <p role="status">{t('Đang kiểm tra phiên đã lưu…')}</p>
           )}
           {auth.mode === 'api' && session.isError && (
             <p className="notice error" role="alert">
-              Không khôi phục được phiên. Bạn có thể đăng nhập lại. {session.error.message}
+              {t('Không khôi phục được phiên. Bạn có thể đăng nhập lại. {message}', {
+                message: session.error.message,
+              })}
             </p>
           )}
           <h1>{titles[action]}</h1>
           <p className="muted">
             {action === 'register'
-              ? 'Tạo tài khoản người chăm sóc gia đình.'
-              : 'Không gian chăm sóc dành cho bạn.'}
+              ? t('Tạo tài khoản người chăm sóc gia đình.')
+              : t('Không gian chăm sóc dành cho bạn.')}
           </p>
           {auth.mode === 'mock' && (
             <div className="notice">
-              Bản demo · Dữ liệu giả lưu trên trình duyệt. Mật khẩu mẫu: <strong>Demo@123</strong>.
-              Không nhập dữ liệu hoặc mật khẩu thật.
+              {t('Bản demo · Dữ liệu giả lưu trên trình duyệt. Mật khẩu mẫu:')}{' '}
+              <strong>Demo@123</strong>
+              {t('. Không nhập dữ liệu hoặc mật khẩu thật.')}
             </div>
           )}
           {action === 'login' && auth.mode === 'mock' && (
             <label className="field">
-              Chọn tài khoản demo
+              {t('Chọn tài khoản demo')}
               <select value={email} onChange={(e) => setEmail(e.target.value)}>
                 {accounts.map((p) => (
                   <option key={p.id} value={p.email}>
@@ -151,7 +168,9 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
           )}
           {emailReset && !validResetLink && (
             <p className="notice error" role="alert">
-              Liên kết khôi phục thiếu hoặc không hợp lệ. Hãy yêu cầu email mới qua Quên mật khẩu.
+              {t(
+                'Liên kết khôi phục thiếu hoặc không hợp lệ. Hãy yêu cầu email mới qua Quên mật khẩu.',
+              )}
             </p>
           )}
           {!(auth.mode === 'api' && session.isPending) && (!emailReset || validResetLink) && (
@@ -167,12 +186,12 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
               }}
               submit={
                 action === 'login'
-                  ? 'Đăng nhập'
+                  ? t('Đăng nhập')
                   : action === 'register'
-                    ? 'Tạo tài khoản'
+                    ? t('Tạo tài khoản')
                     : action === 'recover'
-                      ? 'Tạo yêu cầu khôi phục'
-                      : 'Đặt mật khẩu'
+                      ? t('Tạo yêu cầu khôi phục')
+                      : t('Đặt mật khẩu')
               }
               onSubmit={async (v) => {
                 setMessage('');
@@ -182,7 +201,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
                 }
                 if (action === 'register') {
                   if (auth.mode === 'api' && v.password !== v.confirm)
-                    throw Error('Mật khẩu xác nhận không khớp.');
+                    throw Error(t('Mật khẩu xác nhận không khớp.'));
                   await auth.register(String(v.name), String(v.email), String(v.password));
                   nav(returnTo, { replace: true });
                 }
@@ -191,20 +210,21 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
                   setMessage(
                     auth.mode === 'api'
                       ? code
-                      : 'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo chỉ dùng với email tồn tại: ' +
-                          code,
+                      : t(
+                          'Mô phỏng yêu cầu khôi phục. Chưa gửi email thật. Mã demo chỉ dùng với email tồn tại: ',
+                        ) + code,
                   );
                 }
                 if (action === 'reset') {
                   if (auth.mode === 'api' && v.password !== v.confirm)
-                    throw Error('Mật khẩu xác nhận không khớp.');
+                    throw Error(t('Mật khẩu xác nhận không khớp.'));
                   await auth.resetPassword(
                     emailReset ? resetEmail : String(v.email),
                     emailReset ? resetToken : String(v.code),
                     String(v.password),
                   );
                   if (auth.mode === 'api') nav('/auth/login', { replace: true });
-                  else setMessage('Đã đổi mật khẩu demo. Bạn có thể đăng nhập lại.');
+                  else setMessage(t('Đã đổi mật khẩu demo. Bạn có thể đăng nhập lại.'));
                 }
               }}
             />
@@ -216,16 +236,16 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
           )}
           {auth.mode === 'api' && (
             <>
-              {action !== 'recover' && <Link to="/auth/recover">Quên mật khẩu?</Link>}
+              {action !== 'recover' && <Link to="/auth/recover">{t('Quên mật khẩu?')}</Link>}
               {['register', 'reset'].includes(action) && (
                 <p className="muted">
-                  Mật khẩu cần 8–100 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.
+                  {t('Mật khẩu cần 8–100 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.')}
                 </p>
               )}
               <div className="row between">
-                <Link to="/auth/login">Đăng nhập</Link>
+                <Link to="/auth/login">{t('Đăng nhập')}</Link>
                 <Link to="/auth/register">
-                  Đăng ký <ArrowUpRight size={14} />
+                  {t('Đăng ký')} <ArrowUpRight size={14} />
                 </Link>
               </div>
             </>
@@ -233,18 +253,18 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
           {auth.mode === 'mock' && (
             <>
               <div className="row between">
-                <Link to="/auth/login">Đăng nhập</Link>
+                <Link to="/auth/login">{t('Đăng nhập')}</Link>
                 <Link to="/auth/register">
-                  Đăng ký <ArrowUpRight size={14} />
+                  {t('Đăng ký')} <ArrowUpRight size={14} />
                 </Link>
               </div>
               <div className="row between">
-                <Link to="/auth/recover">Quên mật khẩu?</Link>
-                <Link to="/auth/reset">Nhập mã khôi phục</Link>
+                <Link to="/auth/recover">{t('Quên mật khẩu?')}</Link>
+                <Link to="/auth/reset">{t('Nhập mã khôi phục')}</Link>
               </div>
             </>
           )}
-          <small>Hệ thống hỗ trợ người khiếm thị · FA26SE013</small>
+          <small>{t('Hệ thống hỗ trợ người khiếm thị · FA26SE013')}</small>
         </div>
       </main>
     </div>

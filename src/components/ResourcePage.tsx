@@ -1,3 +1,4 @@
+import { t, tText } from '../i18n';
 import { useState, type ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 import { useWorkspace } from '../hooks/useWorkspace';
@@ -76,7 +77,7 @@ export function ResourcePage({
                 onClick={() => setEdit({ ...blank, id: crypto.randomUUID() })}
               >
                 <Plus size={16} />
-                Thêm mới
+                {t('Thêm mới')}
               </button>
             )}
           </>
@@ -84,13 +85,13 @@ export function ResourcePage({
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {scope === 'viu' && !selected ? (
-          <p className="glass empty">Chưa có người được liên kết.</p>
+          <p className="glass empty">{t('Chưa có người được liên kết.')}</p>
         ) : (
           <>
             <p className="notice" style={{ marginBottom: 20 }}>
               {editable
-                ? 'Thay đổi được lưu sau khi kiểm tra quyền và dữ liệu.'
-                : 'Bạn đang có quyền xem; không có quyền chỉnh sửa mục này.'}
+                ? t('Thay đổi được lưu sau khi kiểm tra quyền và dữ liệu.')
+                : t('Bạn đang có quyền xem; không có quyền chỉnh sửa mục này.')}
             </p>
             <DataTable
               title={title}
@@ -98,18 +99,18 @@ export function ResourcePage({
               searchText={(e) => e.name + ' ' + Object.values(e.fields).join(' ')}
               filter={
                 <label className="field">
-                  <span className="sr-only">Lọc hoạt động</span>
+                  <span className="sr-only">{t('Lọc hoạt động')}</span>
                   <select value={active} onChange={(e) => setActive(e.target.value)}>
-                    <option value="all">Tất cả</option>
-                    <option value="active">Đang hoạt động</option>
-                    <option value="inactive">Chưa hoạt động</option>
+                    <option value="all">{t('Tất cả')}</option>
+                    <option value="active">{t('Đang hoạt động')}</option>
+                    <option value="inactive">{t('Chưa hoạt động')}</option>
                   </select>
                 </label>
               }
               columns={[
-                { label: 'Tên', render: (e) => e.name },
+                { label: t('Tên'), render: (e) => e.name },
                 {
-                  label: 'Thông tin',
+                  label: t('Thông tin'),
                   render: (e) =>
                     details ? (
                       details(e)
@@ -120,7 +121,7 @@ export function ResourcePage({
                           .slice(0, 3)
                           .map((f) => (
                             <div key={f.key}>
-                              <small>{f.label}: </small>
+                              <small>{tText(f.label)}: </small>
                               {String(e.fields[f.key] ?? '—')}
                             </div>
                           ))}
@@ -128,26 +129,26 @@ export function ResourcePage({
                     ),
                 },
                 {
-                  label: 'Trạng thái',
+                  label: t('Trạng thái'),
                   render: (e) => (
                     <Badge tone={e.active ? 'green' : 'amber'}>
-                      {e.active ? 'Hoạt động' : 'Chưa hoạt động'}
+                      {e.active ? t('Hoạt động') : t('Chưa hoạt động')}
                     </Badge>
                   ),
                 },
                 {
-                  label: 'Thao tác',
+                  label: t('Thao tác'),
                   render: (e) => (
                     <div className="row">
                       {extraAction?.(e)}
                       {canWrite(kind, e) && (
                         <>
                           <button className="btn small" onClick={() => setEdit(e)}>
-                            Chỉnh sửa
+                            {t('Chỉnh sửa')}
                           </button>
                           {allowDelete && (
                             <button className="btn small danger" onClick={() => setRemove(e)}>
-                              Xóa
+                              {t('Xóa')}
                             </button>
                           )}
                         </>
@@ -162,17 +163,17 @@ export function ResourcePage({
       </State>
       {edit && (
         <Dialog
-          title={(edit.version ? 'Chỉnh sửa: ' : 'Thêm mới: ') + title}
+          title={(edit.version ? t('Chỉnh sửa: ') : t('Thêm mới: ')) + title}
           onClose={() => setEdit(null)}
         >
           <Form
             fields={[
-              ...(!fixedName ? [{ key: 'name', label: 'Tên', required: true, max: 200 }] : []),
+              ...(!fixedName ? [{ key: 'name', label: t('Tên'), required: true, max: 200 }] : []),
               ...fields,
               ...(kind !== 'faces' &&
               kind !== 'configs' &&
               (kind !== 'organizations' || user.role === 'Admin')
-                ? [{ key: 'active', label: 'Đang hoạt động', type: 'checkbox' as const }]
+                ? [{ key: 'active', label: t('Đang hoạt động'), type: 'checkbox' as const }]
                 : []),
             ]}
             initial={{ ...edit.fields, name: edit.name, active: edit.active }}
@@ -197,11 +198,11 @@ export function ResourcePage({
       )}
       {pendingSave && (
         <Confirm
-          title="Thay đổi trạng thái tổ chức?"
+          title={t('Thay đổi trạng thái tổ chức?')}
           description={
-            'Thay đổi quyền đăng nhập của thành viên thuộc ' +
+            t('Thay đổi quyền đăng nhập của thành viên thuộc ') +
             pendingSave.name +
-            '. Xác nhận tiếp tục?'
+            t('. Xác nhận tiếp tục?')
           }
           onClose={() => setPendingSave(null)}
           onConfirm={async () => {
@@ -212,8 +213,10 @@ export function ResourcePage({
       )}
       {remove && (
         <Confirm
-          title={`Xóa ${remove.name}?`}
-          description="Thao tác xóa không thể hoàn tác. Dữ liệu chỉ được bỏ khỏi giao diện sau khi dịch vụ xác nhận thành công."
+          title={t('Xóa {name}?', { name: remove.name })}
+          description={t(
+            'Thao tác xóa không thể hoàn tác. Dữ liệu chỉ được bỏ khỏi giao diện sau khi dịch vụ xác nhận thành công.',
+          )}
           onClose={() => setRemove(null)}
           onConfirm={() =>
             cmd.mutateAsync({ type: 'delete', kind, id: remove.id, version: remove.version })

@@ -1,3 +1,4 @@
+import { t, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -31,8 +32,8 @@ function Places({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title="Địa điểm và vùng an toàn"
-        description="Lưu nơi thường đến và cấu hình vùng tròn cho người được chăm sóc."
+        title={t('Địa điểm và vùng an toàn')}
+        description={t('Lưu nơi thường đến và cấu hình vùng tròn cho người được chăm sóc.')}
       />
       <section className="glass card stack">
         <form
@@ -45,24 +46,24 @@ function Places({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Tìm người được chăm sóc
+            {t('Tìm người được chăm sóc')}
             <input name="search" />
           </label>
-          <button className="btn primary">Tìm kiếm</button>
+          <button className="btn primary">{t('Tìm kiếm')}</button>
           <button
             type="button"
             className="btn"
             disabled={users.isFetching}
             onClick={() => void users.refetch()}
           >
-            Tải lại người dùng
+            {t('Tải lại người dùng')}
           </button>
         </form>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           <label className="field">
-            Người được chăm sóc
+            {t('Người được chăm sóc')}
             <select value={person?.id || ''} onChange={(e) => setSelected(e.target.value)}>
-              <option value="">Chọn người được chăm sóc</option>
+              <option value="">{t('Chọn người được chăm sóc')}</option>
               {users.data?.items.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.fullName} · {item.email}
@@ -72,13 +73,19 @@ function Places({ actor }: { actor: Person }) {
           </label>
           {!person && (
             <p className="notice">
-              Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.
+              {t(
+                'Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.',
+              )}
             </p>
           )}
           {users.data && (
             <div className="row pagination">
               <span>
-                {users.data.totalCount} người · Trang {page}/{Math.max(1, users.data.totalPages)}
+                {t('{totalCount} người · Trang {page}/{p4}', {
+                  totalCount: users.data.totalCount,
+                  page,
+                  p4: Math.max(1, users.data.totalPages),
+                })}
               </span>
               <button
                 className="btn"
@@ -88,7 +95,7 @@ function Places({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang trước
+                {t('Trang trước')}
               </button>
               <button
                 className="btn"
@@ -98,11 +105,11 @@ function Places({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang sau
+                {t('Trang sau')}
               </button>
             </div>
           )}
-          {!users.data?.items.length && <p>Chưa có người được chăm sóc phù hợp.</p>}
+          {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
         </State>
       </section>
       {!users.error && person && (
@@ -120,26 +127,27 @@ function PlaceList({ actor, viuId, name }: { actor: Person; viuId: string; name:
   const [kind, setKind] = useState<PlaceKind>('saved-locations');
   return (
     <section className="glass card stack">
-      <h2>Địa điểm của {name}</h2>
-      <div className="row" aria-label="Loại địa điểm">
+      <h2>{t('Địa điểm của {name}', { name })}</h2>
+      <div className="row" aria-label={t('Loại địa điểm')}>
         <button
           className={'btn ' + (kind === 'saved-locations' ? 'primary' : '')}
           aria-pressed={kind === 'saved-locations'}
           onClick={() => setKind('saved-locations')}
         >
-          Địa điểm đã lưu
+          {t('Địa điểm đã lưu')}
         </button>
         <button
           className={'btn ' + (kind === 'geofences' ? 'primary' : '')}
           aria-pressed={kind === 'geofences'}
           onClick={() => setKind('geofences')}
         >
-          Vùng an toàn
+          {t('Vùng an toàn')}
         </button>
       </div>
       <p className="notice">
-        Nhập tọa độ chính xác để xác định vị trí. Cảnh báo vào, ra và lời nhắc đến nơi phụ thuộc GPS
-        trên điện thoại và hệ thống xử lý.
+        {t(
+          'Nhập tọa độ chính xác để xác định vị trí. Cảnh báo vào, ra và lời nhắc đến nơi phụ thuộc GPS trên điện thoại và hệ thống xử lý.',
+        )}
       </p>
       <PlaceTable key={kind} actor={actor} viuId={viuId} kind={kind} />
     </section>
@@ -167,7 +175,7 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <div className="row">
         <label className="field">
-          Trạng thái
+          {t('Trạng thái')}
           <select
             value={active}
             onChange={(e) => {
@@ -177,20 +185,20 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
               setRemoving(null);
             }}
           >
-            <option value="">Tất cả trạng thái</option>
-            <option value="true">Hoạt động</option>
-            <option value="false">Tạm ngưng</option>
+            <option value="">{t('Tất cả trạng thái')}</option>
+            <option value="true">{t('Hoạt động')}</option>
+            <option value="false">{t('Tạm ngưng')}</option>
           </select>
         </label>
         <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-          Tải lại địa điểm
+          {t('Tải lại địa điểm')}
         </button>
         <button
           className="btn primary"
           disabled={query.isError || !query.data?.canManage}
           onClick={() => setEditing('new')}
         >
-          {zone ? 'Thêm vùng an toàn' : 'Thêm địa điểm'}
+          {zone ? t('Thêm vùng an toàn') : t('Thêm địa điểm')}
         </button>
       </div>
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
@@ -198,24 +206,24 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
           <>
             {!query.data.canManage && (
               <p className="notice">
-                Bạn có quyền xem. Cần quyền quản lý vị trí để thêm, sửa hoặc xóa.
+                {t('Bạn có quyền xem. Cần quyền quản lý vị trí để thêm, sửa hoặc xóa.')}
               </p>
             )}
-            {!zone && <p>Tối đa 20 địa điểm cho mỗi người, bao gồm địa điểm tạm ngưng.</p>}
-            {!query.data.items.length && <p>Chưa có địa điểm phù hợp.</p>}
+            {!zone && <p>{t('Tối đa 20 địa điểm cho mỗi người, bao gồm địa điểm tạm ngưng.')}</p>}
+            {!query.data.items.length && <p>{t('Chưa có địa điểm phù hợp.')}</p>}
             <div
               className="table-scroll"
               tabIndex={0}
               role="region"
-              aria-label="Danh sách địa điểm"
+              aria-label={t('Danh sách địa điểm')}
             >
               <table className="places-table">
                 <thead>
                   <tr>
-                    <th>Tên</th>
-                    <th>Tọa độ và bán kính</th>
-                    <th>Trạng thái</th>
-                    <th>Thao tác</th>
+                    <th>{t('Tên')}</th>
+                    <th>{t('Tọa độ và bán kính')}</th>
+                    <th>{t('Trạng thái')}</th>
+                    <th>{t('Thao tác')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -225,33 +233,38 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                         <strong>{item.name}</strong>
                         {'alertOnExit' in item && (
                           <p className="care-secondary">
-                            Vào: {item.alertOnEnter ? 'bật' : 'tắt'} · Ra:{' '}
-                            {item.alertOnExit ? 'bật' : 'tắt'}
+                            {t('Vào:')} {item.alertOnEnter ? t('bật') : t('tắt')} · {t('Ra:')}{' '}
+                            {item.alertOnExit ? t('bật') : t('tắt')}
                           </p>
                         )}
                       </td>
                       <td>
                         <span>
-                          Vĩ độ: {item.latitude} · Kinh độ: {item.longitude}
+                          {t('Vĩ độ: {latitude} · Kinh độ: {longitude}', {
+                            latitude: item.latitude,
+                            longitude: item.longitude,
+                          })}
                         </span>
                         <p>
-                          Bán kính:{' '}
-                          {'radiusMeters' in item ? item.radiusMeters : item.arrivalRadiusMeters} m
+                          {t('Bán kính: {p3} m', {
+                            p3:
+                              'radiusMeters' in item ? item.radiusMeters : item.arrivalRadiusMeters,
+                          })}
                         </p>
                       </td>
                       <td>
                         <Badge tone={item.isActive ? 'green' : 'amber'}>
-                          {item.isActive ? 'Hoạt động' : 'Tạm ngưng'}
+                          {item.isActive ? t('Hoạt động') : t('Tạm ngưng')}
                         </Badge>
                       </td>
                       <td>
                         <div className="row">
                           <button className="btn small" onClick={() => setEditing(item.id)}>
-                            {query.data.canManage ? 'Xem và sửa' : 'Chi tiết'}
+                            {query.data.canManage ? t('Xem và sửa') : t('Chi tiết')}
                           </button>
                           {query.data.canManage && (
                             <button className="btn small danger" onClick={() => setRemoving(item)}>
-                              Xóa
+                              {t('Xóa')}
                             </button>
                           )}
                         </div>
@@ -263,22 +276,25 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
             </div>
             <div className="row pagination">
               <span>
-                {query.data.totalCount} kết quả · Trang {query.data.page}/
-                {Math.max(1, query.data.totalPages)}
+                {t('{totalCount} kết quả · Trang {page}/{p4}', {
+                  totalCount: query.data.totalCount,
+                  page: query.data.page,
+                  p4: Math.max(1, query.data.totalPages),
+                })}
               </span>
               <button
                 className="btn"
                 disabled={query.isFetching || !query.data.hasPreviousPage}
                 onClick={() => setPage(page - 1)}
               >
-                Trang địa điểm trước
+                {t('Trang địa điểm trước')}
               </button>
               <button
                 className="btn"
                 disabled={query.isFetching || !query.data.hasNextPage}
                 onClick={() => setPage(page + 1)}
               >
-                Trang địa điểm sau
+                {t('Trang địa điểm sau')}
               </button>
             </div>
             {editing && (
@@ -292,20 +308,25 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                 onClose={() => setEditing(null)}
                 onSave={() => {
                   setEditing(null);
-                  setNotice('Đã lưu theo dữ liệu máy chủ.');
+                  setNotice(t('Đã lưu theo dữ liệu máy chủ.'));
                 }}
                 refresh={refresh}
               />
             )}
             {removing && query.data.canManage && (
               <Confirm
-                title={zone ? 'Xóa vùng an toàn' : 'Xóa địa điểm'}
-                description={`Xóa ${removing.name}? ${zone ? 'Vùng này sẽ không còn được dùng để cảnh báo vào hoặc ra.' : 'Địa điểm này sẽ không còn được dùng để nhắc khi đến nơi.'}`}
+                title={zone ? t('Xóa vùng an toàn') : t('Xóa địa điểm')}
+                description={t('Xóa {name}? {p1}', {
+                  name: removing.name,
+                  p1: zone
+                    ? t('Vùng này sẽ không còn được dùng để cảnh báo vào hoặc ra.')
+                    : t('Địa điểm này sẽ không còn được dùng để nhắc khi đến nơi.'),
+                })}
                 onClose={() => setRemoving(null)}
                 onConfirm={async () => {
                   try {
                     await placesApi.remove(actor, viuId, kind, removing.id);
-                    setNotice('Đã xóa theo dữ liệu máy chủ.');
+                    setNotice(t('Đã xóa theo dữ liệu máy chủ.'));
                     if (query.data.items.length === 1 && page > 1) setPage(page - 1);
                   } finally {
                     await refresh();
@@ -346,34 +367,34 @@ function PlaceEditor({
     retry: false,
   });
   const fields: FieldSpec[] = [
-    { key: 'name', label: 'Tên', required: true, max: 200 },
-    { key: 'latitude', label: 'Vĩ độ', type: 'number', required: true, min: -90, max: 90 },
-    { key: 'longitude', label: 'Kinh độ', type: 'number', required: true, min: -180, max: 180 },
+    { key: 'name', label: t('Tên'), required: true, max: 200 },
+    { key: 'latitude', label: t('Vĩ độ'), type: 'number', required: true, min: -90, max: 90 },
+    { key: 'longitude', label: t('Kinh độ'), type: 'number', required: true, min: -180, max: 180 },
     {
       key: zone ? 'radiusMeters' : 'arrivalRadiusMeters',
-      label: 'Bán kính — mét',
+      label: t('Bán kính — mét'),
       type: 'number',
       required: true,
       min: zone ? 50 : 10,
       max: zone ? 50000 : 5000,
       step: 1,
-      hint: zone ? 'Từ 50 đến 50.000 mét.' : 'Từ 10 đến 5.000 mét.',
+      hint: zone ? t('Từ 50 đến 50.000 mét.') : t('Từ 10 đến 5.000 mét.'),
     },
     ...(zone
       ? [
-          { key: 'alertOnExit', label: 'Cảnh báo khi ra ngoài', type: 'checkbox' as const },
-          { key: 'alertOnEnter', label: 'Cảnh báo khi đi vào', type: 'checkbox' as const },
+          { key: 'alertOnExit', label: t('Cảnh báo khi ra ngoài'), type: 'checkbox' as const },
+          { key: 'alertOnEnter', label: t('Cảnh báo khi đi vào'), type: 'checkbox' as const },
         ]
       : [
-          { key: 'description', label: 'Mô tả', type: 'textarea' as const },
+          { key: 'description', label: t('Mô tả'), type: 'textarea' as const },
           {
             key: 'ttsAnnouncement',
-            label: 'Lời nhắc khi đến nơi',
+            label: t('Lời nhắc khi đến nơi'),
             type: 'textarea' as const,
             max: 500,
           },
         ]),
-    ...(!creating ? [{ key: 'isActive', label: 'Hoạt động', type: 'checkbox' as const }] : []),
+    ...(!creating ? [{ key: 'isActive', label: t('Hoạt động'), type: 'checkbox' as const }] : []),
   ];
   const initial: Fields = creating
     ? {
@@ -390,8 +411,8 @@ function PlaceEditor({
   return (
     <Dialog
       title={
-        (creating ? 'Thêm ' : canManage ? 'Xem và sửa ' : 'Chi tiết ') +
-        (zone ? 'vùng an toàn' : 'địa điểm')
+        (creating ? t('Thêm ') : canManage ? t('Xem và sửa ') : t('Chi tiết ')) +
+        (zone ? t('vùng an toàn') : t('địa điểm'))
       }
       onClose={onClose}
     >
@@ -412,7 +433,9 @@ function PlaceEditor({
                 } catch (error) {
                   if ((error as { status?: number }).status! >= 500)
                     throw new Error(
-                      'Chưa xác nhận được kết quả lưu. Tải lại danh sách trước khi gửi lại để tránh tạo trùng.',
+                      t(
+                        'Chưa xác nhận được kết quả lưu. Tải lại danh sách trước khi gửi lại để tránh tạo trùng.',
+                      ),
                       { cause: error },
                     );
                   throw error;
@@ -425,12 +448,12 @@ function PlaceEditor({
             <dl className="record-details">
               {fields.map((field) => (
                 <div key={field.key}>
-                  <dt>{field.label}</dt>
+                  <dt>{tText(field.label)}</dt>
                   <dd>
                     {typeof initial[field.key] === 'boolean'
                       ? initial[field.key]
-                        ? 'Bật'
-                        : 'Tắt'
+                        ? t('Bật')
+                        : t('Tắt')
                       : String(initial[field.key] ?? '—')}
                   </dd>
                 </div>

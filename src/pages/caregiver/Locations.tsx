@@ -1,10 +1,11 @@
+import { t, msg } from '../../i18n';
 import { useState } from 'react';
 import { ResourcePage } from '../../components/ResourcePage';
 import type { FieldSpec } from '../../components/Form';
 const coordinates: FieldSpec[] = [
-  { key: 'lat', label: 'Vĩ độ', type: 'number', min: -90, max: 90 },
-  { key: 'lng', label: 'Kinh độ', type: 'number', min: -180, max: 180 },
-  { key: 'radius', label: 'Bán kính (m)', type: 'number', min: 1 },
+  { key: 'lat', label: msg('Vĩ độ'), type: 'number', min: -90, max: 90 },
+  { key: 'lng', label: msg('Kinh độ'), type: 'number', min: -180, max: 180 },
+  { key: 'radius', label: msg('Bán kính (m)'), type: 'number', min: 1 },
 ];
 export function Locations() {
   const [zone, setZone] = useState(false);
@@ -12,20 +13,22 @@ export function Locations() {
     <>
       <div className="row" style={{ marginBottom: 20 }}>
         <button className={'btn ' + (!zone ? 'primary' : '')} onClick={() => setZone(false)}>
-          Địa điểm đã lưu
+          {t('Địa điểm đã lưu')}
         </button>
         <button className={'btn ' + (zone ? 'primary' : '')} onClick={() => setZone(true)}>
-          Vùng an toàn
+          {t('Vùng an toàn')}
         </button>
       </div>
       <ResourcePage
         key={String(zone)}
         kind={zone ? 'geofences' : 'places'}
-        title={zone ? 'Vùng an toàn' : 'Địa điểm quen thuộc'}
+        title={zone ? t('Vùng an toàn') : t('Địa điểm quen thuộc')}
         description={
           zone
-            ? 'Vùng tròn, cảnh báo khi đi vào hoặc ra ngoài. Sơ đồ chỉ là bản xem trước mô phỏng.'
-            : 'Lưu nơi thường đến và lời nhắc khi đến nơi. Bán kính mặc định 50 m.'
+            ? t(
+                'Vùng tròn, cảnh báo khi đi vào hoặc ra ngoài. Sơ đồ chỉ là bản xem trước mô phỏng.',
+              )
+            : t('Lưu nơi thường đến và lời nhắc khi đến nơi. Bán kính mặc định 50 m.')
         }
         defaults={{
           lat: 10.841,
@@ -39,10 +42,10 @@ export function Locations() {
           ...coordinates,
           ...(zone
             ? [
-                { key: 'enter', label: 'Cảnh báo khi đi vào', type: 'checkbox' as const },
-                { key: 'exit', label: 'Cảnh báo khi đi ra', type: 'checkbox' as const },
+                { key: 'enter', label: t('Cảnh báo khi đi vào'), type: 'checkbox' as const },
+                { key: 'exit', label: t('Cảnh báo khi đi ra'), type: 'checkbox' as const },
               ]
-            : [{ key: 'message', label: 'Lời nhắc khi đến nơi', type: 'textarea' as const }]),
+            : [{ key: 'message', label: t('Lời nhắc khi đến nơi'), type: 'textarea' as const }]),
         ]}
         details={(e) => (
           <>
@@ -52,7 +55,10 @@ export function Locations() {
             <p>
               {String(e.fields.radius)} m{' '}
               {zone
-                ? `· Vào: ${e.fields.enter ? 'bật' : 'tắt'} · Ra: ${e.fields.exit ? 'bật' : 'tắt'}`
+                ? t('· Vào: {p0} · Ra: {p1}', {
+                    p0: e.fields.enter ? t('bật') : t('tắt'),
+                    p1: e.fields.exit ? t('bật') : t('tắt'),
+                  })
                 : ''}
             </p>
           </>

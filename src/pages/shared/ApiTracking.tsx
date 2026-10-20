@@ -1,3 +1,4 @@
+import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -10,10 +11,9 @@ import { Badge, PageHead, State } from '../../components/UI';
 import type { Person } from '../../models/domain';
 
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-const time = (value: string) =>
-  new Date(value).toLocaleString('vi-VN', { timeZone: timezone, hour12: false });
+const time = (value: string) => formatLocaleDateTime(value, { timeZone: timezone, hour12: false });
 const optional = (value: number | null, unit: string) =>
-  value === null ? 'Không có dữ liệu' : `${value} ${unit}`;
+  value === null ? t('Không có dữ liệu') : `${value} ${unit}`;
 type Viu = { id: string; fullName: string; email: string; isActive: boolean };
 export function ApiTracking() {
   const { data: actor } = useSession();
@@ -47,13 +47,15 @@ function Tracking({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title={actor.role === 'CenterAdmin' ? 'Theo dõi GPS trung tâm' : 'Theo dõi vị trí GPS'}
-        description="Vị trí ghi nhận và lịch sử di chuyển của người được phép theo dõi."
+        title={
+          actor.role === 'CenterAdmin' ? t('Theo dõi GPS trung tâm') : t('Theo dõi vị trí GPS')
+        }
+        description={t('Vị trí ghi nhận và lịch sử di chuyển của người được phép theo dõi.')}
       />
       <p className="notice">
-        Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật;
-        trạng thái kết nối hiển thị phía trên. Bản đồ nền đang chờ cấu hình Mapbox; bên dưới là dữ
-        liệu tọa độ từ máy chủ.
+        {t(
+          'Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật; trạng thái kết nối hiển thị phía trên. Bản đồ nền đang chờ cấu hình Mapbox; bên dưới là dữ liệu tọa độ từ máy chủ.',
+        )}
       </p>
       <section className="glass card stack">
         <form
@@ -65,47 +67,50 @@ function Tracking({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Tìm người được theo dõi
+            {t('Tìm người được theo dõi')}
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Tên, email, điện thoại"
+              placeholder={t('Tên, email, điện thoại')}
             />
           </label>
-          <button className="btn primary">Tìm kiếm</button>
+          <button className="btn primary">{t('Tìm kiếm')}</button>
           <button
             type="button"
             className="btn"
             disabled={users.isFetching}
             onClick={() => void users.refetch()}
           >
-            Tải lại danh sách
+            {t('Tải lại danh sách')}
           </button>
         </form>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           {users.data && (
             <>
               {!users.data.items.length && (
-                <p>Chưa có người dùng phù hợp hoặc liên kết được phép xem.</p>
+                <p>{t('Chưa có người dùng phù hợp hoặc liên kết được phép xem.')}</p>
               )}
               <div className="row">
                 <span>
-                  {users.data.totalCount} người · Trang {users.data.page}/
-                  {Math.max(1, users.data.totalPages)}
+                  {t('{totalCount} người · Trang {page}/{p4}', {
+                    totalCount: users.data.totalCount,
+                    page: users.data.page,
+                    p4: Math.max(1, users.data.totalPages),
+                  })}
                 </span>
                 <button
                   className="btn"
                   disabled={users.isFetching || !users.data.hasPreviousPage}
                   onClick={() => setPage(page - 1)}
                 >
-                  Trang người dùng trước
+                  {t('Trang người dùng trước')}
                 </button>
                 <button
                   className="btn"
                   disabled={users.isFetching || !users.data.hasNextPage}
                   onClick={() => setPage(page + 1)}
                 >
-                  Trang người dùng sau
+                  {t('Trang người dùng sau')}
                 </button>
               </div>
               <PageLocations key={page + ':' + search} actor={actor} people={users.data.items} />
@@ -136,8 +141,10 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
   return (
     <div className="stack">
       <p>
-        Thời gian hiển thị theo {timezone}. Danh sách này chỉ lấy vị trí của tối đa 10 người trên
-        trang hiện tại.
+        {t(
+          'Thời gian hiển thị theo {timezone}. Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.',
+          { timezone },
+        )}
       </p>
       <button
         className="btn"
@@ -146,17 +153,17 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
           void cache.invalidateQueries({ queryKey: ['api-location-live', actor.id, actor.orgId] })
         }
       >
-        Tải lại vị trí
+        {t('Tải lại vị trí')}
       </button>
-      <div className="table-scroll" tabIndex={0} role="region" aria-label="Dữ liệu vị trí">
+      <div className="table-scroll" tabIndex={0} role="region" aria-label={t('Dữ liệu vị trí')}>
         <table className="tracking-table">
           <thead>
             <tr>
-              <th>Người được theo dõi</th>
-              <th>Tọa độ (vĩ độ, kinh độ)</th>
-              <th>Thời gian ghi nhận</th>
-              <th>Độ mới / lỗi</th>
-              <th>Thao tác</th>
+              <th>{t('Người được theo dõi')}</th>
+              <th>{t('Tọa độ (vĩ độ, kinh độ)')}</th>
+              <th>{t('Thời gian ghi nhận')}</th>
+              <th>{t('Độ mới / lỗi')}</th>
+              <th>{t('Thao tác')}</th>
             </tr>
           </thead>
           <tbody>
@@ -169,7 +176,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
                     {person.fullName}
                     <br />
                     {person.email}
-                    {!person.isActive && <p>Tài khoản vô hiệu hóa</p>}
+                    {!person.isActive && <p>{t('Tài khoản vô hiệu hóa')}</p>}
                   </td>
                   <td>
                     {point ? `${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}` : '—'}
@@ -177,18 +184,18 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
                   <td>{point ? time(point.cachedAt) : '—'}</td>
                   <td>
                     {q.isPending ? (
-                      'Đang tải…'
+                      t('Đang tải…')
                     ) : q.error ? (
                       <span role="status">
                         {q.error instanceof ServiceError && q.error.status === 404
-                          ? 'Chưa có vị trí khả dụng'
+                          ? t('Chưa có vị trí khả dụng')
                           : q.error.message}
                       </span>
                     ) : (
                       point && (
                         <Badge
                           tone={
-                            locationAge(point.cachedAt, now).startsWith('Ghi nhận')
+                            locationAge(point.cachedAt, now).startsWith(t('Ghi nhận'))
                               ? 'green'
                               : 'amber'
                           }
@@ -202,9 +209,9 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
                     <button
                       className="btn"
                       onClick={() => setSelected(person.id)}
-                      aria-label={'Xem GPS của ' + person.fullName}
+                      aria-label={t('Xem GPS của ') + person.fullName}
                     >
-                      Vị trí & lịch sử
+                      {t('Vị trí & lịch sử')}
                     </button>
                     {q.isError && (
                       <button
@@ -212,7 +219,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
                         disabled={q.isFetching}
                         onClick={() => void q.refetch()}
                       >
-                        Thử lại vị trí
+                        {t('Thử lại vị trí')}
                       </button>
                     )}
                   </td>
@@ -223,10 +230,10 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
         </table>
       </div>
       {person && current && (
-        <section className="stack" aria-label={'GPS của ' + person.fullName}>
-          <h2>{person.fullName} — vị trí & lịch sử</h2>
+        <section className="stack" aria-label={t('GPS của ') + person.fullName}>
+          <h2>{t('{fullName} — vị trí & lịch sử', { fullName: person.fullName })}</h2>
           {current.error instanceof ServiceError && current.error.status === 404 ? (
-            <p>Chưa có vị trí khả dụng. Lịch sử bên dưới có thể vẫn còn dữ liệu.</p>
+            <p>{t('Chưa có vị trí khả dụng. Lịch sử bên dưới có thể vẫn còn dữ liệu.')}</p>
           ) : (
             <State
               loading={current.isPending}
@@ -235,17 +242,25 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
             >
               {current.data && (
                 <>
-                  <p>Địa chỉ: {current.data.formattedAddress || 'Chưa có địa chỉ'}</p>
                   <p>
-                    Vĩ độ: {current.data.latitude} · Kinh độ: {current.data.longitude}
+                    {t('Địa chỉ:')} {current.data.formattedAddress || t('Chưa có địa chỉ')}
                   </p>
                   <p>
-                    Ghi nhận GPS: {time(current.data.cachedAt)} · Máy chủ cập nhật:{' '}
-                    {time(current.data.updatedAt)}
+                    {t('Vĩ độ: {latitude} · Kinh độ: {longitude}', {
+                      latitude: current.data.latitude,
+                      longitude: current.data.longitude,
+                    })}
                   </p>
                   <p>
-                    Pin, mạng và độ chính xác của vị trí hiện tại không có trong API này. Xem giá
-                    trị tại từng bản ghi lịch sử bên dưới.
+                    {t('Ghi nhận GPS: {p1} · Máy chủ cập nhật: {p5}', {
+                      p1: time(current.data.cachedAt),
+                      p5: time(current.data.updatedAt),
+                    })}
+                  </p>
+                  <p>
+                    {t(
+                      'Pin, mạng và độ chính xác của vị trí hiện tại không có trong API này. Xem giá trị tại từng bản ghi lịch sử bên dưới.',
+                    )}
                   </p>
                 </>
               )}
@@ -270,7 +285,7 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
   });
   return (
     <div className="stack">
-      <h3>Lịch sử di chuyển</h3>
+      <h3>{t('Lịch sử di chuyển')}</h3>
       <form
         className="row"
         onSubmit={(e) => {
@@ -280,26 +295,26 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
             setPage(1);
             setError('');
           } catch (err) {
-            setError(err instanceof Error ? err.message : 'Thời gian không hợp lệ.');
+            setError(err instanceof Error ? err.message : t('Thời gian không hợp lệ.'));
           }
         }}
       >
         <label className="field">
-          Từ thời gian
+          {t('Từ thời gian')}
           <input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
         </label>
         <label className="field">
-          Đến thời gian
+          {t('Đến thời gian')}
           <input type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
         </label>
-        <button className="btn primary">Lọc lịch sử</button>
+        <button className="btn primary">{t('Lọc lịch sử')}</button>
         <button
           type="button"
           className="btn"
           disabled={query.isFetching}
           onClick={() => void query.refetch()}
         >
-          Tải lại lịch sử
+          {t('Tải lại lịch sử')}
         </button>
       </form>
       {error && (
@@ -310,19 +325,24 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {query.data && (
           <>
-            {!query.data.items.length && <p>Không có lịch sử trong khoảng thời gian này.</p>}
-            <div className="table-scroll" tabIndex={0} role="region" aria-label="Dữ liệu vị trí">
+            {!query.data.items.length && <p>{t('Không có lịch sử trong khoảng thời gian này.')}</p>}
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label={t('Dữ liệu vị trí')}
+            >
               <table className="tracking-table">
                 <thead>
                   <tr>
-                    <th>Ghi nhận ({timezone})</th>
-                    <th>Vĩ độ / kinh độ</th>
-                    <th>Độ chính xác</th>
-                    <th>Độ cao</th>
-                    <th>Tốc độ</th>
-                    <th>Hướng</th>
-                    <th>Pin</th>
-                    <th>Mạng lúc ghi nhận</th>
+                    <th>{t('Ghi nhận ({timezone})', { timezone })}</th>
+                    <th>{t('Vĩ độ / kinh độ')}</th>
+                    <th>{t('Độ chính xác')}</th>
+                    <th>{t('Độ cao')}</th>
+                    <th>{t('Tốc độ')}</th>
+                    <th>{t('Hướng')}</th>
+                    <th>{t('Pin')}</th>
+                    <th>{t('Mạng lúc ghi nhận')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -339,12 +359,12 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
                       <td>{optional(point.batteryLevel, '%')}</td>
                       <td>
                         {point.networkStatus === null
-                          ? 'Không có dữ liệu'
+                          ? t('Không có dữ liệu')
                           : {
                               Wifi: 'Wi-Fi',
                               Mobile4G: '4G',
                               Mobile3G: '3G',
-                              Offline: 'Ngoại tuyến',
+                              Offline: t('Ngoại tuyến'),
                             }[point.networkStatus] || point.networkStatus}
                       </td>
                     </tr>
@@ -354,22 +374,25 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
             </div>
             <div className="row">
               <span>
-                {query.data.totalCount} bản ghi · Trang {query.data.page}/
-                {Math.max(1, query.data.totalPages)}
+                {t('{totalCount} bản ghi · Trang {page}/{p4}', {
+                  totalCount: query.data.totalCount,
+                  page: query.data.page,
+                  p4: Math.max(1, query.data.totalPages),
+                })}
               </span>
               <button
                 className="btn"
                 disabled={query.isFetching || !query.data.hasPreviousPage}
                 onClick={() => setPage(page - 1)}
               >
-                Lịch sử trước
+                {t('Lịch sử trước')}
               </button>
               <button
                 className="btn"
                 disabled={query.isFetching || !query.data.hasNextPage}
                 onClick={() => setPage(page + 1)}
               >
-                Lịch sử sau
+                {t('Lịch sử sau')}
               </button>
             </div>
           </>

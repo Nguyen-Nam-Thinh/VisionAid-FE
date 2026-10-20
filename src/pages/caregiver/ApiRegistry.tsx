@@ -1,3 +1,4 @@
+import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -34,8 +35,8 @@ function Registry({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title="Gương mặt thân quen"
-        description="Quản lý người thân và ảnh dùng cho nhận diện của người được chăm sóc."
+        title={t('Gương mặt thân quen')}
+        description={t('Quản lý người thân và ảnh dùng cho nhận diện của người được chăm sóc.')}
       />
       <section className="glass card stack">
         <form
@@ -48,24 +49,24 @@ function Registry({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Tìm người được chăm sóc
+            {t('Tìm người được chăm sóc')}
             <input name="search" />
           </label>
-          <button className="btn primary">Tìm kiếm</button>
+          <button className="btn primary">{t('Tìm kiếm')}</button>
           <button
             type="button"
             className="btn"
             disabled={users.isFetching}
             onClick={() => void users.refetch()}
           >
-            Tải lại người dùng
+            {t('Tải lại người dùng')}
           </button>
         </form>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           <label className="field">
-            Người được chăm sóc
+            {t('Người được chăm sóc')}
             <select value={person?.id || ''} onChange={(e) => setSelected(e.target.value)}>
-              <option value="">Chọn người được chăm sóc</option>
+              <option value="">{t('Chọn người được chăm sóc')}</option>
               {users.data?.items.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.fullName} · {item.email}
@@ -75,13 +76,19 @@ function Registry({ actor }: { actor: Person }) {
           </label>
           {!person && (
             <p className="notice">
-              Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.
+              {t(
+                'Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.',
+              )}
             </p>
           )}
           {users.data && (
             <div className="row">
               <span>
-                {users.data.totalCount} người · Trang {page}/{Math.max(1, users.data.totalPages)}
+                {t('{totalCount} người · Trang {page}/{p4}', {
+                  totalCount: users.data.totalCount,
+                  page,
+                  p4: Math.max(1, users.data.totalPages),
+                })}
               </span>
               <button
                 className="btn"
@@ -91,7 +98,7 @@ function Registry({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang trước
+                {t('Trang trước')}
               </button>
               <button
                 className="btn"
@@ -101,11 +108,11 @@ function Registry({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang sau
+                {t('Trang sau')}
               </button>
             </div>
           )}
-          {!users.data?.items.length && <p>Chưa có người được chăm sóc phù hợp.</p>}
+          {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
         </State>
       </section>
       {!users.error && person && (
@@ -146,34 +153,35 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
     ) || [];
   return (
     <section className="glass card stack">
-      <h2>Danh bạ của {name}</h2>
+      <h2>{t('Danh bạ của {name}', { name })}</h2>
       <p className="notice">
-        Tối đa 20 người. Cần ít nhất 3 ảnh để kích hoạt mỗi người. Trạng thái nhận từ máy chủ; khả
-        năng nhận diện còn phụ thuộc chất lượng ảnh và hệ thống AI.
+        {t(
+          'Tối đa 20 người. Cần ít nhất 3 ảnh để kích hoạt mỗi người. Trạng thái nhận từ máy chủ; khả năng nhận diện còn phụ thuộc chất lượng ảnh và hệ thống AI.',
+        )}
       </p>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <div className="row">
         <label className="field">
-          Tìm người thân
+          {t('Tìm người thân')}
           <input value={search} onChange={(e) => setSearch(e.target.value)} />
         </label>
         <label className="field">
-          Trạng thái
+          {t('Trạng thái')}
           <select value={active} onChange={(e) => setActive(e.target.value)}>
-            <option value="">Tất cả</option>
-            <option value="true">Hoạt động</option>
-            <option value="false">Chưa hoạt động</option>
+            <option value="">{t('Tất cả')}</option>
+            <option value="true">{t('Hoạt động')}</option>
+            <option value="false">{t('Chưa hoạt động')}</option>
           </select>
         </label>
         <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-          Tải lại danh bạ
+          {t('Tải lại danh bạ')}
         </button>
         <button
           className="btn primary"
           disabled={query.isError || !query.data?.canManage || query.data.items.length >= 20}
           onClick={() => setEditing('new')}
         >
-          Thêm người thân
+          {t('Thêm người thân')}
         </button>
       </div>
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
@@ -181,23 +189,23 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
           <>
             {!query.data.canManage && (
               <p className="notice">
-                Bạn có quyền xem. Cần quyền quản lý gương mặt để thêm, sửa hoặc xóa.
+                {t('Bạn có quyền xem. Cần quyền quản lý gương mặt để thêm, sửa hoặc xóa.')}
               </p>
             )}
-            {!items.length && <p>Chưa có người thân phù hợp.</p>}
+            {!items.length && <p>{t('Chưa có người thân phù hợp.')}</p>}
             <div
               className="table-scroll"
               tabIndex={0}
               role="region"
-              aria-label="Danh sách gương mặt thân quen"
+              aria-label={t('Danh sách gương mặt thân quen')}
             >
               <table className="registry-table">
                 <thead>
                   <tr>
-                    <th>Tên</th>
-                    <th>Mối quan hệ</th>
-                    <th>Trạng thái</th>
-                    <th>Thao tác</th>
+                    <th>{t('Tên')}</th>
+                    <th>{t('Mối quan hệ')}</th>
+                    <th>{t('Trạng thái')}</th>
+                    <th>{t('Thao tác')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -205,25 +213,27 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
                     <tr key={item.id}>
                       <td>
                         <strong>{item.displayName}</strong>
-                        <p className="care-secondary">{item.imageCount} ảnh</p>
+                        <p className="care-secondary">
+                          {t('{imageCount} ảnh', { imageCount: item.imageCount })}
+                        </p>
                       </td>
                       <td>{item.relationship || '—'}</td>
                       <td>
                         <Badge tone={item.isActive ? 'green' : 'amber'}>
-                          {item.isActive ? 'Hoạt động' : 'Chưa hoạt động'}
+                          {item.isActive ? t('Hoạt động') : t('Chưa hoạt động')}
                         </Badge>
                       </td>
                       <td>
                         <div className="row">
                           <button className="btn small" onClick={() => setPhotos(item.id)}>
-                            Quản lý ảnh
+                            {t('Quản lý ảnh')}
                           </button>
                           <button className="btn small" onClick={() => setEditing(item.id)}>
-                            {query.data.canManage ? 'Chỉnh sửa' : 'Chi tiết'}
+                            {query.data.canManage ? t('Chỉnh sửa') : t('Chi tiết')}
                           </button>
                           {query.data.canManage && (
                             <button className="btn small danger" onClick={() => setRemoving(item)}>
-                              Xóa
+                              {t('Xóa')}
                             </button>
                           )}
                         </div>
@@ -233,7 +243,7 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
                 </tbody>
               </table>
             </div>
-            <p>{items.length} kết quả</p>
+            <p>{t('{length} kết quả', { length: items.length })}</p>
             {editing && (
               <RegistryEditor
                 key={editing}
@@ -245,7 +255,7 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
                 refresh={refresh}
                 onSave={() => {
                   setEditing(null);
-                  setNotice('Đã lưu người thân.');
+                  setNotice(t('Đã lưu người thân.'));
                 }}
               />
             )}
@@ -261,13 +271,16 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
             )}
             {removing && query.data.canManage && (
               <Confirm
-                title="Xóa người thân"
-                description={`Xóa ${removing.displayName} khỏi danh bạ và ngừng dùng các ảnh của người này để nhận diện?`}
+                title={t('Xóa người thân')}
+                description={t(
+                  'Xóa {displayName} khỏi danh bạ và ngừng dùng các ảnh của người này để nhận diện?',
+                  { displayName: removing.displayName },
+                )}
                 onClose={() => setRemoving(null)}
                 onConfirm={async () => {
                   try {
                     await registryApi.remove(actor, viuId, removing.id);
-                    setNotice('Đã xóa người thân.');
+                    setNotice(t('Đã xóa người thân.'));
                   } finally {
                     await refresh();
                   }
@@ -281,9 +294,9 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
   );
 }
 const fields: FieldSpec[] = [
-  { key: 'displayName', label: 'Tên người thân', required: true, max: 200 },
-  { key: 'relationship', label: 'Mối quan hệ', max: 100 },
-  { key: 'notes', label: 'Ghi chú', type: 'textarea', max: 1000 },
+  { key: 'displayName', label: msg('Tên người thân'), required: true, max: 200 },
+  { key: 'relationship', label: msg('Mối quan hệ'), max: 100 },
+  { key: 'notes', label: msg('Ghi chú'), type: 'textarea', max: 1000 },
 ];
 function RegistryEditor({
   actor,
@@ -315,7 +328,7 @@ function RegistryEditor({
   };
   const editable = canManage && (creating || detail.data?.canManage);
   return (
-    <Dialog title={creating ? 'Thêm người thân' : 'Thông tin người thân'} onClose={onClose}>
+    <Dialog title={creating ? t('Thêm người thân') : t('Thông tin người thân')} onClose={onClose}>
       <State
         loading={!creating && detail.isPending}
         error={detail.error}
@@ -342,7 +355,9 @@ function RegistryEditor({
                 } catch (error) {
                   if ((error as { status?: number }).status! >= 500)
                     throw new Error(
-                      'Chưa xác nhận được kết quả lưu. Tải lại danh bạ trước khi gửi lại để tránh tạo trùng.',
+                      t(
+                        'Chưa xác nhận được kết quả lưu. Tải lại danh bạ trước khi gửi lại để tránh tạo trùng.',
+                      ),
                       { cause: error },
                     );
                   throw error;
@@ -355,7 +370,7 @@ function RegistryEditor({
             <dl className="record-details">
               {fields.map((field) => (
                 <div key={field.key}>
-                  <dt>{field.label}</dt>
+                  <dt>{tText(field.label)}</dt>
                   <dd>{String(initial[field.key] || '—')}</dd>
                 </div>
               ))}
@@ -390,7 +405,7 @@ function RegistryPhotos({
   const person = detail.data?.person;
   return (
     <Dialog
-      title={'Ảnh người thân' + (person ? ` — ${person.displayName}` : '')}
+      title={t('Ảnh người thân') + (person ? ` — ${person.displayName}` : '')}
       onClose={() => {
         if (!pending) onClose();
       }}
@@ -400,8 +415,9 @@ function RegistryPhotos({
           {person && (
             <>
               <p className="notice">
-                {person.imageCount} ảnh · {person.isActive ? 'Hoạt động' : 'Chưa hoạt động'}. Xóa
-                ảnh khiến số lượng dưới 3 sẽ ngừng kích hoạt người này.
+                {t('{imageCount} ảnh ·', { imageCount: person.imageCount })}{' '}
+                {person.isActive ? t('Hoạt động') : t('Chưa hoạt động')}
+                {t('. Xóa ảnh khiến số lượng dưới 3 sẽ ngừng kích hoạt người này.')}
               </p>
               {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
               {error && (
@@ -419,7 +435,7 @@ function RegistryPhotos({
                     const data = new FormData(form);
                     const file = data.get('photo');
                     if (!(file instanceof File) || !file.size) {
-                      setError('Hãy chọn một ảnh.');
+                      setError(t('Hãy chọn một ảnh.'));
                       return;
                     }
                     setPending(true);
@@ -428,12 +444,12 @@ function RegistryPhotos({
                     try {
                       await registryApi.upload(actor, viuId, id, file, data.has('primary'));
                       form.reset();
-                      setNotice('Đã tải ảnh lên.');
+                      setNotice(t('Đã tải ảnh lên.'));
                     } catch (err) {
                       setError(
-                        (err instanceof Error ? err.message : 'Không thể tải ảnh.') +
+                        (err instanceof Error ? err.message : t('Không thể tải ảnh.')) +
                           ((err as { status?: number }).status! >= 500
-                            ? ' Tải lại và kiểm tra số ảnh trước khi gửi lại để tránh trùng.'
+                            ? t(' Tải lại và kiểm tra số ảnh trước khi gửi lại để tránh trùng.')
                             : ''),
                       );
                     } finally {
@@ -443,7 +459,7 @@ function RegistryPhotos({
                   }}
                 >
                   <label className="field">
-                    Chọn ảnh người thân
+                    {t('Chọn ảnh người thân')}
                     <input
                       name="photo"
                       type="file"
@@ -453,8 +469,9 @@ function RegistryPhotos({
                     />
                   </label>
                   <p className="muted">
-                    JPEG, PNG hoặc WebP, tối đa 10 MB mỗi ảnh. Chỉ tải ảnh bạn được phép sử dụng.
-                    Ảnh được gửi lên máy chủ để xử lý nhận diện.
+                    {t(
+                      'JPEG, PNG hoặc WebP, tối đa 10 MB mỗi ảnh. Chỉ tải ảnh bạn được phép sử dụng. Ảnh được gửi lên máy chủ để xử lý nhận diện.',
+                    )}
                   </p>
                   <div className="field field-checkbox">
                     <input
@@ -463,34 +480,45 @@ function RegistryPhotos({
                       name="primary"
                       disabled={pending}
                     />
-                    <label htmlFor="registry-upload-primary">Đặt ảnh vừa tải làm ảnh chính</label>
+                    <label htmlFor="registry-upload-primary">
+                      {t('Đặt ảnh vừa tải làm ảnh chính')}
+                    </label>
                   </div>
                   <button className="btn primary" disabled={pending}>
-                    {pending ? 'Đang xử lý…' : 'Tải ảnh lên'}
+                    {pending ? t('Đang xử lý…') : t('Tải ảnh lên')}
                   </button>
                 </form>
               ) : (
-                <p className="notice">Bạn có quyền xem ảnh, chưa có quyền quản lý gương mặt.</p>
+                <p className="notice">
+                  {t('Bạn có quyền xem ảnh, chưa có quyền quản lý gương mặt.')}
+                </p>
               )}
               <button
                 className="btn"
                 disabled={pending || detail.isFetching}
                 onClick={() => void reload()}
               >
-                Tải lại ảnh
+                {t('Tải lại ảnh')}
               </button>
-              {!person.images.length && <p>Chưa có ảnh. Thêm ít nhất 3 ảnh để kích hoạt.</p>}
+              {!person.images.length && <p>{t('Chưa có ảnh. Thêm ít nhất 3 ảnh để kích hoạt.')}</p>}
               <div className="registry-photos">
                 {person.images.map((photo, index) => (
-                  <article className="stack" key={photo.id} aria-label={`Ảnh ${index + 1}`}>
+                  <article
+                    className="stack"
+                    key={photo.id}
+                    aria-label={t('Ảnh {p0}', { p0: index + 1 })}
+                  >
                     <RegistryPreview
                       actor={actor}
                       viuId={viuId}
                       id={id}
                       photoId={photo.id}
-                      name={`${person.displayName} — ảnh ${index + 1}`}
+                      name={t('{displayName} — ảnh {p1}', {
+                        displayName: person.displayName,
+                        p1: index + 1,
+                      })}
                     />
-                    {photo.isPrimaryImage && <Badge tone="green">Ảnh chính</Badge>}
+                    {photo.isPrimaryImage && <Badge tone="green">{t('Ảnh chính')}</Badge>}
                     {detail.data?.canManage && (
                       <div className="row">
                         {!photo.isPrimaryImage && (
@@ -503,10 +531,12 @@ function RegistryPhotos({
                               setNotice('');
                               try {
                                 await registryApi.primary(actor, viuId, id, photo.id);
-                                setNotice('Đã đổi ảnh chính.');
+                                setNotice(t('Đã đổi ảnh chính.'));
                               } catch (err) {
                                 setError(
-                                  err instanceof Error ? err.message : 'Không thể đổi ảnh chính.',
+                                  err instanceof Error
+                                    ? err.message
+                                    : t('Không thể đổi ảnh chính.'),
                                 );
                               } finally {
                                 await reload();
@@ -514,7 +544,7 @@ function RegistryPhotos({
                               }
                             }}
                           >
-                            Đặt ảnh chính
+                            {t('Đặt ảnh chính')}
                           </button>
                         )}
                         <button
@@ -522,7 +552,7 @@ function RegistryPhotos({
                           disabled={pending}
                           onClick={() => setRemoving(photo)}
                         >
-                          Xóa ảnh
+                          {t('Xóa ảnh')}
                         </button>
                       </div>
                     )}
@@ -531,14 +561,16 @@ function RegistryPhotos({
               </div>
               {removing && detail.data?.canManage && (
                 <Confirm
-                  title="Xóa ảnh người thân"
-                  description="Xóa vĩnh viễn ảnh này? Nếu còn dưới 3 ảnh, người thân sẽ ngừng hoạt động trong nhận diện."
+                  title={t('Xóa ảnh người thân')}
+                  description={t(
+                    'Xóa vĩnh viễn ảnh này? Nếu còn dưới 3 ảnh, người thân sẽ ngừng hoạt động trong nhận diện.',
+                  )}
                   onClose={() => setRemoving(null)}
                   onConfirm={async () => {
                     setPending(true);
                     try {
                       await registryApi.removePhoto(actor, viuId, id, removing.id);
-                      setNotice('Đã xóa ảnh.');
+                      setNotice(t('Đã xóa ảnh.'));
                     } finally {
                       await reload();
                       setPending(false);
@@ -585,7 +617,7 @@ function RegistryPreview({
       })
       .catch((err: unknown) => {
         if (!controller.signal.aborted)
-          setError(err instanceof Error ? err.message : 'Không tải được ảnh.');
+          setError(err instanceof Error ? err.message : t('Không tải được ảnh.'));
       });
     return () => {
       off();
@@ -603,12 +635,12 @@ function RegistryPreview({
           setAttempt(attempt + 1);
         }}
       >
-        Thử tải ảnh lại
+        {t('Thử tải ảnh lại')}
       </button>
     </div>
   ) : url ? (
-    <img src={url} alt={name} onError={() => setError('Ảnh không thể hiển thị.')} />
+    <img src={url} alt={name} onError={() => setError(t('Ảnh không thể hiển thị.'))} />
   ) : (
-    <p role="status">Đang tải ảnh…</p>
+    <p role="status">{t('Đang tải ảnh…')}</p>
   );
 }

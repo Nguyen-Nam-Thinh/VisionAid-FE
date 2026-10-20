@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { createCaregivingApi } from './caregiving';
@@ -32,18 +33,19 @@ export const ttsDefaults = {
 export function createTtsApi(get = apiGet, write = apiWrite) {
   const authorize = async (actor: Person, viuId: string, signal?: AbortSignal) => {
     if (!z.string().uuid().safeParse(viuId).success)
-      throw new ServiceError('Mã người được chăm sóc không hợp lệ.', 400);
+      throw new ServiceError(t('Mã người được chăm sóc không hợp lệ.'), 400);
     if (actor.role !== 'Caregiver')
-      throw new ServiceError('Màn hình này dành cho người chăm sóc có liên kết.', 403);
+      throw new ServiceError(t('Màn hình này dành cho người chăm sóc có liên kết.'), 403);
     const links = await createCaregivingApi(get, write).links(actor.id, viuId, 1, signal);
     if (!links.items.some((link) => !link.unlinkedAt))
-      throw new ServiceError('Bạn không còn liên kết chăm sóc hoạt động với người này.', 403);
+      throw new ServiceError(t('Bạn không còn liên kết chăm sóc hoạt động với người này.'), 403);
   };
   const checked = (raw: unknown, viuId: string) => {
     const parsed = response.safeParse(raw);
-    if (!parsed.success) throw new ServiceError('Cấu hình giọng đọc từ máy chủ không hợp lệ.', 502);
+    if (!parsed.success)
+      throw new ServiceError(t('Cấu hình giọng đọc từ máy chủ không hợp lệ.'), 502);
     if (parsed.data.userId !== viuId)
-      throw new ServiceError('Cấu hình không thuộc người được chọn.', 403);
+      throw new ServiceError(t('Cấu hình không thuộc người được chọn.'), 403);
     return parsed.data;
   };
   const path = (viuId: string) => `/api/users/${viuId}/tts-preferences`;
@@ -61,14 +63,14 @@ export function createTtsApi(get = apiGet, write = apiWrite) {
           if (users.items.some((user) => user.id === viuId && user.isActive)) return null;
           if (!users.hasNextPage) break;
         }
-        throw new ServiceError('Không xác minh được người được chăm sóc đang hoạt động.', 403);
+        throw new ServiceError(t('Không xác minh được người được chăm sóc đang hoạt động.'), 403);
       }
     },
     async save(actor: Person, viuId: string, values: unknown) {
       const parsed = input.safeParse(values);
       if (!parsed.success)
         throw new ServiceError(
-          'Kiểm tra giọng đọc, tốc độ, âm lượng và ngôn ngữ.',
+          t('Kiểm tra giọng đọc, tốc độ, âm lượng và ngôn ngữ.'),
           400,
           Object.fromEntries(
             parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message]),

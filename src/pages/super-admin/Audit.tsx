@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import { PageHead, State, DataTable, Dialog } from '../../components/UI';
@@ -19,16 +20,18 @@ export function Audit() {
   return (
     <>
       <PageHead
-        title="Nhật ký kiểm toán"
-        description="Theo dõi thao tác quản trị. Chỉ đọc; không xóa hoặc sửa bản ghi audit trên giao diện."
+        title={t('Nhật ký kiểm toán')}
+        description={t(
+          'Theo dõi thao tác quản trị. Chỉ đọc; không xóa hoặc sửa bản ghi audit trên giao diện.',
+        )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <div className="stack">
           <div className="glass card row">
             <label className="field">
-              Người thực hiện
+              {t('Người thực hiện')}
               <select value={actor} onChange={(e) => setActor(e.target.value)}>
-                <option value="all">Tất cả</option>
+                <option value="all">{t('Tất cả')}</option>
                 {db?.people
                   .filter((p) => db.audit.some((a) => a.actor === p.id))
                   .map((p) => (
@@ -39,31 +42,31 @@ export function Audit() {
               </select>
             </label>
             <label className="field">
-              Từ ngày
+              {t('Từ ngày')}
               <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
             </label>
             <label className="field">
-              Đến ngày
+              {t('Đến ngày')}
               <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} />
             </label>
           </div>
           <DataTable
-            title="Lịch sử hệ thống"
+            title={t('Lịch sử hệ thống')}
             rows={rows}
             searchText={(a) => a.action + ' ' + a.target}
             columns={[
-              { label: 'Thời gian · UTC+7', render: (a) => formatTime(a.at) },
+              { label: t('Thời gian · UTC+7'), render: (a) => formatTime(a.at) },
               {
-                label: 'Người thực hiện',
-                render: (a) => db?.people.find((p) => p.id === a.actor)?.name ?? 'Hệ thống',
+                label: t('Người thực hiện'),
+                render: (a) => db?.people.find((p) => p.id === a.actor)?.name ?? t('Hệ thống'),
               },
-              { label: 'Hành động', render: (a) => a.action },
-              { label: 'Đối tượng', render: (a) => a.target },
+              { label: t('Hành động'), render: (a) => a.action },
+              { label: t('Đối tượng'), render: (a) => a.target },
               {
-                label: 'Thao tác',
+                label: t('Thao tác'),
                 render: (a) => (
                   <button className="btn small" onClick={() => setSelected(a.id)}>
-                    Chi tiết
+                    {t('Chi tiết')}
                   </button>
                 ),
               },
@@ -72,20 +75,20 @@ export function Audit() {
         </div>
       </State>
       {entry && (
-        <Dialog title="Chi tiết bản ghi audit" onClose={() => setSelected('')}>
+        <Dialog title={t('Chi tiết bản ghi audit')} onClose={() => setSelected('')}>
           <dl>
-            <dt>Mã bản ghi</dt>
+            <dt>{t('Mã bản ghi')}</dt>
             <dd className="mono">{entry.id}</dd>
-            <dt>Hành động</dt>
+            <dt>{t('Hành động')}</dt>
             <dd>{entry.action}</dd>
-            <dt>Đối tượng</dt>
+            <dt>{t('Đối tượng')}</dt>
             <dd>{entry.target}</dd>
-            <dt>Thời gian</dt>
+            <dt>{t('Thời gian')}</dt>
             <dd>{formatTime(entry.at)} · UTC+7</dd>
-            <dt>Phạm vi</dt>
+            <dt>{t('Phạm vi')}</dt>
             <dd>
               {db?.entities.organizations.find((o) => o.id === entry.orgId)?.name ??
-                'Nền tảng / cá nhân'}
+                t('Nền tảng / cá nhân')}
             </dd>
           </dl>
         </Dialog>

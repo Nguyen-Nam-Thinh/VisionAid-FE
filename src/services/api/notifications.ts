@@ -1,15 +1,16 @@
+import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 
-export const notificationTypes = {
-  FallDetected: 'Phát hiện té ngã',
-  EmergencyManual: 'Khẩn cấp chủ động',
-  GeofenceBreach: 'Vượt vùng an toàn',
-  ArrivalNotification: 'Thông báo đến nơi',
-  SystemAlert: 'Thông báo hệ thống',
-};
+export const notificationTypes = labelMap({
+  FallDetected: msg('Phát hiện té ngã'),
+  EmergencyManual: msg('Khẩn cấp chủ động'),
+  GeofenceBreach: msg('Vượt vùng an toàn'),
+  ArrivalNotification: msg('Thông báo đến nơi'),
+  SystemAlert: msg('Thông báo hệ thống'),
+});
 export const channels = { Fcm: 'Push (FCM)', SignalR: 'Realtime (SignalR)', Email: 'Email' };
 const type = z.enum([
   'FallDetected',
@@ -65,14 +66,14 @@ function parse<T>(schema: z.ZodType<T>, data: unknown, status = 502): T {
   const result = schema.safeParse(data);
   if (!result.success)
     throw new ServiceError(
-      'Dữ liệu thông báo không hợp lệ. Kiểm tra các trường và tải lại.',
+      t('Dữ liệu thông báo không hợp lệ. Kiểm tra các trường và tải lại.'),
       status,
     );
   return result.data;
 }
 function checkScope(actor: Scope) {
   if (actor.role !== 'Admin' && (actor.role !== 'CenterAdmin' || !actor.orgId))
-    throw new ServiceError('Không có quyền quản lý quy tắc.', 403);
+    throw new ServiceError(t('Không có quyền quản lý quy tắc.'), 403);
 }
 export function canEditRule(actor: Scope, item: NotificationRule) {
   return (
@@ -89,7 +90,7 @@ export function createNotificationsApi(get = apiGet, write = apiWrite) {
   const preferences = (actor: Scope, data: unknown) => {
     const items = parse(z.array(preference), data);
     if (items.some((item) => item.userId !== actor.id))
-      throw new ServiceError('Tùy chọn không thuộc tài khoản hiện tại.', 403);
+      throw new ServiceError(t('Tùy chọn không thuộc tài khoản hiện tại.'), 403);
     return items;
   };
   const checkedRule = (actor: Scope, data: unknown) => {
@@ -99,7 +100,7 @@ export function createNotificationsApi(get = apiGet, write = apiWrite) {
       item.organizationId !== null &&
       item.organizationId !== actor.orgId
     )
-      throw new ServiceError('Quy tắc không thuộc trung tâm hiện tại.', 403);
+      throw new ServiceError(t('Quy tắc không thuộc trung tâm hiện tại.'), 403);
     return item;
   };
   return {
@@ -129,26 +130,26 @@ export function createNotificationsApi(get = apiGet, write = apiWrite) {
       if (actor.role === 'CenterAdmin') input.organizationId = actor.orgId;
       const item = checkedRule(actor, await write('/api/notifications/rules', json('POST', input)));
       if (item.organizationId !== input.organizationId)
-        throw new ServiceError('Phạm vi quy tắc trả về không khớp.', 502);
+        throw new ServiceError(t('Phạm vi quy tắc trả về không khớp.'), 502);
       return item;
     },
     async updateRule(actor: Scope, item: NotificationRule, values: unknown) {
       checkScope(actor);
       if (!canEditRule(actor, item))
-        throw new ServiceError('Chỉ được sửa quy tắc của trung tâm mình.', 403);
+        throw new ServiceError(t('Chỉ được sửa quy tắc của trung tâm mình.'), 403);
       const id = parse(z.string().uuid(), item.id, 400);
       const result = checkedRule(
         actor,
         await write('/api/notifications/rules/' + id, json('PUT', parse(flags, values, 400))),
       );
       if (result.id !== id || result.organizationId !== item.organizationId)
-        throw new ServiceError('Quy tắc trả về không khớp.', 502);
+        throw new ServiceError(t('Quy tắc trả về không khớp.'), 502);
       return result;
     },
     async removeRule(actor: Scope, item: NotificationRule) {
       checkScope(actor);
       if (!canEditRule(actor, item))
-        throw new ServiceError('Chỉ được xóa quy tắc của trung tâm mình.', 403);
+        throw new ServiceError(t('Chỉ được xóa quy tắc của trung tâm mình.'), 403);
       await write('/api/notifications/rules/' + parse(z.string().uuid(), item.id, 400), {
         method: 'DELETE',
       });

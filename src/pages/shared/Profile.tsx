@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { PushSettings } from '../../components/PushSettings';
 import { Form } from '../../components/Form';
@@ -13,17 +14,22 @@ export function Profile() {
   if (!user) return null;
   return (
     <>
-      <PageHead title="Hồ sơ của bạn" description="Thông tin cá nhân và bảo vệ phiên đăng nhập." />
-      {message && (
-        <Toast message={message} onDismiss={() => setMessage('')} />
+      <PageHead
+        title={t('Hồ sơ của bạn')}
+        description={t('Thông tin cá nhân và bảo vệ phiên đăng nhập.')}
+      />
+      {message && <Toast message={message} onDismiss={() => setMessage('')} />}
+      {avatarError && (
+        <p className="notice error" role="alert">
+          {avatarError}
+        </p>
       )}
-      {avatarError && <p className="notice error" role="alert">{avatarError}</p>}
       <div className="profile-layout">
         <section className="glass card stack">
-          <h2>Thông tin cá nhân</h2>
+          <h2>{t('Thông tin cá nhân')}</h2>
           <dl className="profile-details">
             <div>
-              <dt>Họ và tên</dt>
+              <dt>{t('Họ và tên')}</dt>
               <dd>{user.name}</dd>
             </div>
             <div>
@@ -31,19 +37,19 @@ export function Profile() {
               <dd>{user.email}</dd>
             </div>
             <div>
-              <dt>Số điện thoại</dt>
-              <dd>{user.phone || 'Chưa có số điện thoại'}</dd>
+              <dt>{t('Số điện thoại')}</dt>
+              <dd>{user.phone || t('Chưa có số điện thoại')}</dd>
             </div>
           </dl>
           <button className="btn" onClick={() => setEditor('profile')}>
-            Chỉnh sửa hồ sơ
+            {t('Chỉnh sửa hồ sơ')}
           </button>
           {editor === 'profile' && (
-            <Dialog title="Chỉnh sửa hồ sơ" onClose={() => setEditor(null)}>
+            <Dialog title={t('Chỉnh sửa hồ sơ')} onClose={() => setEditor(null)}>
               <Form
                 fields={[
-                  { key: 'name', label: 'Họ và tên', required: true, max: 200 },
-                  { key: 'phone', label: 'Số điện thoại' },
+                  { key: 'name', label: t('Họ và tên'), required: true, max: 200 },
+                  { key: 'phone', label: t('Số điện thoại') },
                 ]}
                 initial={{ name: user.name, phone: user.phone }}
                 onSubmit={async (v) => {
@@ -53,7 +59,7 @@ export function Profile() {
                     phone: String(v.phone),
                     avatar: user.avatar,
                   });
-                  setMessage('Đã cập nhật hồ sơ.');
+                  setMessage(t('Đã cập nhật hồ sơ.'));
                   setEditor(null);
                 }}
               />
@@ -61,7 +67,7 @@ export function Profile() {
           )}
           {auth.mode === 'mock' && (
             <label className="field">
-              Ảnh đại diện JPG/PNG · bản demo tối đa 2 MB
+              {t('Ảnh đại diện JPG/PNG · bản demo tối đa 2 MB')}
               <input
                 type="file"
                 accept="image/png,image/jpeg"
@@ -74,7 +80,7 @@ export function Profile() {
                       !['image/png', 'image/jpeg'].includes(file.type) ||
                       file.size > 2 * 1024 * 1024
                     )
-                      throw Error('Chọn ảnh JPG/PNG dưới 2 MB.');
+                      throw Error(t('Chọn ảnh JPG/PNG dưới 2 MB.'));
                     const avatar = await new Promise<string>((resolve, reject) => {
                       const reader = new FileReader();
                       reader.onload = () => resolve(String(reader.result));
@@ -82,9 +88,11 @@ export function Profile() {
                       reader.readAsDataURL(file);
                     });
                     await auth.profile({ name: user.name, phone: user.phone, avatar });
-                    setMessage('Đã cập nhật avatar demo.');
+                    setMessage(t('Đã cập nhật avatar demo.'));
                   } catch (error) {
-                    setAvatarError(error instanceof Error ? error.message : 'Không thể đọc ảnh.');
+                    setAvatarError(
+                      error instanceof Error ? error.message : t('Không thể đọc ảnh.'),
+                    );
                   }
                 }}
               />
@@ -92,56 +100,62 @@ export function Profile() {
           )}
           {auth.mode === 'api' && (
             <p className="muted">
-              Ảnh đại diện hiện tại được giữ nguyên. Chưa tích hợp tải ảnh lên.
+              {t('Ảnh đại diện hiện tại được giữ nguyên. Chưa tích hợp tải ảnh lên.')}
             </p>
           )}
           {user.avatar && (
-            <img src={user.avatar} alt="Ảnh đại diện của bạn" width={80} height={80} />
+            <img src={user.avatar} alt={t('Ảnh đại diện của bạn')} width={80} height={80} />
           )}
         </section>
         <section className="glass card stack">
-          <h2>Đổi mật khẩu</h2>
+          <h2>{t('Đổi mật khẩu')}</h2>
           <p className="muted">
-            Dùng mật khẩu riêng cho VisionAid. Bạn cần nhập mật khẩu hiện tại để thay đổi.
+            {t('Dùng mật khẩu riêng cho VisionAid. Bạn cần nhập mật khẩu hiện tại để thay đổi.')}
           </p>
           <button className="btn" onClick={() => setEditor('password')}>
-            Đổi mật khẩu
+            {t('Đổi mật khẩu')}
           </button>
           {editor === 'password' && (
-            <Dialog title="Đổi mật khẩu" onClose={() => setEditor(null)}>
+            <Dialog title={t('Đổi mật khẩu')} onClose={() => setEditor(null)}>
               <Form
                 fields={[
-                  { key: 'current', label: 'Mật khẩu hiện tại', type: 'password', required: true },
+                  {
+                    key: 'current',
+                    label: t('Mật khẩu hiện tại'),
+                    type: 'password',
+                    required: true,
+                  },
                   {
                     key: 'next',
-                    label: 'Mật khẩu mới',
+                    label: t('Mật khẩu mới'),
                     type: 'password',
                     required: true,
                     autoComplete: 'new-password',
                   },
                   {
                     key: 'confirm',
-                    label: 'Nhập lại mật khẩu mới',
+                    label: t('Nhập lại mật khẩu mới'),
                     type: 'password',
                     required: true,
                     autoComplete: 'new-password',
                   },
                 ]}
-                submit="Đổi mật khẩu"
+                submit={t('Đổi mật khẩu')}
                 onSubmit={async (v) => {
                   setMessage('');
-                  if (v.next !== v.confirm) throw Error('Mật khẩu xác nhận không khớp.');
+                  if (v.next !== v.confirm) throw Error(t('Mật khẩu xác nhận không khớp.'));
                   await auth.changePassword(String(v.current), String(v.next));
                   setEditor(null);
-                  if (auth.mode === 'mock') setMessage('Đã đổi mật khẩu demo.');
+                  if (auth.mode === 'mock') setMessage(t('Đã đổi mật khẩu demo.'));
                 }}
               />
             </Dialog>
           )}
           {auth.mode === 'api' && (
             <p className="muted">
-              Mật khẩu mới: 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt. Sau khi đổi
-              thành công, bạn cần đăng nhập lại.
+              {t(
+                'Mật khẩu mới: 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt. Sau khi đổi thành công, bạn cần đăng nhập lại.',
+              )}
             </p>
           )}
         </section>
@@ -153,20 +167,23 @@ export function Profile() {
       )}
       {auth.mode === 'api' && (
         <section className="glass card stack">
-          <h2>Phiên đăng nhập</h2>
+          <h2>{t('Phiên đăng nhập')}</h2>
           <p>
-            Thu hồi quyền gia hạn phiên và nhận thông báo trên mọi thiết bị. Phiên truy cập hiện có
-            trên thiết bị khác có thể còn hiệu lực đến khi hết hạn.
+            {t(
+              'Thu hồi quyền gia hạn phiên và nhận thông báo trên mọi thiết bị. Phiên truy cập hiện có trên thiết bị khác có thể còn hiệu lực đến khi hết hạn.',
+            )}
           </p>
           <button className="btn danger" onClick={() => setConfirmLogoutAll(true)}>
-            Đăng xuất tất cả thiết bị
+            {t('Đăng xuất tất cả thiết bị')}
           </button>
         </section>
       )}
       {confirmLogoutAll && (
         <Confirm
-          title="Đăng xuất tất cả thiết bị?"
-          description="Tab này sẽ đăng xuất ngay. Các thiết bị khác sẽ cần đăng nhập lại khi gia hạn phiên."
+          title={t('Đăng xuất tất cả thiết bị?')}
+          description={t(
+            'Tab này sẽ đăng xuất ngay. Các thiết bị khác sẽ cần đăng nhập lại khi gia hạn phiên.',
+          )}
           onClose={() => setConfirmLogoutAll(false)}
           onConfirm={auth.logoutAll}
         />

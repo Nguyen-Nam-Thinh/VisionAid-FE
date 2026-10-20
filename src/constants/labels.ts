@@ -1,26 +1,27 @@
+import { msg, labelMap, intlLocale } from '../i18n';
 import type { AlertStatus, Role } from '../models/domain';
-export const roles: Record<Role, string> = {
-  Caregiver: 'Người chăm sóc',
-  CenterAdmin: 'Quản trị trung tâm',
-  Admin: 'Quản trị hệ thống',
-  VisuallyImpaired: 'Người khiếm thị',
-};
-export const statuses: Record<AlertStatus, string> = {
-  DETECTED: 'Đã phát hiện',
-  DISMISSED: 'Đã hủy',
-  SENT: 'Chờ hỗ trợ',
-  ACKNOWLEDGED: 'Đang hỗ trợ',
-  ESCALATED: 'Đã chuyển cấp',
-  RESOLVED: 'Đã giải quyết',
-  CALLED: 'Đã gọi hỗ trợ',
-};
-export const activityLabels = {
-  MOVEMENT: 'Di chuyển',
-  OCR: 'Đọc văn bản',
-  QR: 'Quét QR',
-  FACE: 'Nhận diện',
-  VOICE: 'Lệnh giọng nói',
-};
+export const roles: Record<Role, string> = labelMap({
+  Caregiver: msg('Người chăm sóc'),
+  CenterAdmin: msg('Quản trị trung tâm'),
+  Admin: msg('Quản trị hệ thống'),
+  VisuallyImpaired: msg('Người khiếm thị'),
+});
+export const statuses: Record<AlertStatus, string> = labelMap({
+  DETECTED: msg('Đã phát hiện'),
+  DISMISSED: msg('Đã hủy'),
+  SENT: msg('Chờ hỗ trợ'),
+  ACKNOWLEDGED: msg('Đang hỗ trợ'),
+  ESCALATED: msg('Đã chuyển cấp'),
+  RESOLVED: msg('Đã giải quyết'),
+  CALLED: msg('Đã gọi hỗ trợ'),
+});
+export const activityLabels = labelMap({
+  MOVEMENT: msg('Di chuyển'),
+  OCR: msg('Đọc văn bản'),
+  QR: msg('Quét QR'),
+  FACE: msg('Nhận diện'),
+  VOICE: msg('Lệnh giọng nói'),
+});
 export function normalizeRole(raw: string): Role | null {
   return (
     (
@@ -38,7 +39,7 @@ export function normalizeRole(raw: string): Role | null {
   );
 }
 export const formatTime = (at: string) =>
-  new Intl.DateTimeFormat('vi-VN', {
+  new Intl.DateTimeFormat(intlLocale(), {
     dateStyle: 'short',
     timeStyle: 'short',
     timeZone: 'Asia/Ho_Chi_Minh',

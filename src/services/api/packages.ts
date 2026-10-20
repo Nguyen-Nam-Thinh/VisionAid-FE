@@ -1,3 +1,4 @@
+import { t, formatMoney } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -10,14 +11,15 @@ const money = z
   .finite()
   .min(0)
   .max(9999999999.99)
-  .refine(
-    (value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.0002,
-    'Giá có tối đa 2 chữ số thập phân.',
-  );
+  .refine((value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.0002, {
+    error: () => t('Giá có tối đa 2 chữ số thập phân.'),
+  });
 const fields = z.object({
   name: z.string().trim().min(1).max(200),
   priceMonthly: money,
-  priceYearly: money.refine((value) => value > 0, 'Giá năm phải lớn hơn 0.').nullable(),
+  priceYearly: money
+    .refine((value) => value > 0, { error: () => t('Giá năm phải lớn hơn 0.') })
+    .nullable(),
   currency: z.string().trim().min(1).max(10),
   maxViuPerLicense: integer,
   includedLicenses: integer,
@@ -56,13 +58,13 @@ export const packageForActor = (actor: Actor, item: LicensePackage) =>
   (item.isActive && item.packageType === (actor.role === 'CenterAdmin' ? 'Business' : 'Personal'));
 function check(actor: Actor, admin = false, id?: string) {
   if (!canBrowsePackages(actor) || (admin && actor.role !== 'Admin'))
-    throw new ServiceError('Bạn không có quyền quản lý gói này.', 403);
+    throw new ServiceError(t('Bạn không có quyền quản lý gói này.'), 403);
   if (id && !z.string().uuid().safeParse(id).success)
-    throw new ServiceError('Mã gói không hợp lệ.', 400);
+    throw new ServiceError(t('Mã gói không hợp lệ.'), 400);
 }
 function parse<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
-  if (!result.success) throw new ServiceError('Dữ liệu gói không hợp lệ. Hãy tải lại.', 502);
+  if (!result.success) throw new ServiceError(t('Dữ liệu gói không hợp lệ. Hãy tải lại.'), 502);
   return result.data;
 }
 export function packageInput(values: Fields, current?: LicensePackage) {
@@ -70,16 +72,16 @@ export function packageInput(values: Fields, current?: LicensePackage) {
   try {
     featureFlags = JSON.parse(String(values.featureFlags || '{}'));
   } catch {
-    throw new ServiceError('Feature flags cần là JSON với giá trị true/false.', 400, {
-      featureFlags: 'JSON không hợp lệ.',
+    throw new ServiceError(t('Feature flags cần là JSON với giá trị true/false.'), 400, {
+      featureFlags: t('JSON không hợp lệ.'),
     });
   }
   const annual = String(values.priceYearly ?? '').trim();
   if (current?.priceYearly != null && !annual)
     throw new ServiceError(
-      'BE chưa hỗ trợ xóa giá năm đã lưu. Giữ giá hiện tại hoặc nhập giá mới.',
+      t('BE chưa hỗ trợ xóa giá năm đã lưu. Giữ giá hiện tại hoặc nhập giá mới.'),
       400,
-      { priceYearly: 'Không thể xóa giá năm đã lưu.' },
+      { priceYearly: t('Không thể xóa giá năm đã lưu.') },
     );
   const schema = current ? fields.extend({ isActive: z.boolean() }) : fields.extend(identity);
   const result = schema.safeParse({
@@ -89,7 +91,9 @@ export function packageInput(values: Fields, current?: LicensePackage) {
   });
   if (!result.success)
     throw new ServiceError(
-      'Kiểm tra thông tin gói: giá hợp lệ, số lượng/ngày là số nguyên và flags chỉ chứa true/false.',
+      t(
+        'Kiểm tra thông tin gói: giá hợp lệ, số lượng/ngày là số nguyên và flags chỉ chứa true/false.',
+      ),
       400,
       Object.fromEntries(result.error.issues.map((i) => [String(i.path[0]), i.message])),
     );
@@ -107,7 +111,7 @@ export function createPackagesApi(get = apiGet, write = apiWrite) {
     async detail(actor: Actor, id: string, signal?: AbortSignal) {
       check(actor, true, id);
       const item = parse(packageSchema, await get('/api/licenses/packages/' + id, signal));
-      if (item.id !== id) throw new ServiceError('Máy chủ trả về sai gói.', 502);
+      if (item.id !== id) throw new ServiceError(t('Máy chủ trả về sai gói.'), 502);
       return item;
     },
     async save(actor: Actor, values: Fields, current?: LicensePackage) {
@@ -122,11 +126,10 @@ export function createPackagesApi(get = apiGet, write = apiWrite) {
         }),
       );
       if (current && item.id !== current.id)
-        throw new ServiceError('Máy chủ trả về sai gói. Tải lại trước khi thao tác tiếp.', 502);
+        throw new ServiceError(t('Máy chủ trả về sai gói. Tải lại trước khi thao tác tiếp.'), 502);
       return item;
     },
   };
 }
 export const packagesApi = createPackagesApi();
-export const packagePrice = (amount: number, currency: string) =>
-  `${amount.toLocaleString('vi-VN', { maximumFractionDigits: 2 })} ${currency}`;
+export const packagePrice = (amount: number, currency: string) => formatMoney(amount, currency);

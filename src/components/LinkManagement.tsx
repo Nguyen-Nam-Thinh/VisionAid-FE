@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useState } from 'react';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { useCommand, useLinkActions } from '../hooks/useService';
@@ -18,14 +19,16 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
   return (
     <>
       <PageHead
-        title={family ? 'Người chăm sóc phụ' : 'Phân công chăm sóc'}
-        description="Tối đa 3 người chăm sóc/người dùng và 3 người dùng/người chăm sóc. Duy trì một người chăm sóc chính."
+        title={family ? t('Người chăm sóc phụ') : t('Phân công chăm sóc')}
+        description={t(
+          'Tối đa 3 người chăm sóc/người dùng và 3 người dùng/người chăm sóc. Duy trì một người chăm sóc chính.',
+        )}
         actions={
           <>
             {family && <ViuSelect />}
             {canManage && (
               <button className="btn primary" onClick={() => setAdding(true)}>
-                Thêm liên kết
+                {t('Thêm liên kết')}
               </button>
             )}
           </>
@@ -33,47 +36,53 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {!canManage && (
-          <p className="notice">Chỉ người chăm sóc chính được quản lý liên kết này.</p>
+          <p className="notice">{t('Chỉ người chăm sóc chính được quản lý liên kết này.')}</p>
         )}
         <DataTable
-          title="Liên kết đang có"
+          title={t('Liên kết đang có')}
           rows={rows}
           searchText={(l) =>
             `${db?.people.find((p) => p.id === l.caregiverId)?.name} ${db?.people.find((p) => p.id === l.viuId)?.name}`
           }
           columns={[
             {
-              label: 'Người chăm sóc',
+              label: t('Người chăm sóc'),
               render: (l) => db?.people.find((p) => p.id === l.caregiverId)?.name,
             },
-            { label: 'Người dùng', render: (l) => db?.people.find((p) => p.id === l.viuId)?.name },
-            { label: 'Vai trò', render: (l) => <Badge>{l.primary ? 'Chính' : 'Phụ'}</Badge> },
             {
-              label: 'Quyền',
-              render: (l) =>
-                [
-                  l.alerts ? 'Cảnh báo' : '',
-                  l.registry ? 'Registry' : '',
-                  l.locations ? 'Địa điểm' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' · ') || 'Chỉ xem',
+              label: t('Người dùng'),
+              render: (l) => db?.people.find((p) => p.id === l.viuId)?.name,
             },
             {
-              label: 'Thao tác',
+              label: t('Vai trò'),
+              render: (l) => <Badge>{l.primary ? t('Chính') : t('Phụ')}</Badge>,
+            },
+            {
+              label: t('Quyền'),
+              render: (l) =>
+                [
+                  l.alerts ? t('Cảnh báo') : '',
+                  l.registry ? 'Registry' : '',
+                  l.locations ? t('Địa điểm') : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || t('Chỉ xem'),
+            },
+            {
+              label: t('Thao tác'),
               render: (l) =>
                 canManage && (
                   <div className="row">
                     <button className="btn small" onClick={() => setEdit(l)}>
-                      Quyền
+                      {t('Quyền')}
                     </button>
                     {!l.primary && (
                       <button className="btn small" onClick={() => setTransfer(l)}>
-                        Đặt làm chính
+                        {t('Đặt làm chính')}
                       </button>
                     )}
                     <button className="btn small danger" onClick={() => setRemove(l)}>
-                      Gỡ
+                      {t('Gỡ')}
                     </button>
                   </div>
                 ),
@@ -82,13 +91,13 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
         />
       </State>
       {adding && (
-        <Dialog title="Thêm liên kết chăm sóc" onClose={() => setAdding(false)}>
+        <Dialog title={t('Thêm liên kết chăm sóc')} onClose={() => setAdding(false)}>
           {family ? (
             <Form
               fields={[
                 {
                   key: 'email',
-                  label: 'Email Caregiver đã đăng ký',
+                  label: t('Email Caregiver đã đăng ký'),
                   type: 'email',
                   required: true,
                 },
@@ -104,7 +113,7 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
               fields={[
                 {
                   key: 'caregiverId',
-                  label: 'Người chăm sóc',
+                  label: t('Người chăm sóc'),
                   type: 'select',
                   required: true,
                   options: db?.people
@@ -113,14 +122,18 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
                 },
                 {
                   key: 'viuId',
-                  label: 'Người khiếm thị',
+                  label: t('Người khiếm thị'),
                   type: 'select',
                   required: true,
                   options: db?.people
                     .filter((p) => p.role === 'VisuallyImpaired' && p.active)
                     .map((p) => ({ value: p.id, label: p.name })),
                 },
-                { key: 'primary', label: 'Người chăm sóc chính (khi chưa có)', type: 'checkbox' },
+                {
+                  key: 'primary',
+                  label: t('Người chăm sóc chính (khi chưa có)'),
+                  type: 'checkbox',
+                },
               ]}
               initial={{ primary: true }}
               onSubmit={async (v) => {
@@ -143,12 +156,12 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
         </Dialog>
       )}
       {edit && (
-        <Dialog title="Quyền trên người dùng được liên kết" onClose={() => setEdit(null)}>
+        <Dialog title={t('Quyền trên người dùng được liên kết')} onClose={() => setEdit(null)}>
           <Form
             fields={[
-              { key: 'alerts', label: 'Nhận và xử lý cảnh báo', type: 'checkbox' },
-              { key: 'registry', label: 'Quản lý danh bạ khuôn mặt', type: 'checkbox' },
-              { key: 'locations', label: 'Quản lý địa điểm và geofence', type: 'checkbox' },
+              { key: 'alerts', label: t('Nhận và xử lý cảnh báo'), type: 'checkbox' },
+              { key: 'registry', label: t('Quản lý danh bạ khuôn mặt'), type: 'checkbox' },
+              { key: 'locations', label: t('Quản lý địa điểm và geofence'), type: 'checkbox' },
             ]}
             initial={{ alerts: edit.alerts, registry: edit.registry, locations: edit.locations }}
             onSubmit={async (v) => {
@@ -168,16 +181,25 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
       )}
       {remove && (
         <Confirm
-          title="Gỡ liên kết chăm sóc?"
-          description={`Gỡ ${db?.people.find((p) => p.id === remove.caregiverId)?.name} khỏi ${db?.people.find((p) => p.id === remove.viuId)?.name}. Quyền truy cập sẽ bị thu hồi.`}
+          title={t('Gỡ liên kết chăm sóc?')}
+          description={t('Gỡ {name} khỏi {name2}. Quyền truy cập sẽ bị thu hồi.', {
+            name: db?.people.find((p) => p.id === remove.caregiverId)?.name,
+            name2: db?.people.find((p) => p.id === remove.viuId)?.name,
+          })}
           onClose={() => setRemove(null)}
           onConfirm={() => cmd.mutateAsync({ type: 'unlink', id: remove.id })}
         />
       )}{' '}
       {transfer && (
         <Confirm
-          title="Chuyển người chăm sóc chính?"
-          description={`Chuyển vai trò chính sang ${db?.people.find((p) => p.id === transfer.caregiverId)?.name}. ${family && user.id !== transfer.caregiverId ? 'Bạn sẽ không còn quyền quản lý người chăm sóc phụ.' : ''}`}
+          title={t('Chuyển người chăm sóc chính?')}
+          description={t('Chuyển vai trò chính sang {name}. {p1}', {
+            name: db?.people.find((p) => p.id === transfer.caregiverId)?.name,
+            p1:
+              family && user.id !== transfer.caregiverId
+                ? t('Bạn sẽ không còn quyền quản lý người chăm sóc phụ.')
+                : '',
+          })}
           onClose={() => setTransfer(null)}
           onConfirm={() =>
             cmd.mutateAsync({

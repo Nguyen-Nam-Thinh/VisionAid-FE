@@ -101,6 +101,7 @@ src/
     notifications/     # Browser permission, chờ FCM integration
     maps/              # Schematic projection/stale, chờ Mapbox
   stores/              # UI state: selected VIU và notice
+  i18n/                # Locale store, t()/msg()/labelMap, formatters, en.ts dictionary
   models/              # API DTOs, client models, explicit mapping functions
   constants/           # Role labels, route identifiers, enum display mappings
   configs/             # Validated public runtime/build configuration
@@ -284,7 +285,12 @@ Giá trị nghiệp vụ trong DB: `DETECTED`, `DISMISSED`, `SENT`, `ACKNOWLEDGE
 - Không duplicate role/permission checks: dùng một policy helper/hook chung, kiểm tra đúng resource/link.
 - Không optimistic update trạng thái khẩn cấp/quyền/xóa dữ liệu sinh trắc học. Thao tác UI ít rủi ro có thể optimistic nếu có rollback.
 - Không đưa thư viện chỉ để dùng một hàm nhỏ khi nền tảng đã đáp ứng. Không tạo abstraction vượt nhu cầu hiện tại.
-- Giữ ngôn ngữ giao diện nhất quán; tiếng Việt phù hợp người dùng mục tiêu, tên kỹ thuật trong code dùng tiếng Anh. Không làm i18n đa ngôn ngữ vượt phạm vi nếu chưa yêu cầu.
+- Giao diện hỗ trợ tiếng Việt (mặc định) và tiếng Anh qua `src/i18n` (từ điển typed tự viết, không thêm thư viện; `en.ts` tải lười khi chọn EN); tên kỹ thuật trong code dùng tiếng Anh. Chi tiết ở docs/I18N.md.
+  - Chuỗi tiếng Việt gốc là message id: viết `t('Văn bản tiếng Việt', { name })` trong lúc render/khi tạo thông báo; mọi id phải có bản dịch trong `src/i18n/en.ts` (TypeScript báo lỗi nếu thiếu). Không ghép chuỗi bằng `+`/template, dùng placeholder `{name}`.
+  - Chuỗi ở cấp module (FieldSpec, nhãn menu, bảng enum → nhãn) dùng `msg('...')` rồi dịch khi render (`t()`/`tText()`, Form tự dịch label/hint/option), hoặc `labelMap({...})` để `map[value]` tự theo ngôn ngữ hiện tại.
+  - Ngày/số/tiền dùng `formatLocaleDateTime`, `formatNumber`, `formatMoney`, `intlLocale()` (vi-VN / en-US); không hard-code `'vi-VN'`.
+  - Không dịch dữ liệu API, enum/giá trị gửi lên BE, dữ liệu mock seed hay tên kỹ thuật. Lựa chọn lưu ở localStorage `visionaid.locale` và đặt `<html lang>`; nút chuyển VI/EN ở topbar, trang auth và landing.
+  - `src/i18n/coverage.test.ts` chặn chuỗi tiếng Việt có dấu nằm ngoài `t()`/`msg()`/`tText()` và key tiếng Anh không còn dùng; chuỗi tiếng Việt không dấu ("Trang sau", "Pin") không tự phát hiện được, cần tự rà.
 
 ## 13. Những điểm tài liệu chưa thống nhất
 

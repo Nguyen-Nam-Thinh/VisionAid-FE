@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet } from './adapter';
 import { ServiceError } from '../contracts';
@@ -122,11 +123,11 @@ export type MonitoringFilters = {
 };
 function authorize(actor: Pick<Person, 'role'>) {
   if (actor.role !== 'Admin')
-    throw new ServiceError('Chỉ quản trị viên hệ thống được xem dữ liệu này.', 403);
+    throw new ServiceError(t('Chỉ quản trị viên hệ thống được xem dữ liệu này.'), 403);
 }
 function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
   const result = schema.safeParse(raw);
-  if (!result.success) throw new ServiceError('Dữ liệu giám sát từ máy chủ không hợp lệ.', 502);
+  if (!result.success) throw new ServiceError(t('Dữ liệu giám sát từ máy chủ không hợp lệ.'), 502);
   return result.data;
 }
 export function createMonitoringApi(get = apiGet) {
@@ -139,13 +140,17 @@ export function createMonitoringApi(get = apiGet) {
       signal?: AbortSignal,
     ) {
       authorize(actor);
-      if (!Number.isInteger(page) || page < 1) throw new ServiceError('Trang không hợp lệ.', 400);
+      if (!Number.isInteger(page) || page < 1)
+        throw new ServiceError(t('Trang không hợp lệ.'), 400);
       const { from = '', to = '' } = filters;
       if (
         [from, to].some((d) => d && !z.iso.date().safeParse(d).success) ||
         (from && to && from > to)
       )
-        throw new ServiceError('Khoảng ngày không hợp lệ. Kiểm tra ngày bắt đầu và kết thúc.', 400);
+        throw new ServiceError(
+          t('Khoảng ngày không hợp lệ. Kiểm tra ngày bắt đầu và kết thúc.'),
+          400,
+        );
       const query = new URLSearchParams({ page: String(page), pageSize: '20' });
       // Vietnam day bounds sent as UTC: the deployed BE returns 500 for a non-zero offset.
       const utc = (date: string, time: string) => new Date(`${date}T${time}+07:00`).toISOString();
@@ -170,7 +175,7 @@ export function createMonitoringApi(get = apiGet) {
           ['actorId', 'targetRecordId', 'userId', 'sessionId'].includes(key) &&
           !uuid.safeParse(value).success
         )
-          throw new ServiceError('Mã định danh phải là UUID hợp lệ.', 400);
+          throw new ServiceError(t('Mã định danh phải là UUID hợp lệ.'), 400);
         if (
           (key === 'targetTable' && value.length > 100) ||
           (key === 'actionType' && !auditActions.some((action) => action === value)) ||
@@ -178,7 +183,7 @@ export function createMonitoringApi(get = apiGet) {
           (key === 'engineUsed' && !guidanceEngines.some((engine) => engine === value)) ||
           (key === 'isOfflineFallback' && !['true', 'false'].includes(value))
         )
-          throw new ServiceError('Bộ lọc không hợp lệ.', 400);
+          throw new ServiceError(t('Bộ lọc không hợp lệ.'), 400);
         query.set(key, value);
       }
       const data = parse(pageSchema, await get(kinds[kind].path + '?' + query, signal));

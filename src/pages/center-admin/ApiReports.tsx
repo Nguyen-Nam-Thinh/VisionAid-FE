@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -11,7 +12,7 @@ export function ApiReports() {
   if (actor?.role !== 'CenterAdmin' || !actor.orgId)
     return (
       <p role="alert" className="notice error">
-        Tài khoản cần thuộc một trung tâm để xem báo cáo.
+        {t('Tài khoản cần thuộc một trung tâm để xem báo cáo.')}
       </p>
     );
   return <Reports key={actor.id + actor.orgId} actor={actor} />;
@@ -45,11 +46,13 @@ function Reports({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title="Báo cáo hoạt động"
-        description="Tổng hợp hoạt động của người khiếm thị thuộc trung tâm và tra cứu thành viên."
+        title={t('Báo cáo hoạt động')}
+        description={t(
+          'Tổng hợp hoạt động của người khiếm thị thuộc trung tâm và tra cứu thành viên.',
+        )}
       />
       <section className="glass card stack">
-        <h2>Hoạt động của trung tâm</h2>
+        <h2>{t('Hoạt động của trung tâm')}</h2>
         <form
           className="row"
           onSubmit={(e) => {
@@ -59,74 +62,78 @@ function Reports({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Từ ngày UTC
+            {t('Từ ngày UTC')}
             <input type="date" name="from" />
           </label>
           <label className="field">
-            Đến ngày UTC
+            {t('Đến ngày UTC')}
             <input type="date" name="to" />
           </label>
-          <button className="btn primary">Xem báo cáo</button>
+          <button className="btn primary">{t('Xem báo cáo')}</button>
           <button
             type="button"
             className="btn"
             disabled={summary.isFetching}
             onClick={() => void summary.refetch()}
           >
-            Tải lại báo cáo
+            {t('Tải lại báo cáo')}
           </button>
         </form>
         <p className="notice">
-          Máy chủ tính theo ngày UTC: một ngày bắt đầu lúc 07:00 giờ Việt Nam và kết thúc ngay trước
-          07:00 hôm sau. Để trống ngày để xem toàn bộ dữ liệu còn lưu.
+          {t(
+            'Máy chủ tính theo ngày UTC: một ngày bắt đầu lúc 07:00 giờ Việt Nam và kết thúc ngay trước 07:00 hôm sau. Để trống ngày để xem toàn bộ dữ liệu còn lưu.',
+          )}
         </p>
         <State loading={summary.isPending} error={summary.error} retry={() => summary.refetch()}>
           {summary.data && (
             <>
               <p role="status">
-                Kỳ báo cáo UTC: {summary.data.dateFrom || 'Không giới hạn đầu kỳ'} →{' '}
-                {summary.data.dateTo || 'Không giới hạn cuối kỳ'}
+                {t('Kỳ báo cáo UTC:')} {summary.data.dateFrom || t('Không giới hạn đầu kỳ')} →{' '}
+                {summary.data.dateTo || t('Không giới hạn cuối kỳ')}
               </p>
               <div className="table-scroll">
                 <table className="report-totals">
-                  <caption className="sr-only">Số bản ghi hoạt động trong kỳ báo cáo</caption>
+                  <caption className="sr-only">
+                    {t('Số bản ghi hoạt động trong kỳ báo cáo')}
+                  </caption>
                   <thead>
                     <tr>
-                      <th>Hoạt động</th>
-                      <th>Số bản ghi</th>
+                      <th>{t('Hoạt động')}</th>
+                      <th>{t('Số bản ghi')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Sự kiện khẩn cấp</td>
+                      <td>{t('Sự kiện khẩn cấp')}</td>
                       <td>{summary.data.emergencyEventCount}</td>
                     </tr>
                     <tr>
-                      <td>Sự kiện ranh giới vùng an toàn</td>
+                      <td>{t('Sự kiện ranh giới vùng an toàn')}</td>
                       <td>{summary.data.geofenceBreachCount}</td>
                     </tr>
                     <tr>
-                      <td>Yêu cầu đọc chữ và quét QR</td>
+                      <td>{t('Yêu cầu đọc chữ và quét QR')}</td>
                       <td>{summary.data.ocrRequestCount}</td>
                     </tr>
                     <tr>
-                      <td>Lượt nhận diện khuôn mặt</td>
+                      <td>{t('Lượt nhận diện khuôn mặt')}</td>
                       <td>{summary.data.faceRecognitionCount}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <p className="report-note">
-                Số liệu do máy chủ tổng hợp cho các thành viên khiếm thị hiện thuộc trung tâm, chưa
-                bị xóa. Các nhóm có thể trùng sự kiện nên không cộng thành một tổng chung.
+                {t(
+                  'Số liệu do máy chủ tổng hợp cho các thành viên khiếm thị hiện thuộc trung tâm, chưa bị xóa. Các nhóm có thể trùng sự kiện nên không cộng thành một tổng chung.',
+                )}
               </p>
             </>
           )}
         </State>
       </section>
       <section className="glass card stack">
-        <h2>Thành viên hiện tại</h2>
-        <p>Danh sách thành viên có bộ lọc riêng, không phụ thuộc khoảng ngày báo cáo.</p>
+        <h2>{t('Thành viên hiện tại')}</h2>
+        <p>{t('Danh sách thành viên có bộ lọc riêng, không phụ thuộc khoảng ngày báo cáo.')}</p>
         <form
           className="row"
           onSubmit={(e) => {
@@ -141,13 +148,13 @@ function Reports({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Tìm thành viên
+            {t('Tìm thành viên')}
             <input name="search" />
           </label>
           <label className="field">
-            Vai trò
+            {t('Vai trò')}
             <select name="role">
-              <option value="">Tất cả vai trò</option>
+              <option value="">{t('Tất cả vai trò')}</option>
               {(['CenterAdmin', 'Caregiver', 'VisuallyImpaired'] as const).map((role) => (
                 <option key={role} value={role}>
                   {roles[role]}
@@ -156,44 +163,51 @@ function Reports({ actor }: { actor: Person }) {
             </select>
           </label>
           <label className="field">
-            Trạng thái
+            {t('Trạng thái')}
             <select name="active">
-              <option value="">Tất cả trạng thái</option>
-              <option value="true">Hoạt động</option>
-              <option value="false">Vô hiệu hóa</option>
+              <option value="">{t('Tất cả trạng thái')}</option>
+              <option value="true">{t('Hoạt động')}</option>
+              <option value="false">{t('Vô hiệu hóa')}</option>
             </select>
           </label>
-          <button className="btn primary">Lọc thành viên</button>
+          <button className="btn primary">{t('Lọc thành viên')}</button>
           <button
             type="button"
             className="btn"
             disabled={members.isFetching}
             onClick={() => void members.refetch()}
           >
-            Tải lại thành viên
+            {t('Tải lại thành viên')}
           </button>
         </form>
         <State loading={members.isPending} error={members.error} retry={() => members.refetch()}>
           {members.data?.items.length ? (
-            <div className="table-scroll" role="region" aria-label="Bảng thành viên" tabIndex={0}>
+            <div
+              className="table-scroll"
+              role="region"
+              aria-label={t('Bảng thành viên')}
+              tabIndex={0}
+            >
               <table style={{ minWidth: 640 }}>
                 <thead>
                   <tr>
-                    <th>Họ tên</th>
+                    <th>{t('Họ tên')}</th>
                     <th>Email</th>
-                    <th>Vai trò</th>
-                    <th>Trạng thái</th>
+                    <th>{t('Vai trò')}</th>
+                    <th>{t('Trạng thái')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {members.data.items.map((member) => (
                     <tr key={member.id}>
-                      <td><strong>{member.fullName}</strong></td>
+                      <td>
+                        <strong>{member.fullName}</strong>
+                      </td>
                       <td style={{ overflowWrap: 'anywhere' }}>{member.email}</td>
                       <td>{roles[member.role]}</td>
                       <td>
                         <Badge tone={member.isActive ? 'green' : 'gray'}>
-                          {member.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
+                          {member.isActive ? t('Hoạt động') : t('Vô hiệu hóa')}
                         </Badge>
                       </td>
                     </tr>
@@ -202,27 +216,30 @@ function Reports({ actor }: { actor: Person }) {
               </table>
             </div>
           ) : (
-            <p>Chưa có thành viên phù hợp.</p>
+            <p>{t('Chưa có thành viên phù hợp.')}</p>
           )}
           {members.data && (
             <div className="row pagination">
               <span>
-                {members.data.totalCount} thành viên · Trang {page}/
-                {Math.max(1, members.data.totalPages)}
+                {t('{totalCount} thành viên · Trang {page}/{p4}', {
+                  totalCount: members.data.totalCount,
+                  page,
+                  p4: Math.max(1, members.data.totalPages),
+                })}
               </span>
               <button
                 className="btn"
                 disabled={members.isFetching || !members.data.hasPreviousPage}
                 onClick={() => setPage(page - 1)}
               >
-                Trang trước
+                {t('Trang trước')}
               </button>
               <button
                 className="btn"
                 disabled={members.isFetching || !members.data.hasNextPage}
                 onClick={() => setPage(page + 1)}
               >
-                Trang sau
+                {t('Trang sau')}
               </button>
             </div>
           )}

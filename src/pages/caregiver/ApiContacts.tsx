@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -33,8 +34,10 @@ function Contacts({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title="Liên hệ khẩn cấp"
-        description="Quản lý danh bạ cho người được chăm sóc có liên kết hoạt động. Lưu liên hệ không thực hiện cuộc gọi."
+        title={t('Liên hệ khẩn cấp')}
+        description={t(
+          'Quản lý danh bạ cho người được chăm sóc có liên kết hoạt động. Lưu liên hệ không thực hiện cuộc gọi.',
+        )}
       />
       <section className="glass card stack">
         <form
@@ -47,24 +50,24 @@ function Contacts({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Tìm người được chăm sóc
+            {t('Tìm người được chăm sóc')}
             <input name="search" />
           </label>
-          <button className="btn primary">Tìm kiếm</button>
+          <button className="btn primary">{t('Tìm kiếm')}</button>
           <button
             type="button"
             className="btn"
             disabled={users.isFetching}
             onClick={() => void users.refetch()}
           >
-            Tải lại người dùng
+            {t('Tải lại người dùng')}
           </button>
         </form>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           <label className="field">
-            Người được chăm sóc
+            {t('Người được chăm sóc')}
             <select value={person?.id || ''} onChange={(e) => setSelected(e.target.value)}>
-              <option value="">Chọn người được chăm sóc</option>
+              <option value="">{t('Chọn người được chăm sóc')}</option>
               {users.data?.items.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.fullName} · {item.email}
@@ -74,13 +77,19 @@ function Contacts({ actor }: { actor: Person }) {
           </label>
           {!person && (
             <p className="notice">
-              Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.
+              {t(
+                'Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.',
+              )}
             </p>
           )}
           {users.data && (
             <div className="row pagination">
               <span>
-                {users.data.totalCount} người · Trang {page}/{Math.max(1, users.data.totalPages)}
+                {t('{totalCount} người · Trang {page}/{p4}', {
+                  totalCount: users.data.totalCount,
+                  page,
+                  p4: Math.max(1, users.data.totalPages),
+                })}
               </span>
               <button
                 className="btn"
@@ -90,7 +99,7 @@ function Contacts({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang trước
+                {t('Trang trước')}
               </button>
               <button
                 className="btn"
@@ -100,11 +109,11 @@ function Contacts({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang sau
+                {t('Trang sau')}
               </button>
             </div>
           )}
-          {!users.data?.items.length && <p>Chưa có người được chăm sóc phù hợp.</p>}
+          {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
         </State>
       </section>
       {!users.error && person && (
@@ -135,10 +144,11 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
   const refresh = () => cache.invalidateQueries({ queryKey: key });
   return (
     <section className="glass card stack">
-      <h2>Danh bạ của {name}</h2>
+      <h2>{t('Danh bạ của {name}', { name })}</h2>
       <p>
-        Tối đa 5 liên hệ kể cả liên hệ tạm ngưng. Ưu tiên là số nguyên dương và không trùng; số nhỏ
-        hơn được ưu tiên trước.
+        {t(
+          'Tối đa 5 liên hệ kể cả liên hệ tạm ngưng. Ưu tiên là số nguyên dương và không trùng; số nhỏ hơn được ưu tiên trước.',
+        )}
       </p>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {error && (
@@ -153,21 +163,21 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
             disabled={!query.data || query.data.length >= 5}
             onClick={() => setEditing('new')}
           >
-            Thêm liên hệ
+            {t('Thêm liên hệ')}
           </button>
           <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-            Tải lại liên hệ
+            {t('Tải lại liên hệ')}
           </button>
         </div>
-        {!query.data?.length && <p>Chưa có liên hệ khẩn cấp.</p>}
-        <div className="table-scroll" tabIndex={0} role="region" aria-label="Danh bạ khẩn cấp">
+        {!query.data?.length && <p>{t('Chưa có liên hệ khẩn cấp.')}</p>}
+        <div className="table-scroll" tabIndex={0} role="region" aria-label={t('Danh bạ khẩn cấp')}>
           <table className="care-contacts-table">
             <thead>
               <tr>
-                <th>Liên hệ</th>
-                <th>Ưu tiên</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
+                <th>{t('Liên hệ')}</th>
+                <th>{t('Ưu tiên')}</th>
+                <th>{t('Trạng thái')}</th>
+                <th>{t('Thao tác')}</th>
               </tr>
             </thead>
             <tbody>
@@ -183,7 +193,7 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
                   <td>{item.priorityOrder}</td>
                   <td>
                     <Badge tone={item.isActive ? 'green' : 'amber'}>
-                      {item.isActive ? 'Hoạt động' : 'Tạm ngưng'}
+                      {item.isActive ? t('Hoạt động') : t('Tạm ngưng')}
                     </Badge>
                   </td>
                   <td>
@@ -204,19 +214,19 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
                           }
                         }}
                       >
-                        Chỉnh sửa
+                        {t('Chỉnh sửa')}
                       </button>
                       <button
                         className="btn small"
                         onClick={() => setAction({ item, remove: false })}
                       >
-                        {item.isActive ? 'Tạm ngưng' : 'Kích hoạt'}
+                        {item.isActive ? t('Tạm ngưng') : t('Kích hoạt')}
                       </button>
                       <button
                         className="btn small danger"
                         onClick={() => setAction({ item, remove: true })}
                       >
-                        Xóa
+                        {t('Xóa')}
                       </button>
                     </div>
                   </td>
@@ -227,44 +237,45 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
         </div>
         {editing && (
           <Dialog
-            title={editing === 'new' ? 'Thêm liên hệ khẩn cấp' : 'Sửa liên hệ khẩn cấp'}
+            title={editing === 'new' ? t('Thêm liên hệ khẩn cấp') : t('Sửa liên hệ khẩn cấp')}
             onClose={() => setEditing(null)}
           >
             <p>
-              Chấp nhận số di động Việt Nam (0… hoặc +84…), hotline 112–115 và tổng đài 1800/1900.
-              Liên kết Zalo được lưu như văn bản, không tự mở.
+              {t(
+                'Chấp nhận số di động Việt Nam (0… hoặc +84…), hotline 112–115 và tổng đài 1800/1900. Liên kết Zalo được lưu như văn bản, không tự mở.',
+              )}
             </p>
             <Form
               fields={[
-                { key: 'contactName', label: 'Tên liên hệ', required: true, max: 200 },
+                { key: 'contactName', label: t('Tên liên hệ'), required: true, max: 200 },
                 {
                   key: 'contactType',
-                  label: 'Loại liên hệ',
+                  label: t('Loại liên hệ'),
                   type: 'select',
                   required: true,
                   options: Object.entries(contactTypes).map(([value, label]) => ({ value, label })),
                 },
                 {
                   key: 'phoneNumber',
-                  label: 'Số điện thoại',
+                  label: t('Số điện thoại'),
                   max: 20,
-                  hint: 'Bắt buộc với Điện thoại hoặc Điện thoại và Zalo.',
+                  hint: t('Bắt buộc với Điện thoại hoặc Điện thoại và Zalo.'),
                 },
                 {
                   key: 'zaloDeepLink',
-                  label: 'Liên kết Zalo',
+                  label: t('Liên kết Zalo'),
                   max: 500,
-                  hint: 'Bắt buộc với Zalo hoặc Điện thoại và Zalo.',
+                  hint: t('Bắt buộc với Zalo hoặc Điện thoại và Zalo.'),
                 },
                 {
                   key: 'priorityOrder',
-                  label: 'Thứ tự ưu tiên',
+                  label: t('Thứ tự ưu tiên'),
                   type: 'number',
                   min: 1,
                   max: 32767,
                   step: 1,
                 },
-                { key: 'notes', label: 'Ghi chú', type: 'textarea', max: 500 },
+                { key: 'notes', label: t('Ghi chú'), type: 'textarea', max: 500 },
               ]}
               initial={
                 editing === 'new'
@@ -285,11 +296,13 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
                     editing === 'new' ? undefined : editing.id,
                   );
                   setEditing(null);
-                  setNotice('Đã lưu liên hệ theo dữ liệu máy chủ.');
+                  setNotice(t('Đã lưu liên hệ theo dữ liệu máy chủ.'));
                 } catch (e) {
                   if ((e as { status?: number }).status! >= 500)
                     throw new Error(
-                      'Chưa xác nhận được kết quả lưu. Tải lại danh sách trước khi gửi lại để tránh tạo trùng.',
+                      t(
+                        'Chưa xác nhận được kết quả lưu. Tải lại danh sách trước khi gửi lại để tránh tạo trùng.',
+                      ),
                       { cause: e },
                     );
                   throw e;
@@ -302,14 +315,25 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
         )}
         {action && (
           <Confirm
-            title={action.remove ? 'Xóa liên hệ' : 'Đổi trạng thái liên hệ'}
-            description={`${action.remove ? 'Xóa' : action.item.isActive ? 'Tạm ngưng' : 'Kích hoạt'} liên hệ ${action.item.contactName}? Thao tác ảnh hưởng danh bạ khẩn cấp của ${name}.`}
+            title={action.remove ? t('Xóa liên hệ') : t('Đổi trạng thái liên hệ')}
+            description={t(
+              '{p0} liên hệ {contactName}? Thao tác ảnh hưởng danh bạ khẩn cấp của {name}.',
+              {
+                p0: action.remove
+                  ? t('Xóa')
+                  : action.item.isActive
+                    ? t('Tạm ngưng')
+                    : t('Kích hoạt'),
+                contactName: action.item.contactName,
+                name,
+              },
+            )}
             onClose={() => setAction(null)}
             onConfirm={async () => {
               try {
                 if (action.remove) await contactsApi.remove(actor, viuId, action.item.id);
                 else await contactsApi.status(actor, viuId, action.item.id, !action.item.isActive);
-                setNotice('Đã cập nhật danh bạ.');
+                setNotice(t('Đã cập nhật danh bạ.'));
               } finally {
                 await refresh();
               }

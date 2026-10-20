@@ -1,3 +1,4 @@
+import { t, msg, labelMap, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -13,13 +14,13 @@ import {
 import { historyRange } from '../../services/api/locations';
 import { PageHead, State, Dialog, Confirm } from '../../components/UI';
 import type { Person } from '../../models/domain';
-const time = (value: string) => new Date(value).toLocaleString('vi-VN');
-const methods: Record<string, string> = {
-  AccelerometerCamera: 'Cảm biến / camera',
-  Manual: 'Thủ công',
-  VoiceCommand: 'Giọng nói',
-  Gesture: 'Cử chỉ',
-};
+const time = (value: string) => formatLocaleDateTime(value);
+const methods: Record<string, string> = labelMap({
+  AccelerometerCamera: msg('Cảm biến / camera'),
+  Manual: msg('Thủ công'),
+  VoiceCommand: msg('Giọng nói'),
+  Gesture: msg('Cử chỉ'),
+});
 export function ApiAlerts() {
   const { data: actor } = useSession();
   return actor?.role === 'Caregiver' ? <Alerts key={actor.id} actor={actor} /> : null;
@@ -43,8 +44,10 @@ function Alerts({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title="Trung tâm cảnh báo"
-        description="Cảnh báo trong phạm vi liên kết được phép xem. Cập nhật qua SignalR và tải lại dự phòng mỗi 30 giây."
+        title={t('Trung tâm cảnh báo')}
+        description={t(
+          'Cảnh báo trong phạm vi liên kết được phép xem. Cập nhật qua SignalR và tải lại dự phòng mỗi 30 giây.',
+        )}
       />
       <section className="glass card stack">
         <form
@@ -68,13 +71,13 @@ function Alerts({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Mã VIU (để trống xem tất cả)
+            {t('Mã VIU (để trống xem tất cả)')}
             <input name="viuId" />
           </label>
           <label className="field">
-            Trạng thái cảnh báo
+            {t('Trạng thái cảnh báo')}
             <select name="status">
-              <option value="">Tất cả</option>
+              <option value="">{t('Tất cả')}</option>
               {Object.entries(alertLabels).map(([v, l]) => (
                 <option key={v} value={v}>
                   {l}
@@ -83,26 +86,27 @@ function Alerts({ actor }: { actor: Person }) {
             </select>
           </label>
           <label className="field">
-            Từ thời gian
+            {t('Từ thời gian')}
             <input name="from" type="datetime-local" />
           </label>
           <label className="field">
-            Đến thời gian
+            {t('Đến thời gian')}
             <input name="to" type="datetime-local" />
           </label>
-          <button className="btn primary">Lọc cảnh báo</button>
+          <button className="btn primary">{t('Lọc cảnh báo')}</button>
           <button
             type="button"
             className="btn"
             disabled={query.isFetching}
             onClick={() => void query.refetch()}
           >
-            Tải lại cảnh báo
+            {t('Tải lại cảnh báo')}
           </button>
         </form>
         <small>
-          Thời gian theo {Intl.DateTimeFormat().resolvedOptions().timeZone}. API trả mã VIU, chưa có
-          tên người dùng trong cảnh báo.
+          {t('Thời gian theo {timeZone}. API trả mã VIU, chưa có tên người dùng trong cảnh báo.', {
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          })}
         </small>
         {error && (
           <p role="alert" className="notice error">
@@ -112,16 +116,21 @@ function Alerts({ actor }: { actor: Person }) {
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           {query.data && (
             <>
-              {!query.data.items.length && <p>Không có cảnh báo phù hợp.</p>}
-              <div className="table-scroll" tabIndex={0} role="region" aria-label="Danh sách cảnh báo">
+              {!query.data.items.length && <p>{t('Không có cảnh báo phù hợp.')}</p>}
+              <div
+                className="table-scroll"
+                tabIndex={0}
+                role="region"
+                aria-label={t('Danh sách cảnh báo')}
+              >
                 <table className="alerts-table">
                   <thead>
                     <tr>
                       <th>VIU</th>
-                      <th>Phát hiện</th>
-                      <th>Trạng thái</th>
-                      <th>Thời gian</th>
-                      <th>Thao tác</th>
+                      <th>{t('Phát hiện')}</th>
+                      <th>{t('Trạng thái')}</th>
+                      <th>{t('Thời gian')}</th>
+                      <th>{t('Thao tác')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -129,11 +138,13 @@ function Alerts({ actor }: { actor: Person }) {
                       <tr key={event.id}>
                         <td>{event.visuallyImpairedUserId}</td>
                         <td>{methods[event.detectionMethod] || event.detectionMethod}</td>
-                        <td><strong>{alertLabels[event.currentStatus]}</strong></td>
+                        <td>
+                          <strong>{alertLabels[event.currentStatus]}</strong>
+                        </td>
                         <td>{time(event.detectedAt)}</td>
                         <td>
                           <button className="btn" onClick={() => setSelected(event.id)}>
-                            Xem chi tiết
+                            {t('Xem chi tiết')}
                           </button>
                         </td>
                       </tr>
@@ -143,22 +154,25 @@ function Alerts({ actor }: { actor: Person }) {
               </div>
               <div className="row pagination">
                 <span>
-                  {query.data.totalCount} cảnh báo · Trang {query.data.page}/
-                  {Math.max(1, query.data.totalPages)}
+                  {t('{totalCount} cảnh báo · Trang {page}/{p4}', {
+                    totalCount: query.data.totalCount,
+                    page: query.data.page,
+                    p4: Math.max(1, query.data.totalPages),
+                  })}
                 </span>
                 <button
                   className="btn"
                   disabled={query.isFetching || !query.data.hasPreviousPage}
                   onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
                 >
-                  Trang trước
+                  {t('Trang trước')}
                 </button>
                 <button
                   className="btn"
                   disabled={query.isFetching || !query.data.hasNextPage}
                   onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                 >
-                  Trang sau
+                  {t('Trang sau')}
                 </button>
               </div>
             </>
@@ -196,7 +210,7 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
   return (
     <>
       <Dialog
-        title="Chi tiết cảnh báo"
+        title={t('Chi tiết cảnh báo')}
         onClose={() => {
           if (!pending) onClose();
         }}
@@ -212,16 +226,36 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
               <>
                 <strong>{alertLabels[event.currentStatus]}</strong>
                 <dl className="record-details">
-                  <div><dt>Mã VIU</dt><dd>{event.visuallyImpairedUserId}</dd></div>
-                  <div><dt>Phát hiện</dt><dd>{methods[event.detectionMethod] || event.detectionMethod}</dd></div>
-                  <div><dt>Thời gian</dt><dd>{time(event.detectedAt)}</dd></div>
-                  <div><dt>Vị trí ghi nhận</dt><dd>Vĩ độ: {event.latitude ?? 'Không có dữ liệu'} · Kinh độ: {event.longitude ?? 'Không có dữ liệu'}</dd></div>
-                  <div><dt>Ghi chú</dt><dd>{event.notes || 'Không có'}</dd></div>
+                  <div>
+                    <dt>{t('Mã VIU')}</dt>
+                    <dd>{event.visuallyImpairedUserId}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('Phát hiện')}</dt>
+                    <dd>{methods[event.detectionMethod] || event.detectionMethod}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('Thời gian')}</dt>
+                    <dd>{time(event.detectedAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('Vị trí ghi nhận')}</dt>
+                    <dd>
+                      {t('Vĩ độ:')} {event.latitude ?? t('Không có dữ liệu')} {t('· Kinh độ:')}{' '}
+                      {event.longitude ?? t('Không có dữ liệu')}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{t('Ghi chú')}</dt>
+                    <dd>{event.notes || t('Không có')}</dd>
+                  </div>
                 </dl>
                 <p>
                   {event.snapshotPath
-                    ? 'Có thông tin ảnh trên máy chủ nhưng API chưa cung cấp URL tải ảnh được xác thực.'
-                    : 'Không có ảnh chụp sự kiện.'}
+                    ? t(
+                        'Có thông tin ảnh trên máy chủ nhưng API chưa cung cấp URL tải ảnh được xác thực.',
+                      )
+                    : t('Không có ảnh chụp sự kiện.')}
                 </p>
                 <State
                   loading={permission.isPending}
@@ -231,7 +265,7 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                   {permission.data ? (
                     <>
                       <label className="field">
-                        Ghi chú xử lý
+                        {t('Ghi chú xử lý')}
                         <textarea
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
@@ -252,14 +286,16 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                       </div>
                     </>
                   ) : (
-                    <p>Bạn có quyền xem nhưng không có quyền xử lý cảnh báo.</p>
+                    <p>{t('Bạn có quyền xem nhưng không có quyền xử lý cảnh báo.')}</p>
                   )}
                 </State>
                 {contacts && !permission.isError && permission.data && (
                   <section className="stack">
-                    <h3>Liên hệ khẩn cấp</h3>
+                    <h3>{t('Liên hệ khẩn cấp')}</h3>
                     <p>
-                      Chuyển cấp không có nghĩa cuộc gọi đã diễn ra. Web không tự gọi hoặc mở Zalo.
+                      {t(
+                        'Chuyển cấp không có nghĩa cuộc gọi đã diễn ra. Web không tự gọi hoặc mở Zalo.',
+                      )}
                     </p>
                     {contacts.emergencyContacts.length ? (
                       [...contacts.emergencyContacts]
@@ -267,26 +303,26 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                         .map((c) => (
                           <p key={c.id}>
                             {c.priorityOrder}. {c.contactName} · {c.contactType} ·{' '}
-                            {c.phoneNumber || 'Không có số điện thoại'}
+                            {c.phoneNumber || t('Không có số điện thoại')}
                             {c.zaloDeepLink && <span> · Zalo: {c.zaloDeepLink}</span>}
                           </p>
                         ))
                     ) : (
-                      <p>Chưa có liên hệ khẩn cấp.</p>
+                      <p>{t('Chưa có liên hệ khẩn cấp.')}</p>
                     )}
                   </section>
                 )}
-                <h3>Lịch sử xử lý</h3>
-                {!event.statusHistory.length && <p>Chưa có lịch sử xử lý.</p>}
+                <h3>{t('Lịch sử xử lý')}</h3>
+                {!event.statusHistory.length && <p>{t('Chưa có lịch sử xử lý.')}</p>}
                 {event.statusHistory.map((h) => (
                   <div key={h.id}>
                     <strong>
                       {alertLabels[h.fromStatus]} → {alertLabels[h.toStatus]}
                     </strong>
                     <p>
-                      {time(h.changedAt)} · {h.changedBy || 'Hệ thống'}
+                      {time(h.changedAt)} · {h.changedBy || t('Hệ thống')}
                     </p>
-                    <p>{h.reason || 'Không có ghi chú'}</p>
+                    <p>{h.reason || t('Không có ghi chú')}</p>
                   </div>
                 ))}
               </>
@@ -297,7 +333,10 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
       {action && event && !detail.isError && (
         <Confirm
           title={actionLabels[action]}
-          description={`Xác nhận xử lý cảnh báo ${id}? ${notes || 'Không có ghi chú.'}`}
+          description={t('Xác nhận xử lý cảnh báo {id}? {p1}', {
+            id,
+            p1: notes || t('Không có ghi chú.'),
+          })}
           onClose={() => setAction(null)}
           onConfirm={async () => {
             setPending(true);
@@ -313,11 +352,11 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
               );
               setContacts(result);
               setNotes('');
-              setMessage('Máy chủ đã xác nhận cập nhật.');
+              setMessage(t('Máy chủ đã xác nhận cập nhật.'));
             } catch (err) {
               setMessage(
-                (err instanceof Error ? err.message : 'Không thể xử lý.') +
-                  ' Chưa xác nhận thành công; kiểm tra trạng thái mới trước khi thử lại.',
+                (err instanceof Error ? err.message : t('Không thể xử lý.')) +
+                  t(' Chưa xác nhận thành công; kiểm tra trạng thái mới trước khi thử lại.'),
               );
             } finally {
               await Promise.all([

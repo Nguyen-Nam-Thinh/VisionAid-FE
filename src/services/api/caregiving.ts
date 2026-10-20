@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -40,7 +41,7 @@ export type LinkedUser = z.infer<typeof userSchema>;
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success)
-    throw new ServiceError('Dữ liệu người dùng hoặc liên kết không đúng định dạng.', 502);
+    throw new ServiceError(t('Dữ liệu người dùng hoặc liên kết không đúng định dạng.'), 502);
   return result.data;
 }
 export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite = apiWrite) {
@@ -51,7 +52,7 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
   });
   const checkLink = (link: z.infer<typeof linkSchema>, caregiverId: string, viuId: string) => {
     if (link.caregiverId !== caregiverId || link.visuallyImpairedUserId !== viuId)
-      throw new ServiceError('Liên kết không thuộc tài khoản hoặc người được chọn.', 403);
+      throw new ServiceError(t('Liên kết không thuộc tài khoản hoặc người được chọn.'), 403);
     return link;
   };
   return {
@@ -78,7 +79,9 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
         .safeParse(values);
       if (!input.success)
         throw new ServiceError(
-          'Kiểm tra họ tên, email, số điện thoại và mật khẩu. Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.',
+          t(
+            'Kiểm tra họ tên, email, số điện thoại và mật khẩu. Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.',
+          ),
           400,
         );
       const active = parse(
@@ -86,10 +89,10 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
         await get('/api/caregiver-links?page=1&pageSize=1&isActive=true'),
       );
       if (active.items.some((l) => l.caregiverId !== caregiverId))
-        throw new ServiceError('Liên kết không thuộc tài khoản hiện tại.', 403);
+        throw new ServiceError(t('Liên kết không thuộc tài khoản hiện tại.'), 403);
       if (active.totalCount >= 3)
         throw new ServiceError(
-          'Bạn đã có tối đa 3 liên kết hoạt động. Chưa tạo tài khoản mới.',
+          t('Bạn đã có tối đa 3 liên kết hoạt động. Chưa tạo tài khoản mới.'),
           422,
         );
       return parse(
@@ -110,7 +113,7 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
       },
     ) {
       if (!z.string().uuid().safeParse(viuId).success)
-        throw new ServiceError('Mã VIU phải là UUID hợp lệ.', 400);
+        throw new ServiceError(t('Mã VIU phải là UUID hợp lệ.'), 400);
       try {
         return checkLink(
           parse(
@@ -148,14 +151,14 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
     },
     async unlink(id: string, caregiverId: string, viuId: string) {
       if (!z.string().uuid().safeParse(id).success)
-        throw new ServiceError('Mã liên kết không hợp lệ.', 400);
+        throw new ServiceError(t('Mã liên kết không hợp lệ.'), 400);
       const link = checkLink(
         parse(linkSchema, await get('/api/caregiver-links/' + encodeURIComponent(id))),
         caregiverId,
         viuId,
       );
       if (link.linkType !== 'Personal' || link.unlinkedAt)
-        throw new ServiceError('Chỉ có thể gỡ liên kết cá nhân đang hoạt động của bạn.', 403);
+        throw new ServiceError(t('Chỉ có thể gỡ liên kết cá nhân đang hoạt động của bạn.'), 403);
       await write('/api/caregiver-links/' + encodeURIComponent(id), { method: 'DELETE' });
     },
     async users(page: number, search: string, signal?: AbortSignal) {
@@ -181,7 +184,7 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
     },
     async detail(id: string, caregiverId: string, viuId: string, signal?: AbortSignal) {
       if (!z.string().uuid().safeParse(id).success)
-        throw new ServiceError('Mã liên kết không hợp lệ.', 400);
+        throw new ServiceError(t('Mã liên kết không hợp lệ.'), 400);
       return checkLink(
         parse(linkSchema, await get('/api/caregiver-links/' + encodeURIComponent(id), signal)),
         caregiverId,

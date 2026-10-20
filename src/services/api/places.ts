@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { createCaregivingApi } from './caregiving';
@@ -47,19 +48,19 @@ export type Place = z.infer<typeof savedSchema> | z.infer<typeof zoneSchema>;
 export function createPlacesApi(get = apiGet, write = apiWrite) {
   const validId = (value: string) => {
     if (!z.string().uuid().safeParse(value).success)
-      throw new ServiceError('Mã địa điểm hoặc người được chăm sóc không hợp lệ.', 400);
+      throw new ServiceError(t('Mã địa điểm hoặc người được chăm sóc không hợp lệ.'), 400);
     return value;
   };
   const authorize = async (actor: Person, viuId: string, manage = false, signal?: AbortSignal) => {
     validId(viuId);
     if (actor.role !== 'Caregiver')
-      throw new ServiceError('Bạn không có quyền mở màn hình này.', 403);
+      throw new ServiceError(t('Bạn không có quyền mở màn hình này.'), 403);
     const links = await createCaregivingApi(get, write).links(actor.id, viuId, 1, signal);
     const active = links.items.filter((link) => !link.unlinkedAt);
     const canManage = active.some((link) => link.canManageLocations);
     if (!active.length || (manage && !canManage))
       throw new ServiceError(
-        'Bạn không còn liên kết hoặc quyền quản lý vị trí cho người này.',
+        t('Bạn không còn liên kết hoặc quyền quản lý vị trí cho người này.'),
         403,
       );
     return canManage;
@@ -67,9 +68,10 @@ export function createPlacesApi(get = apiGet, write = apiWrite) {
   const schema = (kind: PlaceKind) => (kind === 'geofences' ? zoneSchema : savedSchema);
   const checked = (kind: PlaceKind, raw: unknown, viuId: string, id?: string): Place => {
     const parsed = schema(kind).safeParse(raw);
-    if (!parsed.success) throw new ServiceError('Dữ liệu địa điểm từ máy chủ không hợp lệ.', 502);
+    if (!parsed.success)
+      throw new ServiceError(t('Dữ liệu địa điểm từ máy chủ không hợp lệ.'), 502);
     if (parsed.data.visuallyImpairedUserId !== viuId || (id && parsed.data.id !== id))
-      throw new ServiceError('Địa điểm không thuộc người được chọn.', 403);
+      throw new ServiceError(t('Địa điểm không thuộc người được chọn.'), 403);
     return parsed.data;
   };
   const read = async (kind: PlaceKind, viuId: string, id: string, signal?: AbortSignal) =>
@@ -84,7 +86,7 @@ export function createPlacesApi(get = apiGet, write = apiWrite) {
       signal?: AbortSignal,
     ) {
       if (!Number.isInteger(page) || page < 1 || !['', 'true', 'false'].includes(active))
-        throw new ServiceError('Bộ lọc địa điểm không hợp lệ.', 400);
+        throw new ServiceError(t('Bộ lọc địa điểm không hợp lệ.'), 400);
       const canManage = await authorize(actor, viuId, false, signal);
       const query = new URLSearchParams({ viuId, page: String(page), pageSize: '20' });
       if (active) query.set('isActive', active);
@@ -99,7 +101,7 @@ export function createPlacesApi(get = apiGet, write = apiWrite) {
           hasPreviousPage: z.boolean(),
         })
         .safeParse(await get(`/api/${kind}?${query}`, signal));
-      if (!result.success) throw new ServiceError('Danh sách địa điểm không hợp lệ.', 502);
+      if (!result.success) throw new ServiceError(t('Danh sách địa điểm không hợp lệ.'), 502);
       return {
         ...result.data,
         items: result.data.items.map((item) => checked(kind, item, viuId)),
@@ -115,7 +117,7 @@ export function createPlacesApi(get = apiGet, write = apiWrite) {
       const parsed = (id ? input.extend({ isActive: z.boolean() }) : input).safeParse(values);
       if (!parsed.success)
         throw new ServiceError(
-          'Kiểm tra tên, tọa độ và bán kính. Bán kính phải là số nguyên trong khoảng cho phép.',
+          t('Kiểm tra tên, tọa độ và bán kính. Bán kính phải là số nguyên trong khoảng cho phép.'),
           400,
           Object.fromEntries(
             parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message]),

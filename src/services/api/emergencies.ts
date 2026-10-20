@@ -1,3 +1,4 @@
+import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { caregivingApi } from './caregiving';
@@ -13,15 +14,15 @@ const status = z.enum([
   'Resolved',
   'Called',
 ]);
-export const alertLabels: Record<z.infer<typeof status>, string> = {
-  Detected: 'Mới phát hiện',
-  Dismissed: 'Đã hủy',
-  Sent: 'Đã gửi',
-  Acknowledged: 'Đã tiếp nhận',
-  Escalated: 'Đã chuyển cấp',
-  Resolved: 'Đã giải quyết',
-  Called: 'Đã gọi',
-};
+export const alertLabels: Record<z.infer<typeof status>, string> = labelMap({
+  Detected: msg('Mới phát hiện'),
+  Dismissed: msg('Đã hủy'),
+  Sent: msg('Đã gửi'),
+  Acknowledged: msg('Đã tiếp nhận'),
+  Escalated: msg('Đã chuyển cấp'),
+  Resolved: msg('Đã giải quyết'),
+  Called: msg('Đã gọi'),
+});
 const date = z.string().datetime({ offset: true });
 const eventSchema = z.object({
   id: z.string().uuid(),
@@ -81,11 +82,11 @@ const escalationSchema = z.object({
 export type Emergency = z.infer<typeof eventSchema>;
 export type Escalation = z.infer<typeof escalationSchema>;
 export type AlertAction = 'acknowledge' | 'escalate' | 'resolve';
-export const actionLabels: Record<AlertAction, string> = {
-  acknowledge: 'Tiếp nhận cảnh báo',
-  escalate: 'Chuyển cấp hỗ trợ',
-  resolve: 'Đánh dấu đã giải quyết',
-};
+export const actionLabels: Record<AlertAction, string> = labelMap({
+  acknowledge: msg('Tiếp nhận cảnh báo'),
+  escalate: msg('Chuyển cấp hỗ trợ'),
+  resolve: msg('Đánh dấu đã giải quyết'),
+});
 export function alertActions(s: Emergency['currentStatus']): AlertAction[] {
   return s === 'Sent'
     ? ['acknowledge', 'escalate', 'resolve']
@@ -105,7 +106,7 @@ export type AlertFilters = {
 };
 function parse<T>(schema: z.ZodType<T>, value: unknown) {
   const r = schema.safeParse(value);
-  if (!r.success) throw new ServiceError('Dữ liệu cảnh báo từ máy chủ không hợp lệ.', 502);
+  if (!r.success) throw new ServiceError(t('Dữ liệu cảnh báo từ máy chủ không hợp lệ.'), 502);
   return r.data;
 }
 function authorize(actor: Actor) {
@@ -113,18 +114,18 @@ function authorize(actor: Actor) {
     !['Caregiver', 'CenterAdmin'].includes(actor.role) ||
     (actor.role === 'CenterAdmin' && !actor.orgId)
   )
-    throw new ServiceError('Không có quyền truy cập cảnh báo.', 403);
+    throw new ServiceError(t('Không có quyền truy cập cảnh báo.'), 403);
 }
 function uuid(id: string) {
   if (!z.string().uuid().safeParse(id).success)
-    throw new ServiceError('Mã định danh không hợp lệ.', 400);
+    throw new ServiceError(t('Mã định danh không hợp lệ.'), 400);
 }
 export function createEmergenciesApi(get = apiGet, write = apiWrite, links = caregivingApi.links) {
   async function detail(actor: Actor, id: string, signal?: AbortSignal) {
     authorize(actor);
     uuid(id);
     const result = parse(detailSchema, await get('/api/emergency-events/' + id, signal));
-    if (result.id !== id) throw new ServiceError('Cảnh báo không khớp yêu cầu.', 403);
+    if (result.id !== id) throw new ServiceError(t('Cảnh báo không khớp yêu cầu.'), 403);
     return result;
   }
   async function canAct(actor: Actor, viuId: string, signal?: AbortSignal) {
@@ -147,9 +148,9 @@ export function createEmergenciesApi(get = apiGet, write = apiWrite, links = car
       authorize(actor);
       if (filters.viuId) uuid(filters.viuId);
       if (filters.status && !status.safeParse(filters.status).success)
-        throw new ServiceError('Trạng thái không hợp lệ.', 400);
+        throw new ServiceError(t('Trạng thái không hợp lệ.'), 400);
       if (!Number.isInteger(filters.page) || filters.page < 1)
-        throw new ServiceError('Trang không hợp lệ.', 400);
+        throw new ServiceError(t('Trang không hợp lệ.'), 400);
       const range = historyRange(filters.dateFrom, filters.dateTo);
       const q = new URLSearchParams({ page: String(filters.page), pageSize: '20' });
       for (const [key, value] of Object.entries({
@@ -160,7 +161,7 @@ export function createEmergenciesApi(get = apiGet, write = apiWrite, links = car
         if (value) q.set(key, value);
       const result = parse(pageSchema, await get('/api/emergency-events?' + q, signal));
       if (filters.viuId && result.items.some((e) => e.visuallyImpairedUserId !== filters.viuId))
-        throw new ServiceError('Cảnh báo không thuộc VIU được chọn.', 403);
+        throw new ServiceError(t('Cảnh báo không thuộc VIU được chọn.'), 403);
       return result;
     },
     async act(
@@ -175,9 +176,12 @@ export function createEmergenciesApi(get = apiGet, write = apiWrite, links = car
         current.currentStatus !== expectedStatus ||
         !alertActions(current.currentStatus).includes(action)
       )
-        throw new ServiceError('Trạng thái đã thay đổi. Hãy xem dữ liệu mới trước khi xử lý.', 409);
+        throw new ServiceError(
+          t('Trạng thái đã thay đổi. Hãy xem dữ liệu mới trước khi xử lý.'),
+          409,
+        );
       if (!(await canAct(actor, current.visuallyImpairedUserId)))
-        throw new ServiceError('Bạn không có quyền xử lý cảnh báo này.', 403);
+        throw new ServiceError(t('Bạn không có quyền xử lý cảnh báo này.'), 403);
       const response = await write('/api/emergency-events/' + id + '/' + action, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -186,7 +190,7 @@ export function createEmergenciesApi(get = apiGet, write = apiWrite, links = car
       if (action !== 'escalate') return null;
       const result = parse(escalationSchema, response);
       if (result.eventId !== id)
-        throw new ServiceError('Phản hồi chuyển cấp không khớp cảnh báo.', 502);
+        throw new ServiceError(t('Phản hồi chuyển cấp không khớp cảnh báo.'), 502);
       return result;
     },
   };

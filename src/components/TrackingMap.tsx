@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useNow } from '../hooks/useNow';
 import { useState } from 'react';
 import { Wifi, WifiOff, MapPin } from 'lucide-react';
@@ -31,17 +32,17 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
   return (
     <>
       <PageHead
-        title={fleet ? 'Bản đồ toàn trung tâm' : 'Bản đồ theo dõi'}
-        description="Vị trí gần nhất và tình trạng kết nối của người được chăm sóc."
+        title={fleet ? t('Bản đồ toàn trung tâm') : t('Bản đồ theo dõi')}
+        description={t('Vị trí gần nhất và tình trạng kết nối của người được chăm sóc.')}
         actions={
           <Badge tone={rt.state === 'connected' ? 'green' : 'amber'}>
             {rt.state === 'connected' ? <Wifi size={14} /> : <WifiOff size={14} />}
             {
               {
-                connected: 'Realtime mô phỏng',
-                disconnected: 'Đã ngắt kết nối',
-                reconnecting: 'Đang kết nối lại…',
-                unconfigured: 'Chưa cấu hình SignalR',
+                connected: t('Realtime mô phỏng'),
+                disconnected: t('Đã ngắt kết nối'),
+                reconnecting: t('Đang kết nối lại…'),
+                unconfigured: t('Chưa cấu hình SignalR'),
               }[rt.state]
             }
           </Badge>
@@ -51,20 +52,20 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
         <div className="stack">
           <div className="row between">
             <label className="field">
-              Trạng thái vị trí
+              {t('Trạng thái vị trí')}
               <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value="live">Cập nhật gần đây</option>
-                <option value="stale">Dữ liệu cũ</option>
-                <option value="alerts">Có cảnh báo đang mở</option>
+                <option value="all">{t('Tất cả')}</option>
+                <option value="live">{t('Cập nhật gần đây')}</option>
+                <option value="stale">{t('Dữ liệu cũ')}</option>
+                <option value="alerts">{t('Có cảnh báo đang mở')}</option>
               </select>
             </label>
             <div className="row">
               <button className="btn" onClick={rt.disconnect}>
-                Mô phỏng ngắt kết nối
+                {t('Mô phỏng ngắt kết nối')}
               </button>
               <button className="btn" onClick={rt.reconnect} disabled={rt.state === 'reconnecting'}>
-                Kết nối lại
+                {t('Kết nối lại')}
               </button>
               <button
                 className="btn"
@@ -74,7 +75,7 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
                   cmd.mutate({ type: 'simulate', event: 'stale' });
                 }}
               >
-                Mô phỏng vị trí cũ
+                {t('Mô phỏng vị trí cũ')}
               </button>
             </div>
           </div>
@@ -90,23 +91,25 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
                 </span>
                 <div>
                   <h2>{selected?.name}</h2>
-                  <p className="muted">Lần ghi nhận: {formatTime(current.at)} · UTC+7</p>
+                  <p className="muted">
+                    {t('Lần ghi nhận: {p1} · UTC+7', { p1: formatTime(current.at) })}
+                  </p>
                 </div>
               </div>
               <Badge tone={isStale(current, now) ? 'amber' : 'green'}>
                 {isStale(current, now)
-                  ? 'Vị trí cũ — không phải trực tiếp'
-                  : 'Cập nhật gần đây · dữ liệu mô phỏng'}
+                  ? t('Vị trí cũ — không phải trực tiếp')
+                  : t('Cập nhật gần đây · dữ liệu mô phỏng')}
               </Badge>
             </section>
           )}
           <DataTable
-            title="Danh sách vị trí"
+            title={t('Danh sách vị trí')}
             rows={points.map((l) => ({ ...l, id: l.viuId }))}
             searchText={(l) => db?.people.find((p) => p.id === l.viuId)?.name ?? ''}
             columns={[
               {
-                label: 'Người dùng',
+                label: t('Người dùng'),
                 render: (l) => (
                   <button className="btn small" onClick={() => setSelected(l.viuId)}>
                     {db?.people.find((p) => p.id === l.viuId)?.name}
@@ -114,7 +117,7 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
                 ),
               },
               {
-                label: 'Tọa độ (vĩ độ, kinh độ)',
+                label: t('Tọa độ (vĩ độ, kinh độ)'),
                 render: (l) => (
                   <span className="mono">
                     {l.lat.toFixed(5)}, {l.lng.toFixed(5)}
@@ -122,22 +125,22 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
                 ),
               },
               {
-                label: 'Pin / mạng',
+                label: t('Pin / mạng'),
                 render: (l) =>
                   `${l.battery === null ? '—' : l.battery + '%'} · ${l.network ?? '—'}`,
               },
               {
-                label: 'Độ chính xác',
+                label: t('Độ chính xác'),
                 render: (l) => (l.accuracy === null ? '—' : `±${l.accuracy} m`),
               },
               {
-                label: 'Ghi nhận',
+                label: t('Ghi nhận'),
                 render: (l) => (
                   <>
                     <small>{formatTime(l.at)}</small>
                     <br />
                     <Badge tone={isStale(l, now) ? 'amber' : 'green'}>
-                      {isStale(l, now) ? 'Dữ liệu cũ' : 'Gần đây'}
+                      {isStale(l, now) ? t('Dữ liệu cũ') : t('Gần đây')}
                     </Badge>
                   </>
                 ),
