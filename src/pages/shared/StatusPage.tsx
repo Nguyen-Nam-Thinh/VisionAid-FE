@@ -1,4 +1,6 @@
+import { t, msg, tText } from '../../i18n';
 import { useEffect, useRef, type ReactNode } from 'react';
+import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { Compass, CreditCard, RotateCw, ShieldAlert, TriangleAlert, UserX } from 'lucide-react';
 
 export type StatusKind = 'not-found' | 'forbidden' | 'error' | 'unsupported' | 'license';
@@ -10,34 +12,39 @@ const content: Record<
   'not-found': {
     code: '404',
     icon: Compass,
-    title: 'Không tìm thấy trang',
-    description:
+    title: msg('Không tìm thấy trang'),
+    description: msg(
       'Đường dẫn không tồn tại, đã được đổi hoặc bạn gõ nhầm. Dữ liệu của bạn không bị ảnh hưởng.',
+    ),
   },
   forbidden: {
     code: '403',
     icon: ShieldAlert,
-    title: 'Bạn không có quyền xem trang này',
-    description:
+    title: msg('Bạn không có quyền xem trang này'),
+    description: msg(
       'Trang này dành cho vai trò khác. Nếu bạn cần truy cập, hãy liên hệ quản trị trung tâm hoặc quản trị hệ thống.',
+    ),
   },
   error: {
     icon: TriangleAlert,
-    title: 'Màn hình này gặp sự cố',
-    description:
+    title: msg('Màn hình này gặp sự cố'),
+    description: msg(
       'Một lỗi bất ngờ khiến màn hình không hiển thị được. Thao tác đang gửi có thể chưa hoàn tất — hãy tải lại và kiểm tra trước khi làm lại.',
+    ),
   },
   license: {
     icon: CreditCard,
-    title: 'Cần gói dịch vụ để dùng chức năng này',
-    description:
+    title: msg('Cần gói dịch vụ để dùng chức năng này'),
+    description: msg(
       'Tài khoản của bạn chưa có gói Personal. Đăng ký gói qua PayOS hoặc kích hoạt key do trung tâm cấp để mở chức năng này.',
+    ),
   },
   unsupported: {
     icon: UserX,
-    title: 'Tài khoản này không dùng trên Web',
-    description:
+    title: msg('Tài khoản này không dùng trên Web'),
+    description: msg(
       'Người khiếm thị sử dụng VisionAid qua ứng dụng di động. Web dành cho người chăm sóc, quản trị trung tâm và quản trị hệ thống.',
+    ),
   },
 };
 
@@ -82,12 +89,12 @@ export function StatusPage({
         </p>
       )}
       <h1 id="status-title" ref={heading} tabIndex={-1}>
-        {title}
+        {tText(title)}
       </h1>
-      <p className="status-description">{description}</p>
+      <p className="status-description">{tText(description)}</p>
       {detail && (
         <details className="status-detail">
-          <summary>Thông tin kỹ thuật</summary>
+          <summary>{t('Thông tin kỹ thuật')}</summary>
           <code>{detail}</code>
         </details>
       )}
@@ -111,6 +118,7 @@ export function StatusPage({
             VisionAid<span style={{ color: 'var(--primary)' }}>.</span>
           </span>
         </a>
+        <LanguageSwitch />
       </header>
       <main id="main" className="status-main">
         {body}
@@ -119,9 +127,11 @@ export function StatusPage({
   );
 }
 
-export const reloadAction = (
-  <button className="btn primary" onClick={() => window.location.reload()}>
-    <RotateCw size={18} aria-hidden="true" />
-    Tải lại trang
-  </button>
-);
+export function ReloadAction() {
+  return (
+    <button className="btn primary" onClick={() => window.location.reload()}>
+      <RotateCw size={18} aria-hidden="true" />
+      {t('Tải lại trang')}
+    </button>
+  );
+}

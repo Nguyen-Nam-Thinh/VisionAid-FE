@@ -1,3 +1,4 @@
+import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -11,8 +12,7 @@ import {
 } from '../../services/api/calls';
 import { PageHead, State, Dialog } from '../../components/UI';
 import type { Person } from '../../models/domain';
-const time = (value: string | null) =>
-  value ? new Date(value).toLocaleString('vi-VN') : 'Chưa có';
+const time = (value: string | null) => (value ? formatLocaleDateTime(value) : t('Chưa có'));
 export function ApiCalls() {
   const { data: actor } = useSession();
   return actor?.role === 'Caregiver' ? (
@@ -31,12 +31,15 @@ function History({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title="Lịch sử cuộc gọi"
-        description="Các phiên gọi bạn đã tham gia. Thời gian hiển thị theo múi giờ trình duyệt."
+        title={t('Lịch sử cuộc gọi')}
+        description={t(
+          'Các phiên gọi bạn đã tham gia. Thời gian hiển thị theo múi giờ trình duyệt.',
+        )}
       />
       <p className="notice">
-        Để bắt đầu gọi, vào Người được chăm sóc và chọn Gọi hỗ trợ. Kết quả dưới đây do máy chủ ghi
-        nhận.
+        {t(
+          'Để bắt đầu gọi, vào Người được chăm sóc và chọn Gọi hỗ trợ. Kết quả dưới đây do máy chủ ghi nhận.',
+        )}
       </p>
       <section className="glass card stack">
         <form
@@ -54,18 +57,18 @@ function History({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Mã người được chăm sóc
-            <input name="viuUserId" placeholder="UUID · để trống xem tất cả" />
+            {t('Mã người được chăm sóc')}
+            <input name="viuUserId" placeholder={t('UUID · để trống xem tất cả')} />
           </label>
           <label className="field">
-            Từ thời điểm
+            {t('Từ thời điểm')}
             <input name="dateFrom" type="datetime-local" />
           </label>
           <label className="field">
-            Đến thời điểm
+            {t('Đến thời điểm')}
             <input name="dateTo" type="datetime-local" />
           </label>
-          <button className="btn primary">Lọc lịch sử</button>
+          <button className="btn primary">{t('Lọc lịch sử')}</button>
           <button
             type="button"
             className="btn"
@@ -75,20 +78,20 @@ function History({ actor }: { actor: Person }) {
               void result.refetch();
             }}
           >
-            Tải lại
+            {t('Tải lại')}
           </button>
         </form>
         <State loading={result.isPending} error={result.error} retry={() => result.refetch()}>
-          {!result.data?.items.length && <p>Chưa có cuộc gọi phù hợp.</p>}
+          {!result.data?.items.length && <p>{t('Chưa có cuộc gọi phù hợp.')}</p>}
           <div className="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>Bắt đầu</th>
-                  <th>Loại cuộc gọi</th>
-                  <th>Trạng thái</th>
-                  <th>Thời lượng</th>
-                  <th>Thao tác</th>
+                  <th>{t('Bắt đầu')}</th>
+                  <th>{t('Loại cuộc gọi')}</th>
+                  <th>{t('Trạng thái')}</th>
+                  <th>{t('Thời lượng')}</th>
+                  <th>{t('Thao tác')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,11 +101,13 @@ function History({ actor }: { actor: Person }) {
                     <td>{callTriggers[call.triggerType]}</td>
                     <td>{callStatuses[call.status]}</td>
                     <td>
-                      {call.durationSeconds === null ? 'Chưa có' : `${call.durationSeconds} giây`}
+                      {call.durationSeconds === null
+                        ? t('Chưa có')
+                        : t('{durationSeconds} giây', { durationSeconds: call.durationSeconds })}
                     </td>
                     <td>
                       <button className="btn small" onClick={() => setSelected(call)}>
-                        Chi tiết
+                        {t('Chi tiết')}
                       </button>
                     </td>
                   </tr>
@@ -112,8 +117,11 @@ function History({ actor }: { actor: Person }) {
           </div>
           <div className="row pagination">
             <span>
-              {result.data?.totalCount ?? 0} cuộc gọi · Trang {page}/
-              {Math.max(1, result.data?.totalPages ?? 1)}
+              {t('{p0} cuộc gọi · Trang {page}/{p4}', {
+                p0: result.data?.totalCount ?? 0,
+                page,
+                p4: Math.max(1, result.data?.totalPages ?? 1),
+              })}
             </span>
             <button
               className="btn"
@@ -123,7 +131,7 @@ function History({ actor }: { actor: Person }) {
                 setSelected(null);
               }}
             >
-              Trang trước
+              {t('Trang trước')}
             </button>
             <button
               className="btn"
@@ -133,45 +141,46 @@ function History({ actor }: { actor: Person }) {
                 setSelected(null);
               }}
             >
-              Trang sau
+              {t('Trang sau')}
             </button>
           </div>
           {selected && (
-            <Dialog title="Chi tiết cuộc gọi" onClose={() => setSelected(null)}>
+            <Dialog title={t('Chi tiết cuộc gọi')} onClose={() => setSelected(null)}>
               <div className="stack" style={{ overflowWrap: 'anywhere' }}>
                 <dl className="record-details">
                   <div>
-                    <dt>Mã phiên</dt>
+                    <dt>{t('Mã phiên')}</dt>
                     <dd>{selected.sessionId}</dd>
                   </div>
                   <div>
-                    <dt>Người được chăm sóc</dt>
-                    <dd>{selected.viuUserId || 'Không còn thông tin'}</dd>
+                    <dt>{t('Người được chăm sóc')}</dt>
+                    <dd>{selected.viuUserId || t('Không còn thông tin')}</dd>
                   </div>
                   <div>
-                    <dt>Trạng thái</dt>
+                    <dt>{t('Trạng thái')}</dt>
                     <dd>{callStatuses[selected.status]}</dd>
                   </div>
                   <div>
-                    <dt>Bắt đầu</dt>
+                    <dt>{t('Bắt đầu')}</dt>
                     <dd>{time(selected.startedAt)}</dd>
                   </div>
                   <div>
-                    <dt>Chấp nhận</dt>
+                    <dt>{t('Chấp nhận')}</dt>
                     <dd>{time(selected.connectedAt)}</dd>
                   </div>
                   <div>
-                    <dt>Kết thúc</dt>
+                    <dt>{t('Kết thúc')}</dt>
                     <dd>{time(selected.endedAt)}</dd>
                   </div>
                   <div>
-                    <dt>Lý do</dt>
+                    <dt>{t('Lý do')}</dt>
                     <dd>{callEndReason(selected.endReason)}</dd>
                   </div>
                 </dl>
                 <p className="muted">
-                  Trạng thái chấp nhận do máy chủ ghi nhận không chứng minh âm thanh hoặc hình ảnh
-                  đã kết nối.
+                  {t(
+                    'Trạng thái chấp nhận do máy chủ ghi nhận không chứng minh âm thanh hoặc hình ảnh đã kết nối.',
+                  )}
                 </p>
               </div>
             </Dialog>

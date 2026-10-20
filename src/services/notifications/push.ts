@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { firebaseConfig, vapidKey } from '../../configs/firebase';
 
 export const pushOwnerKey = 'visionaid.push.owner.v1';
@@ -28,7 +29,7 @@ async function sdk() {
     import('@firebase/app'),
     import('@firebase/messaging'),
   ]);
-  if (!(await messaging.isSupported())) throw new Error('Trình duyệt chưa hỗ trợ Web Push.');
+  if (!(await messaging.isSupported())) throw new Error(t('Trình duyệt chưa hỗ trợ Web Push.'));
   return {
     ...messaging,
     instance: messaging.getMessaging(getApps()[0] || initializeApp(firebaseConfig)),
@@ -46,7 +47,7 @@ async function revoke() {
   (await registration.getNotifications()).forEach((notification) => notification.close());
   const subscription = await registration.pushManager.getSubscription();
   if (subscription && !(await subscription.unsubscribe()))
-    throw new Error('Chưa tắt được push. Hãy chặn thông báo trong cài đặt trình duyệt.');
+    throw new Error(t('Chưa tắt được push. Hãy chặn thông báo trong cài đặt trình duyệt.'));
   // Local unsubscribe works offline; remote Firebase cleanup is best effort.
   try {
     const fcm = await sdk();
@@ -65,22 +66,22 @@ export async function enablePush(
   register: (token: string) => Promise<unknown>,
   ask = true,
 ) {
-  if (!pushSupported()) throw new Error('Web Push cần HTTPS và trình duyệt hỗ trợ thông báo.');
+  if (!pushSupported()) throw new Error(t('Web Push cần HTTPS và trình duyệt hỗ trợ thông báo.'));
   const epoch = generation;
   // Permission prompt runs directly after the user's click, before loading Firebase.
   const permission = ask ? await Notification.requestPermission() : Notification.permission;
   if (permission !== 'granted')
-    throw new Error('Chưa được cấp quyền thông báo. Bạn vẫn có thể dùng Dashboard.');
+    throw new Error(t('Chưa được cấp quyền thông báo. Bạn vẫn có thể dùng Dashboard.'));
   return lock(async () => {
-    if (epoch !== generation) throw new Error('Phiên đã thay đổi. Vui lòng thử lại.');
+    if (epoch !== generation) throw new Error(t('Phiên đã thay đổi. Vui lòng thử lại.'));
     if (!ask && pushOwner() !== owner) return;
     try {
       if (pushOwner() !== owner) await revoke();
       const fcm = await sdk();
       const token = await fcm.getToken(fcm.instance, { vapidKey });
-      if (epoch !== generation) throw new Error('Phiên đã thay đổi.');
+      if (epoch !== generation) throw new Error(t('Phiên đã thay đổi.'));
       await register(token);
-      if (epoch !== generation) throw new Error('Phiên đã thay đổi.');
+      if (epoch !== generation) throw new Error(t('Phiên đã thay đổi.'));
       localStorage.setItem(pushOwnerKey, owner);
       const state = await caches.open(cacheName);
       await state.put('/push-enabled', new Response('1'));

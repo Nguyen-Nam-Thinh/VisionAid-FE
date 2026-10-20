@@ -1,3 +1,4 @@
+import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -36,8 +37,8 @@ export function ApiLinkedUsers() {
   return (
     <>
       <PageHead
-        title="Người được chăm sóc"
-        description="Danh sách người dùng được liên kết với tài khoản của bạn."
+        title={t('Người được chăm sóc')}
+        description={t('Danh sách người dùng được liên kết với tài khoản của bạn.')}
         actions={
           user?.role === 'Caregiver' &&
           !user.orgId && (
@@ -66,15 +67,15 @@ export function ApiLinkedUsers() {
           }}
         >
           <label className="field">
-            Tìm người được chăm sóc
+            {t('Tìm người được chăm sóc')}
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Tên, email hoặc số điện thoại"
+              placeholder={t('Tên, email hoặc số điện thoại')}
             />
           </label>
           <button className="btn primary" type="submit">
-            Tìm kiếm
+            {t('Tìm kiếm')}
           </button>
           <button
             className="btn"
@@ -82,27 +83,32 @@ export function ApiLinkedUsers() {
             disabled={query.isFetching}
             onClick={() => void query.refetch()}
           >
-            Tải lại
+            {t('Tải lại')}
           </button>
         </form>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           {query.data && (
             <>
               <p>
-                {query.data.totalCount} kết quả · Trang {query.data.page}/
-                {Math.max(1, query.data.totalPages)}
+                {t('{totalCount} kết quả · Trang {page}/{p4}', {
+                  totalCount: query.data.totalCount,
+                  page: query.data.page,
+                  p4: Math.max(1, query.data.totalPages),
+                })}
               </p>
               {query.data.items.length === 0 ? (
-                <p role="status">Không có người dùng phù hợp trong danh sách được phép xem.</p>
+                <p role="status">
+                  {t('Không có người dùng phù hợp trong danh sách được phép xem.')}
+                </p>
               ) : (
                 <>
                   <label className="field">
-                    Người được chăm sóc trên trang này
+                    {t('Người được chăm sóc trên trang này')}
                     <select
                       value={selectedUser?.id ?? ''}
                       onChange={(e) => setSelected(e.target.value)}
                     >
-                      <option value="">Chọn người dùng</option>
+                      <option value="">{t('Chọn người dùng')}</option>
                       {query.data.items.map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.fullName}
@@ -114,17 +120,17 @@ export function ApiLinkedUsers() {
                     className="table-scroll"
                     tabIndex={0}
                     role="region"
-                    aria-label="Danh sách người được chăm sóc"
+                    aria-label={t('Danh sách người được chăm sóc')}
                   >
                     <table className="care-people-table">
                       <thead>
                         <tr>
-                          <th>Họ và tên</th>
+                          <th>{t('Họ và tên')}</th>
                           <th>Email</th>
-                          <th>Điện thoại</th>
-                          <th>Tài khoản</th>
+                          <th>{t('Điện thoại')}</th>
+                          <th>{t('Tài khoản')}</th>
                           <th>License</th>
-                          <th>Thao tác</th>
+                          <th>{t('Thao tác')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -134,17 +140,19 @@ export function ApiLinkedUsers() {
                               <strong>{p.fullName}</strong>
                             </td>
                             <td>{p.email}</td>
-                            <td>{p.phoneNumber || 'Chưa có'}</td>
+                            <td>{p.phoneNumber || t('Chưa có')}</td>
                             <td>
                               <Badge tone={p.isActive ? 'green' : 'amber'}>
-                                {p.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}
+                                {p.isActive ? t('Đang hoạt động') : t('Đã vô hiệu hóa')}
                               </Badge>
                             </td>
                             <td>
                               {viuLicenseLabel(p.licenseStatus)}
                               {p.licenseExpiresAt && (
                                 <p>
-                                  Hết hạn: {new Date(p.licenseExpiresAt).toLocaleString('vi-VN')}
+                                  {t('Hết hạn: {p1}', {
+                                    p1: formatLocaleDateTime(p.licenseExpiresAt),
+                                  })}
                                 </p>
                               )}
                             </td>
@@ -154,9 +162,9 @@ export function ApiLinkedUsers() {
                                 <button
                                   className="btn"
                                   onClick={() => setSelected(p.id)}
-                                  aria-label={'Xem liên kết của ' + p.fullName}
+                                  aria-label={t('Xem liên kết của ') + p.fullName}
                                 >
-                                  Xem liên kết
+                                  {t('Xem liên kết')}
                                 </button>
                               </div>
                             </td>
@@ -176,7 +184,7 @@ export function ApiLinkedUsers() {
                     setSelected('');
                   }}
                 >
-                  Trang trước
+                  {t('Trang trước')}
                 </button>
                 <button
                   className="btn"
@@ -186,7 +194,7 @@ export function ApiLinkedUsers() {
                     setSelected('');
                   }}
                 >
-                  Trang sau
+                  {t('Trang sau')}
                 </button>
               </div>
             </>
@@ -195,7 +203,7 @@ export function ApiLinkedUsers() {
       </section>
 
       {selectedUser && user && (
-        <Dialog title="Chi tiết người được chăm sóc" onClose={() => setSelected('')}>
+        <Dialog title={t('Chi tiết người được chăm sóc')} onClose={() => setSelected('')}>
           <UserLinks
             key={user.id + selectedUser.id}
             person={selectedUser}
@@ -242,14 +250,14 @@ function UserLinks({
   });
   return (
     <section className="stack">
-      <h2>Liên kết với {person.fullName}</h2>
+      <h2>{t('Liên kết với {fullName}', { fullName: person.fullName })}</h2>
       {unlinkId && (
         <Confirm
-          title="Gỡ liên kết chăm sóc"
+          title={t('Gỡ liên kết chăm sóc')}
           description={
-            'Gỡ liên kết với ' +
+            t('Gỡ liên kết với ') +
             person.fullName +
-            '? Bạn sẽ mất quyền truy cập qua liên kết này. Tài khoản người dùng không bị xóa.'
+            t('? Bạn sẽ mất quyền truy cập qua liên kết này. Tài khoản người dùng không bị xóa.')
           }
           onClose={() => setUnlinkId('')}
           onConfirm={async () => {
@@ -260,21 +268,21 @@ function UserLinks({
       )}
       <State loading={links.isPending} error={links.error} retry={() => links.refetch()}>
         {links.data?.items.length === 0 && (
-          <p role="status">Không còn liên kết hoạt động với người dùng này.</p>
+          <p role="status">{t('Không còn liên kết hoạt động với người dùng này.')}</p>
         )}
         {links.data?.items.map((link) => (
           <div className="row between" key={link.id}>
             <span>
-              {link.isPrimary ? 'Chăm sóc chính' : 'Chăm sóc phụ'} ·{' '}
-              {link.linkType === 'Personal' ? 'Gia đình' : 'Tổ chức'}
+              {link.isPrimary ? t('Chăm sóc chính') : t('Chăm sóc phụ')} ·{' '}
+              {link.linkType === 'Personal' ? t('Gia đình') : t('Tổ chức')}
             </span>
             {link.linkType === 'Personal' && !link.unlinkedAt && (
               <button className="btn danger" onClick={() => setUnlinkId(link.id)}>
-                Gỡ liên kết
+                {t('Gỡ liên kết')}
               </button>
             )}
             <button className="btn" onClick={() => setDetailId(link.id)}>
-              Xem quyền liên kết
+              {t('Xem quyền liên kết')}
             </button>
           </div>
         ))}
@@ -288,11 +296,9 @@ function UserLinks({
                 setDetailId('');
               }}
             >
-              Liên kết trước
+              {t('Liên kết trước')}
             </button>
-            <span>
-              Trang {page}/{links.data.totalPages}
-            </span>
+            <span>{t('Trang {page}/{total}', { page, total: links.data.totalPages })}</span>
             <button
               className="btn"
               disabled={!links.data.hasNextPage}
@@ -301,7 +307,7 @@ function UserLinks({
                 setDetailId('');
               }}
             >
-              Liên kết sau
+              {t('Liên kết sau')}
             </button>
           </div>
         )}
@@ -310,22 +316,22 @@ function UserLinks({
         <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
           {detail.data &&
             (detail.data.unlinkedAt ? (
-              <p role="status">Liên kết đã được gỡ. Hãy tải lại danh sách.</p>
+              <p role="status">{t('Liên kết đã được gỡ. Hãy tải lại danh sách.')}</p>
             ) : (
               <>
-                <h3>Quyền liên kết</h3>
+                <h3>{t('Quyền liên kết')}</h3>
                 <dl className="record-details">
                   <div>
-                    <dt>Nhận cảnh báo</dt>
-                    <dd>{detail.data.canReceiveAlerts ? 'Có' : 'Không'}</dd>
+                    <dt>{t('Nhận cảnh báo')}</dt>
+                    <dd>{detail.data.canReceiveAlerts ? t('Có') : t('Không')}</dd>
                   </div>
                   <div>
-                    <dt>Quản lý gương mặt</dt>
-                    <dd>{detail.data.canManageRegistry ? 'Có' : 'Không'}</dd>
+                    <dt>{t('Quản lý gương mặt')}</dt>
+                    <dd>{detail.data.canManageRegistry ? t('Có') : t('Không')}</dd>
                   </div>
                   <div>
-                    <dt>Quản lý địa điểm</dt>
-                    <dd>{detail.data.canManageLocations ? 'Có' : 'Không'}</dd>
+                    <dt>{t('Quản lý địa điểm')}</dt>
+                    <dd>{detail.data.canManageLocations ? t('Có') : t('Không')}</dd>
                   </div>
                 </dl>
               </>

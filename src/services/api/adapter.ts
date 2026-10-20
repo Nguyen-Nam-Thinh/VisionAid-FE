@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { ServiceError, type VisionService } from '../contracts';
 import { runtime } from '../../configs/runtime';
 import { createApiAuth } from './auth';
@@ -19,7 +20,9 @@ export const apiAccessToken = auth.accessToken;
 export const apiDeviceId = auth.deviceId;
 const unavailable = async (): Promise<never> => {
   throw new ServiceError(
-    'Chức năng này chưa tích hợp API. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
+    t(
+      'Chức năng này chưa tích hợp API. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
+    ),
     501,
   );
 };

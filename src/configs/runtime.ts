@@ -1,7 +1,8 @@
+import { t } from '../i18n';
 export function parseMode(value?: string): 'mock' | 'api' {
   if (!value || value === 'mock') return 'mock';
   if (value === 'api') return 'api';
-  throw new Error('VITE_SERVICE_MODE phải là mock hoặc api.');
+  throw new Error(t('VITE_SERVICE_MODE phải là mock hoặc api.'));
 }
 export const runtime = {
   mode: parseMode(import.meta.env.VITE_SERVICE_MODE),

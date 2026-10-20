@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -56,7 +57,7 @@ export function Toast({ message, onDismiss }: { message: string; onDismiss: () =
       <span role="status" aria-live="polite" aria-atomic="true">
         {message}
       </span>
-      <button type="button" aria-label="Đóng thông báo" onClick={onDismiss}>
+      <button type="button" aria-label={t('Đóng thông báo')} onClick={onDismiss}>
         <X size={18} aria-hidden="true" />
       </button>
     </div>
@@ -76,7 +77,7 @@ export function State({
   if (loading)
     return (
       <div className="glass empty" role="status">
-        Đang tải dữ liệu…
+        {t('Đang tải dữ liệu…')}
       </div>
     );
   if (error)
@@ -86,16 +87,16 @@ export function State({
         {error instanceof ServiceError && error.status === 402 && (
           <div className="row">
             <Link className="btn primary" to="/packages">
-              Chọn gói dịch vụ
+              {t('Chọn gói dịch vụ')}
             </Link>
             <Link className="btn" to="/license">
-              Xem trạng thái license
+              {t('Xem trạng thái license')}
             </Link>
           </div>
         )}
         {retry && (
           <button className="btn" onClick={retry}>
-            Thử lại
+            {t('Thử lại')}
           </button>
         )}
       </div>
@@ -137,7 +138,7 @@ export function Dialog({
     >
       <header className="dialog-header row between">
         <h2 id={label}>{title}</h2>
-        <button className="btn small" aria-label="Đóng hộp thoại" onClick={close}>
+        <button className="btn small" aria-label={t('Đóng hộp thoại')} onClick={close}>
           <X size={18} />
         </button>
       </header>
@@ -174,7 +175,7 @@ export function Confirm({
         )}
         <div className="row">
           <button className="btn" disabled={pending} onClick={onClose}>
-            Hủy
+            {t('Hủy')}
           </button>
           <button
             className="btn danger"
@@ -185,13 +186,13 @@ export function Confirm({
                 await onConfirm();
                 onClose();
               } catch (e) {
-                setError(e instanceof Error ? e.message : 'Không thể thực hiện.');
+                setError(e instanceof Error ? e.message : t('Không thể thực hiện.'));
               } finally {
                 setPending(false);
               }
             }}
           >
-            {pending ? 'Đang xử lý…' : 'Xác nhận'}
+            {pending ? t('Đang xử lý…') : t('Xác nhận')}
           </button>
         </div>
       </div>
@@ -225,10 +226,10 @@ export function DataTable<T extends { id: string }>({
         <div className="row">
           <label className="table-search">
             <Search size={17} aria-hidden="true" />
-            <span className="sr-only">Tìm kiếm {title}</span>
+            <span className="sr-only">{t('Tìm kiếm {title}', { title })}</span>
             <input
               className="search"
-              placeholder="Tìm kiếm…"
+              placeholder={t('Tìm kiếm…')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -263,18 +264,22 @@ export function DataTable<T extends { id: string }>({
         </table>
         {!filtered.length && (
           <p className="empty">
-            Chưa có dữ liệu phù hợp. Thử thay đổi bộ lọc hoặc thêm dữ liệu mới.
+            {t('Chưa có dữ liệu phù hợp. Thử thay đổi bộ lọc hoặc thêm dữ liệu mới.')}
           </p>
         )}
       </div>
       <footer className="pagination">
         <span>
-          {filtered.length} kết quả · Trang {current}/{pages}
+          {t('{length} kết quả · Trang {current}/{pages}', {
+            length: filtered.length,
+            current,
+            pages,
+          })}
         </span>
         <div className="row">
           <button
             className="btn small"
-            aria-label="Trang trước"
+            aria-label={t('Trang trước')}
             disabled={current === 1}
             onClick={() => setPage(current - 1)}
           >
@@ -282,7 +287,7 @@ export function DataTable<T extends { id: string }>({
           </button>
           <button
             className="btn small"
-            aria-label="Trang sau"
+            aria-label={t('Trang sau')}
             disabled={current === pages}
             onClick={() => setPage(current + 1)}
           >

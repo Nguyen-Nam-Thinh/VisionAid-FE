@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import { useCommand } from '../../hooks/useService';
@@ -15,16 +16,16 @@ export function Notifications() {
   return (
     <>
       <PageHead
-        title="Tùy chọn thông báo"
-        description="Chọn kênh nhận tin phù hợp; các thông báo bắt buộc luôn được giữ lại."
+        title={t('Tùy chọn thông báo')}
+        description={t('Chọn kênh nhận tin phù hợp; các thông báo bắt buộc luôn được giữ lại.')}
         actions={
           <button className="btn" disabled={notifications.pending} onClick={notifications.request}>
-            Xin quyền thông báo trình duyệt
+            {t('Xin quyền thông báo trình duyệt')}
           </button>
         }
       />
       <p className="notice" style={{ marginBottom: 20 }}>
-        Email và push trong phiên bản này chỉ được mô phỏng. Chưa gửi hoặc đăng ký FCM thật.
+        {t('Email và push trong phiên bản này chỉ được mô phỏng. Chưa gửi hoặc đăng ký FCM thật.')}
       </p>
       {notifications.message && (
         <p className="notice" role="status">
@@ -45,11 +46,11 @@ export function Notifications() {
                 <div className="row between">
                   <h2>{rule.name}</h2>
                   <Badge tone={rule.fields.mandatory ? 'amber' : 'blue'}>
-                    {rule.fields.mandatory ? 'Bắt buộc' : 'Tùy chọn'}
+                    {rule.fields.mandatory ? t('Bắt buộc') : t('Tùy chọn')}
                   </Badge>
                 </div>
                 <button className="btn" onClick={() => setEditing(event)}>
-                  Chỉnh sửa
+                  {t('Chỉnh sửa')}
                 </button>
                 {editing === event && (
                   <Dialog title={rule.name} onClose={() => setEditing('')}>
@@ -58,7 +59,7 @@ export function Notifications() {
                       fields={[
                         {
                           key: 'push',
-                          label: 'Thông báo đẩy',
+                          label: t('Thông báo đẩy'),
                           type: 'checkbox',
                           disabled: !!rule.fields.mandatory && !!rule.fields.push,
                         },

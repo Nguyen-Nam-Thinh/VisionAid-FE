@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { ResourcePage } from '../../components/ResourcePage';
 import { Dialog, Confirm, Badge } from '../../components/UI';
@@ -17,39 +18,42 @@ export function Registry() {
     <>
       <ResourcePage
         kind="faces"
-        title="Gương mặt thân quen"
-        description="Danh bạ nhận diện người thân. Cần ít nhất 3 ảnh để kích hoạt mỗi người."
-        fields={[{ key: 'relationship', label: 'Mối quan hệ', required: true }]}
+        title={t('Gương mặt thân quen')}
+        description={t('Danh bạ nhận diện người thân. Cần ít nhất 3 ảnh để kích hoạt mỗi người.')}
+        fields={[{ key: 'relationship', label: t('Mối quan hệ'), required: true }]}
         details={(e) => (
           <>
-            {String(e.fields.relationship)} ·{' '}
-            {db?.photos.filter((p) => p.faceId === e.id).length ?? 0} ảnh
+            {t('{p0} · {p4} ảnh', {
+              p0: String(e.fields.relationship),
+              p4: db?.photos.filter((p) => p.faceId === e.id).length ?? 0,
+            })}
           </>
         )}
         extraAction={(e) => (
           <button className="btn small" onClick={() => setFaceId(e.id)}>
-            Quản lý ảnh
+            {t('Quản lý ảnh')}
           </button>
         )}
       />
       {face && (
         <Dialog
-          title={'Ảnh của ' + face.name}
+          title={t('Ảnh của ') + face.name}
           onClose={() => {
             if (!uploading) setFaceId('');
           }}
         >
           <div className="stack">
             <Badge tone={face.active ? 'green' : 'amber'}>
-              {face.active ? 'Đủ ảnh để nhận diện' : 'Cần ít nhất 3 ảnh'}
+              {face.active ? t('Đủ ảnh để nhận diện') : t('Cần ít nhất 3 ảnh')}
             </Badge>
             <p className="notice">
-              Chỉ dùng ảnh thử nghiệm. Demo lưu ảnh cục bộ; mã hóa AES-256 và xóa MinIO thuộc
-              backend, chưa được thực hiện ở đây. Giới hạn demo 2 MB/ảnh.
+              {t(
+                'Chỉ dùng ảnh thử nghiệm. Demo lưu ảnh cục bộ; mã hóa AES-256 và xóa MinIO thuộc backend, chưa được thực hiện ở đây. Giới hạn demo 2 MB/ảnh.',
+              )}
             </p>
             {canWrite('faces', face) && (
               <label className="field">
-                Thêm nhiều ảnh JPG/PNG
+                {t('Thêm nhiều ảnh JPG/PNG')}
                 <input
                   type="file"
                   multiple
@@ -65,11 +69,11 @@ export function Registry() {
                           !['image/jpeg', 'image/png'].includes(file.type) ||
                           file.size > 2 * 1024 * 1024
                         )
-                          throw Error('Chỉ nhận JPG/PNG dưới 2 MB.');
+                          throw Error(t('Chỉ nhận JPG/PNG dưới 2 MB.'));
                         const url = await new Promise<string>((resolve, reject) => {
                           const reader = new FileReader();
                           reader.onload = () => resolve(String(reader.result));
-                          reader.onerror = () => reject(Error('Không đọc được ảnh.'));
+                          reader.onerror = () => reject(Error(t('Không đọc được ảnh.')));
                           reader.readAsDataURL(file);
                         });
                         await cmd.mutateAsync({
@@ -88,7 +92,7 @@ export function Registry() {
                 />
               </label>
             )}
-            {uploading && <p role="status">Đang lưu ảnh…</p>}
+            {uploading && <p role="status">{t('Đang lưu ảnh…')}</p>}
             {(error || cmd.error) && (
               <p role="alert" className="notice error">
                 {error || cmd.error?.message}
@@ -97,8 +101,8 @@ export function Registry() {
             <div className="photo-grid">
               {photos.map((p) => (
                 <div key={p.id} className="stack">
-                  <img src={p.url} alt={'Ảnh đã đăng ký của ' + face.name} />
-                  <Badge>{p.primary ? 'Ảnh chính' : 'Ảnh bổ sung'}</Badge>
+                  <img src={p.url} alt={t('Ảnh đã đăng ký của ') + face.name} />
+                  <Badge>{p.primary ? t('Ảnh chính') : t('Ảnh bổ sung')}</Badge>
                   {canWrite('faces', face) && (
                     <>
                       <button
@@ -112,10 +116,10 @@ export function Registry() {
                           })
                         }
                       >
-                        Đặt ảnh chính
+                        {t('Đặt ảnh chính')}
                       </button>
                       <button className="btn small danger" onClick={() => setRemove(p)}>
-                        Xóa ảnh
+                        {t('Xóa ảnh')}
                       </button>
                     </>
                   )}
@@ -123,15 +127,17 @@ export function Registry() {
               ))}
             </div>
             {!photos.length && (
-              <p className="empty">Chưa có ảnh. Thêm ảnh từ thiết bị để thử luồng đăng ký.</p>
+              <p className="empty">
+                {t('Chưa có ảnh. Thêm ảnh từ thiết bị để thử luồng đăng ký.')}
+              </p>
             )}
           </div>
         </Dialog>
       )}
       {remove && (
         <Confirm
-          title="Xóa ảnh đã chọn?"
-          description="Xóa ảnh có thể khiến người này không còn đủ 3 ảnh để nhận diện."
+          title={t('Xóa ảnh đã chọn?')}
+          description={t('Xóa ảnh có thể khiến người này không còn đủ 3 ảnh để nhận diện.')}
           onClose={() => setRemove(null)}
           onConfirm={() =>
             cmd.mutateAsync({ type: 'photo', faceId: remove.faceId, photo: remove, remove: true })

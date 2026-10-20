@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -60,7 +61,7 @@ export type OrganizationInput = {
 };
 function parse<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
-  if (!result.success) throw new ServiceError('Dữ liệu tổ chức không đúng định dạng.', 502);
+  if (!result.success) throw new ServiceError(t('Dữ liệu tổ chức không đúng định dạng.'), 502);
   return result.data;
 }
 function scopeCheck(scope: Scope, id?: string, adminOnly = false) {
@@ -68,9 +69,9 @@ function scopeCheck(scope: Scope, id?: string, adminOnly = false) {
     scope.role !== 'Admin' &&
     (adminOnly || scope.role !== 'CenterAdmin' || !scope.orgId || (id && id !== scope.orgId))
   )
-    throw new ServiceError('Bạn không có quyền thao tác tổ chức này.', 403);
+    throw new ServiceError(t('Bạn không có quyền thao tác tổ chức này.'), 403);
   if (id && !z.string().uuid().safeParse(id).success)
-    throw new ServiceError('Mã tổ chức không hợp lệ.', 400);
+    throw new ServiceError(t('Mã tổ chức không hợp lệ.'), 400);
 }
 function input(values: OrganizationInput, create: boolean) {
   const result = z
@@ -92,11 +93,11 @@ function input(values: OrganizationInput, create: boolean) {
   if (!result.success) {
     // Point at the offending fields; the phone rule mirrors the BE validator (mobile numbers only).
     const messages: Record<string, string> = {
-      name: 'Tên tổ chức từ 1 đến 200 ký tự.',
-      address: 'Địa chỉ tối đa 500 ký tự.',
-      phoneNumber: 'Nhập số di động (03, 05, 07, 08, 09), số bàn 02x hoặc tổng đài 1800/1900.',
-      contactEmail: 'Email không hợp lệ.',
-      taxCode: 'Mã số thuế tối đa 50 ký tự.',
+      name: t('Tên tổ chức từ 1 đến 200 ký tự.'),
+      address: t('Địa chỉ tối đa 500 ký tự.'),
+      phoneNumber: t('Nhập số di động (03, 05, 07, 08, 09), số bàn 02x hoặc tổng đài 1800/1900.'),
+      contactEmail: t('Email không hợp lệ.'),
+      taxCode: t('Mã số thuế tối đa 50 ký tự.'),
     };
     const fields = Object.fromEntries(
       result.error.issues.map((issue) => [String(issue.path[0]), messages[String(issue.path[0])]]),
@@ -124,7 +125,7 @@ export function createOrganizationsApi(get = apiGet, write = apiWrite) {
       const dates = summaryDates.safeParse({ dateFrom: dateFrom || null, dateTo: dateTo || null });
       if (!dates.success || (dateFrom && dateTo && dateFrom > dateTo))
         throw new ServiceError(
-          'Kiểm tra ngày lọc; ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
+          t('Kiểm tra ngày lọc; ngày kết thúc phải sau hoặc bằng ngày bắt đầu.'),
           400,
         );
       const query = new URLSearchParams();
@@ -135,9 +136,9 @@ export function createOrganizationsApi(get = apiGet, write = apiWrite) {
         await get(`/api/organizations/${id}/activity-summary?${query}`, signal),
       );
       if (result.organizationId !== id)
-        throw new ServiceError('Báo cáo không thuộc tổ chức hiện tại.', 403);
+        throw new ServiceError(t('Báo cáo không thuộc tổ chức hiện tại.'), 403);
       if (result.dateFrom !== dates.data.dateFrom || result.dateTo !== dates.data.dateTo)
-        throw new ServiceError('Khoảng ngày báo cáo không khớp bộ lọc.', 502);
+        throw new ServiceError(t('Khoảng ngày báo cáo không khớp bộ lọc.'), 502);
       return result;
     },
     async list(
@@ -157,16 +158,16 @@ export function createOrganizationsApi(get = apiGet, write = apiWrite) {
     async detail(scope: Scope, id: string, signal?: AbortSignal) {
       scopeCheck(scope, id);
       const result = parse(organization, await get('/api/organizations/' + id, signal));
-      if (result.id !== id) throw new ServiceError('Tổ chức trả về không khớp lựa chọn.', 403);
+      if (result.id !== id) throw new ServiceError(t('Tổ chức trả về không khớp lựa chọn.'), 403);
       return result;
     },
     async me(scope: Scope, signal?: AbortSignal) {
       scopeCheck(scope, scope.orgId);
       if (scope.role !== 'CenterAdmin')
-        throw new ServiceError('Chỉ dành cho quản trị trung tâm.', 403);
+        throw new ServiceError(t('Chỉ dành cho quản trị trung tâm.'), 403);
       const result = parse(organization, await get('/api/organizations/me', signal));
       if (result.id !== scope.orgId)
-        throw new ServiceError('Tổ chức không thuộc phiên hiện tại.', 403);
+        throw new ServiceError(t('Tổ chức không thuộc phiên hiện tại.'), 403);
       return result;
     },
     async members(
@@ -200,7 +201,7 @@ export function createOrganizationsApi(get = apiGet, write = apiWrite) {
         organization,
         await write('/api/organizations/' + id, json('PUT', input(values, false))),
       );
-      if (result.id !== id) throw new ServiceError('Tổ chức trả về không khớp lựa chọn.', 403);
+      if (result.id !== id) throw new ServiceError(t('Tổ chức trả về không khớp lựa chọn.'), 403);
       return result;
     },
     async status(scope: Scope, id: string, isActive: boolean) {

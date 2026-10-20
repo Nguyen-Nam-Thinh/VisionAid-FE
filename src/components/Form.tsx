@@ -1,9 +1,11 @@
+import { t, tText } from '../i18n';
 import { useId, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Fields } from '../models/domain';
 
+/** `label`, `hint` and option labels may be message ids (`msg()`); they are translated at render. */
 export interface FieldSpec {
   key: string;
   label: string;
@@ -21,7 +23,7 @@ export interface FieldSpec {
 export function Form({
   fields,
   initial = {},
-  submit = 'Lưu thay đổi',
+  submit = t('Lưu thay đổi'),
   onSubmit,
 }: {
   fields: FieldSpec[];
@@ -34,20 +36,23 @@ export function Form({
   for (const field of fields) {
     if (field.type === 'checkbox') shape[field.key] = z.boolean();
     else if (field.type === 'number') {
-      let rule = z.number({ error: 'Cần nhập một số hợp lệ.' });
+      let rule = z.number({ error: t('Cần nhập một số hợp lệ.') });
       if (field.min !== undefined)
-        rule = rule.min(field.min, 'Giá trị tối thiểu ' + field.min + '.');
-      if (field.max !== undefined) rule = rule.max(field.max, 'Giá trị tối đa ' + field.max + '.');
+        rule = rule.min(field.min, t('Giá trị tối thiểu {min}.', { min: field.min }));
+      if (field.max !== undefined)
+        rule = rule.max(field.max, t('Giá trị tối đa {max}.', { max: field.max }));
       shape[field.key] = rule;
     } else {
       let rule = z.string();
       if (field.required)
         rule = rule.min(
           field.type === 'password' ? 8 : field.key === 'name' ? 2 : 1,
-          field.type === 'password' ? 'Mật khẩu cần ít nhất 8 ký tự.' : 'Vui lòng nhập thông tin.',
+          field.type === 'password'
+            ? t('Mật khẩu cần ít nhất 8 ký tự.')
+            : t('Vui lòng nhập thông tin.'),
         );
-      if (field.max) rule = rule.max(field.max);
-      shape[field.key] = field.type === 'email' ? rule.email('Email không hợp lệ.') : rule;
+      if (field.max) rule = rule.max(field.max, t('Tối đa {max} ký tự.', { max: field.max }));
+      shape[field.key] = field.type === 'email' ? rule.email(t('Email không hợp lệ.')) : rule;
     }
   }
   const {
@@ -80,7 +85,7 @@ export function Form({
           await onSubmit(values);
         } catch (error) {
           const err = error as { message?: string; fields?: Record<string, string> };
-          setFailure(err.message ?? 'Không thể lưu thay đổi.');
+          setFailure(err.message ?? t('Không thể lưu thay đổi.'));
           Object.entries(err.fields ?? {}).forEach(([key, message], index) =>
             setError(key, { message }, { shouldFocus: index === 0 }),
           );
@@ -97,17 +102,20 @@ export function Form({
             (errors[field.key] ? fieldId + '-error ' : '') + (field.hint ? fieldId + '-hint' : ''),
         };
         return (
-          <div className={field.type === 'checkbox' ? 'field field-checkbox' : 'field'} key={field.key}>
+          <div
+            className={field.type === 'checkbox' ? 'field field-checkbox' : 'field'}
+            key={field.key}
+          >
             <label htmlFor={fieldId}>
-              {field.label}
+              {tText(field.label)}
               {field.required ? ' *' : ''}
             </label>
             {field.type === 'select' ? (
               <select {...register(field.key)} {...props}>
-                <option value="">Chọn…</option>
+                <option value="">{t('Chọn…')}</option>
                 {field.options?.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {tText(option.label)}
                   </option>
                 ))}
               </select>
@@ -134,20 +142,22 @@ export function Form({
                 {errors[field.key]?.message as string}
               </span>
             )}
-            {field.hint && <small id={fieldId + '-hint'}>{field.hint}</small>}
+            {field.hint && <small id={fieldId + '-hint'}>{tText(field.hint)}</small>}
           </div>
         );
       })}
       {hasCoordinates && (
         <div className="stack">
           <p className="notice">
-            Chọn điểm trên sơ đồ demo hoặc nhập tọa độ chính xác ở trên. Không phải bản đồ địa lý.
+            {t(
+              'Chọn điểm trên sơ đồ demo hoặc nhập tọa độ chính xác ở trên. Không phải bản đồ địa lý.',
+            )}
           </p>
           <button
             type="button"
             className="map"
             style={{ minHeight: 180 }}
-            aria-label="Chọn vị trí trên sơ đồ demo; dùng ô tọa độ để nhập bằng bàn phím"
+            aria-label={t('Chọn vị trí trên sơ đồ demo; dùng ô tọa độ để nhập bằng bàn phím')}
             onClick={(event) => {
               const rect = event.currentTarget.getBoundingClientRect();
               const x = event.detail === 0 ? 0.5 : (event.clientX - rect.left) / rect.width;
@@ -178,7 +188,11 @@ export function Form({
               <circle cx="150" cy="85" r="5" fill="#1856ff" />
             </svg>
             <span className="map-caption">
-              Tâm: {String(values.lat)}, {String(values.lng)} · {String(values.radius)} m
+              {t('Tâm: {p1}, {p3} · {p5} m', {
+                p1: String(values.lat),
+                p3: String(values.lng),
+                p5: String(values.radius),
+              })}
             </span>
           </button>
         </div>
@@ -189,7 +203,7 @@ export function Form({
         </p>
       )}
       <button type="submit" className="btn primary" disabled={isSubmitting}>
-        {isSubmitting ? 'Đang xử lý…' : submit}
+        {isSubmitting ? t('Đang xử lý…') : submit}
       </button>
     </form>
   );

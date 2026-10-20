@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import { PageHead, State, DataTable, Badge } from '../../components/UI';
@@ -14,7 +15,7 @@ export function Activity() {
       id: a.id,
       viuId: a.viuId,
       type: 'EMERGENCY',
-      label: 'Khẩn cấp',
+      label: t('Khẩn cấp'),
       at: a.at,
       text: `${a.type} · ${statuses[a.status]}`,
       online: true,
@@ -46,18 +47,20 @@ export function Activity() {
   return (
     <>
       <PageHead
-        title="Nhật ký hoạt động"
-        description="Lịch sử di chuyển, đọc văn bản, QR, nhận diện, lệnh thoại và khẩn cấp. Thời gian UTC+7."
+        title={t('Nhật ký hoạt động')}
+        description={t(
+          'Lịch sử di chuyển, đọc văn bản, QR, nhận diện, lệnh thoại và khẩn cấp. Thời gian UTC+7.',
+        )}
         actions={<ViuSelect />}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <div className="stack">
           <div className="glass card row">
             <label className="field">
-              Loại hoạt động
+              {t('Loại hoạt động')}
               <select value={type} onChange={(e) => setType(e.target.value)}>
-                <option value="all">Tất cả</option>
-                {Object.entries({ ...activityLabels, EMERGENCY: 'Khẩn cấp' }).map(([v, l]) => (
+                <option value="all">{t('Tất cả')}</option>
+                {Object.entries({ ...activityLabels, EMERGENCY: t('Khẩn cấp') }).map(([v, l]) => (
                   <option key={v} value={v}>
                     {l}
                   </option>
@@ -65,20 +68,22 @@ export function Activity() {
               </select>
             </label>
             <label className="field">
-              Từ ngày
+              {t('Từ ngày')}
               <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
             </label>
             <label className="field">
-              Đến ngày
+              {t('Đến ngày')}
               <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} />
             </label>
           </div>
           {movement.length > 1 && (
             <section className="glass card">
-              <h2>Tuyến di chuyển đã ghi nhận</h2>
+              <h2>{t('Tuyến di chuyển đã ghi nhận')}</h2>
               <svg
                 role="img"
-                aria-label="Đường nối các vị trí lịch sử, sơ đồ mô phỏng không phải bản đồ đường đi"
+                aria-label={t(
+                  'Đường nối các vị trí lịch sử, sơ đồ mô phỏng không phải bản đồ đường đi',
+                )}
                 viewBox="0 0 600 210"
                 style={{ width: '100%', maxHeight: 240, background: '#edf3f9', borderRadius: 14 }}
               >
@@ -94,18 +99,20 @@ export function Activity() {
                   return <circle key={a.id} cx={cx} cy={cy} r="5" fill="#fff" stroke="#1856ff" />;
                 })}
               </svg>
-              <small>Sơ đồ lịch sử demo; xem tọa độ và giờ ghi nhận trong bảng bên dưới.</small>
+              <small>
+                {t('Sơ đồ lịch sử demo; xem tọa độ và giờ ghi nhận trong bảng bên dưới.')}
+              </small>
             </section>
           )}
           <DataTable
-            title="Hoạt động đã ghi nhận"
+            title={t('Hoạt động đã ghi nhận')}
             rows={entries}
             searchText={(a) => a.text + ' ' + a.label}
             columns={[
-              { label: 'Thời gian', render: (a) => formatTime(a.at) },
-              { label: 'Hoạt động', render: (a) => <Badge>{a.label}</Badge> },
+              { label: t('Thời gian'), render: (a) => formatTime(a.at) },
+              { label: t('Hoạt động'), render: (a) => <Badge>{a.label}</Badge> },
               {
-                label: 'Nội dung',
+                label: t('Nội dung'),
                 render: (a) => (
                   <>
                     {a.text}
@@ -118,7 +125,7 @@ export function Activity() {
                 ),
               },
               {
-                label: 'Kết nối',
+                label: t('Kết nối'),
                 render: (a) => (
                   <Badge tone={a.online ? 'green' : 'amber'}>
                     {a.online ? 'Online' : 'Offline'}

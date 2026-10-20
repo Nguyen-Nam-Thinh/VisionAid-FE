@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useState } from 'react';
 import type { Person, Role } from '../models/domain';
 import { useWorkspace } from '../hooks/useWorkspace';
@@ -24,21 +25,21 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
         (roleFilter === 'all' || p.role === roleFilter),
     ) ?? [];
   const fields: FieldSpec[] = [
-    { key: 'name', label: 'Họ và tên', required: true, max: 200 },
+    { key: 'name', label: t('Họ và tên'), required: true, max: 200 },
     { key: 'email', label: 'Email', type: 'email', required: true },
-    { key: 'phone', label: 'Số điện thoại' },
+    { key: 'phone', label: t('Số điện thoại') },
     ...(!role
       ? [
           {
             key: 'role',
-            label: 'Vai trò',
+            label: t('Vai trò'),
             type: 'select' as const,
             required: true,
             options: Object.entries(roles).map(([value, label]) => ({ value, label })),
           },
           {
             key: 'orgId',
-            label: 'Tổ chức (bắt buộc khi tạo Staff/VIU/Center Admin)',
+            label: t('Tổ chức (bắt buộc khi tạo Staff/VIU/Center Admin)'),
             type: 'select' as const,
             options: db?.entities.organizations
               .filter((o) => o.active)
@@ -51,7 +52,9 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
     <>
       <PageHead
         title={title}
-        description="Tạo và cập nhật tài khoản trong phạm vi được cấp quyền. Vô hiệu hóa sẽ thu hồi quyền đăng nhập."
+        description={t(
+          'Tạo và cập nhật tài khoản trong phạm vi được cấp quyền. Vô hiệu hóa sẽ thu hồi quyền đăng nhập.',
+        )}
         actions={
           <button
             className="btn primary"
@@ -67,7 +70,7 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
               })
             }
           >
-            Thêm tài khoản
+            {t('Thêm tài khoản')}
           </button>
         }
       />
@@ -79,18 +82,18 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
           filter={
             <>
               <label className="field">
-                <span className="sr-only">Trạng thái tài khoản</span>
+                <span className="sr-only">{t('Trạng thái tài khoản')}</span>
                 <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                  <option value="all">Tất cả trạng thái</option>
-                  <option value="active">Đang hoạt động</option>
-                  <option value="inactive">Ngừng hoạt động</option>
+                  <option value="all">{t('Tất cả trạng thái')}</option>
+                  <option value="active">{t('Đang hoạt động')}</option>
+                  <option value="inactive">{t('Ngừng hoạt động')}</option>
                 </select>
               </label>
               {!role && (
                 <label className="field">
-                  <span className="sr-only">Vai trò tài khoản</span>
+                  <span className="sr-only">{t('Vai trò tài khoản')}</span>
                   <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-                    <option value="all">Tất cả vai trò</option>
+                    <option value="all">{t('Tất cả vai trò')}</option>
                     {Object.entries(roles).map(([v, l]) => (
                       <option key={v} value={v}>
                         {l}
@@ -103,7 +106,7 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
           }
           columns={[
             {
-              label: 'Tài khoản',
+              label: t('Tài khoản'),
               render: (p) => (
                 <>
                   <strong>{p.name}</strong>
@@ -114,47 +117,48 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
               ),
             },
             {
-              label: 'Vai trò / tổ chức',
+              label: t('Vai trò / tổ chức'),
               render: (p) => (
                 <>
                   {roles[p.role]}
                   <p>
                     <small>
-                      {db?.entities.organizations.find((o) => o.id === p.orgId)?.name ?? 'Cá nhân'}
+                      {db?.entities.organizations.find((o) => o.id === p.orgId)?.name ??
+                        t('Cá nhân')}
                     </small>
                   </p>
                 </>
               ),
             },
             {
-              label: 'Phân công',
+              label: t('Phân công'),
               render: (p) =>
                 db?.links.filter((l) => l.caregiverId === p.id || l.viuId === p.id).length ?? 0,
             },
             {
-              label: 'Trạng thái',
+              label: t('Trạng thái'),
               render: (p) => (
                 <Badge tone={p.active ? 'green' : 'amber'}>
-                  {p.active ? 'Hoạt động' : 'Đã vô hiệu hóa'}
+                  {p.active ? t('Hoạt động') : t('Đã vô hiệu hóa')}
                 </Badge>
               ),
             },
             {
-              label: 'Thao tác',
+              label: t('Thao tác'),
               render: (p) =>
                 canManagePerson(user, p) && (
                   <div className="row">
                     <button className="btn small" onClick={() => setEdit(p)}>
-                      Chỉnh sửa
+                      {t('Chỉnh sửa')}
                     </button>
                     <button className="btn small" onClick={() => setReset(p)}>
-                      Đặt lại mật khẩu
+                      {t('Đặt lại mật khẩu')}
                     </button>
                     <button
                       className={'btn small ' + (p.active ? 'danger' : '')}
                       onClick={() => setToggle(p)}
                     >
-                      {p.active ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                      {p.active ? t('Vô hiệu hóa') : t('Kích hoạt')}
                     </button>
                   </div>
                 ),
@@ -165,14 +169,17 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
       {edit && (
         <Dialog
           title={
-            db?.people.some((p) => p.id === edit.id) ? 'Chỉnh sửa tài khoản' : 'Tạo tài khoản demo'
+            db?.people.some((p) => p.id === edit.id)
+              ? t('Chỉnh sửa tài khoản')
+              : t('Tạo tài khoản demo')
           }
           onClose={() => setEdit(null)}
         >
           <div className="stack">
             <p className="notice">
-              Tài khoản demo mới dùng mật khẩu Demo@123. Không có email thật được gửi. VIU chỉ đăng
-              nhập ứng dụng Mobile.
+              {t(
+                'Tài khoản demo mới dùng mật khẩu Demo@123. Không có email thật được gửi. VIU chỉ đăng nhập ứng dụng Mobile.',
+              )}
             </p>
             <Form
               fields={fields}
@@ -203,11 +210,13 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
       )}
       {toggle && (
         <Confirm
-          title={`${toggle.active ? 'Vô hiệu hóa' : 'Kích hoạt'} ${toggle.name}?`}
+          title={`${toggle.active ? t('Vô hiệu hóa') : t('Kích hoạt')} ${toggle.name}?`}
           description={
             toggle.active
-              ? 'Tài khoản sẽ không đăng nhập được. Liên kết vẫn được giữ để quản trị viên phân công lại; không tự chuyển người chăm sóc chính.'
-              : 'Khôi phục quyền đăng nhập theo vai trò và liên kết hiện tại.'
+              ? t(
+                  'Tài khoản sẽ không đăng nhập được. Liên kết vẫn được giữ để quản trị viên phân công lại; không tự chuyển người chăm sóc chính.',
+                )
+              : t('Khôi phục quyền đăng nhập theo vai trò và liên kết hiện tại.')
           }
           onClose={() => setToggle(null)}
           onConfirm={() =>
@@ -217,16 +226,16 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
       )}{' '}
       {reset && (
         <Confirm
-          title={`Đặt lại mật khẩu cho ${reset.name}?`}
-          description="Tạo mã đặt lại mật khẩu demo. Không gửi email thật."
+          title={t('Đặt lại mật khẩu cho {name}?', { name: reset.name })}
+          description={t('Tạo mã đặt lại mật khẩu demo. Không gửi email thật.')}
           onClose={() => setReset(null)}
           onConfirm={async () => setCode(await actions.resetPassword(reset.id))}
         />
       )}{' '}
       {code && (
-        <Dialog title="Mã khôi phục demo" onClose={() => setCode('')}>
+        <Dialog title={t('Mã khôi phục demo')} onClose={() => setCode('')}>
           <p className="mono">{code}</p>
-          <p>Dùng mã ở trang khôi phục mật khẩu. Chưa gửi email thật.</p>
+          <p>{t('Dùng mã ở trang khôi phục mật khẩu. Chưa gửi email thật.')}</p>
         </Dialog>
       )}
     </>

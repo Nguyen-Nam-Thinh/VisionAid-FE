@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import {
   createContext,
   useContext,
@@ -21,8 +22,8 @@ function ConnectionNotice({ client }: { client: CallClient }) {
   return (
     <p className="notice" role="status">
       {call.network === 'connected'
-        ? 'Sẵn sàng gọi hỗ trợ. Micro chỉ bật khi bạn bắt đầu hoặc nhận cuộc gọi.'
-        : 'Chưa kết nối dịch vụ cuộc gọi. Nếu chờ lâu, kiểm tra mạng rồi tải lại trang.'}
+        ? t('Sẵn sàng gọi hỗ trợ. Micro chỉ bật khi bạn bắt đầu hoặc nhận cuộc gọi.')
+        : t('Chưa kết nối dịch vụ cuộc gọi. Nếu chờ lâu, kiểm tra mạng rồi tải lại trang.')}
     </p>
   );
 }
@@ -60,17 +61,18 @@ function ConnectedButton({
         disabled={
           disabled || call.network !== 'connected' || !['idle', 'ended'].includes(call.phase)
         }
-        aria-label={'Gọi ' + name}
+        aria-label={t('Gọi ') + name}
         onClick={() => setConfirm(true)}
       >
-        Gọi hỗ trợ
+        {t('Gọi hỗ trợ')}
       </button>
       {confirm && (
-        <Dialog title={'Gọi ' + name} onClose={() => setConfirm(false)}>
+        <Dialog title={t('Gọi ') + name} onClose={() => setConfirm(false)}>
           <div className="stack">
             <p>
-              Web sẽ bật micro để bạn trò chuyện và nhận hình ảnh từ người được chăm sóc. Camera của
-              bạn không được bật.
+              {t(
+                'Web sẽ bật micro để bạn trò chuyện và nhận hình ảnh từ người được chăm sóc. Camera của bạn không được bật.',
+              )}
             </p>
             <button
               className="btn primary"
@@ -79,7 +81,7 @@ function ConnectedButton({
                 void client.start(viuId, name);
               }}
             >
-              Bắt đầu gọi
+              {t('Bắt đầu gọi')}
             </button>
           </div>
         </Dialog>
@@ -108,23 +110,23 @@ function IncomingCall({ client, call }: { client: CallClient; call: CallView }) 
     <dialog
       ref={dialog}
       className="dialog incoming-call"
-      aria-label={'Cuộc gọi đến từ ' + call.name}
+      aria-label={t('Cuộc gọi đến từ ') + call.name}
       onCancel={(event) => event.preventDefault()}
     >
       <div className="incoming-call-avatar">
         <PhoneIncoming size={32} aria-hidden="true" />
       </div>
-      <p className="muted">Cuộc gọi hỗ trợ đến</p>
+      <p className="muted">{t('Cuộc gọi hỗ trợ đến')}</p>
       <h2>{call.name}</h2>
       <p role="status">{call.message}</p>
-      <p className="muted">Micro chỉ bật khi bạn nhận cuộc gọi. Camera của bạn không bật.</p>
+      <p className="muted">{t('Micro chỉ bật khi bạn nhận cuộc gọi. Camera của bạn không bật.')}</p>
       <div className="row">
         <button className="btn" onClick={() => void client.reject()}>
-          Từ chối
+          {t('Từ chối')}
         </button>
         <button className="btn primary" onClick={() => void client.accept()}>
           <Phone size={18} aria-hidden="true" />
-          Nhận cuộc gọi
+          {t('Nhận cuộc gọi')}
         </button>
       </div>
     </dialog>
@@ -149,7 +151,9 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
     // Keep keyboard focus out of page controls obscured by the expanded call.
     const previous = main.inert;
     main.inert = true;
-    return () => { main.inert = previous; };
+    return () => {
+      main.inert = previous;
+    };
   }, [minimized, incoming]);
   useEffect(() => {
     const element = video.current;
@@ -162,7 +166,7 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
         if (active) setPlayError('');
       })
       .catch(() => {
-        if (active) setPlayError('Trình duyệt chặn tự phát. Nhấn Phát âm thanh và hình ảnh.');
+        if (active) setPlayError(t('Trình duyệt chặn tự phát. Nhấn Phát âm thanh và hình ảnh.'));
       });
     return () => {
       active = false;
@@ -194,7 +198,7 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
     <section
       ref={panel}
       tabIndex={-1}
-      aria-label={'Cuộc gọi với ' + call.name}
+      aria-label={t('Cuộc gọi với ') + call.name}
       className={'call-workspace' + (minimized ? ' is-minimized' : '') + (ended ? ' is-ended' : '')}
     >
       <div className="call-workspace-header">
@@ -213,7 +217,7 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
           <button
             ref={toggle}
             className="btn"
-            aria-label={minimized ? 'Mở rộng cuộc gọi' : 'Thu nhỏ cuộc gọi'}
+            aria-label={minimized ? t('Mở rộng cuộc gọi') : t('Thu nhỏ cuộc gọi')}
             onClick={() => setView({ path: location.key, minimized: !minimized })}
           >
             {minimized ? (
@@ -221,14 +225,15 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
             ) : (
               <Minus size={18} aria-hidden="true" />
             )}
-            <span>{minimized ? 'Mở rộng' : 'Thu nhỏ'}</span>
+            <span>{minimized ? t('Mở rộng') : t('Thu nhỏ')}</span>
           </button>
         )}
       </div>
       {call.pending && (
         <p className="notice call-pending" role="status">
-          Có cuộc gọi khác cần kiểm tra. Kết thúc cuộc gọi hiện tại rồi đóng bảng để kiểm tra lại
-          trên máy chủ.
+          {t(
+            'Có cuộc gọi khác cần kiểm tra. Kết thúc cuộc gọi hiện tại rồi đóng bảng để kiểm tra lại trên máy chủ.',
+          )}
         </p>
       )}
       {!ended && (
@@ -238,31 +243,35 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
               ref={video}
               playsInline
               autoPlay
-              aria-label="Hình ảnh và âm thanh từ người được chăm sóc"
+              aria-label={t('Hình ảnh và âm thanh từ người được chăm sóc')}
             />
             {!call.remote && (
               <div className="call-video-empty">
                 <Video size={40} aria-hidden="true" />
-                <p>Đang chờ âm thanh và hình ảnh</p>
-                <small>Hình ảnh sẽ xuất hiện khi thiết bị kết nối.</small>
+                <p>{t('Đang chờ âm thanh và hình ảnh')}</p>
+                <small>{t('Hình ảnh sẽ xuất hiện khi thiết bị kết nối.')}</small>
               </div>
             )}
-            <span className="call-video-caption">Hình ảnh từ người được chăm sóc</span>
+            <span className="call-video-caption">{t('Hình ảnh từ người được chăm sóc')}</span>
           </div>
           <div className="call-information">
-            <h3>Trong cuộc gọi</h3>
+            <h3>{t('Trong cuộc gọi')}</h3>
             <dl>
-              <dt>Người được chăm sóc</dt>
+              <dt>{t('Người được chăm sóc')}</dt>
               <dd>{call.name}</dd>
-              <dt>Micro của bạn</dt>
+              <dt>{t('Micro của bạn')}</dt>
               <dd>
-                {call.phase === 'preparing' ? 'Đang chuẩn bị' : call.muted ? 'Đã tắt' : 'Đang bật'}
+                {call.phase === 'preparing'
+                  ? t('Đang chuẩn bị')
+                  : call.muted
+                    ? t('Đã tắt')
+                    : t('Đang bật')}
               </dd>
-              <dt>Camera của bạn</dt>
-              <dd>Không bật</dd>
+              <dt>{t('Camera của bạn')}</dt>
+              <dd>{t('Không bật')}</dd>
             </dl>
-            <p>Thu nhỏ để xem bản đồ hoặc thông tin người thân trong khi trò chuyện.</p>
-            <p>Web không ghi âm hoặc lưu video.</p>
+            <p>{t('Thu nhỏ để xem bản đồ hoặc thông tin người thân trong khi trò chuyện.')}</p>
+            <p>{t('Web không ghi âm hoặc lưu video.')}</p>
           </div>
         </div>
       )}
@@ -275,23 +284,25 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
               void video.current
                 ?.play()
                 .then(() => setPlayError(''))
-                .catch(() => setPlayError('Không thể phát. Kiểm tra thiết bị âm thanh của bạn.'));
+                .catch(() =>
+                  setPlayError(t('Không thể phát. Kiểm tra thiết bị âm thanh của bạn.')),
+                );
             }}
           >
-            Phát âm thanh và hình ảnh
+            {t('Phát âm thanh và hình ảnh')}
           </button>
         </div>
       )}
       <div className="call-controls">
         <p className="muted">
           {ended
-            ? 'Bạn có thể đóng bảng và xem lại lịch sử cuộc gọi.'
-            : 'Thu nhỏ không kết thúc cuộc gọi.'}
+            ? t('Bạn có thể đóng bảng và xem lại lịch sử cuộc gọi.')
+            : t('Thu nhỏ không kết thúc cuộc gọi.')}
         </p>
         <div className="row">
           {ended ? (
             <button className="btn" onClick={client.dismiss}>
-              Đóng
+              {t('Đóng')}
             </button>
           ) : (
             <>
@@ -306,11 +317,11 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
                 ) : (
                   <Mic size={18} aria-hidden="true" />
                 )}
-                {call.muted ? 'Bật micro' : 'Tắt micro'}
+                {call.muted ? t('Bật micro') : t('Tắt micro')}
               </button>
               <button className="btn call-end" onClick={() => void client.end()}>
                 <PhoneOff size={18} aria-hidden="true" />
-                Kết thúc cuộc gọi
+                {t('Kết thúc cuộc gọi')}
               </button>
             </>
           )}

@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -36,11 +37,11 @@ export type IcePage = { page: number; active: string };
 const path = '/api/webrtc/ice-servers';
 function authorize(actor: Pick<Person, 'role'>) {
   if (actor.role !== 'Admin')
-    throw new ServiceError('Chỉ quản trị viên hệ thống được quản lý máy chủ kết nối.', 403);
+    throw new ServiceError(t('Chỉ quản trị viên hệ thống được quản lý máy chủ kết nối.'), 403);
 }
 function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
   const data = schema.safeParse(raw);
-  if (!data.success) throw new ServiceError('Phản hồi máy chủ kết nối không hợp lệ.', 502);
+  if (!data.success) throw new ServiceError(t('Phản hồi máy chủ kết nối không hợp lệ.'), 502);
   return data.data;
 }
 export function validateIceInput(input: IceInput) {
@@ -70,12 +71,14 @@ export function validateIceInput(input: IceInput) {
       : match[1].toLowerCase() === 'stun')
   )
     throw new ServiceError(
-      'Địa chỉ phải đúng loại STUN hoặc TURN, có host và cổng hợp lệ. TURN có thể thêm ?transport=udp hoặc ?transport=tcp.',
+      t(
+        'Địa chỉ phải đúng loại STUN hoặc TURN, có host và cổng hợp lệ. TURN có thể thêm ?transport=udp hoặc ?transport=tcp.',
+      ),
       400,
     );
   if (!Number.isInteger(priority) || priority < 1 || priority > 1000)
-    throw new ServiceError('Độ ưu tiên phải là số nguyên từ 1 đến 1000.', 400);
-  if (typeof isActive !== 'boolean') throw new ServiceError('Trạng thái không hợp lệ.', 400);
+    throw new ServiceError(t('Độ ưu tiên phải là số nguyên từ 1 đến 1000.'), 400);
+  if (typeof isActive !== 'boolean') throw new ServiceError(t('Trạng thái không hợp lệ.'), 400);
   if (
     serverType === 'Turn' &&
     (!username ||
@@ -84,7 +87,7 @@ export function validateIceInput(input: IceInput) {
       input.credential.length > 200)
   )
     throw new ServiceError(
-      'TURN cần tên đăng nhập và credential, mỗi giá trị tối đa 200 ký tự.',
+      t('TURN cần tên đăng nhập và credential, mỗi giá trị tối đa 200 ký tự.'),
       400,
     );
   return {
@@ -104,19 +107,19 @@ export function createIceServersApi(get = apiGet, write = apiWrite) {
       filter.page < 1 ||
       !['', 'true', 'false'].includes(filter.active)
     )
-      throw new ServiceError('Bộ lọc máy chủ không hợp lệ.', 400);
+      throw new ServiceError(t('Bộ lọc máy chủ không hợp lệ.'), 400);
     const query = new URLSearchParams({ page: String(filter.page), pageSize: '20' });
     if (filter.active) query.set('isActive', filter.active);
     return parse(pageSchema, await get(path + '?' + query, signal));
   }
   async function current(actor: Pick<Person, 'role'>, server: IceServer, filter: IcePage) {
     if (!z.string().uuid().safeParse(server.id).success)
-      throw new ServiceError('Mã máy chủ không hợp lệ.', 400);
+      throw new ServiceError(t('Mã máy chủ không hợp lệ.'), 400);
     // shortcut: pre-read is not atomic; use server version preconditions when BE supports them.
     const found = (await list(actor, filter)).items.find((row) => row.id === server.id);
     if (!found || JSON.stringify(found) !== JSON.stringify(server))
       throw new ServiceError(
-        'Danh sách hoặc cấu hình đã thay đổi. Đóng popup và tải lại trước khi tiếp tục.',
+        t('Danh sách hoặc cấu hình đã thay đổi. Đóng popup và tải lại trước khi tiếp tục.'),
         409,
       );
   }
@@ -132,7 +135,9 @@ export function createIceServersApi(get = apiGet, write = apiWrite) {
       const code = (error as { status?: number }).status;
       // Do not echo backend validation text that might include submitted credentials.
       throw new ServiceError(
-        'Không thể xác nhận thao tác máy chủ kết nối. Kiểm tra quyền, dữ liệu và tải lại danh sách.',
+        t(
+          'Không thể xác nhận thao tác máy chủ kết nối. Kiểm tra quyền, dữ liệu và tải lại danh sách.',
+        ),
         code ?? 0,
       );
     }
@@ -165,7 +170,7 @@ export function createIceServersApi(get = apiGet, write = apiWrite) {
         saved.isActive !== (server ? isActive : true)
       )
         throw new ServiceError(
-          'Phản hồi không khớp thay đổi. Tải lại danh sách để kiểm tra kết quả.',
+          t('Phản hồi không khớp thay đổi. Tải lại danh sách để kiểm tra kết quả.'),
           502,
         );
       return saved;

@@ -929,3 +929,15 @@ tbody tr:hover {
   color: var(--muted);
   flex-shrink: 0;
 }
+/* VI/EN language switch: a quiet utility control, styled like the active sidebar item. */
+.lang-switch { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--muted); }
+.lang-switch > svg { margin: 0 2px 0 7px; flex-shrink: 0; }
+.lang-switch button { min-width: 38px; min-height: 34px; padding: 4px 8px; border: 0; border-radius: 7px; background: transparent; color: #46546a; font: inherit; font-size: .8125rem; font-weight: 600; letter-spacing: .02em; cursor: pointer; }
+.lang-switch button:hover { background: var(--stone); color: var(--text); }
+.lang-switch button[aria-pressed='true'] { background: #dcece8; color: var(--primary-hover); font-weight: 700; }
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+.status-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+@media (max-width: 640px) {
+  .lang-switch > svg { display: none; }
+  .topbar-actions { width: 100%; justify-content: space-between; }
+}

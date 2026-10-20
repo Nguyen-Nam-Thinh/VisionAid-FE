@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import { PageHead, State, DataTable, Badge } from '../../components/UI';
@@ -23,39 +24,42 @@ export function Reports() {
   return (
     <>
       <PageHead
-        title="Báo cáo hoạt động"
-        description="Cảnh báo và thời gian phản hồi của nhân viên trong trung tâm. Không bao gồm audit toàn hệ thống."
+        title={t('Báo cáo hoạt động')}
+        description={t(
+          'Cảnh báo và thời gian phản hồi của nhân viên trong trung tâm. Không bao gồm audit toàn hệ thống.',
+        )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <div className="stack">
           <div className="glass card row">
             <label className="field">
-              Từ ngày
+              {t('Từ ngày')}
               <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
             </label>
             <label className="field">
-              Đến ngày
+              {t('Đến ngày')}
               <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} />
             </label>
             <label className="field">
-              Loại sự kiện
+              {t('Loại sự kiện')}
               <select value={type} onChange={(e) => setType(e.target.value)}>
-                <option value="all">Tất cả</option>
+                <option value="all">{t('Tất cả')}</option>
                 <option value="SOS">SOS</option>
-                <option value="FALL">Té ngã</option>
-                <option value="GEOFENCE">Vùng an toàn</option>
+                <option value="FALL">{t('Té ngã')}</option>
+                <option value="GEOFENCE">{t('Vùng an toàn')}</option>
               </select>
             </label>
           </div>
           <div className="grid">
             {[
-              ['Số sự kiện', alerts.length],
-              ['Đã giải quyết', alerts.filter((a) => a.status === 'RESOLVED').length],
+              [t('Số sự kiện'), alerts.length],
+              [t('Đã giải quyết'), alerts.filter((a) => a.status === 'RESOLVED').length],
               [
-                'Phản hồi trung bình',
+                t('Phản hồi trung bình'),
                 responses.length
-                  ? (responses.reduce((a, b) => a + b, 0) / responses.length).toFixed(1) + ' phút'
-                  : 'Chưa có dữ liệu',
+                  ? (responses.reduce((a, b) => a + b, 0) / responses.length).toFixed(1) +
+                    t(' phút')
+                  : t('Chưa có dữ liệu'),
               ],
             ].map(([label, value]) => (
               <section className="glass card" key={label}>
@@ -65,36 +69,37 @@ export function Reports() {
             ))}
           </div>
           <DataTable
-            title="Nhật ký hỗ trợ của trung tâm"
+            title={t('Nhật ký hỗ trợ của trung tâm')}
             rows={alerts}
             searchText={(a) => db?.people.find((p) => p.id === a.viuId)?.name ?? ''}
             columns={[
               {
-                label: 'Người dùng',
+                label: t('Người dùng'),
                 render: (a) => db?.people.find((p) => p.id === a.viuId)?.name,
               },
-              { label: 'Sự kiện', render: (a) => a.type },
-              { label: 'Thời gian · UTC+7', render: (a) => formatTime(a.at) },
-              { label: 'Trạng thái', render: (a) => <Badge>{statuses[a.status]}</Badge> },
+              { label: t('Sự kiện'), render: (a) => a.type },
+              { label: t('Thời gian · UTC+7'), render: (a) => formatTime(a.at) },
+              { label: t('Trạng thái'), render: (a) => <Badge>{statuses[a.status]}</Badge> },
               {
-                label: 'Nhân viên / phản hồi',
+                label: t('Nhân viên / phản hồi'),
                 render: (a) => {
                   const ack = a.history.find((h) => h.to === 'ACKNOWLEDGED');
                   return ack ? (
                     <>
-                      {db?.people.find((p) => p.id === ack.actor)?.name ?? 'Nhân viên'}
+                      {db?.people.find((p) => p.id === ack.actor)?.name ?? t('Nhân viên')}
                       <p>
                         <small>
-                          {(
-                            (new Date(ack.at).getTime() - new Date(a.at).getTime()) /
-                            60000
-                          ).toFixed(1)}{' '}
-                          phút
+                          {t('{p0} phút', {
+                            p0: (
+                              (new Date(ack.at).getTime() - new Date(a.at).getTime()) /
+                              60000
+                            ).toFixed(1),
+                          })}
                         </small>
                       </p>
                     </>
                   ) : (
-                    'Chưa phản hồi'
+                    t('Chưa phản hồi')
                   );
                 },
               },

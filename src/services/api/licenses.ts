@@ -1,3 +1,4 @@
+import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
 import { apiGet } from './adapter';
 import { ServiceError } from '../contracts';
@@ -20,18 +21,18 @@ export const subscription = z.object({
   autoRenew: z.boolean(),
   daysRemaining: z.number().int().nonnegative().nullable(),
 });
-export const subscriptionLabels = {
-  Trial: 'Dùng thử',
-  Active: 'Đang hoạt động',
-  Expired: 'Đã hết hạn',
-  Cancelled: 'Đã hủy',
-  Suspended: 'Tạm ngưng',
-};
+export const subscriptionLabels = labelMap({
+  Trial: msg('Dùng thử'),
+  Active: msg('Đang hoạt động'),
+  Expired: msg('Đã hết hạn'),
+  Cancelled: msg('Đã hủy'),
+  Suspended: msg('Tạm ngưng'),
+});
 export function viuLicenseLabel(status?: string | null) {
   return status === 'None'
-    ? 'Chưa có license'
+    ? t('Chưa có license')
     : subscriptionLabels[status as keyof typeof subscriptionLabels] ||
-        'Chưa có thông tin license từ máy chủ';
+        t('Chưa có thông tin license từ máy chủ');
 }
 export const isPersonalCaregiver = (user: Person) => user.role === 'Caregiver' && !user.orgId;
 export const isOrganizationBuyer = (user: Person) => user.role === 'CenterAdmin' && !!user.orgId;
@@ -53,21 +54,21 @@ const pool = z.object({
 });
 export async function getOrganizationPool(user: Person, signal?: AbortSignal, get = apiGet) {
   if (!isOrganizationBuyer(user))
-    throw new ServiceError('Chỉ quản trị trung tâm có tổ chức được xem kho license.', 403);
+    throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được xem kho license.'), 403);
   const parsed = pool.safeParse(await get('/api/licenses/pool', signal));
   if (!parsed.success)
-    throw new ServiceError('Dữ liệu kho license không hợp lệ. Hãy tải lại.', 502);
+    throw new ServiceError(t('Dữ liệu kho license không hợp lệ. Hãy tải lại.'), 502);
   if (parsed.data.organizationId !== user.orgId)
-    throw new ServiceError('Máy chủ trả về kho license không thuộc tổ chức của bạn.', 403);
+    throw new ServiceError(t('Máy chủ trả về kho license không thuộc tổ chức của bạn.'), 403);
   return parsed.data;
 }
 
 export async function getMySubscription(user: Person, signal?: AbortSignal, get = apiGet) {
   if (!isPersonalCaregiver(user))
-    throw new ServiceError('Tài khoản không dùng subscription cá nhân.', 403);
+    throw new ServiceError(t('Tài khoản không dùng subscription cá nhân.'), 403);
   const parsed = subscription.safeParse(await get('/api/licenses/subscription', signal));
   if (!parsed.success)
-    throw new ServiceError('Dữ liệu subscription không hợp lệ. Hãy tải lại.', 502);
+    throw new ServiceError(t('Dữ liệu subscription không hợp lệ. Hãy tải lại.'), 502);
   return parsed.data;
 }
 
@@ -104,22 +105,28 @@ export function personalLicenseBlock(user: Person, now = Date.now()): 'none' | '
 export function licenseSummary(user: Person, now = Date.now()) {
   if (!isPersonalCaregiver(user))
     return user.role === 'Caregiver'
-      ? 'Nhân viên thuộc tổ chức — không yêu cầu license cá nhân. Quyền dữ liệu vẫn theo phân công.'
-      : 'Tài khoản quản trị — không yêu cầu license cá nhân.';
+      ? t(
+          'Nhân viên thuộc tổ chức — không yêu cầu license cá nhân. Quyền dữ liệu vẫn theo phân công.',
+        )
+      : t('Tài khoản quản trị — không yêu cầu license cá nhân.');
   const expiry = user.licenseExpiresAt ? Date.parse(user.licenseExpiresAt) : NaN;
   const days = Number.isFinite(expiry) ? Math.max(0, Math.ceil((expiry - now) / 86400000)) : null;
   switch (user.licenseStatus) {
     case 'Trial':
-      return `Đang dùng thử${days === null ? '' : ` · Còn ${days} ngày theo thời hạn hồ sơ`}.`;
+      return t('Đang dùng thử{p0}.', {
+        p0: days === null ? '' : t(' · Còn {days} ngày theo thời hạn hồ sơ', { days }),
+      });
     case 'Active':
-      return 'License đang hoạt động theo trạng thái máy chủ.';
+      return t('License đang hoạt động theo trạng thái máy chủ.');
     case 'Expired':
       return Number.isFinite(expiry) && now >= expiry && now - expiry <= 3 * 86400000
-        ? 'License đã hết hạn, đang trong khoảng gia hạn 3 ngày theo thời hạn hồ sơ. Quyền sử dụng do máy chủ xác nhận.'
-        : 'License đã hết hạn. Một số chức năng có thể bị giới hạn; kiểm tra thông tin gia hạn.';
+        ? t(
+            'License đã hết hạn, đang trong khoảng gia hạn 3 ngày theo thời hạn hồ sơ. Quyền sử dụng do máy chủ xác nhận.',
+          )
+        : t('License đã hết hạn. Một số chức năng có thể bị giới hạn; kiểm tra thông tin gia hạn.');
     case 'None':
-      return 'Chưa có license cá nhân. Kiểm tra subscription hoặc thông tin kích hoạt.';
+      return t('Chưa có license cá nhân. Kiểm tra subscription hoặc thông tin kích hoạt.');
     default:
-      return 'Chưa xác định được trạng thái license từ máy chủ. Hãy tải lại thông tin.';
+      return t('Chưa xác định được trạng thái license từ máy chủ. Hãy tải lại thông tin.');
   }
 }

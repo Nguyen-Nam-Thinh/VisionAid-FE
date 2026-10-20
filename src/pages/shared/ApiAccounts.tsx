@@ -1,3 +1,4 @@
+import { t, msg, formatLocaleDateTime } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,19 +18,23 @@ import { viuLicenseLabel } from '../../services/api/licenses';
 import { useOwnOrgName } from '../../hooks/useOrgPeople';
 
 const profileFields: FieldSpec[] = [
-  { key: 'fullName', label: 'Họ và tên', required: true, max: 200 },
-  { key: 'phoneNumber', label: 'Điện thoại', hint: 'Để trống hoặc nhập số Việt Nam có 10 chữ số.' },
-  { key: 'avatarUrl', label: 'URL ảnh đại diện', max: 500 },
+  { key: 'fullName', label: msg('Họ và tên'), required: true, max: 200 },
+  {
+    key: 'phoneNumber',
+    label: msg('Điện thoại'),
+    hint: msg('Để trống hoặc nhập số Việt Nam có 10 chữ số.'),
+  },
+  { key: 'avatarUrl', label: msg('URL ảnh đại diện'), max: 500 },
 ];
 const passwordFields: FieldSpec[] = [
   {
     key: 'password',
-    label: 'Mật khẩu mới',
+    label: msg('Mật khẩu mới'),
     type: 'password',
     required: true,
-    hint: 'Ít nhất 8 ký tự, có chữ hoa/thường, số và ký tự đặc biệt.',
+    hint: msg('Ít nhất 8 ký tự, có chữ hoa/thường, số và ký tự đặc biệt.'),
   },
-  { key: 'confirmation', label: 'Nhập lại mật khẩu', type: 'password', required: true },
+  { key: 'confirmation', label: msg('Nhập lại mật khẩu'), type: 'password', required: true },
 ];
 export function ApiAccounts({ fixedRole }: { fixedRole?: 'Caregiver' | 'VisuallyImpaired' }) {
   const { data: user } = useSession();
@@ -93,15 +98,15 @@ function Accounts({
       <PageHead
         title={
           fixedRole === 'Caregiver'
-            ? 'Nhân viên chăm sóc'
+            ? t('Nhân viên chăm sóc')
             : fixedRole
-              ? 'Người dùng VIU'
-              : 'Quản lý tài khoản'
+              ? t('Người dùng VIU')
+              : t('Quản lý tài khoản')
         }
-        description="Quản lý hồ sơ và trạng thái tài khoản trong phạm vi được cấp quyền."
+        description={t('Quản lý hồ sơ và trạng thái tài khoản trong phạm vi được cấp quyền.')}
         actions={
           <button className="btn primary" onClick={() => setCreating(true)}>
-            Tạo tài khoản
+            {t('Tạo tài khoản')}
           </button>
         }
       />
@@ -115,7 +120,9 @@ function Accounts({
             setCreating(false);
             setSelected(account.id);
             setNotice(
-              'Đã tạo tài khoản. Kiểm tra thông tin license và phân công chăm sóc cho người dùng.',
+              t(
+                'Đã tạo tài khoản. Kiểm tra thông tin license và phân công chăm sóc cho người dùng.',
+              ),
             );
             await refresh();
           }}
@@ -130,18 +137,18 @@ function Accounts({
           }}
         >
           <label className="field">
-            Tìm tài khoản
+            {t('Tìm tài khoản')}
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tên, email, điện thoại"
+              placeholder={t('Tên, email, điện thoại')}
             />
           </label>
           {!fixedRole && (
             <label className="field">
-              Vai trò
+              {t('Vai trò')}
               <select value={filters.role} onChange={(e) => filter({ role: e.target.value })}>
-                <option value="">Tất cả vai trò</option>
+                <option value="">{t('Tất cả vai trò')}</option>
                 {Object.entries(roles).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
@@ -152,53 +159,53 @@ function Accounts({
           )}
           {actor.role === 'Admin' && (
             <label className="field">
-              Mã tổ chức để lọc
+              {t('Mã tổ chức để lọc')}
               <input
                 value={orgFilter}
                 onChange={(e) => setOrgFilter(e.target.value)}
-                placeholder="UUID; để trống xem tất cả"
+                placeholder={t('UUID; để trống xem tất cả')}
               />
             </label>
           )}
           <label className="field">
-            Trạng thái
+            {t('Trạng thái')}
             <select value={filters.active} onChange={(e) => filter({ active: e.target.value })}>
-              <option value="">Tất cả trạng thái</option>
-              <option value="true">Hoạt động</option>
-              <option value="false">Vô hiệu hóa</option>
+              <option value="">{t('Tất cả trạng thái')}</option>
+              <option value="true">{t('Hoạt động')}</option>
+              <option value="false">{t('Vô hiệu hóa')}</option>
             </select>
           </label>
           <label className="field">
-            Dữ liệu xóa
+            {t('Dữ liệu xóa')}
             <select value={filters.deleted} onChange={(e) => filter({ deleted: e.target.value })}>
-              <option value="false">Chưa xóa</option>
-              <option value="true">Đã xóa</option>
-              <option value="">Tất cả</option>
+              <option value="false">{t('Chưa xóa')}</option>
+              <option value="true">{t('Đã xóa')}</option>
+              <option value="">{t('Tất cả')}</option>
             </select>
           </label>
-          <button className="btn">Tìm kiếm</button>
+          <button className="btn">{t('Tìm kiếm')}</button>
           <button
             type="button"
             className="btn"
             disabled={list.isFetching}
             onClick={() => void refresh()}
           >
-            Tải lại
+            {t('Tải lại')}
           </button>
         </form>
         <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
           {list.data && (
             <>
-              {!list.data.items.length && <p>Không có tài khoản phù hợp.</p>}
+              {!list.data.items.length && <p>{t('Không có tài khoản phù hợp.')}</p>}
               <div className="table-scroll">
                 <table>
                   <thead>
                     <tr>
-                      <th>Họ tên</th>
+                      <th>{t('Họ tên')}</th>
                       <th>Email</th>
-                      <th>Vai trò</th>
-                      <th>Trạng thái</th>
-                      <th>Thao tác</th>
+                      <th>{t('Vai trò')}</th>
+                      <th>{t('Trạng thái')}</th>
+                      <th>{t('Thao tác')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -213,10 +220,10 @@ function Accounts({
                         <td>
                           <button
                             className="btn"
-                            aria-label={'Xem tài khoản ' + account.email}
+                            aria-label={t('Xem tài khoản ') + account.email}
                             onClick={() => setSelected(account.id)}
                           >
-                            Chi tiết
+                            {t('Chi tiết')}
                           </button>
                         </td>
                       </tr>
@@ -226,22 +233,25 @@ function Accounts({
               </div>
               <div className="row pagination">
                 <span>
-                  {list.data.totalCount} kết quả · Trang {list.data.page}/
-                  {Math.max(1, list.data.totalPages)}
+                  {t('{totalCount} kết quả · Trang {page}/{p4}', {
+                    totalCount: list.data.totalCount,
+                    page: list.data.page,
+                    p4: Math.max(1, list.data.totalPages),
+                  })}
                 </span>
                 <button
                   className="btn"
                   disabled={list.isFetching || !list.data.hasPreviousPage}
                   onClick={() => filter({ page: filters.page - 1 })}
                 >
-                  Trang trước
+                  {t('Trang trước')}
                 </button>
                 <button
                   className="btn"
                   disabled={list.isFetching || !list.data.hasNextPage}
                   onClick={() => filter({ page: filters.page + 1 })}
                 >
-                  Trang sau
+                  {t('Trang sau')}
                 </button>
               </div>
             </>
@@ -249,7 +259,7 @@ function Accounts({
         </State>
       </section>
       {selected && (
-        <Dialog title="Chi tiết tài khoản" onClose={() => setSelected('')}>
+        <Dialog title={t('Chi tiết tài khoản')} onClose={() => setSelected('')}>
           <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
             {detail.data && (
               <AccountDetails
@@ -259,7 +269,7 @@ function Accounts({
                 refresh={refresh}
                 removed={() => {
                   setSelected('');
-                  setNotice('Đã xóa mềm tài khoản.');
+                  setNotice(t('Đã xóa mềm tài khoản.'));
                 }}
               />
             )}
@@ -272,7 +282,7 @@ function Accounts({
 function AccountStatus({ account }: { account: Account }) {
   return (
     <Badge tone={account.isActive ? 'green' : 'amber'}>
-      {account.deletedAt ? 'Đã xóa' : account.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
+      {account.deletedAt ? t('Đã xóa') : account.isActive ? t('Hoạt động') : t('Vô hiệu hóa')}
     </Badge>
   );
 }
@@ -303,7 +313,7 @@ function AccountEditor({
           : [
               {
                 key: 'role',
-                label: 'Vai trò tài khoản',
+                label: t('Vai trò tài khoản'),
                 type: 'select' as const,
                 required: true,
                 options: Object.entries(roles)
@@ -318,33 +328,42 @@ function AccountEditor({
           ? [
               {
                 key: 'organizationId',
-                label: 'Mã tổ chức',
-                hint: 'Sao chép UUID từ màn Tổ chức. Bắt buộc với vai trò không phải Admin; tổ chức phải hoạt động.',
+                label: t('Mã tổ chức'),
+                hint: t(
+                  'Sao chép UUID từ màn Tổ chức. Bắt buộc với vai trò không phải Admin; tổ chức phải hoạt động.',
+                ),
               },
             ]
           : []),
       ];
   return (
     <Dialog
-      title={account ? 'Sửa hồ sơ tài khoản' : 'Tạo tài khoản'}
+      title={account ? t('Sửa hồ sơ tài khoản') : t('Tạo tài khoản')}
       onClose={() => {
         if (!busy) close();
       }}
     >
       {account && (
         <p>
-          Email, vai trò và tổ chức giữ nguyên: {account.email} · {roles[account.role]}
+          {t('Email, vai trò và tổ chức giữ nguyên: {email} · {p3}', {
+            email: account.email,
+            p3: roles[account.role],
+          })}
         </p>
       )}
       {!account && actor.role === 'CenterAdmin' && (
         <div className="stack">
           <p>
-            Tổ chức: {orgName ?? actor.orgId} · Vai trò: {roles[fixedRole || 'Caregiver']}
+            {t('Tổ chức: {p1} · Vai trò: {p3}', {
+              p1: orgName ?? actor.orgId,
+              p3: roles[fixedRole || 'Caregiver'],
+            })}
           </p>
           <p>
-            Nhân viên không dùng suất license. Để tạo người được chăm sóc, tổ chức cần gói license
-            đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.{' '}
-            <Link to="/center-admin/licenses">Xem kho license</Link>.
+            {t(
+              'Nhân viên không dùng suất license. Để tạo người được chăm sóc, tổ chức cần gói license đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.',
+            )}{' '}
+            <Link to="/center-admin/licenses">{t('Xem kho license')}</Link>.
           </p>
         </div>
       )}
@@ -359,10 +378,10 @@ function AccountEditor({
               }
             : {}
         }
-        submit={account ? 'Lưu hồ sơ' : 'Tạo tài khoản'}
+        submit={account ? t('Lưu hồ sơ') : t('Tạo tài khoản')}
         onSubmit={async (values) => {
           if (!account && values.password !== values.confirmation)
-            throw new Error('Mật khẩu nhập lại không khớp.');
+            throw new Error(t('Mật khẩu nhập lại không khớp.'));
           setBusy(true);
           try {
             const profile = {
@@ -388,12 +407,17 @@ function AccountEditor({
               [402, 422].includes((error as { status?: number }).status || 0)
             )
               throw new Error(
-                `${error instanceof Error ? error.message : 'Không thể tạo tài khoản.'} Kiểm tra dữ liệu và kho license; nếu hết suất, mua thêm gói Business rồi thử lại.`,
+                t(
+                  '{p0} Kiểm tra dữ liệu và kho license; nếu hết suất, mua thêm gói Business rồi thử lại.',
+                  { p0: error instanceof Error ? error.message : t('Không thể tạo tài khoản.') },
+                ),
                 { cause: error },
               );
             if ((error as { status?: number }).status! >= 500)
               throw new Error(
-                'Chưa xác nhận được kết quả lưu. Đóng form và tải lại/tìm email trước khi gửi lại để tránh tạo trùng tài khoản.',
+                t(
+                  'Chưa xác nhận được kết quả lưu. Đóng form và tải lại/tìm email trước khi gửi lại để tránh tạo trùng tài khoản.',
+                ),
                 { cause: error },
               );
             throw error;
@@ -435,50 +459,54 @@ function AccountDetails({
       <h2>{account.fullName}</h2>
       <AccountStatus account={account} />
       <p>
-        {account.email} · {account.phoneNumber || 'Chưa có điện thoại'} · {roles[account.role]}
+        {account.email} · {account.phoneNumber || t('Chưa có điện thoại')} · {roles[account.role]}
       </p>
       <p>
-        Mã tài khoản: {account.id} · Tổ chức:{' '}
+        {t('Mã tài khoản: {id} · Tổ chức:', { id: account.id })}{' '}
         {account.organizationId
           ? (account.organizationId === actor.orgId && orgName) || account.organizationId
-          : 'Không thuộc tổ chức'}
+          : t('Không thuộc tổ chức')}
       </p>
-      <p>URL ảnh: {account.avatarUrl || 'Chưa có'}</p>
+      <p>
+        {t('URL ảnh:')} {account.avatarUrl || t('Chưa có')}
+      </p>
       {account.role === 'VisuallyImpaired' && (
         <p>
           License: {viuLicenseLabel(account.licenseStatus)}
           {account.licenseExpiresAt &&
-            ` · Hết hạn: ${new Date(account.licenseExpiresAt).toLocaleString('vi-VN')}`}
+            t(' · Hết hạn: {p0}', {
+              p0: formatLocaleDateTime(account.licenseExpiresAt),
+            })}
           {actor.role === 'CenterAdmin' && (
             <>
               {' '}
-              · <Link to="/center-admin/licenses">Quản lý cấp và thu hồi</Link>
+              · <Link to="/center-admin/licenses">{t('Quản lý cấp và thu hồi')}</Link>
             </>
           )}
         </p>
       )}
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {account.deletedAt ? (
-        <p>Tài khoản đã xóa. Chưa có API khôi phục tài khoản.</p>
+        <p>{t('Tài khoản đã xóa. Chưa có API khôi phục tài khoản.')}</p>
       ) : (
         <div className="row">
           <button className="btn" onClick={() => setEdit(true)}>
-            Sửa hồ sơ tài khoản
+            {t('Sửa hồ sơ tài khoản')}
           </button>
           <button className="btn" onClick={() => setReset(true)}>
-            Đặt lại mật khẩu
+            {t('Đặt lại mật khẩu')}
           </button>
           {account.id !== actor.id && (
             <button
               className="btn"
               onClick={() => setAction(account.isActive ? 'deactivate' : 'activate')}
             >
-              {account.isActive ? 'Vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}
+              {account.isActive ? t('Vô hiệu hóa tài khoản') : t('Kích hoạt tài khoản')}
             </button>
           )}
           {actor.role === 'Admin' && account.id !== actor.id && (
             <button className="btn danger" onClick={() => setAction('delete')}>
-              Xóa tài khoản
+              {t('Xóa tài khoản')}
             </button>
           )}
         </div>
@@ -490,7 +518,7 @@ function AccountDetails({
           close={() => setEdit(false)}
           saved={async () => {
             setEdit(false);
-            setNotice('Đã cập nhật hồ sơ.');
+            setNotice(t('Đã cập nhật hồ sơ.'));
             await refresh();
             if (account.id === actor.id) await cache.invalidateQueries({ queryKey: ['session'] });
           }}
@@ -500,19 +528,19 @@ function AccountDetails({
         <Confirm
           title={
             action === 'delete'
-              ? 'Xóa tài khoản'
+              ? t('Xóa tài khoản')
               : action === 'activate'
-                ? 'Kích hoạt tài khoản'
-                : 'Vô hiệu hóa tài khoản'
+                ? t('Kích hoạt tài khoản')
+                : t('Vô hiệu hóa tài khoản')
           }
           description={
             account.email +
             (action === 'activate'
-              ? ': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.'
-              : ': thu hồi phiên refresh và FCM. ' +
+              ? t(': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.')
+              : t(': thu hồi phiên refresh và FCM. ') +
                 (action === 'delete'
-                  ? 'Xóa mềm, hiện chưa có API khôi phục.'
-                  : 'Người dùng sẽ bị chặn đăng nhập.'))
+                  ? t('Xóa mềm, hiện chưa có API khôi phục.')
+                  : t('Người dùng sẽ bị chặn đăng nhập.')))
           }
           onClose={() => setAction(null)}
           onConfirm={async () => {
@@ -521,7 +549,7 @@ function AccountDetails({
               removed();
             } else {
               await accountsApi.status(actor, account.id, action === 'activate');
-              setNotice('Đã cập nhật trạng thái.');
+              setNotice(t('Đã cập nhật trạng thái.'));
             }
             await refresh();
           }}
@@ -529,34 +557,36 @@ function AccountDetails({
       )}
       {reset && !account.deletedAt && (
         <Dialog
-          title="Đặt lại mật khẩu"
+          title={t('Đặt lại mật khẩu')}
           onClose={() => {
             if (!busy) setReset(false);
           }}
         >
           <p>
-            Tài khoản: {account.email}. Đặt lại mật khẩu sẽ thu hồi các phiên refresh; người dùng
-            cần đăng nhập lại.
+            {t(
+              'Tài khoản: {email}. Đặt lại mật khẩu sẽ thu hồi các phiên refresh; người dùng cần đăng nhập lại.',
+              { email: account.email },
+            )}
           </p>
           <Form
             fields={[
               ...passwordFields,
               {
                 key: 'confirm',
-                label: 'Tôi xác nhận đặt lại mật khẩu cho tài khoản này',
+                label: t('Tôi xác nhận đặt lại mật khẩu cho tài khoản này'),
                 type: 'checkbox',
               },
             ]}
-            submit="Xác nhận đặt lại mật khẩu"
+            submit={t('Xác nhận đặt lại mật khẩu')}
             onSubmit={async (values) => {
               if (values.password !== values.confirmation)
-                throw new Error('Mật khẩu nhập lại không khớp.');
-              if (!values.confirm) throw new Error('Vui lòng xác nhận thao tác.');
+                throw new Error(t('Mật khẩu nhập lại không khớp.'));
+              if (!values.confirm) throw new Error(t('Vui lòng xác nhận thao tác.'));
               setBusy(true);
               try {
                 await accountsApi.resetPassword(actor, account.id, String(values.password));
                 setReset(false);
-                setNotice('Đã đặt lại mật khẩu; người dùng cần đăng nhập lại.');
+                setNotice(t('Đã đặt lại mật khẩu; người dùng cần đăng nhập lại.'));
                 if (account.id === actor.id) await auth.logout();
                 else await refresh();
               } finally {

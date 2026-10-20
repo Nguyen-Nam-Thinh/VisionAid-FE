@@ -1,3 +1,4 @@
+import { t, msg, labelMap, tText, getLocale } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -15,69 +16,72 @@ import { formatTime } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 import { uiStore, useUI } from '../../stores/ui';
 
-const labels: Record<string, string> = {
-  startedAt: 'Bắt đầu',
-  endedAt: 'Kết thúc',
-  detectionMode: 'Chế độ phát hiện',
-  totalDetections: 'Số phát hiện',
-  totalAlertsIssued: 'Số cảnh báo',
-  deviceModel: 'Thiết bị',
-  appVersion: 'Phiên bản ứng dụng',
-  isActive: 'Phiên đang hoạt động',
-  requestType: 'Loại đọc chữ',
-  triggerMethod: 'Cách kích hoạt',
-  rawText: 'Văn bản gốc',
-  processedText: 'Văn bản đã xử lý',
-  confidenceScore: 'Độ tin cậy',
-  ocrEngine: 'Bộ nhận dạng',
-  languageDetected: 'Ngôn ngữ',
-  processingTimeMs: 'Thời gian xử lý',
-  resultStatus: 'Kết quả',
-  errorMessage: 'Thông tin lỗi',
-  ttsAnnounced: 'Đã phát giọng đọc',
-  requestedAt: 'Thời gian yêu cầu',
-  latitude: 'Vĩ độ',
-  longitude: 'Kinh độ',
-  qrContent: 'Nội dung QR',
-  qrType: 'Loại QR',
-  isUrl: 'Là đường dẫn',
-  urlDomain: 'Tên miền trong QR',
-  scannedAt: 'Thời gian quét',
-  matchedPersonName: 'Người được nhận diện',
-  similarityScore: 'Độ tương đồng',
-  recognitionResult: 'Kết quả nhận diện',
-  estimatedDistance: 'Khoảng cách ước tính',
-  recognizedAt: 'Thời gian nhận diện',
-  rawTranscript: 'Lời nói được ghi nhận',
-  matchedCommand: 'Lệnh nhận dạng',
-  recognitionEngine: 'Bộ nhận dạng',
-  executionStatus: 'Kết quả thực hiện',
-  requiredConfirmation: 'Yêu cầu xác nhận',
-  confirmedAt: 'Thời gian xác nhận',
-  audioDurationMs: 'Thời lượng âm thanh',
-  isOffline: 'Xử lý ngoại tuyến',
-  executedAt: 'Thời gian thực hiện',
-};
-const values: Record<string, string> = {
-  Full: 'Đầy đủ',
-  Minimal: 'Tối giản',
-  Success: 'Thành công',
-  Failed: 'Thất bại',
-  Retried: 'Đã thử lại',
-  LowConfidence: 'Độ tin cậy thấp',
-  Matched: 'Nhận diện được',
-  NotMatched: 'Chưa nhận diện được',
-  Error: 'Lỗi',
-  Unrecognized: 'Không nhận dạng được',
-  Confirmed: 'Đã xác nhận',
-  Cancelled: 'Đã hủy',
-  Near: 'Gần',
-  Medium: 'Trung bình',
-  Far: 'Xa',
-};
+const labels: Record<string, string> = labelMap({
+  startedAt: msg('Bắt đầu'),
+  endedAt: msg('Kết thúc'),
+  detectionMode: msg('Chế độ phát hiện'),
+  totalDetections: msg('Số phát hiện'),
+  totalAlertsIssued: msg('Số cảnh báo'),
+  deviceModel: msg('Thiết bị'),
+  appVersion: msg('Phiên bản ứng dụng'),
+  isActive: msg('Phiên đang hoạt động'),
+  requestType: msg('Loại đọc chữ'),
+  triggerMethod: msg('Cách kích hoạt'),
+  rawText: msg('Văn bản gốc'),
+  processedText: msg('Văn bản đã xử lý'),
+  confidenceScore: msg('Độ tin cậy'),
+  ocrEngine: msg('Bộ nhận dạng'),
+  languageDetected: msg('Ngôn ngữ'),
+  processingTimeMs: msg('Thời gian xử lý'),
+  resultStatus: msg('Kết quả'),
+  errorMessage: msg('Thông tin lỗi'),
+  ttsAnnounced: msg('Đã phát giọng đọc'),
+  requestedAt: msg('Thời gian yêu cầu'),
+  latitude: msg('Vĩ độ'),
+  longitude: msg('Kinh độ'),
+  qrContent: msg('Nội dung QR'),
+  qrType: msg('Loại QR'),
+  isUrl: msg('Là đường dẫn'),
+  urlDomain: msg('Tên miền trong QR'),
+  scannedAt: msg('Thời gian quét'),
+  matchedPersonName: msg('Người được nhận diện'),
+  similarityScore: msg('Độ tương đồng'),
+  recognitionResult: msg('Kết quả nhận diện'),
+  estimatedDistance: msg('Khoảng cách ước tính'),
+  recognizedAt: msg('Thời gian nhận diện'),
+  rawTranscript: msg('Lời nói được ghi nhận'),
+  matchedCommand: msg('Lệnh nhận dạng'),
+  recognitionEngine: msg('Bộ nhận dạng'),
+  executionStatus: msg('Kết quả thực hiện'),
+  requiredConfirmation: msg('Yêu cầu xác nhận'),
+  confirmedAt: msg('Thời gian xác nhận'),
+  audioDurationMs: msg('Thời lượng âm thanh'),
+  isOffline: msg('Xử lý ngoại tuyến'),
+  executedAt: msg('Thời gian thực hiện'),
+});
+const values: Record<string, string> = labelMap({
+  Full: msg('Đầy đủ'),
+  Minimal: msg('Tối giản'),
+  Success: msg('Thành công'),
+  Failed: msg('Thất bại'),
+  Retried: msg('Đã thử lại'),
+  LowConfidence: msg('Độ tin cậy thấp'),
+  Matched: msg('Nhận diện được'),
+  NotMatched: msg('Chưa nhận diện được'),
+  Error: msg('Lỗi'),
+  Unrecognized: msg('Không nhận dạng được'),
+  Confirmed: msg('Đã xác nhận'),
+  Cancelled: msg('Đã hủy'),
+  Near: msg('Gần'),
+  Medium: msg('Trung bình'),
+  Far: msg('Xa'),
+});
+// Vietnamese reads "Chi tiết di chuyển"; English keeps the capital ("Movement details").
+const lowerFirst = (text: string) =>
+  getLocale() === 'vi' ? text.charAt(0).toLowerCase() + text.slice(1) : text;
 function display(key: string, value: ActivityRecord[string]) {
-  if (value === null || value === undefined || value === '') return 'Chưa có';
-  if (typeof value === 'boolean') return value ? 'Có' : 'Không';
+  if (value === null || value === undefined || value === '') return t('Chưa có');
+  if (typeof value === 'boolean') return value ? t('Có') : t('Không');
   if (key.endsWith('At')) return formatTime(String(value));
   if (key.endsWith('Score')) return `${(Number(value) * 100).toFixed(1)}%`;
   if (key.endsWith('Ms')) return `${value} ms`;
@@ -103,21 +107,25 @@ function Pager({
   return (
     <div className="row pagination">
       <span>
-        {data.totalCount} kết quả · Trang {data.page}/{Math.max(1, data.totalPages)}
+        {t('{totalCount} kết quả · Trang {page}/{p4}', {
+          totalCount: data.totalCount,
+          page: data.page,
+          p4: Math.max(1, data.totalPages),
+        })}
       </span>
       <button
         className="btn"
         disabled={busy || !data.hasPreviousPage}
         onClick={() => onPage(data.page - 1)}
       >
-        Trang trước
+        {t('Trang trước')}
       </button>
       <button
         className="btn"
         disabled={busy || !data.hasNextPage}
         onClick={() => onPage(data.page + 1)}
       >
-        Trang sau
+        {t('Trang sau')}
       </button>
     </div>
   );
@@ -133,19 +141,21 @@ function Events({ actor, viuId, sessionId }: { actor: Person; viuId: string; ses
   });
   return (
     <section className="stack">
-      <h3>Phát hiện trong phiên</h3>
-      <p>Sắp xếp từ cũ đến mới. Đây là nhật ký phát hiện, không phải toàn bộ lộ trình GPS.</p>
+      <h3>{t('Phát hiện trong phiên')}</h3>
+      <p>
+        {t('Sắp xếp từ cũ đến mới. Đây là nhật ký phát hiện, không phải toàn bộ lộ trình GPS.')}
+      </p>
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {query.data?.items.length ? (
           <div className="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>Thời gian</th>
-                  <th>Đối tượng</th>
-                  <th>Độ tin cậy</th>
-                  <th>Khoảng cách</th>
-                  <th>Đã cảnh báo</th>
+                  <th>{t('Thời gian')}</th>
+                  <th>{t('Đối tượng')}</th>
+                  <th>{t('Độ tin cậy')}</th>
+                  <th>{t('Khoảng cách')}</th>
+                  <th>{t('Đã cảnh báo')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -162,7 +172,7 @@ function Events({ actor, viuId, sessionId }: { actor: Person; viuId: string; ses
             </table>
           </div>
         ) : (
-          <p>Chưa có phát hiện được lưu trong phiên này.</p>
+          <p>{t('Chưa có phát hiện được lưu trong phiên này.')}</p>
         )}
         {query.data && <Pager data={query.data} busy={query.isFetching} onPage={setPage} />}
       </State>
@@ -191,13 +201,13 @@ function Detail({
   });
   return (
     <Dialog
-      title={`Chi tiết ${activityKinds[kind].label[0].toLowerCase()}${activityKinds[kind].label.slice(1)}`}
+      title={t('Chi tiết {kind}', { kind: lowerFirst(tText(activityKinds[kind].label)) })}
       onClose={onClose}
     >
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {query.data && (
           <div className="stack">
-            <p>Thời gian hiển thị theo giờ Việt Nam.</p>
+            <p>{t('Thời gian hiển thị theo giờ Việt Nam.')}</p>
             <dl className="record-details">
               {Object.entries(query.data)
                 .filter(([key]) => labels[key])
@@ -230,13 +240,14 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
   });
   return (
     <section className="glass card stack">
-      <h2>Lịch sử của {name}</h2>
+      <h2>{t('Lịch sử của {name}', { name })}</h2>
       <p>
-        Dữ liệu do Mobile gửi lên, trong thời hạn lưu trữ của máy chủ. Không có bản ghi không có
-        nghĩa là người dùng không hoạt động.
+        {t(
+          'Dữ liệu do Mobile gửi lên, trong thời hạn lưu trữ của máy chủ. Không có bản ghi không có nghĩa là người dùng không hoạt động.',
+        )}
       </p>
       <label className="field">
-        Loại hoạt động
+        {t('Loại hoạt động')}
         <select
           value={kind}
           onChange={(e) => {
@@ -247,7 +258,7 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
         >
           {Object.entries(activityKinds).map(([key, item]) => (
             <option key={key} value={key}>
-              {item.label}
+              {tText(item.label)}
             </option>
           ))}
         </select>
@@ -270,26 +281,27 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
         }}
       >
         <label className="field">
-          Từ ngày
+          {t('Từ ngày')}
           <input type="date" name="from" />
         </label>
         <label className="field">
-          Đến ngày
+          {t('Đến ngày')}
           <input type="date" name="to" />
         </label>
-        <button className="btn">Lọc lịch sử</button>
+        <button className="btn">{t('Lọc lịch sử')}</button>
         <button
           type="button"
           className="btn"
           disabled={query.isFetching}
           onClick={() => void query.refetch()}
         >
-          Tải lại lịch sử
+          {t('Tải lại lịch sử')}
         </button>
       </form>
       <p>
-        Ngày lọc và thời gian hiển thị theo giờ Việt Nam. Để trống ngày để xem toàn bộ thời gian còn
-        lưu.
+        {t(
+          'Ngày lọc và thời gian hiển thị theo giờ Việt Nam. Để trống ngày để xem toàn bộ thời gian còn lưu.',
+        )}
       </p>
       {error && (
         <p className="notice error" role="alert">
@@ -302,9 +314,9 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
             <table>
               <thead>
                 <tr>
-                  <th>Thời gian</th>
-                  <th>{kind === 'navigation' ? 'Chế độ phát hiện' : 'Kết quả'}</th>
-                  <th>Thao tác</th>
+                  <th>{t('Thời gian')}</th>
+                  <th>{kind === 'navigation' ? t('Chế độ phát hiện') : t('Kết quả')}</th>
+                  <th>{t('Thao tác')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -316,7 +328,7 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
                     </td>
                     <td>
                       <button className="btn small" onClick={() => setDetail(item.id)}>
-                        Chi tiết
+                        {t('Chi tiết')}
                       </button>
                     </td>
                   </tr>
@@ -325,7 +337,7 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
             </table>
           </div>
         ) : (
-          <p>Chưa có lịch sử phù hợp với bộ lọc.</p>
+          <p>{t('Chưa có lịch sử phù hợp với bộ lọc.')}</p>
         )}
         {query.data && (
           <Pager
@@ -374,8 +386,8 @@ function Activity({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title="Lịch sử hoạt động"
-        description="Xem các hoạt động đã được ghi nhận của người bạn chăm sóc."
+        title={t('Lịch sử hoạt động')}
+        description={t('Xem các hoạt động đã được ghi nhận của người bạn chăm sóc.')}
       />
       <section className="glass card stack">
         <form
@@ -388,24 +400,24 @@ function Activity({ actor }: { actor: Person }) {
           }}
         >
           <label className="field">
-            Tìm người được chăm sóc
+            {t('Tìm người được chăm sóc')}
             <input name="search" />
           </label>
-          <button className="btn">Tìm kiếm</button>
+          <button className="btn">{t('Tìm kiếm')}</button>
           <button
             type="button"
             className="btn"
             disabled={users.isFetching}
             onClick={() => void users.refetch()}
           >
-            Tải lại người dùng
+            {t('Tải lại người dùng')}
           </button>
         </form>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           <label className="field">
-            Người được chăm sóc
+            {t('Người được chăm sóc')}
             <select value={person?.id || ''} onChange={(e) => setSelected(e.target.value)}>
-              <option value="">Chọn người được chăm sóc</option>
+              <option value="">{t('Chọn người được chăm sóc')}</option>
               {users.data?.items.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.fullName} · {item.email}
@@ -416,7 +428,11 @@ function Activity({ actor }: { actor: Person }) {
           {users.data && (
             <div className="row">
               <span>
-                {users.data.totalCount} người · Trang {page}/{Math.max(1, users.data.totalPages)}
+                {t('{totalCount} người · Trang {page}/{p4}', {
+                  totalCount: users.data.totalCount,
+                  page,
+                  p4: Math.max(1, users.data.totalPages),
+                })}
               </span>
               <button
                 className="btn"
@@ -426,7 +442,7 @@ function Activity({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang trước
+                {t('Trang trước')}
               </button>
               <button
                 className="btn"
@@ -436,11 +452,11 @@ function Activity({ actor }: { actor: Person }) {
                   setSelected('');
                 }}
               >
-                Trang sau
+                {t('Trang sau')}
               </button>
             </div>
           )}
-          {!users.data?.items.length && <p>Chưa có người được chăm sóc phù hợp.</p>}
+          {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
         </State>
       </section>
       {!users.error && person && (

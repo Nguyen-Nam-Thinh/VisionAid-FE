@@ -1,3 +1,4 @@
+import { t, msg } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,35 +18,46 @@ import {
 import type { Person } from '../../models/domain';
 
 const editorFields: FieldSpec[] = [
-  { key: 'name', label: 'Tên gói', required: true, max: 200 },
-  { key: 'priceMonthly', label: 'Giá tháng', type: 'number', min: 0, required: true },
+  { key: 'name', label: msg('Tên gói'), required: true, max: 200 },
+  { key: 'priceMonthly', label: msg('Giá tháng'), type: 'number', min: 0, required: true },
   {
     key: 'priceYearly',
-    label: 'Giá năm',
-    hint: 'Có thể để trống khi tạo. Giá năm chưa dùng để thanh toán trên Web; không thể xóa giá đã lưu.',
+    label: msg('Giá năm'),
+    hint: msg(
+      'Có thể để trống khi tạo. Giá năm chưa dùng để thanh toán trên Web; không thể xóa giá đã lưu.',
+    ),
   },
-  { key: 'currency', label: 'Đơn vị tiền tệ', required: true, max: 10 },
+  { key: 'currency', label: msg('Đơn vị tiền tệ'), required: true, max: 10 },
   {
     key: 'maxViuPerLicense',
-    label: 'VIU trên license (cấu hình gói)',
+    label: msg('VIU trên license (cấu hình gói)'),
     type: 'number',
     min: 1,
     step: 1,
     required: true,
-    hint: 'B2C vẫn tối đa 3 VIU theo MaxViusPerCaregiver; trường này không thay đổi giới hạn đó.',
+    hint: msg(
+      'B2C vẫn tối đa 3 VIU theo MaxViusPerCaregiver; trường này không thay đổi giới hạn đó.',
+    ),
   },
   {
     key: 'includedLicenses',
-    label: 'Số license bao gồm',
+    label: msg('Số license bao gồm'),
     type: 'number',
     min: 1,
     step: 1,
     required: true,
   },
-  { key: 'trialDays', label: 'Số ngày dùng thử', type: 'number', min: 0, step: 1, required: true },
+  {
+    key: 'trialDays',
+    label: msg('Số ngày dùng thử'),
+    type: 'number',
+    min: 0,
+    step: 1,
+    required: true,
+  },
   {
     key: 'durationDays',
-    label: 'Thời hạn gói (ngày)',
+    label: msg('Thời hạn gói (ngày)'),
     type: 'number',
     min: 1,
     step: 1,
@@ -55,7 +67,9 @@ const editorFields: FieldSpec[] = [
     key: 'featureFlags',
     label: 'Feature flags (JSON)',
     type: 'textarea',
-    hint: 'Ví dụ {"ocr": true}. Chỉ lưu cờ true/false, không nhập khóa bí mật. Cờ không tự triển khai tính năng mới.',
+    hint: msg(
+      'Ví dụ {"ocr": true}. Chỉ lưu cờ true/false, không nhập khóa bí mật. Cờ không tự triển khai tính năng mới.',
+    ),
   },
 ];
 export function ApiPackages({ admin = false }: { admin?: boolean }) {
@@ -82,20 +96,20 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
   if (!allowed)
     return (
       <p className="notice">
-        Tài khoản này không cần chọn gói cá nhân. License do tổ chức quản lý.
+        {t('Tài khoản này không cần chọn gói cá nhân. License do tổ chức quản lý.')}
       </p>
     );
   const items = query.data?.items.filter((p) => admin || packageForActor(actor, p)) ?? [];
   return (
     <>
       <PageHead
-        title={admin ? 'Quản lý gói license' : 'Danh mục gói'}
+        title={admin ? t('Quản lý gói license') : t('Danh mục gói')}
         description={
           admin
-            ? 'Tạo và cập nhật cấu hình gói trên máy chủ.'
+            ? t('Tạo và cập nhật cấu hình gói trên máy chủ.')
             : personal
-              ? 'Chọn gói Personal và tạo đơn thanh toán qua PayOS.'
-              : 'Chọn gói Business và tạo đơn thanh toán qua PayOS.'
+              ? t('Chọn gói Personal và tạo đơn thanh toán qua PayOS.')
+              : t('Chọn gói Business và tạo đơn thanh toán qua PayOS.')
         }
         actions={
           admin && (
@@ -106,7 +120,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                 setSelected('new');
               }}
             >
-              Thêm gói
+              {t('Thêm gói')}
             </button>
           )
         }
@@ -114,18 +128,18 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
       {!admin && (
         <p className="notice">
           {actor.role === 'CenterAdmin'
-            ? 'Gói Business dành cho tổ chức.'
-            : 'Gói Personal dành cho gia đình; tối đa 3 người được chăm sóc theo chính sách hiện hành.'}
+            ? t('Gói Business dành cho tổ chức.')
+            : t(
+                'Gói Personal dành cho gia đình; tối đa 3 người được chăm sóc theo chính sách hiện hành.',
+              )}
         </p>
       )}
-      {notice && (
-        <Toast message={notice} onDismiss={() => setNotice('')} />
-      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <section className="glass card stack">
         <div className="row">
           {admin && (
             <label className="field">
-              Trạng thái gói
+              {t('Trạng thái gói')}
               <select
                 value={active}
                 onChange={(e) => {
@@ -133,27 +147,27 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                   setPage(1);
                 }}
               >
-                <option value="">Tất cả</option>
-                <option value="true">Đang mở</option>
-                <option value="false">Ngừng mở</option>
+                <option value="">{t('Tất cả')}</option>
+                <option value="true">{t('Đang mở')}</option>
+                <option value="false">{t('Ngừng mở')}</option>
               </select>
             </label>
           )}
           <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-            Tải lại danh mục
+            {t('Tải lại danh mục')}
           </button>
         </div>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           <div className="table-scroll">
             <table className="package-table">
-              <caption className="sr-only">Danh sách gói license</caption>
+              <caption className="sr-only">{t('Danh sách gói license')}</caption>
               <thead>
                 <tr>
-                  <th>Gói</th>
-                  <th>Giá tháng</th>
-                  <th>Thời hạn</th>
+                  <th>{t('Gói')}</th>
+                  <th>{t('Giá tháng')}</th>
+                  <th>{t('Thời hạn')}</th>
                   <th>License</th>
-                  {(admin || buyer) && <th>Thao tác</th>}
+                  {(admin || buyer) && <th>{t('Thao tác')}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -164,30 +178,41 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                       <p className="package-meta">
                         {p.code} · {p.packageType}
                       </p>
-                      <p className="package-meta">{p.isActive ? 'Đang mở' : 'Ngừng mở'}</p>
+                      <p className="package-meta">{p.isActive ? t('Đang mở') : t('Ngừng mở')}</p>
                     </td>
                     <td>
-                      <strong className="package-price">{packagePrice(p.priceMonthly, p.currency)}</strong>
+                      <strong className="package-price">
+                        {packagePrice(p.priceMonthly, p.currency)}
+                      </strong>
                       {p.priceYearly !== null && (
-                        <p className="package-meta">Giá năm tham khảo: {packagePrice(p.priceYearly, p.currency)}</p>
+                        <p className="package-meta">
+                          {t('Giá năm tham khảo: {p1}', {
+                            p1: packagePrice(p.priceYearly, p.currency),
+                          })}
+                        </p>
                       )}
                     </td>
                     <td>
-                      {p.durationDays} ngày<p className="package-meta">Dùng thử: {p.trialDays} ngày</p>
+                      {t('{durationDays} ngày', { durationDays: p.durationDays })}
+                      <p className="package-meta">
+                        {t('Dùng thử: {trialDays} ngày', { trialDays: p.trialDays })}
+                      </p>
                     </td>
                     <td>
                       {p.packageType === 'Personal'
-                        ? 'Tối đa 3 VIU theo chính sách B2C'
-                        : `${p.includedLicenses} license bao gồm`}
+                        ? t('Tối đa 3 VIU theo chính sách B2C')
+                        : t('{includedLicenses} license bao gồm', {
+                            includedLicenses: p.includedLicenses,
+                          })}
                     </td>
                     {buyer && (
                       <td>
                         {canCheckout(p, actor) ? (
                           <button className="btn primary" onClick={() => setCheckout(p)}>
-                            Chọn gói {p.name}
+                            {t('Chọn gói {name}', { name: p.name })}
                           </button>
                         ) : (
-                          <span>Gói chưa hỗ trợ thanh toán online.</span>
+                          <span>{t('Gói chưa hỗ trợ thanh toán online.')}</span>
                         )}
                       </td>
                     )}
@@ -199,9 +224,9 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                             setNotice('');
                             setSelected(p.id);
                           }}
-                          aria-label={'Chi tiết ' + p.name}
+                          aria-label={t('Chi tiết ') + p.name}
                         >
-                          Chi tiết / Sửa
+                          {t('Chi tiết / Sửa')}
                         </button>
                       </td>
                     )}
@@ -212,31 +237,31 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
           </div>
           {!items.length && (
             <p>
-              Chưa có gói phù hợp trên trang này.
-              {query.data?.hasNextPage ? ' Hãy xem trang tiếp theo.' : ''}
+              {t('Chưa có gói phù hợp trên trang này.')}
+              {query.data?.hasNextPage ? t(' Hãy xem trang tiếp theo.') : ''}
             </p>
           )}
           {query.data && (
             <footer className="pagination">
               <span>
-                Trang {page}/{Math.max(1, query.data.totalPages)} ·{' '}
+                {t('Trang {page}/{total}', { page, total: Math.max(1, query.data.totalPages) })} ·{' '}
                 {admin
-                  ? query.data.totalCount + ' gói'
-                  : 'Phân trang theo danh mục máy chủ; chỉ hiển thị loại gói phù hợp tài khoản.'}
+                  ? query.data.totalCount + t(' gói')
+                  : t('Phân trang theo danh mục máy chủ; chỉ hiển thị loại gói phù hợp tài khoản.')}
               </span>
               <button
                 className="btn"
                 disabled={query.isFetching || !query.data.hasPreviousPage}
                 onClick={() => setPage((p) => p - 1)}
               >
-                Trang trước
+                {t('Trang trước')}
               </button>
               <button
                 className="btn"
                 disabled={query.isFetching || !query.data.hasNextPage}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Trang sau
+                {t('Trang sau')}
               </button>
             </footer>
           )}
@@ -253,7 +278,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
           onClose={() => setSelected(null)}
           onSaved={() => {
             setSelected(null);
-            setNotice('Đã lưu gói trên máy chủ.');
+            setNotice(t('Đã lưu gói trên máy chủ.'));
           }}
         />
       )}
@@ -286,14 +311,14 @@ function PackageEditor({
       : [
           {
             key: 'code',
-            label: 'Mã gói',
+            label: t('Mã gói'),
             required: true,
             max: 50,
-            hint: 'Chữ in hoa, số, dấu gạch dưới. Không thể đổi sau khi tạo.',
+            hint: t('Chữ in hoa, số, dấu gạch dưới. Không thể đổi sau khi tạo.'),
           },
           {
             key: 'packageType',
-            label: 'Loại gói',
+            label: t('Loại gói'),
             type: 'select' as const,
             required: true,
             options: [
@@ -303,11 +328,11 @@ function PackageEditor({
           },
         ]),
     ...editorFields,
-    ...(!creating ? [{ key: 'isActive', label: 'Đang mở bán', type: 'checkbox' as const }] : []),
+    ...(!creating ? [{ key: 'isActive', label: t('Đang mở bán'), type: 'checkbox' as const }] : []),
   ];
   return (
     <Dialog
-      title={creating ? 'Thêm gói license' : 'Chi tiết / Sửa gói'}
+      title={creating ? t('Thêm gói license') : t('Chi tiết / Sửa gói')}
       onClose={() => {
         if (!pending) onClose();
       }}
@@ -321,7 +346,10 @@ function PackageEditor({
           <>
             {current && (
               <p>
-                Mã: {current.code} · Loại: {current.packageType} · không thể thay đổi
+                {t('Mã: {code} · Loại: {packageType} · không thể thay đổi', {
+                  code: current.code,
+                  packageType: current.packageType,
+                })}
               </p>
             )}
             <Form
@@ -335,7 +363,7 @@ function PackageEditor({
                     }
                   : { featureFlags: '{}' }
               }
-              submit={creating ? 'Tạo gói' : 'Lưu gói'}
+              submit={creating ? t('Tạo gói') : t('Lưu gói')}
               onSubmit={async (values) => {
                 setPending(true);
                 try {

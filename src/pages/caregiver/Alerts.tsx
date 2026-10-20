@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useNow } from '../../hooks/useNow';
 import { useState } from 'react';
 import { BellRing, Phone, TriangleAlert } from 'lucide-react';
@@ -18,15 +19,15 @@ export function Alerts() {
   const [action, setAction] = useState<AlertStatus | null>(null);
   const alert = db?.alerts.find((a) => a.id === selected);
   const label: Partial<Record<AlertStatus, string>> = {
-    ACKNOWLEDGED: 'Xác nhận hỗ trợ',
-    ESCALATED: 'Chuyển cấp hỗ trợ',
-    RESOLVED: 'Đánh dấu đã giải quyết',
+    ACKNOWLEDGED: t('Xác nhận hỗ trợ'),
+    ESCALATED: t('Chuyển cấp hỗ trợ'),
+    RESOLVED: t('Đánh dấu đã giải quyết'),
   };
   return (
     <>
       <PageHead
-        title="Trung tâm cảnh báo"
-        description="Ưu tiên phản hồi kịp thời. Mỗi thao tác đều được ghi nhận trong lịch sử."
+        title={t('Trung tâm cảnh báo')}
+        description={t('Ưu tiên phản hồi kịp thời. Mỗi thao tác đều được ghi nhận trong lịch sử.')}
         actions={
           <button
             className="btn"
@@ -34,7 +35,7 @@ export function Alerts() {
             onClick={() => cmd.mutate({ type: 'simulate', event: 'alert' })}
           >
             <BellRing size={16} />
-            Tạo SOS mô phỏng
+            {t('Tạo SOS mô phỏng')}
           </button>
         }
       />
@@ -58,14 +59,14 @@ export function Alerts() {
           </p>
         )}
         <DataTable
-          title="Hộp thư cảnh báo"
+          title={t('Hộp thư cảnh báo')}
           rows={db?.alerts.filter((a) => filter === 'all' || a.status === filter) ?? []}
           searchText={(a) => `${db?.people.find((p) => p.id === a.viuId)?.name} ${a.type} ${a.id}`}
           filter={
             <label className="field">
-              <span className="sr-only">Trạng thái cảnh báo</span>
+              <span className="sr-only">{t('Trạng thái cảnh báo')}</span>
               <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-                <option value="all">Tất cả trạng thái</option>
+                <option value="all">{t('Tất cả trạng thái')}</option>
                 {Object.entries(statuses).map(([v, l]) => (
                   <option key={v} value={v}>
                     {l}
@@ -76,16 +77,20 @@ export function Alerts() {
           }
           columns={[
             {
-              label: 'Người cần hỗ trợ',
+              label: t('Người cần hỗ trợ'),
               render: (a) => db?.people.find((p) => p.id === a.viuId)?.name,
             },
             {
-              label: 'Loại',
+              label: t('Loại'),
               render: (a) =>
-                a.type === 'FALL' ? 'Té ngã' : a.type === 'SOS' ? 'SOS khẩn cấp' : 'Vùng an toàn',
+                a.type === 'FALL'
+                  ? t('Té ngã')
+                  : a.type === 'SOS'
+                    ? t('SOS khẩn cấp')
+                    : t('Vùng an toàn'),
             },
             {
-              label: 'Trạng thái',
+              label: t('Trạng thái'),
               render: (a) => (
                 <Badge
                   tone={
@@ -100,12 +105,12 @@ export function Alerts() {
                 </Badge>
               ),
             },
-            { label: 'Thời gian · UTC+7', render: (a) => formatTime(a.at) },
+            { label: t('Thời gian · UTC+7'), render: (a) => formatTime(a.at) },
             {
-              label: 'Thao tác',
+              label: t('Thao tác'),
               render: (a) => (
                 <button className="btn small" onClick={() => setSelected(a.id)}>
-                  Xem chi tiết
+                  {t('Xem chi tiết')}
                 </button>
               ),
             },
@@ -114,7 +119,9 @@ export function Alerts() {
       </State>
       {alert && (
         <Dialog
-          title={`Cảnh báo · ${db?.people.find((p) => p.id === alert.viuId)?.name}`}
+          title={t('Cảnh báo · {name}', {
+            name: db?.people.find((p) => p.id === alert.viuId)?.name,
+          })}
           onClose={() => setSelected('')}
         >
           <div className="stack">
@@ -123,11 +130,13 @@ export function Alerts() {
               {alert.lat.toFixed(5)}, {alert.lng.toFixed(5)} · {formatTime(alert.at)}
             </p>
             <div className="empty" style={{ background: '#f1f4f9', borderRadius: 14 }}>
-              Không có ảnh chụp sự kiện trong dữ liệu demo.
+              {t('Không có ảnh chụp sự kiện trong dữ liệu demo.')}
             </div>
             {alert.status === 'SENT' && now - new Date(alert.at).getTime() > 300000 && (
               <p className="notice error">
-                Chưa được xác nhận sau 5 phút. Cân nhắc liên hệ người thân hoặc hỗ trợ khẩn cấp.
+                {t(
+                  'Chưa được xác nhận sau 5 phút. Cân nhắc liên hệ người thân hoặc hỗ trợ khẩn cấp.',
+                )}
               </p>
             )}
             <div className="row">
@@ -143,14 +152,15 @@ export function Alerts() {
               ))}
               <a className="btn" href="tel:115">
                 <Phone size={16} />
-                Mở trình gọi 115
+                {t('Mở trình gọi 115')}
               </a>
             </div>
             <small>
-              Mở trình gọi không xác nhận cuộc gọi đã diễn ra. Web không tự gọi hoặc tự chuyển trạng
-              thái “Đã gọi”.
+              {t(
+                'Mở trình gọi không xác nhận cuộc gọi đã diễn ra. Web không tự gọi hoặc tự chuyển trạng thái “Đã gọi”.',
+              )}
             </small>
-            <h3>Lịch sử xử lý</h3>
+            <h3>{t('Lịch sử xử lý')}</h3>
             <div className="timeline">
               {alert.history.map((h, i) => (
                 <div key={i}>
@@ -160,7 +170,7 @@ export function Alerts() {
                   </strong>
                   <p className="muted">
                     {formatTime(h.at)} ·{' '}
-                    {db?.people.find((p) => p.id === h.actor)?.name ?? 'Hệ thống'}
+                    {db?.people.find((p) => p.id === h.actor)?.name ?? t('Hệ thống')}
                   </p>
                 </div>
               ))}
@@ -170,8 +180,11 @@ export function Alerts() {
       )}
       {action && alert && (
         <Confirm
-          title={label[action] ?? 'Xử lý cảnh báo'}
-          description={`Xác nhận cập nhật cảnh báo của ${db?.people.find((p) => p.id === alert.viuId)?.name} thành “${statuses[action]}”?`}
+          title={label[action] ?? t('Xử lý cảnh báo')}
+          description={t('Xác nhận cập nhật cảnh báo của {name} thành “{p1}”?', {
+            name: db?.people.find((p) => p.id === alert.viuId)?.name,
+            p1: statuses[action],
+          })}
           onClose={() => setAction(null)}
           onConfirm={() =>
             cmd.mutateAsync({

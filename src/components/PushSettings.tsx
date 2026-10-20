@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -26,14 +27,16 @@ export function PushSettings({ userId }: { userId: string }) {
   }, [owner]);
   return (
     <section className="glass card stack">
-      <h2>Thông báo trên trình duyệt</h2>
-      <p>{enabled ? 'Đã đăng ký nhận push cho phiên này.' : 'Chưa đăng ký push cho phiên này.'}</p>
+      <h2>{t('Thông báo trên trình duyệt')}</h2>
       <p>
-        Thông báo chỉ hiển thị lời nhắc chung. Mở Dashboard để xem dữ liệu theo quyền của bạn. Mỗi
-        trình duyệt nhận push cho một phiên; bật ở tab khác sẽ thay phiên nhận. Đăng xuất hoặc tắt ở
-        một tab sẽ tắt push trên trình duyệt này.
+        {enabled ? t('Đã đăng ký nhận push cho phiên này.') : t('Chưa đăng ký push cho phiên này.')}
       </p>
-      {!pushSupported() && <p>Trình duyệt chưa hỗ trợ hoặc trang chưa dùng HTTPS.</p>}
+      <p>
+        {t(
+          'Thông báo chỉ hiển thị lời nhắc chung. Mở Dashboard để xem dữ liệu theo quyền của bạn. Mỗi trình duyệt nhận push cho một phiên; bật ở tab khác sẽ thay phiên nhận. Đăng xuất hoặc tắt ở một tab sẽ tắt push trên trình duyệt này.',
+        )}
+      </p>
+      {!pushSupported() && <p>{t('Trình duyệt chưa hỗ trợ hoặc trang chưa dùng HTTPS.')}</p>}
       <div className="row">
         <button
           className="btn primary"
@@ -44,16 +47,22 @@ export function PushSettings({ userId }: { userId: string }) {
             try {
               await enablePush(owner, registerPushToken);
               setMessage(
-                'Đã đăng ký trên máy chủ. Việc nhận push còn phụ thuộc dịch vụ gửi thông báo.',
+                t('Đã đăng ký trên máy chủ. Việc nhận push còn phụ thuộc dịch vụ gửi thông báo.'),
               );
             } catch {
-              setMessage('Không đăng ký được push. Kiểm tra quyền thông báo, kết nối rồi thử lại.');
+              setMessage(
+                t('Không đăng ký được push. Kiểm tra quyền thông báo, kết nối rồi thử lại.'),
+              );
             } finally {
               setPending(false);
             }
           }}
         >
-          {pending ? 'Đang xử lý…' : enabled ? 'Đồng bộ đăng ký push' : 'Bật thông báo trình duyệt'}
+          {pending
+            ? t('Đang xử lý…')
+            : enabled
+              ? t('Đồng bộ đăng ký push')
+              : t('Bật thông báo trình duyệt')}
         </button>
         <button
           className="btn"
@@ -64,16 +73,18 @@ export function PushSettings({ userId }: { userId: string }) {
             try {
               await disablePush();
               setMessage(
-                'Đã tắt push trên trình duyệt này. Tùy chọn kênh trên máy chủ không thay đổi.',
+                t('Đã tắt push trên trình duyệt này. Tùy chọn kênh trên máy chủ không thay đổi.'),
               );
             } catch {
-              setMessage('Chưa xác nhận tắt push. Hãy chặn thông báo trong cài đặt trình duyệt.');
+              setMessage(
+                t('Chưa xác nhận tắt push. Hãy chặn thông báo trong cài đặt trình duyệt.'),
+              );
             } finally {
               setPending(false);
             }
           }}
         >
-          Tắt push trên trình duyệt
+          {t('Tắt push trên trình duyệt')}
         </button>
       </div>
       {message && (

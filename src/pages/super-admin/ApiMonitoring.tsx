@@ -1,3 +1,4 @@
+import { t, msg, labelMap, tText } from '../../i18n';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -14,52 +15,52 @@ import {
 } from '../../services/api/monitoring';
 import type { Person } from '../../models/domain';
 
-const titles = {
-  metrics: 'Hiệu năng AI',
-  audit: 'Nhật ký kiểm toán',
-  delivery: 'Theo dõi thông báo',
-  guidance: 'Nhật ký Hybrid',
-};
-const labels: Record<string, string> = {
-  sessionId: 'Mã phiên điều hướng',
-  userId: 'Mã người dùng',
-  frameId: 'Mã khung hình',
-  decision: 'Quyết định',
+const titles = labelMap({
+  metrics: msg('Hiệu năng AI'),
+  audit: msg('Nhật ký kiểm toán'),
+  delivery: msg('Theo dõi thông báo'),
+  guidance: msg('Nhật ký Hybrid'),
+});
+const labels: Record<string, string> = labelMap({
+  sessionId: msg('Mã phiên điều hướng'),
+  userId: msg('Mã người dùng'),
+  frameId: msg('Mã khung hình'),
+  decision: msg('Quyết định'),
   engineUsed: 'Engine',
-  isOfflineFallback: 'Fallback theo máy chủ',
-  latencyMs: 'Thời gian xử lý',
-  id: 'Mã bản ghi',
-  modelName: 'Mô hình',
-  modelVersion: 'Phiên bản',
-  metricDate: 'Ngày UTC',
-  sourceTable: 'Nguồn dữ liệu',
-  totalRequests: 'Tổng lượt',
-  successfulRequests: 'Thành công',
-  failedRequests: 'Thất bại',
-  avgConfidence: 'Confidence trung bình',
-  avgLatencyMs: 'Thời gian trung bình',
-  p95LatencyMs: 'Thời gian P95',
-  p99LatencyMs: 'Thời gian P99',
-  errorCount: 'Số lỗi',
-  aggregatedBy: 'Nguồn tổng hợp',
-  recordedAt: 'Tổng hợp lúc',
-  actorName: 'Người thực hiện',
-  actorEmail: 'Email người thực hiện',
-  actorId: 'Mã người thực hiện',
-  actionType: 'Hành động',
-  targetTable: 'Bảng đối tượng',
-  targetRecordId: 'Mã đối tượng',
-  performedAt: 'Thời gian',
-  sourceType: 'Nguồn thông báo',
-  emergencyEventId: 'Mã cảnh báo khẩn cấp',
-  locationBoundaryEventId: 'Mã sự kiện vùng an toàn',
-  recipientId: 'Mã người nhận',
-  notificationType: 'Loại thông báo',
-  channel: 'Kênh gửi',
-  status: 'Trạng thái',
-  failureReason: 'Lý do thất bại',
-  createdAt: 'Thời gian tạo',
-};
+  isOfflineFallback: msg('Fallback theo máy chủ'),
+  latencyMs: msg('Thời gian xử lý'),
+  id: msg('Mã bản ghi'),
+  modelName: msg('Mô hình'),
+  modelVersion: msg('Phiên bản'),
+  metricDate: msg('Ngày UTC'),
+  sourceTable: msg('Nguồn dữ liệu'),
+  totalRequests: msg('Tổng lượt'),
+  successfulRequests: msg('Thành công'),
+  failedRequests: msg('Thất bại'),
+  avgConfidence: msg('Confidence trung bình'),
+  avgLatencyMs: msg('Thời gian trung bình'),
+  p95LatencyMs: msg('Thời gian P95'),
+  p99LatencyMs: msg('Thời gian P99'),
+  errorCount: msg('Số lỗi'),
+  aggregatedBy: msg('Nguồn tổng hợp'),
+  recordedAt: msg('Tổng hợp lúc'),
+  actorName: msg('Người thực hiện'),
+  actorEmail: msg('Email người thực hiện'),
+  actorId: msg('Mã người thực hiện'),
+  actionType: msg('Hành động'),
+  targetTable: msg('Bảng đối tượng'),
+  targetRecordId: msg('Mã đối tượng'),
+  performedAt: msg('Thời gian'),
+  sourceType: msg('Nguồn thông báo'),
+  emergencyEventId: msg('Mã cảnh báo khẩn cấp'),
+  locationBoundaryEventId: msg('Mã sự kiện vùng an toàn'),
+  recipientId: msg('Mã người nhận'),
+  notificationType: msg('Loại thông báo'),
+  channel: msg('Kênh gửi'),
+  status: msg('Trạng thái'),
+  failureReason: msg('Lý do thất bại'),
+  createdAt: msg('Thời gian tạo'),
+});
 const columns = {
   guidance: ['createdAt', 'engineUsed', 'decision', 'latencyMs', 'isOfflineFallback'],
   metrics: [
@@ -80,23 +81,23 @@ const channelLabels: Record<string, string> = {
   Email: 'Email',
 };
 const decisions = new Map([
-  ['STOP', 'Dừng lại'],
-  ['TURN_LEFT', 'Rẽ trái'],
-  ['TURN_RIGHT', 'Rẽ phải'],
-  ['PROCEED', 'Tiếp tục'],
+  ['STOP', msg('Dừng lại')],
+  ['TURN_LEFT', msg('Rẽ trái')],
+  ['TURN_RIGHT', msg('Rẽ phải')],
+  ['PROCEED', msg('Tiếp tục')],
 ]);
 function valueText(key: string, value: string | number | boolean | null) {
   if (value === null || value === undefined)
     return key === 'actorId' || key === 'actorName'
-      ? 'Hệ thống hoặc chưa ghi nhận'
-      : 'Chưa có dữ liệu';
-  if (key === 'isOfflineFallback') return value ? 'Có' : 'Không';
-  if (key === 'decision') return decisions.get(String(value)) ?? String(value);
+      ? t('Hệ thống hoặc chưa ghi nhận')
+      : t('Chưa có dữ liệu');
+  if (key === 'isOfflineFallback') return value ? t('Có') : t('Không');
+  if (key === 'decision') return tText(decisions.get(String(value)) ?? String(value));
   if (key.endsWith('At')) return formatTime(String(value)) + ' · UTC+7';
   if (key.endsWith('Ms')) return value + ' ms';
   if (key === 'avgConfidence') return (Number(value) * 100).toFixed(1) + '%';
   if (key === 'channel') return channelLabels[String(value)] ?? String(value);
-  if (key === 'status' && value === 'Failed') return 'Thất bại';
+  if (key === 'status' && value === 'Failed') return t('Thất bại');
   return String(value);
 }
 export function ApiMonitoring({ kind }: { kind: MonitoringKind }) {
@@ -104,7 +105,7 @@ export function ApiMonitoring({ kind }: { kind: MonitoringKind }) {
   if (actor?.role !== 'Admin')
     return (
       <p className="notice error" role="alert">
-        Chỉ quản trị viên hệ thống được xem dữ liệu này.
+        {t('Chỉ quản trị viên hệ thống được xem dữ liệu này.')}
       </p>
     );
   return <Monitoring key={actor.id + kind} actor={actor} kind={kind} />;
@@ -125,18 +126,22 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
         title={titles[kind]}
         description={
           kind === 'metrics'
-            ? 'Số liệu theo mô hình và ngày UTC. Confidence và tỷ lệ xử lý thành công không phải độ chính xác AI.'
+            ? t(
+                'Số liệu theo mô hình và ngày UTC. Confidence và tỷ lệ xử lý thành công không phải độ chính xác AI.',
+              )
             : kind === 'guidance'
-              ? 'Theo dõi quyết định và thời gian xử lý do máy chủ ghi nhận. Đây là lịch sử, không phải hướng dẫn di chuyển trực tiếp.'
+              ? t(
+                  'Theo dõi quyết định và thời gian xử lý do máy chủ ghi nhận. Đây là lịch sử, không phải hướng dẫn di chuyển trực tiếp.',
+                )
               : kind === 'audit'
-                ? 'Tra cứu thao tác quản trị. Nhật ký chỉ đọc, không sửa hoặc xóa.'
-                : 'Thống kê gửi cảnh báo và tra cứu thông báo thất bại.'
+                ? t('Tra cứu thao tác quản trị. Nhật ký chỉ đọc, không sửa hoặc xóa.')
+                : t('Thống kê gửi cảnh báo và tra cứu thông báo thất bại.')
         }
       />
       <div className="stack">
         {kind === 'delivery' && <DeliveryStatus actor={actor} />}
         <section className="glass card stack">
-          <h2>{kind === 'delivery' ? 'Thông báo thất bại' : 'Tra cứu bản ghi'}</h2>
+          <h2>{kind === 'delivery' ? t('Thông báo thất bại') : t('Tra cứu bản ghi')}</h2>
           <form
             className="row"
             onSubmit={(e) => {
@@ -154,17 +159,17 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
             {kind === 'guidance' && (
               <>
                 <label className="field">
-                  Mã người dùng
+                  {t('Mã người dùng')}
                   <input name="userId" placeholder="UUID" />
                 </label>
                 <label className="field">
-                  Mã phiên điều hướng
+                  {t('Mã phiên điều hướng')}
                   <input name="sessionId" placeholder="UUID" />
                 </label>
                 <label className="field">
                   Engine
                   <select name="engineUsed">
-                    <option value="">Tất cả engine</option>
+                    <option value="">{t('Tất cả engine')}</option>
                     {guidanceEngines.map((engine) => (
                       <option key={engine}>{engine}</option>
                     ))}
@@ -173,49 +178,49 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                 <label className="field">
                   Fallback
                   <select name="isOfflineFallback">
-                    <option value="">Tất cả bản ghi</option>
-                    <option value="true">Có fallback</option>
-                    <option value="false">Không fallback</option>
+                    <option value="">{t('Tất cả bản ghi')}</option>
+                    <option value="true">{t('Có fallback')}</option>
+                    <option value="false">{t('Không fallback')}</option>
                   </select>
                 </label>
               </>
             )}
             {kind === 'metrics' && (
               <label className="field">
-                Tên mô hình
-                <input name="modelName" placeholder="Tên chính xác từ máy chủ" />
+                {t('Tên mô hình')}
+                <input name="modelName" placeholder={t('Tên chính xác từ máy chủ')} />
               </label>
             )}
             {kind === 'audit' && (
               <>
                 <label className="field">
-                  Mã người thực hiện
+                  {t('Mã người thực hiện')}
                   <input name="actorId" placeholder="UUID" />
                 </label>
                 <label className="field">
-                  Hành động
+                  {t('Hành động')}
                   <select name="actionType">
-                    <option value="">Tất cả hành động</option>
+                    <option value="">{t('Tất cả hành động')}</option>
                     {auditActions.map((action) => (
                       <option key={action}>{action}</option>
                     ))}
                   </select>
                 </label>
                 <label className="field">
-                  Bảng đối tượng
+                  {t('Bảng đối tượng')}
                   <input name="targetTable" maxLength={100} />
                 </label>
                 <label className="field">
-                  Mã đối tượng
+                  {t('Mã đối tượng')}
                   <input name="targetRecordId" placeholder="UUID" />
                 </label>
               </>
             )}
             {kind === 'delivery' && (
               <label className="field">
-                Kênh gửi
+                {t('Kênh gửi')}
                 <select name="channel">
-                  <option value="">Tất cả kênh</option>
+                  <option value="">{t('Tất cả kênh')}</option>
                   {Object.entries(channelLabels).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
@@ -225,75 +230,77 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
               </label>
             )}
             <label className="field">
-              {kind === 'metrics' ? 'Từ ngày UTC' : 'Từ ngày Việt Nam'}
+              {kind === 'metrics' ? t('Từ ngày UTC') : t('Từ ngày Việt Nam')}
               <input type="date" name="from" />
             </label>
             <label className="field">
-              {kind === 'metrics' ? 'Đến ngày UTC' : 'Đến ngày Việt Nam'}
+              {kind === 'metrics' ? t('Đến ngày UTC') : t('Đến ngày Việt Nam')}
               <input type="date" name="to" />
             </label>
-            <button className="btn primary">Lọc bản ghi</button>
+            <button className="btn primary">{t('Lọc bản ghi')}</button>
             <button
               className="btn"
               type="button"
               disabled={query.isFetching}
               onClick={() => void query.refetch()}
             >
-              Tải lại
+              {t('Tải lại')}
             </button>
           </form>
           {kind === 'metrics' ? (
             <p>
-              Máy chủ tổng hợp ngày trước vào 07:00 giờ Việt Nam. Ngày UTC bắt đầu lúc 07:00 và kết
-              thúc trước 07:00 hôm sau. Giữ nguyên tên mô hình do máy chủ trả về; số thành công phụ
-              thuộc quy tắc tổng hợp từng nguồn.
+              {t(
+                'Máy chủ tổng hợp ngày trước vào 07:00 giờ Việt Nam. Ngày UTC bắt đầu lúc 07:00 và kết thúc trước 07:00 hôm sau. Giữ nguyên tên mô hình do máy chủ trả về; số thành công phụ thuộc quy tắc tổng hợp từng nguồn.',
+              )}
             </p>
           ) : (
             <p>
-              Bộ lọc gồm cả ngày kết thúc theo giờ Việt Nam. Để trống ngày để xem dữ liệu còn lưu.
+              {t(
+                'Bộ lọc gồm cả ngày kết thúc theo giờ Việt Nam. Để trống ngày để xem dữ liệu còn lưu.',
+              )}
             </p>
           )}
           {kind === 'audit' && (
             <p>
-              Chi tiết hiển thị thông tin thao tác. Nội dung trước/sau, ghi chú và thông tin thiết
-              bị chưa hiển thị vì có thể chứa dữ liệu nhạy cảm.
+              {t(
+                'Chi tiết hiển thị thông tin thao tác. Nội dung trước/sau, ghi chú và thông tin thiết bị chưa hiển thị vì có thể chứa dữ liệu nhạy cảm.',
+              )}
             </p>
           )}
           {kind === 'guidance' && (
             <div className="stack">
               <p>
-                Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói.
-                Fallback là cờ do máy chủ ghi nhận, không chứng minh điện thoại đang offline hoặc
-                ghi lại mọi lần chuyển engine. Độ trễ không phải thời gian toàn bộ yêu cầu từ điện
-                thoại.
+                {t(
+                  'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Fallback là cờ do máy chủ ghi nhận, không chứng minh điện thoại đang offline hoặc ghi lại mọi lần chuyển engine. Độ trễ không phải thời gian toàn bộ yêu cầu từ điện thoại.',
+                )}
               </p>
               <div className="row">
                 <Link className="btn" to="/admin/metrics">
-                  Xem số liệu AI
+                  {t('Xem số liệu AI')}
                 </Link>
                 <Link className="btn" to="/admin/configurations">
-                  Cấu hình engine
+                  {t('Cấu hình engine')}
                 </Link>
               </div>
               <p>
-                Trong cấu hình hệ thống, tìm hybrid_navigation_enabled, hybrid_navigation_engine
-                hoặc navigation_near_threshold_ms. Số liệu AI tổng hợp dùng tên JEV, Groq và
-                RuleBased.
+                {t(
+                  'Trong cấu hình hệ thống, tìm hybrid_navigation_enabled, hybrid_navigation_engine hoặc navigation_near_threshold_ms. Số liệu AI tổng hợp dùng tên JEV, Groq và RuleBased.',
+                )}
               </p>
             </div>
           )}
           {kind === 'metrics' && (
             <p>
-              Với nguồn navigation_guidance_logs, máy chủ tính bản ghi thiếu độ trễ vào nhóm thất
-              bại, kể cả RuleBased đã trả quyết định. Các số này không đánh giá độ đúng hoặc an toàn
-              của hướng dẫn.
+              {t(
+                'Với nguồn navigation_guidance_logs, máy chủ tính bản ghi thiếu độ trễ vào nhóm thất bại, kể cả RuleBased đã trả quyết định. Các số này không đánh giá độ đúng hoặc an toàn của hướng dẫn.',
+              )}
             </p>
           )}
           <State loading={query.isPending} error={query.error} retry={() => void query.refetch()}>
             {query.data && (
               <>
                 {!query.data.items.length ? (
-                  <p role="status">Không có bản ghi phù hợp.</p>
+                  <p role="status">{t('Không có bản ghi phù hợp.')}</p>
                 ) : (
                   <div
                     className="table-scroll"
@@ -307,7 +314,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                           {columns[kind].map((key) => (
                             <th key={key}>{labels[key]}</th>
                           ))}
-                          <th>Thao tác</th>
+                          <th>{t('Thao tác')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -326,7 +333,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                             ))}
                             <td>
                               <button className="btn small" onClick={() => setSelected(row)}>
-                                Chi tiết
+                                {t('Chi tiết')}
                               </button>
                             </td>
                           </tr>
@@ -337,8 +344,11 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                 )}
                 <div className="row pagination">
                   <span role="status">
-                    {query.data.totalCount} bản ghi · Trang {query.data.page}/
-                    {Math.max(1, query.data.totalPages)}
+                    {t('{totalCount} bản ghi · Trang {page}/{p4}', {
+                      totalCount: query.data.totalCount,
+                      page: query.data.page,
+                      p4: Math.max(1, query.data.totalPages),
+                    })}
                   </span>
                   <div className="row">
                     <button
@@ -349,7 +359,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                         setSelected(null);
                       }}
                     >
-                      Trang trước
+                      {t('Trang trước')}
                     </button>
                     <button
                       className="btn"
@@ -359,7 +369,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                         setSelected(null);
                       }}
                     >
-                      Trang sau
+                      {t('Trang sau')}
                     </button>
                   </div>
                 </div>
@@ -369,7 +379,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
         </section>
       </div>
       {selected && (
-        <Dialog title="Chi tiết bản ghi" onClose={() => setSelected(null)}>
+        <Dialog title={t('Chi tiết bản ghi')} onClose={() => setSelected(null)}>
           <dl className="record-details">
             {Object.entries(selected).map(([key, value]) => (
               <div key={key}>
@@ -393,14 +403,15 @@ function DeliveryStatus({ actor }: { actor: Person }) {
   return (
     <section className="glass card stack">
       <div className="row between">
-        <h2>Tổng quan gửi cảnh báo</h2>
+        <h2>{t('Tổng quan gửi cảnh báo')}</h2>
         <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-          Tải lại thống kê
+          {t('Tải lại thống kê')}
         </button>
       </div>
       <p>
-        Chỉ tính bản ghi cảnh báo do máy chủ theo dõi. Đã gửi gồm trạng thái Sent và Delivered,
-        không xác nhận người nhận đã đọc. Bộ lọc bên dưới chỉ áp dụng danh sách thất bại.
+        {t(
+          'Chỉ tính bản ghi cảnh báo do máy chủ theo dõi. Đã gửi gồm trạng thái Sent và Delivered, không xác nhận người nhận đã đọc. Bộ lọc bên dưới chỉ áp dụng danh sách thất bại.',
+        )}
       </p>
       <State loading={query.isPending} error={query.error} retry={() => void query.refetch()}>
         {query.data && (
@@ -408,22 +419,22 @@ function DeliveryStatus({ actor }: { actor: Person }) {
             <div
               className="table-scroll"
               role="region"
-              aria-label="Thống kê gửi cảnh báo"
+              aria-label={t('Thống kê gửi cảnh báo')}
               tabIndex={0}
             >
               <table>
                 <thead>
                   <tr>
-                    <th>Khoảng thời gian</th>
-                    <th>Đã gửi</th>
-                    <th>Thất bại</th>
-                    <th>Đang chờ</th>
+                    <th>{t('Khoảng thời gian')}</th>
+                    <th>{t('Đã gửi')}</th>
+                    <th>{t('Thất bại')}</th>
+                    <th>{t('Đang chờ')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(['last24Hours', 'last7Days'] as const).map((key) => (
                     <tr key={key}>
-                      <th>{key === 'last24Hours' ? '24 giờ gần nhất' : '7 ngày gần nhất'}</th>
+                      <th>{key === 'last24Hours' ? t('24 giờ gần nhất') : t('7 ngày gần nhất')}</th>
                       <td>{query.data[key].totalSent}</td>
                       <td>{query.data[key].totalFailed}</td>
                       <td>{query.data[key].totalPending}</td>
@@ -434,18 +445,24 @@ function DeliveryStatus({ actor }: { actor: Person }) {
             </div>
             {(['last24Hours', 'last7Days'] as const).map((key) => (
               <div key={key}>
-                <h3>Kênh gửi · {key === 'last24Hours' ? '24 giờ gần nhất' : '7 ngày gần nhất'}</h3>
+                <h3>
+                  {t('Kênh gửi ·')}{' '}
+                  {key === 'last24Hours' ? t('24 giờ gần nhất') : t('7 ngày gần nhất')}
+                </h3>
                 {query.data[key].byChannel.length ? (
                   <ul>
                     {query.data[key].byChannel.map((row) => (
                       <li key={row.channel}>
-                        {channelLabels[row.channel] ?? row.channel}: {row.sent} đã gửi ·{' '}
-                        {row.failed} thất bại
+                        {t('{p0}: {sent} đã gửi · {failed} thất bại', {
+                          p0: channelLabels[row.channel] ?? row.channel,
+                          sent: row.sent,
+                          failed: row.failed,
+                        })}
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p>Chưa ghi nhận gửi thành công hoặc thất bại theo kênh.</p>
+                  <p>{t('Chưa ghi nhận gửi thành công hoặc thất bại theo kênh.')}</p>
                 )}
               </div>
             ))}

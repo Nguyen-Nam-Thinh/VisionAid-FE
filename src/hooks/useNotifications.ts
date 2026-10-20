@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useState } from 'react';
 import { requestBrowserPermission } from '../services/notifications/adapter';
 export function useNotifications() {
@@ -11,7 +12,7 @@ export function useNotifications() {
       try {
         setMessage(await requestBrowserPermission());
       } catch {
-        setMessage('Không thể xin quyền thông báo. Kiểm tra cài đặt trình duyệt.');
+        setMessage(t('Không thể xin quyền thông báo. Kiểm tra cài đặt trình duyệt.'));
       } finally {
         setPending(false);
       }
