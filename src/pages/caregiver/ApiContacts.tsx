@@ -3,6 +3,7 @@ import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { useLimit } from '../../hooks/useLimit';
 import { caregivingApi } from '../../services/api/caregiving';
 import { contactsApi, contactTypes, type EmergencyContact } from '../../services/api/contacts';
 import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
@@ -128,6 +129,7 @@ function Contacts({ actor }: { actor: Person }) {
   );
 }
 function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; name: string }) {
+  const maxContacts = useLimit('emergency.max_contacts_per_user');
   const cache = useQueryClient();
   const [editing, setEditing] = useState<EmergencyContact | 'new' | null>(null);
   const [action, setAction] = useState<{ item: EmergencyContact; remove: boolean } | null>(null);
@@ -147,7 +149,8 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
       <h2>{t('Danh bạ của {name}', { name })}</h2>
       <p>
         {t(
-          'Tối đa 5 liên hệ kể cả liên hệ tạm ngưng. Ưu tiên là số nguyên dương và không trùng; số nhỏ hơn được ưu tiên trước.',
+          'Tối đa {max} liên hệ kể cả liên hệ tạm ngưng. Ưu tiên là số nguyên dương và không trùng; số nhỏ hơn được ưu tiên trước.',
+          { max: maxContacts },
         )}
       </p>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
@@ -160,7 +163,7 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
         <div className="row">
           <button
             className="btn primary"
-            disabled={!query.data || query.data.length >= 5}
+            disabled={!query.data || query.data.length >= maxContacts}
             onClick={() => setEditing('new')}
           >
             {t('Thêm liên hệ')}

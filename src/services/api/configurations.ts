@@ -15,6 +15,8 @@ const reviewedKeys = new Set([
   'caregiving.max_vius_per_caregiver',
   'face_registry.min_photos_to_activate',
   'face_registry.max_persons_per_registry',
+  'location.max_saved_locations_per_user',
+  'emergency.max_contacts_per_user',
   'location.geofence.default_arrival_radius_meters',
   'location.retention_days',
   'retention.ocr_image_days',

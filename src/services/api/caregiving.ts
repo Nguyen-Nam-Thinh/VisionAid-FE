@@ -2,6 +2,7 @@ import { t } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
+import { fetchLimits } from './limits';
 
 const userSchema = z.object({
   id: z.string().uuid(),
@@ -90,9 +91,10 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
       );
       if (active.items.some((l) => l.caregiverId !== caregiverId))
         throw new ServiceError(t('Liên kết không thuộc tài khoản hiện tại.'), 403);
-      if (active.totalCount >= 3)
+      const max = (await fetchLimits(get))['caregiving.max_vius_per_caregiver'];
+      if (active.totalCount >= max)
         throw new ServiceError(
-          t('Bạn đã có tối đa 3 liên kết hoạt động. Chưa tạo tài khoản mới.'),
+          t('Bạn đã có tối đa {max} liên kết hoạt động. Chưa tạo tài khoản mới.', { max }),
           422,
         );
       return parse(

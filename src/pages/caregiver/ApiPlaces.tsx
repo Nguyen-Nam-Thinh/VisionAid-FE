@@ -3,6 +3,7 @@ import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { useLimit } from '../../hooks/useLimit';
 import { caregivingApi } from '../../services/api/caregiving';
 import { placesApi, type Place, type PlaceKind } from '../../services/api/places';
 import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
@@ -155,6 +156,7 @@ function PlaceList({ actor, viuId, name }: { actor: Person; viuId: string; name:
 }
 type Scope = { actor: Person; viuId: string; kind: PlaceKind };
 function PlaceTable({ actor, viuId, kind }: Scope) {
+  const maxPlaces = useLimit('location.max_saved_locations_per_user');
   const cache = useQueryClient();
   const [page, setPage] = useState(1);
   const [active, setActive] = useState('');
@@ -209,7 +211,13 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                 {t('Bạn có quyền xem. Cần quyền quản lý vị trí để thêm, sửa hoặc xóa.')}
               </p>
             )}
-            {!zone && <p>{t('Tối đa 20 địa điểm cho mỗi người, bao gồm địa điểm tạm ngưng.')}</p>}
+            {!zone && (
+              <p>
+                {t('Tối đa {max} địa điểm cho mỗi người, bao gồm địa điểm tạm ngưng.', {
+                  max: maxPlaces,
+                })}
+              </p>
+            )}
             {!query.data.items.length && <p>{t('Chưa có địa điểm phù hợp.')}</p>}
             <div
               className="table-scroll"

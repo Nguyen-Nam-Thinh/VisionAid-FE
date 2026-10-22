@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 for (const [role, org] of [
   ['Caregiver', null],
   ['Caregiver', '01900000-0000-7000-8000-000000000002'],
@@ -162,6 +162,7 @@ test('U8a: public landing states integration limits without requesting protected
 
 test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ page }) => {
   await stubApi(page, 'Admin');
+  await stubPeopleSearch(page, { VisuallyImpaired: id });
   const requests: URL[] = [];
   let failed = false;
   await page.route('**/api/navigation/guidance/logs?*', (route) => {
@@ -206,8 +207,7 @@ test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ pag
   await page.getByRole('link', { name: 'Nhật ký Hybrid', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Dừng lại', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Chưa có dữ liệu', exact: true })).toBeVisible();
-  await page.getByLabel('Mã người dùng', { exact: true }).fill(id);
-  await page.getByLabel('Mã phiên điều hướng', { exact: true }).fill(id);
+  await pick(page, 'Người dùng', 'VIU', /VIU mẫu/);
   await page.getByRole('combobox', { name: 'Engine', exact: true }).selectOption('RuleBased');
   await page.getByRole('combobox', { name: 'Fallback', exact: true }).selectOption('true');
   await page.getByLabel('Từ ngày Việt Nam').fill('2026-10-11');
@@ -224,7 +224,11 @@ test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ pag
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('RuleBased');
   await expect(dialog).not.toContainText('PRIVATE_');
-  await page.keyboard.press('Escape');
+  await dialog.getByRole('button', { name: 'Xem cùng phiên điều hướng' }).click();
+  await expect.poll(() => requests.at(-1)?.searchParams.get('sessionId')).toBe(id);
+  expect(requests.at(-1)?.searchParams.get('userId')).toBe(id);
+  await page.getByRole('button', { name: 'Bỏ lọc này' }).click();
+  await expect.poll(() => requests.at(-1)?.searchParams.has('sessionId')).toBe(false);
   await page.setViewportSize({ width: 375, height: 812 });
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -391,6 +395,7 @@ test('13b: metrics, audit and delivery filters, details and independent errors',
   page,
 }) => {
   await stubApi(page, 'Admin');
+  const people = await stubPeopleSearch(page, { Admin: id });
   const at = '2026-10-11T00:00:00Z';
   const metric = {
     id,
@@ -502,21 +507,24 @@ test('13b: metrics, audit and delivery filters, details and independent errors',
   await page.keyboard.press('Escape');
   await page.goto('/admin/audit');
   await expect(page.getByRole('cell', { name: 'ConfigChanged', exact: true })).toBeVisible();
-  await page.getByLabel('Mã người thực hiện').fill('invalid');
-  const before = calls.length;
-  await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
-  await expect(page.getByRole('alert')).toContainText('UUID');
-  expect(calls).toHaveLength(before);
-  await page.getByLabel('Mã người thực hiện').fill(id);
+  await expect(page.getByRole('textbox', { name: /Mã/ })).toHaveCount(0);
+  await pick(page, 'Người thực hiện', 'quản', /Quản trị mẫu/);
+  expect(people.at(-1)?.searchParams.get('search')).toBe('quản');
   await page.getByLabel('Đến ngày Việt Nam').fill('2026-10-11');
   await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
   await expect(page.getByRole('cell', { name: 'ConfigChanged', exact: true })).toBeVisible();
   expect(calls.at(-1)?.searchParams.get('dateTo')).toBe('2026-10-11T16:59:59.9999999Z');
+  expect(calls.at(-1)?.searchParams.get('actorId')).toBe(id);
   await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('ConfigChanged');
   await expect(page.getByText('DO_NOT_DISPLAY_SECRET')).toHaveCount(0);
   await page.screenshot({ path: 'test-results/stage13b-audit-desktop.png', fullPage: true });
-  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Xem các thao tác trên đối tượng này' }).click();
+  await expect.poll(() => calls.at(-1)?.searchParams.get('targetRecordId')).toBe(id);
+  expect(calls.at(-1)?.searchParams.get('targetTable')).toBe('system_configurations');
+  await expect(page.getByText('Đang xem các thao tác trên một bản ghi')).toBeVisible();
+  await page.getByRole('button', { name: 'Bỏ lọc này' }).click();
+  await expect.poll(() => calls.at(-1)?.searchParams.has('targetRecordId')).toBe(false);
   await page.goto('/admin/delivery');
   await expect(page.getByRole('cell', { name: 'FallDetected', exact: true })).toBeVisible();
   await expect(page.getByText('24 giờ gần nhất', { exact: true })).toBeVisible();
@@ -1812,6 +1820,41 @@ test('10: registry CRUD, authenticated photos, revoked permissions and recoverab
   await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
   await expect(page.getByText('Chưa có người thân phù hợp.', { exact: true })).toBeVisible();
 });
+// People pickers search /api/users by name/email (pageSize 10) and send the chosen id.
+async function stubPeopleSearch(page: Page, people: Record<string, string>) {
+  const searches: URL[] = [];
+  await page.route(
+    (url) => url.pathname === '/api/users' && url.searchParams.get('pageSize') === '10',
+    (route) => {
+      const url = new URL(route.request().url());
+      searches.push(url);
+      const role = url.searchParams.get('role');
+      const items = Object.entries(people)
+        .filter(([r]) => !role || r === role)
+        .map(([r, personId]) => ({
+          id: personId,
+          fullName:
+            r === 'Caregiver' ? 'Nhân viên mẫu' : r === 'Admin' ? 'Quản trị mẫu' : 'VIU mẫu',
+          email: personId.slice(-4) + '@example.test',
+          phoneNumber: null,
+          role: r,
+          organizationId: r === 'Admin' ? null : organizationId,
+          isActive: true,
+          avatarUrl: null,
+          deletedAt: null,
+          lastLoginAt: null,
+          createdAt: '2026-10-01T00:00:00Z',
+          updatedAt: '2026-10-01T00:00:00Z',
+        }));
+      return route.fulfill({ json: { success: true, data: organizationPage(items) } });
+    },
+  );
+  return searches;
+}
+async function pick(scope: Page | Locator, label: string, term: string, option: RegExp) {
+  await scope.getByRole('combobox', { name: label, exact: true }).fill(term);
+  await scope.getByRole('option', { name: option }).click();
+}
 async function stubApi(page: Page, role = 'Caregiver', organizationId: string | null = null) {
   const calls: string[] = [];
   await page.route('http://localhost:5176/api/**', async (route) => {
@@ -2531,6 +2574,9 @@ test('5b Admin: create/edit/status/reset/delete accounts without changing identi
   await page.route('http://localhost:5176/api/organizations/' + organizationId, (route) =>
     route.fulfill({ json: { success: true, data: organizationFixture } }),
   );
+  await page.route('http://localhost:5176/api/organizations?*', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([organizationFixture]) } }),
+  );
   await page.route('http://localhost:5176/api/users**', (route) => {
     const req = route.request(),
       url = new URL(req.url()),
@@ -2580,7 +2626,7 @@ test('5b Admin: create/edit/status/reset/delete accounts without changing identi
   await dialog.getByLabel('Mật khẩu mới').fill('Password@1');
   await dialog.getByLabel('Nhập lại mật khẩu').fill('Password@1');
   await dialog.getByLabel('Vai trò tài khoản').selectOption('Caregiver');
-  await dialog.getByLabel('Mã tổ chức', { exact: true }).fill(organizationId);
+  await pick(dialog, 'Tổ chức', 'Trung tâm', /Trung tâm thử nghiệm/);
   await dialog.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   await page.getByRole('button', { name: 'Sửa hồ sơ tài khoản', exact: true }).click();
@@ -2675,7 +2721,7 @@ test('5b CenterAdmin: fixed role and own organization, no delete; cross-org resp
     .click();
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await expect(actionDialog(page).getByLabel('Vai trò tài khoản')).toHaveCount(0);
-  await expect(actionDialog(page).getByLabel('Mã tổ chức', { exact: true })).toHaveCount(0);
+  await expect(actionDialog(page).getByLabel('Tổ chức', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
   expect(queries[0].searchParams.get('role')).toBe('Caregiver');
   expect(queries[0].searchParams.get('organizationId')).toBe(organizationId);
@@ -2745,6 +2791,7 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
         { id, role: 'Caregiver', orgId: organizationId },
         { id: linkedViuId, role: 'VisuallyImpaired', orgId: organizationId },
       ]);
+      await stubPeopleSearch(page, { Caregiver: id, VisuallyImpaired: linkedViuId });
       let current = { ...managedLink },
         exists = false,
         failPermission = true,
@@ -2806,8 +2853,8 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
         await dialog.getByLabel('Nhân viên chăm sóc').selectOption(id);
         await dialog.getByLabel('Người được chăm sóc').selectOption(linkedViuId);
       } else {
-        await dialog.getByLabel('Mã Caregiver').fill(id);
-        await dialog.getByLabel('Mã VIU').fill(linkedViuId);
+        await pick(dialog, 'Người chăm sóc *', 'Nhân', /Nhân viên mẫu/);
+        await pick(dialog, 'Người được chăm sóc *', 'VIU', /VIU mẫu/);
       }
       await dialog.getByLabel('Tôi xác nhận tạo liên kết giữa các tài khoản trên').check();
       await dialog.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();

@@ -12,6 +12,8 @@ import {
 } from '../../services/api/calls';
 import { PageHead, State, Dialog } from '../../components/UI';
 import type { Person } from '../../models/domain';
+import { SearchPicker } from '../../components/SearchPicker';
+import { searchCareRecipients } from '../../services/api/pickers';
 const time = (value: string | null) => (value ? formatLocaleDateTime(value) : t('Chưa có'));
 export function ApiCalls() {
   const { data: actor } = useSession();
@@ -23,6 +25,7 @@ function History({ actor }: { actor: Person }) {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<CallFilters>({ viuUserId: '', dateFrom: '', dateTo: '' });
   const [selected, setSelected] = useState<CallHistoryItem | null>(null);
+  const [viu, setViu] = useState('');
   const result = useQuery({
     queryKey: ['api-calls', actor.id, actor.orgId, page, filters],
     queryFn: ({ signal }) => callsApi.history(actor, page, filters, signal),
@@ -48,7 +51,7 @@ function History({ actor }: { actor: Person }) {
             event.preventDefault();
             const data = new FormData(event.currentTarget);
             setFilters({
-              viuUserId: String(data.get('viuUserId') || '').trim(),
+              viuUserId: viu,
               dateFrom: String(data.get('dateFrom') || ''),
               dateTo: String(data.get('dateTo') || ''),
             });
@@ -56,10 +59,14 @@ function History({ actor }: { actor: Person }) {
             setSelected(null);
           }}
         >
-          <label className="field">
-            {t('Mã người được chăm sóc')}
-            <input name="viuUserId" placeholder={t('UUID · để trống xem tất cả')} />
-          </label>
+          <SearchPicker
+            label={t('Người được chăm sóc')}
+            placeholder={t('Gõ tên hoặc email; để trống xem tất cả')}
+            value={viu}
+            onChange={setViu}
+            search={searchCareRecipients()}
+            queryKey={['call-viu', actor.id, actor.orgId]}
+          />
           <label className="field">
             {t('Từ thời điểm')}
             <input name="dateFrom" type="datetime-local" />
