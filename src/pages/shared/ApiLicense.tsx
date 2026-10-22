@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useSession } from '../../hooks/useService';
+import { useLimit } from '../../hooks/useLimit';
 import { PageHead, State } from '../../components/UI';
 import {
   getMySubscription,
@@ -19,6 +20,7 @@ const dateLabel = (date?: string | null) =>
   date ? formatLocaleDateTime(date, { timeZoneName: 'short' }) : t('Chưa có thời hạn từ máy chủ');
 
 export function ApiLicense() {
+  const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const session = useSession();
   const cache = useQueryClient();
   const user = session.data;
@@ -105,7 +107,8 @@ export function ApiLicense() {
           )}
           <p>
             {t(
-              'Trial và Personal hỗ trợ tối đa 3 người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.',
+              'Trial và Personal hỗ trợ tối đa {max} người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.',
+              { max: maxVius },
             )}
           </p>
           <p className="notice">

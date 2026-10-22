@@ -3,6 +3,7 @@ import { Toast } from '../../components/UI';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { useLimit } from '../../hooks/useLimit';
 import { caregivingApi } from '../../services/api/caregiving';
 import { registryApi, type RegistryPerson, type RegistryImage } from '../../services/api/registry';
 import { onSessionEnded } from '../../services/sessionLifecycle';
@@ -129,6 +130,8 @@ function Registry({ actor }: { actor: Person }) {
 
 type Scope = { actor: Person; viuId: string };
 function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
+  const maxPersons = useLimit('face_registry.max_persons_per_registry');
+  const minPhotos = useLimit('face_registry.min_photos_to_activate');
   const cache = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
   const [photos, setPhotos] = useState<string | null>(null);
@@ -156,7 +159,8 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
       <h2>{t('Danh bạ của {name}', { name })}</h2>
       <p className="notice">
         {t(
-          'Tối đa 20 người. Cần ít nhất 3 ảnh để kích hoạt mỗi người. Trạng thái nhận từ máy chủ; khả năng nhận diện còn phụ thuộc chất lượng ảnh và hệ thống AI.',
+          'Tối đa {max} người. Cần ít nhất {min} ảnh để kích hoạt mỗi người. Trạng thái nhận từ máy chủ; khả năng nhận diện còn phụ thuộc chất lượng ảnh và hệ thống AI.',
+          { max: maxPersons, min: minPhotos },
         )}
       </p>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
@@ -178,7 +182,9 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
         </button>
         <button
           className="btn primary"
-          disabled={query.isError || !query.data?.canManage || query.data.items.length >= 20}
+          disabled={
+            query.isError || !query.data?.canManage || query.data.items.length >= maxPersons
+          }
           onClick={() => setEditing('new')}
         >
           {t('Thêm người thân')}
@@ -388,6 +394,7 @@ function RegistryPhotos({
   onClose,
   refresh,
 }: Scope & { id: string; onClose: () => void; refresh: () => Promise<unknown> }) {
+  const minPhotos = useLimit('face_registry.min_photos_to_activate');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -417,7 +424,9 @@ function RegistryPhotos({
               <p className="notice">
                 {t('{imageCount} ảnh ·', { imageCount: person.imageCount })}{' '}
                 {person.isActive ? t('Hoạt động') : t('Chưa hoạt động')}
-                {t('. Xóa ảnh khiến số lượng dưới 3 sẽ ngừng kích hoạt người này.')}
+                {t('. Xóa ảnh khiến số lượng dưới {min} sẽ ngừng kích hoạt người này.', {
+                  min: minPhotos,
+                })}
               </p>
               {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
               {error && (
@@ -500,7 +509,9 @@ function RegistryPhotos({
               >
                 {t('Tải lại ảnh')}
               </button>
-              {!person.images.length && <p>{t('Chưa có ảnh. Thêm ít nhất 3 ảnh để kích hoạt.')}</p>}
+              {!person.images.length && (
+                <p>{t('Chưa có ảnh. Thêm ít nhất {min} ảnh để kích hoạt.', { min: minPhotos })}</p>
+              )}
               <div className="registry-photos">
                 {person.images.map((photo, index) => (
                   <article
@@ -563,7 +574,8 @@ function RegistryPhotos({
                 <Confirm
                   title={t('Xóa ảnh người thân')}
                   description={t(
-                    'Xóa vĩnh viễn ảnh này? Nếu còn dưới 3 ảnh, người thân sẽ ngừng hoạt động trong nhận diện.',
+                    'Xóa vĩnh viễn ảnh này? Nếu còn dưới {min} ảnh, người thân sẽ ngừng hoạt động trong nhận diện.',
+                    { min: minPhotos },
                   )}
                   onClose={() => setRemoving(null)}
                   onConfirm={async () => {

@@ -3,11 +3,14 @@ import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { useLimit } from '../../hooks/useLimit';
 import { personField, useOrgPeople } from '../../hooks/useOrgPeople';
 import { linksApi, canManageLink, type CareLink, type LinkFilters } from '../../services/api/links';
 import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import type { Person } from '../../models/domain';
+import { SearchPicker } from '../../components/SearchPicker';
+import { searchAccounts, searchCareRecipients } from '../../services/api/pickers';
 
 const permissionFields: FieldSpec[] = [
   { key: 'canReceiveAlerts', label: msg('Nhận cảnh báo'), type: 'checkbox' },
@@ -19,6 +22,8 @@ export function ApiLinks() {
   return actor ? <Links key={actor.id + actor.orgId} actor={actor} /> : null;
 }
 function Links({ actor }: { actor: Person }) {
+  const maxCaregivers = useLimit('caregiving.max_caregivers_per_viu');
+  const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const cache = useQueryClient();
   const [filters, setFilters] = useState<LinkFilters>({
     page: 1,
@@ -71,7 +76,8 @@ function Links({ actor }: { actor: Person }) {
                 'Chỉ hiển thị liên kết của chính bạn. Chưa có API mời người chăm sóc phụ bằng email hoặc QR.',
               )
             : t(
-                'Phân công tài khoản Caregiver và VIU đã có; tối đa 3 liên kết hoạt động cho mỗi bên.',
+                'Phân công tài khoản Caregiver và VIU đã có; mỗi VIU tối đa {maxCaregivers} người chăm sóc, mỗi Caregiver tối đa {maxVius} VIU đang liên kết.',
+                { maxCaregivers, maxVius },
               )
         }
         actions={
@@ -98,27 +104,31 @@ function Links({ actor }: { actor: Person }) {
           className="row"
           onSubmit={(e) => {
             e.preventDefault();
-            filter({ caregiverId: draftCg.trim(), viuId: draftViu.trim() });
+            filter({ caregiverId: draftCg, viuId: draftViu });
           }}
         >
           {actor.role !== 'Caregiver' && (
-            <label className="field">
-              {t('Mã Caregiver')}
-              <input
-                value={draftCg}
-                onChange={(e) => setDraftCg(e.target.value)}
-                placeholder={t('UUID; để trống xem tất cả')}
-              />
-            </label>
-          )}
-          <label className="field">
-            {t('Mã VIU')}
-            <input
-              value={draftViu}
-              onChange={(e) => setDraftViu(e.target.value)}
-              placeholder={t('UUID; để trống xem tất cả')}
+            <SearchPicker
+              label={t('Người chăm sóc')}
+              placeholder={t('Gõ tên hoặc email; để trống xem tất cả')}
+              value={draftCg}
+              onChange={setDraftCg}
+              search={searchAccounts(actor, 'Caregiver')}
+              queryKey={['link-filter-caregiver', actor.id, actor.orgId]}
             />
-          </label>
+          )}
+          <SearchPicker
+            label={t('Người được chăm sóc')}
+            placeholder={t('Gõ tên hoặc email; để trống xem tất cả')}
+            value={draftViu}
+            onChange={setDraftViu}
+            search={
+              actor.role === 'Caregiver'
+                ? searchCareRecipients()
+                : searchAccounts(actor, 'VisuallyImpaired')
+            }
+            queryKey={['link-filter-viu', actor.id, actor.orgId]}
+          />
           {actor.role !== 'CenterAdmin' && (
             <label className="field">
               {t('Loại liên kết')}
@@ -281,24 +291,29 @@ function LinkEditor({
                 personField(
                   {
                     key: 'caregiverId',
-                    label: picking ? t('Nhân viên chăm sóc') : t('Mã Caregiver'),
+                    label: picking ? t('Nhân viên chăm sóc') : t('Người chăm sóc'),
                     required: true,
-                    hint: t('UUID từ chi tiết tài khoản nhân viên.'),
                   },
                   staff,
                   t('Trung tâm chưa có nhân viên đang hoạt động. Tạo nhân viên trước.'),
+                  {
+                    search: searchAccounts(actor, 'Caregiver'),
+                    searchKey: ['link-caregiver', actor.id, actor.orgId],
+                  },
                 ),
               ]
             : []),
           personField(
-            {
-              key: 'viuId',
-              label: picking ? t('Người được chăm sóc') : t('Mã VIU'),
-              required: true,
-              hint: t('UUID từ tài khoản người được chăm sóc đã tạo.'),
-            },
+            { key: 'viuId', label: t('Người được chăm sóc'), required: true },
             vius,
             t('Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản VIU trước.'),
+            {
+              search:
+                actor.role === 'Caregiver'
+                  ? searchCareRecipients()
+                  : searchAccounts(actor, 'VisuallyImpaired'),
+              searchKey: ['link-viu', actor.id, actor.orgId],
+            },
           ),
           ...(actor.role === 'Admin'
             ? [
@@ -378,7 +393,7 @@ function LinkEditor({
               if (status === 409 || status >= 500)
                 throw new Error(
                   t(
-                    'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo mã hai tài khoản và tải lại trước khi gửi lại.',
+                    'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo hai tài khoản và tải lại trước khi gửi lại.',
                   ),
                   { cause: error },
                 );
@@ -390,7 +405,7 @@ function LinkEditor({
         />
       )}
       {picking && (staff.isError || vius.isError) && (
-        <p className="muted">{t('Không tải được danh sách tổ chức; nhập mã UUID thay thế.')}</p>
+        <p className="muted">{t('Không tải được danh sách tổ chức; tìm theo tên hoặc email.')}</p>
       )}
     </Dialog>
   );

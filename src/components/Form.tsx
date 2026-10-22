@@ -4,12 +4,22 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Fields } from '../models/domain';
+import { SearchPicker, type PickerSearch } from './SearchPicker';
 
 /** `label`, `hint` and option labels may be message ids (`msg()`); they are translated at render. */
 export interface FieldSpec {
   key: string;
   label: string;
-  type?: 'text' | 'email' | 'password' | 'number' | 'checkbox' | 'select' | 'textarea' | 'date';
+  type?:
+    | 'text'
+    | 'email'
+    | 'password'
+    | 'number'
+    | 'checkbox'
+    | 'select'
+    | 'textarea'
+    | 'date'
+    | 'search';
   required?: boolean;
   min?: number;
   max?: number;
@@ -18,6 +28,10 @@ export interface FieldSpec {
   hint?: string;
   step?: number;
   autoComplete?: string;
+  /** For type 'search': finds records by name/email; the field value is the chosen id. */
+  search?: PickerSearch;
+  /** Cache key identifying the actor/scope of `search`. */
+  searchKey?: unknown[];
 }
 
 export function Form({
@@ -101,6 +115,34 @@ export function Form({
           'aria-describedby':
             (errors[field.key] ? fieldId + '-error ' : '') + (field.hint ? fieldId + '-hint' : ''),
         };
+        const feedback = (
+          <>
+            {errors[field.key] && (
+              <span id={fieldId + '-error'} className="field-error" role="alert">
+                {errors[field.key]?.message as string}
+              </span>
+            )}
+            {field.hint && <small id={fieldId + '-hint'}>{tText(field.hint)}</small>}
+          </>
+        );
+        if (field.type === 'search' && field.search)
+          return (
+            <SearchPicker
+              key={field.key}
+              id={fieldId}
+              label={tText(field.label)}
+              required={field.required}
+              disabled={props.disabled}
+              invalid={props['aria-invalid']}
+              describedBy={props['aria-describedby'] || undefined}
+              value={String(values[field.key] ?? '')}
+              onChange={(id) => setValue(field.key, id, { shouldValidate: true })}
+              search={field.search}
+              queryKey={field.searchKey ?? [field.key]}
+            >
+              {feedback}
+            </SearchPicker>
+          );
         return (
           <div
             className={field.type === 'checkbox' ? 'field field-checkbox' : 'field'}
@@ -137,12 +179,7 @@ export function Form({
                 }
               />
             )}
-            {errors[field.key] && (
-              <span id={fieldId + '-error'} className="field-error" role="alert">
-                {errors[field.key]?.message as string}
-              </span>
-            )}
-            {field.hint && <small id={fieldId + '-hint'}>{tText(field.hint)}</small>}
+            {feedback}
           </div>
         );
       })}

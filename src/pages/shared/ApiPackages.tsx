@@ -3,6 +3,7 @@ import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { useLimit } from '../../hooks/useLimit';
 import { PackageCheckout } from './ApiPayments';
 import { isPersonalCaregiver } from '../../services/api/licenses';
 import { canCheckout, canPay } from '../../services/api/payments';
@@ -36,7 +37,7 @@ const editorFields: FieldSpec[] = [
     step: 1,
     required: true,
     hint: msg(
-      'B2C vẫn tối đa 3 VIU theo MaxViusPerCaregiver; trường này không thay đổi giới hạn đó.',
+      'Số VIU của B2C vẫn theo cấu hình caregiving.max_vius_per_caregiver; trường này không thay đổi giới hạn đó.',
     ),
   },
   {
@@ -79,6 +80,7 @@ export function ApiPackages({ admin = false }: { admin?: boolean }) {
   ) : null;
 }
 function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
+  const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const personal = isPersonalCaregiver(actor);
   const buyer = canPay(actor);
   const [checkout, setCheckout] = useState<LicensePackage | null>(null);
@@ -130,7 +132,8 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
           {actor.role === 'CenterAdmin'
             ? t('Gói Business dành cho tổ chức.')
             : t(
-                'Gói Personal dành cho gia đình; tối đa 3 người được chăm sóc theo chính sách hiện hành.',
+                'Gói Personal dành cho gia đình; tối đa {max} người được chăm sóc theo chính sách hiện hành.',
+                { max: maxVius },
               )}
         </p>
       )}
@@ -200,7 +203,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                     </td>
                     <td>
                       {p.packageType === 'Personal'
-                        ? t('Tối đa 3 VIU theo chính sách B2C')
+                        ? t('Tối đa {max} VIU theo chính sách B2C', { max: maxVius })
                         : t('{includedLicenses} license bao gồm', {
                             includedLicenses: p.includedLicenses,
                           })}

@@ -51,6 +51,26 @@ it('creates only a VIU and prevents account creation when caregiver quota is ful
   await expect(api.createUser(input, caregiverId)).rejects.toMatchObject({ status: 422 });
   expect(write).toHaveBeenCalledTimes(1);
 });
+it('uses the Admin-configured VIU limit before creating an account', async () => {
+  const read = vi.fn(async (path: string) =>
+    path.startsWith('/api/system-configs/public')
+      ? page([{ configKey: 'caregiving.max_vius_per_caregiver', configValue: '2' }])
+      : { ...page([]), totalCount: 2 },
+  );
+  const write = vi.fn();
+  const api = createCaregivingApi(read, write);
+  const input = {
+    fullName: 'VIU',
+    email: 'viu@example.com',
+    phoneNumber: '',
+    password: 'Test123!',
+  };
+  await expect(api.createUser(input, caregiverId)).rejects.toMatchObject({
+    status: 422,
+    message: expect.stringContaining('tối đa 2'),
+  });
+  expect(write).not.toHaveBeenCalled();
+});
 it('reconciles a duplicate link with a scoped read without replaying POST', async () => {
   const read = vi.fn(async () => page([link]));
   const write = vi.fn(async () => {

@@ -16,6 +16,8 @@ import type { Person } from '../../models/domain';
 import { Link } from 'react-router-dom';
 import { viuLicenseLabel } from '../../services/api/licenses';
 import { useOwnOrgName } from '../../hooks/useOrgPeople';
+import { SearchPicker } from '../../components/SearchPicker';
+import { searchOrganizations } from '../../services/api/pickers';
 
 const profileFields: FieldSpec[] = [
   { key: 'fullName', label: msg('Họ và tên'), required: true, max: 200 },
@@ -133,7 +135,7 @@ function Accounts({
           className="row"
           onSubmit={(e) => {
             e.preventDefault();
-            filter({ search: search.trim(), organizationId: orgFilter.trim() });
+            filter({ search: search.trim(), organizationId: orgFilter });
           }}
         >
           <label className="field">
@@ -158,14 +160,14 @@ function Accounts({
             </label>
           )}
           {actor.role === 'Admin' && (
-            <label className="field">
-              {t('Mã tổ chức để lọc')}
-              <input
-                value={orgFilter}
-                onChange={(e) => setOrgFilter(e.target.value)}
-                placeholder={t('UUID; để trống xem tất cả')}
-              />
-            </label>
+            <SearchPicker
+              label={t('Tổ chức')}
+              placeholder={t('Gõ tên tổ chức; để trống xem tất cả')}
+              value={orgFilter}
+              onChange={setOrgFilter}
+              search={searchOrganizations(actor)}
+              queryKey={['account-org-filter', actor.id]}
+            />
           )}
           <label className="field">
             {t('Trạng thái')}
@@ -328,10 +330,11 @@ function AccountEditor({
           ? [
               {
                 key: 'organizationId',
-                label: t('Mã tổ chức'),
-                hint: t(
-                  'Sao chép UUID từ màn Tổ chức. Bắt buộc với vai trò không phải Admin; tổ chức phải hoạt động.',
-                ),
+                label: t('Tổ chức'),
+                type: 'search' as const,
+                search: searchOrganizations(actor),
+                searchKey: ['account-org', actor.id],
+                hint: t('Bắt buộc với vai trò không phải Admin; tổ chức phải hoạt động.'),
               },
             ]
           : []),

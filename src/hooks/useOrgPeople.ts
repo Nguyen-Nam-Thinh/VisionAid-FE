@@ -4,7 +4,7 @@ import { organizationsApi } from '../services/api/organizations';
 import type { FieldSpec } from '../components/Form';
 import type { Person } from '../models/domain';
 
-// Picker data for CenterAdmin forms; other roles keep typed UUIDs (Admin works across organizations).
+// Picker data for CenterAdmin forms; Admin (all organizations) and large orgs use name/email search.
 export function useOrgPeople(
   actor: Person,
   role: 'Caregiver' | 'VisuallyImpaired',
@@ -19,14 +19,15 @@ export function useOrgPeople(
   });
 }
 
-// A select when the full active list is known, otherwise the original UUID text field.
+// A select when the full active list is known, otherwise a name/email search field.
 export function personField(
   field: FieldSpec,
   people: ReturnType<typeof useOrgPeople>,
   emptyHint: string,
+  search: Pick<FieldSpec, 'search' | 'searchKey'>,
 ): FieldSpec {
   const data = people.data;
-  if (!data?.complete) return field;
+  if (!data?.complete) return { ...field, ...search, type: 'search' };
   if (!data.items.length) return { ...field, type: 'select', options: [], hint: emptyHint };
   return {
     ...field,
