@@ -15,7 +15,12 @@ export default defineConfig({
     command: 'npm run dev -- --host localhost --port 5176 --strictPort',
     url: 'http://localhost:5176',
     reuseExistingServer: true,
-    env: { VITE_SERVICE_MODE: 'api', VITE_API_BASE_URL: 'http://localhost:5176', VITE_SIGNALR_URL: 'http://localhost:5176/hubs/location' },
+    env: {
+      VITE_SERVICE_MODE: 'api',
+      VITE_API_BASE_URL: 'http://localhost:5176',
+      VITE_SIGNALR_URL: 'http://localhost:5176/hubs/location',
+      VITE_MAPBOX_PUBLIC_TOKEN: 'pk.eyJ1IjoiZTJlIiwiYSI6ImUyZSJ9.e2e',
+    },
   },
   reporter: [['list'], ['html', { open: 'never' }]],
 });

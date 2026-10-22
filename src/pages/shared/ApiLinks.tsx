@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { useLimit } from '../../hooks/useLimit';
 import { personField, useOrgPeople } from '../../hooks/useOrgPeople';
-import { linksApi, canManageLink, type CareLink, type LinkFilters } from '../../services/api/links';
+import { linksApi, linkAccess, type CareLink, type LinkFilters } from '../../services/api/links';
 import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import type { Person } from '../../models/domain';
@@ -73,7 +73,7 @@ function Links({ actor }: { actor: Person }) {
         description={
           actor.role === 'Caregiver'
             ? t(
-                'Chỉ hiển thị liên kết của chính bạn. Chưa có API mời người chăm sóc phụ bằng email hoặc QR.',
+                'Liên kết của bạn, và liên kết của người chăm sóc phụ với người bạn chăm sóc chính. Chưa có API mời người chăm sóc phụ bằng email hoặc QR.',
               )
             : t(
                 'Phân công tài khoản Caregiver và VIU đã có; mỗi VIU tối đa {maxCaregivers} người chăm sóc, mỗi Caregiver tối đa {maxVius} VIU đang liên kết.',
@@ -424,7 +424,14 @@ function LinkDetails({
   const [edit, setEdit] = useState(false);
   const [action, setAction] = useState<'promote' | 'remove' | null>(null);
   const [notice, setNotice] = useState('');
-  const manage = canManageLink(actor, link);
+  const primary = useQuery({
+    queryKey: ['api-primary-vius', actor.id, actor.orgId],
+    queryFn: ({ signal }) => linksApi.primaryVius(actor, signal),
+    enabled: actor.role === 'Caregiver',
+    refetchInterval: 30000,
+  });
+  const access = linkAccess(actor, link, primary.data ?? new Set());
+  const manage = access.edit || access.remove || access.promote;
   return (
     <section className="stack">
       <h2>{t('Chi tiết liên kết')}</h2>
@@ -472,21 +479,37 @@ function LinkDetails({
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {manage && (
         <div className="row">
-          <button className="btn" onClick={() => setEdit(true)}>
-            {t('Sửa quyền liên kết')}
-          </button>
-          {actor.role !== 'Caregiver' && !link.isPrimary && (
+          {access.edit && (
+            <button className="btn" onClick={() => setEdit(true)}>
+              {t('Sửa quyền liên kết')}
+            </button>
+          )}
+          {access.promote && !link.isPrimary && (
             <button className="btn" onClick={() => setAction('promote')}>
               {t('Chuyển thành chăm sóc chính')}
             </button>
           )}
-          <button className="btn danger" onClick={() => setAction('remove')}>
-            {t('Gỡ liên kết')}
-          </button>
+          {access.remove && (
+            <button className="btn danger" onClick={() => setAction('remove')}>
+              {actor.role === 'Caregiver' && link.caregiverId === actor.id
+                ? t('Hủy liên kết của tôi')
+                : t('Gỡ liên kết')}
+            </button>
+          )}
         </div>
       )}
+      {actor.role === 'Caregiver' &&
+        link.caregiverId === actor.id &&
+        !link.isPrimary &&
+        !link.unlinkedAt && (
+          <p className="notice">
+            {t(
+              'Bạn là người chăm sóc phụ: quyền của liên kết do người chăm sóc chính quyết định. Bạn chỉ có thể tự hủy liên kết.',
+            )}
+          </p>
+        )}
       {!manage && <p>{t('Liên kết này chỉ được xem trong tài khoản hiện tại.')}</p>}
-      {edit && manage && (
+      {edit && access.edit && (
         <LinkEditor
           actor={actor}
           link={link}
@@ -498,7 +521,7 @@ function LinkDetails({
           }}
         />
       )}
-      {action && manage && (
+      {action && access[action] && (
         <Confirm
           title={action === 'promote' ? t('Chuyển người chăm sóc chính') : t('Gỡ liên kết')}
           description={

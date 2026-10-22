@@ -81,19 +81,21 @@ const escalationSchema = z.object({
 });
 export type Emergency = z.infer<typeof eventSchema>;
 export type Escalation = z.infer<typeof escalationSchema>;
-export type AlertAction = 'acknowledge' | 'escalate' | 'resolve';
+export type AlertAction = 'acknowledge' | 'escalate' | 'called' | 'resolve';
 export const actionLabels: Record<AlertAction, string> = labelMap({
   acknowledge: msg('Tiếp nhận cảnh báo'),
   escalate: msg('Chuyển cấp hỗ trợ'),
+  called: msg('Xác nhận đã gọi hỗ trợ'),
   resolve: msg('Đánh dấu đã giải quyết'),
 });
 export function alertActions(s: Emergency['currentStatus']): AlertAction[] {
+  // WF-01: BE allows Called (PUT /called) from Sent, Acknowledged and Escalated; Called is final.
   return s === 'Sent'
-    ? ['acknowledge', 'escalate', 'resolve']
+    ? ['acknowledge', 'escalate', 'called', 'resolve']
     : s === 'Acknowledged'
-      ? ['escalate', 'resolve']
+      ? ['escalate', 'called', 'resolve']
       : s === 'Escalated'
-        ? ['resolve']
+        ? ['called', 'resolve']
         : [];
 }
 type Actor = Pick<Person, 'id' | 'role' | 'orgId'>;

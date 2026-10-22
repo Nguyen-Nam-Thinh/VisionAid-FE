@@ -366,6 +366,8 @@ function PlaceEditor({
 }) {
   const creating = id === 'new';
   const zone = kind === 'geofences';
+  const defaultRadius = useLimit('location.geofence.default_radius_meters');
+  const defaultArrival = useLimit('location.geofence.default_arrival_radius_meters');
   const detail = useQuery({
     queryKey: ['api-place-detail', actor.id, actor.orgId, viuId, kind, id],
     queryFn: ({ signal }) => placesApi.detail(actor, viuId, kind, id, signal),
@@ -408,8 +410,8 @@ function PlaceEditor({
     ? {
         latitude: '',
         longitude: '',
-        radiusMeters: 300,
-        arrivalRadiusMeters: 50,
+        radiusMeters: defaultRadius,
+        arrivalRadiusMeters: defaultArrival,
         alertOnExit: true,
         alertOnEnter: false,
       }

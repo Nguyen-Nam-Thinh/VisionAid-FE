@@ -952,3 +952,18 @@ tbody tr:hover {
 .picker-list > li[role='option'] { cursor: pointer; }
 .picker-list > li.active { background: var(--primary-soft); }
 .picker-list > li > small { color: var(--muted); font-size: 0.75rem; }
+/* GpsMap (Mapbox): the coordinate table below stays the accessible equivalent */
+.gps-map-wrap { display: grid; gap: 8px; }
+.gps-map { height: 420px; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+.gps-map-loading { min-height: 120px; display: grid; place-items: center; color: var(--muted); }
+.gps-marker { width: 22px; height: 22px; border-radius: 50%; border: 3px solid #fff; background: var(--success); box-shadow: 0 2px 8px rgb(23 45 59 / 35%); cursor: pointer; padding: 0; }
+.gps-marker.stale { background: var(--warning-text); }
+.gps-marker.selected { outline: 3px solid var(--primary); outline-offset: 2px; width: 28px; height: 28px; }
+.gps-marker:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+@media (max-width: 760px) { .gps-map { height: 300px; } }
+.gps-popup { display: grid; gap: 2px; font: 0.8125rem/1.45 'Plus Jakarta Sans', sans-serif; color: var(--text); }
+.gps-popup p { margin: 0; color: var(--muted); }
+.gps-map .mapboxgl-popup-content { padding: 12px 36px 12px 14px; border-radius: 10px; box-shadow: var(--shadow-float); }
+.gps-map .mapboxgl-popup-close-button { top: 6px; right: 6px; width: 26px; height: 26px; min-height: 0; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; }
+.gps-map .mapboxgl-popup-close-button:hover { background: var(--stone); color: var(--text); }
+.gps-map .mapboxgl-popup-close-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { apiGet } from './adapter';
 
-// Defaults mirror BE BusinessRules; BE reads the same keys and stays authoritative.
+// Public numeric settings (limits and form defaults). Defaults mirror BE DbSeeder; BE stays authoritative.
 export const LIMIT_DEFAULTS = {
   'caregiving.max_vius_per_caregiver': 3,
   'caregiving.max_caregivers_per_viu': 3,
@@ -9,6 +9,9 @@ export const LIMIT_DEFAULTS = {
   'face_registry.min_photos_to_activate': 3,
   'location.max_saved_locations_per_user': 20,
   'emergency.max_contacts_per_user': 5,
+  // UC-111: starting radius for new geofences / saved-location arrival, editable per record.
+  'location.geofence.default_radius_meters': 300,
+  'location.geofence.default_arrival_radius_meters': 50,
 } as const;
 export type LimitKey = keyof typeof LIMIT_DEFAULTS;
 export type Limits = Record<LimitKey, number>;

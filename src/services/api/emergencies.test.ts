@@ -51,7 +51,10 @@ it('checks fresh status and permission before writing and does not replay failur
   expect(write).toHaveBeenCalledTimes(1);
   expect(JSON.parse(String(write.mock.calls[0][1].body))).toEqual({ notes: 'done' });
   expect(alertActions('Detected')).toEqual([]);
-  expect(alertActions('Escalated')).toEqual(['resolve']);
+  expect(alertActions('Sent')).toEqual(['acknowledge', 'escalate', 'called', 'resolve']);
+  expect(alertActions('Acknowledged')).toEqual(['escalate', 'called', 'resolve']);
+  expect(alertActions('Escalated')).toEqual(['called', 'resolve']);
+  expect(alertActions('Called')).toEqual([]);
 });
 it('rejects unsupported role, mismatched IDs and malformed data', async () => {
   const get = vi.fn<NonNullable<Parameters<typeof createEmergenciesApi>[0]>>(async () => ({

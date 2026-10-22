@@ -18,3 +18,34 @@ export function project(location: Location, all: Location[]) {
     top: `${15 + (60 * (maxY - location.lat)) / (maxY - minY)}%`,
   };
 }
+
+export type MapPoint = {
+  id: string;
+  label: string;
+  lat: number;
+  lng: number;
+  stale: boolean;
+  /** Plain-text lines for the marker popup (address, recorded time). */
+  details?: string[];
+};
+const validPoint = (p: Pick<MapPoint, 'lat' | 'lng'>) =>
+  Number.isFinite(p.lat) &&
+  Number.isFinite(p.lng) &&
+  Math.abs(p.lat) <= 90 &&
+  Math.abs(p.lng) <= 180;
+/** Drops out-of-range coordinates so a bad server value never moves the map off the world. */
+export const mapPoints = (points: MapPoint[]) => points.filter(validPoint);
+/** Camera for the points: none → null, one → its centre, several → [[w, s], [e, n]] bounds. */
+export function mapView(points: Pick<MapPoint, 'lat' | 'lng'>[]) {
+  const valid = points.filter(validPoint);
+  if (!valid.length) return null;
+  if (valid.length === 1) return { center: coordinates(valid[0]) };
+  const lngs = valid.map((p) => p.lng);
+  const lats = valid.map((p) => p.lat);
+  return {
+    bounds: [
+      [Math.min(...lngs), Math.min(...lats)],
+      [Math.max(...lngs), Math.max(...lats)],
+    ] as [[number, number], [number, number]],
+  };
+}

@@ -181,8 +181,19 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
         isActive: 'true',
       });
       const result = parse(paged(linkSchema), await get('/api/caregiver-links?' + query, signal));
-      result.items.forEach((link) => checkLink(link, caregiverId, viuId));
-      return result;
+      // A primary caregiver also receives the secondaries' links for this VIU (UC-32–34);
+      // callers ask for their own link, so keep only that one.
+      if (result.items.some((link) => link.visuallyImpairedUserId !== viuId))
+        throw new ServiceError(t('Liên kết không thuộc tài khoản hoặc người được chọn.'), 403);
+      const items = result.items.filter((link) => link.caregiverId === caregiverId);
+      return {
+        ...result,
+        items,
+        totalCount: items.length,
+        totalPages: items.length ? 1 : 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
     },
     async detail(id: string, caregiverId: string, viuId: string, signal?: AbortSignal) {
       if (!z.string().uuid().safeParse(id).success)
