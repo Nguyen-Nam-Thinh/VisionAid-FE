@@ -484,8 +484,6 @@ export const en = {
     "Call sessions you joined. Times are shown in the browser's time zone.",
   'Để bắt đầu gọi, vào Người được chăm sóc và chọn Gọi hỗ trợ. Kết quả dưới đây do máy chủ ghi nhận.':
     'To start a call, go to Care recipients and choose Support call. The results below are recorded by the server.',
-  'Mã người được chăm sóc': 'Care recipient ID',
-  'UUID · để trống xem tất cả': 'UUID · leave empty to see all',
   'Từ thời điểm': 'From',
   'Đến thời điểm': 'To',
   'Tải lại': 'Reload',
@@ -506,8 +504,8 @@ export const en = {
   'Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.':
     'Choose a care recipient above to view the list and add information for the right person.',
   'Danh bạ của {name}': 'Contacts of {name}',
-  'Tối đa 5 liên hệ kể cả liên hệ tạm ngưng. Ưu tiên là số nguyên dương và không trùng; số nhỏ hơn được ưu tiên trước.':
-    'At most 5 contacts, including paused ones. Priority is a unique positive integer; lower numbers come first.',
+  'Tối đa {max} liên hệ kể cả liên hệ tạm ngưng. Ưu tiên là số nguyên dương và không trùng; số nhỏ hơn được ưu tiên trước.':
+    'At most {max} contacts, including paused ones. Priority is a unique positive integer; lower numbers come first.',
   'Thêm liên hệ': 'Add contact',
   'Tải lại liên hệ': 'Reload contacts',
   'Chưa có liên hệ khẩn cấp.': 'No emergency contacts yet.',
@@ -614,8 +612,8 @@ export const en = {
   'Thêm địa điểm': 'Add place',
   'Bạn có quyền xem. Cần quyền quản lý vị trí để thêm, sửa hoặc xóa.':
     'You have view access. Location management permission is needed to add, edit or delete.',
-  'Tối đa 20 địa điểm cho mỗi người, bao gồm địa điểm tạm ngưng.':
-    'At most 20 places per person, including paused places.',
+  'Tối đa {max} địa điểm cho mỗi người, bao gồm địa điểm tạm ngưng.':
+    'At most {max} places per person, including paused places.',
   'Chưa có địa điểm phù hợp.': 'No matching places.',
   'Danh sách địa điểm': 'Place list',
   'Tọa độ và bán kính': 'Coordinates and radius',
@@ -648,8 +646,8 @@ export const en = {
   Tắt: 'Off',
   'Quản lý người thân và ảnh dùng cho nhận diện của người được chăm sóc.':
     'Manage family members and the photos used to recognize them for the care recipient.',
-  'Tối đa 20 người. Cần ít nhất 3 ảnh để kích hoạt mỗi người. Trạng thái nhận từ máy chủ; khả năng nhận diện còn phụ thuộc chất lượng ảnh và hệ thống AI.':
-    'At most 20 people. Each person needs at least 3 photos to be activated. Status comes from the server; recognition still depends on photo quality and the AI system.',
+  'Tối đa {max} người. Cần ít nhất {min} ảnh để kích hoạt mỗi người. Trạng thái nhận từ máy chủ; khả năng nhận diện còn phụ thuộc chất lượng ảnh và hệ thống AI.':
+    'At most {max} people. Each person needs at least {min} photos to be activated. Status comes from the server; recognition still depends on photo quality and the AI system.',
   'Tìm người thân': 'Find a family member',
   'Tải lại danh bạ': 'Reload registry',
   'Thêm người thân': 'Add family member',
@@ -672,8 +670,8 @@ export const en = {
     'The save result was not confirmed. Reload the registry before resubmitting to avoid duplicates.',
   'Ảnh người thân': 'Family member photos',
   '{imageCount} ảnh ·': '{imageCount} photos ·',
-  '. Xóa ảnh khiến số lượng dưới 3 sẽ ngừng kích hoạt người này.':
-    '. Deleting photos so that fewer than 3 remain will deactivate this person.',
+  '. Xóa ảnh khiến số lượng dưới {min} sẽ ngừng kích hoạt người này.':
+    '. Deleting photos so that fewer than {min} remain will deactivate this person.',
   'Hãy chọn một ảnh.': 'Please choose a photo.',
   'Đã tải ảnh lên.': 'Photo uploaded.',
   'Không thể tải ảnh.': 'Could not upload the photo.',
@@ -687,8 +685,8 @@ export const en = {
   'Bạn có quyền xem ảnh, chưa có quyền quản lý gương mặt.':
     'You can view photos but do not have face management permission.',
   'Tải lại ảnh': 'Reload photos',
-  'Chưa có ảnh. Thêm ít nhất 3 ảnh để kích hoạt.':
-    'No photos yet. Add at least 3 photos to activate.',
+  'Chưa có ảnh. Thêm ít nhất {min} ảnh để kích hoạt.':
+    'No photos yet. Add at least {min} photos to activate.',
   'Ảnh {p0}': 'Photo {p0}',
   '{displayName} — ảnh {p1}': '{displayName} — photo {p1}',
   'Ảnh chính': 'Primary photo',
@@ -697,8 +695,8 @@ export const en = {
   'Không thể đổi ảnh chính.': 'Could not change the primary photo.',
   'Xóa ảnh': 'Delete photo',
   'Xóa ảnh người thân': 'Delete family member photo',
-  'Xóa vĩnh viễn ảnh này? Nếu còn dưới 3 ảnh, người thân sẽ ngừng hoạt động trong nhận diện.':
-    'Permanently delete this photo? With fewer than 3 photos, the family member will stop being used for recognition.',
+  'Xóa vĩnh viễn ảnh này? Nếu còn dưới {min} ảnh, người thân sẽ ngừng hoạt động trong nhận diện.':
+    'Permanently delete this photo? With fewer than {min} photos, the family member will stop being used for recognition.',
   'Đã xóa ảnh.': 'Photo deleted.',
   'Không tải được ảnh.': 'Could not load the photo.',
   'Thử tải ảnh lại': 'Try loading the photo again',
@@ -975,8 +973,6 @@ export const en = {
     'Account created. Check the license information and care assignment for the user.',
   'Tìm tài khoản': 'Find account',
   'Tên, email, điện thoại': 'Name, email, phone',
-  'Mã tổ chức để lọc': 'Organization ID to filter',
-  'UUID; để trống xem tất cả': 'UUID; leave empty to see all',
   'Dữ liệu xóa': 'Deleted data',
   'Chưa xóa': 'Not deleted',
   'Đã xóa': 'Deleted',
@@ -984,9 +980,6 @@ export const en = {
   'Xem tài khoản ': 'View account ',
   'Chi tiết tài khoản': 'Account details',
   'Đã xóa mềm tài khoản.': 'Account soft-deleted.',
-  'Mã tổ chức': 'Organization ID',
-  'Sao chép UUID từ màn Tổ chức. Bắt buộc với vai trò không phải Admin; tổ chức phải hoạt động.':
-    'Copy the UUID from the Organizations screen. Required for non-Admin roles; the organization must be active.',
   'Sửa hồ sơ tài khoản': 'Edit account profile',
   'Email, vai trò và tổ chức giữ nguyên: {email} · {p3}':
     'Email, role and organization stay unchanged: {email} · {p3}',
@@ -1075,8 +1068,8 @@ export const en = {
   Gói: 'Plan',
   'Trạng thái gói': 'Plan status',
   'Hết hạn kỳ sử dụng': 'Period expires',
-  'Trial và Personal hỗ trợ tối đa 3 người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.':
-    'Trial and Personal support up to 3 care recipients. Access to each person still follows the link.',
+  'Trial và Personal hỗ trợ tối đa {max} người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.':
+    'Trial and Personal support up to {max} care recipients. Access to each person still follows the link.',
   'Bạn có thể mua hoặc gia hạn gói Personal từ danh mục gói, hoặc kích hoạt key trung tâm cấp. Nếu license đã được cập nhật qua kênh khác, hãy tải lại thông tin tại đây.':
     'You can buy or renew a Personal plan from the catalog, or activate a key issued by a center. If the license was updated through another channel, reload the information here.',
   'Xem kho license tổ chức': 'View the organization license pool',
@@ -1102,12 +1095,11 @@ export const en = {
   'Lịch sử thanh toán': 'Payment history',
   'Chỉ hiển thị liên kết của chính bạn. Chưa có API mời người chăm sóc phụ bằng email hoặc QR.':
     'Only your own links are shown. There is no API yet to invite secondary caregivers by email or QR.',
-  'Phân công tài khoản Caregiver và VIU đã có; tối đa 3 liên kết hoạt động cho mỗi bên.':
-    'Assign existing Caregiver and VIU accounts; at most 3 active links on each side.',
+  'Phân công tài khoản Caregiver và VIU đã có; mỗi VIU tối đa {maxCaregivers} người chăm sóc, mỗi Caregiver tối đa {maxVius} VIU đang liên kết.':
+    'Assign existing Caregiver and VIU accounts; each VIU can have at most {maxCaregivers} caregivers and each Caregiver at most {maxVius} linked VIUs.',
   'Tạo liên kết': 'Create link',
   'Đã tạo liên kết. Trạng thái chính/phụ do máy chủ quyết định.':
     'Link created. Primary/secondary status is decided by the server.',
-  'Mã Caregiver': 'Caregiver ID',
   'Loại liên kết': 'Link type',
   'Tất cả loại': 'All types',
   'Trạng thái liên kết': 'Link status',
@@ -1119,10 +1111,8 @@ export const en = {
   'Thông tin liên kết': 'Link information',
   'Đã gỡ liên kết. BE sẽ chọn lại người chăm sóc chính nếu cần và còn liên kết hoạt động.':
     'Link removed. The BE will reselect the primary caregiver if needed and active links remain.',
-  'UUID từ chi tiết tài khoản nhân viên.': 'UUID from the staff account details.',
   'Trung tâm chưa có nhân viên đang hoạt động. Tạo nhân viên trước.':
     'The center has no active staff yet. Create staff first.',
-  'UUID từ tài khoản người được chăm sóc đã tạo.': 'UUID from the created care recipient account.',
   'Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản VIU trước.':
     'The center has no active care recipients yet. Create a VIU account first.',
   'Tôi xác nhận cập nhật các quyền trên': 'I confirm updating the permissions above',
@@ -1135,10 +1125,6 @@ export const en = {
     'Both accounts must be active. Organization links require the Caregiver and VIU to be in the same organization.',
   'Đang tải danh sách nhân viên và người được chăm sóc…': 'Loading staff and care recipients…',
   'Lưu quyền liên kết': 'Save link permissions',
-  'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo mã hai tài khoản và tải lại trước khi gửi lại.':
-    'The result was not confirmed or the link already exists. Close the form, filter by the two account IDs and reload before resubmitting.',
-  'Không tải được danh sách tổ chức; nhập mã UUID thay thế.':
-    'Could not load the organization list; enter the UUID instead.',
   'Chi tiết liên kết': 'Link details',
   'Mã: {caregiverId}': 'ID: {caregiverId}',
   'Mã: {visuallyImpairedUserId}': 'ID: {visuallyImpairedUserId}',
@@ -1195,9 +1181,6 @@ export const en = {
     'If there is an error or the connection drops while saving, close and reload to check before resubmitting.',
   'Bật nhận khi không bắt buộc': 'Receive when not mandatory',
   'Vai trò nhận': 'Recipient role',
-  'Mã trung tâm (UUID)': 'Center ID (UUID)',
-  'Để trống để áp dụng toàn hệ thống. Lấy mã từ trang Tổ chức.':
-    'Leave empty to apply system-wide. Get the ID from the Organizations page.',
   'Tôi xác nhận thay đổi quy tắc gửi thông báo': 'I confirm changing the notification rule',
   'Cần xác nhận thay đổi quy tắc.': 'The rule change must be confirmed.',
   'Xóa quy tắc thông báo?': 'Delete notification rule?',
@@ -1252,8 +1235,8 @@ export const en = {
     'May be left empty when creating. The yearly price is not yet used for Web payments; a saved price cannot be removed.',
   'Đơn vị tiền tệ': 'Currency',
   'VIU trên license (cấu hình gói)': 'VIUs per license (plan configuration)',
-  'B2C vẫn tối đa 3 VIU theo MaxViusPerCaregiver; trường này không thay đổi giới hạn đó.':
-    'B2C is still limited to 3 VIUs by MaxViusPerCaregiver; this field does not change that limit.',
+  'Số VIU của B2C vẫn theo cấu hình caregiving.max_vius_per_caregiver; trường này không thay đổi giới hạn đó.':
+    'The B2C VIU count still follows the caregiving.max_vius_per_caregiver setting; this field does not change that limit.',
   'Số license bao gồm': 'Included licenses',
   'Số ngày dùng thử': 'Trial days',
   'Thời hạn gói (ngày)': 'Plan duration (days)',
@@ -1271,8 +1254,8 @@ export const en = {
     'Choose a Business plan and create a PayOS payment order.',
   'Thêm gói': 'Add plan',
   'Gói Business dành cho tổ chức.': 'Business plans are for organizations.',
-  'Gói Personal dành cho gia đình; tối đa 3 người được chăm sóc theo chính sách hiện hành.':
-    'Personal plans are for families; at most 3 care recipients under the current policy.',
+  'Gói Personal dành cho gia đình; tối đa {max} người được chăm sóc theo chính sách hiện hành.':
+    'Personal plans are for families; at most {max} care recipients under the current policy.',
   'Đang mở': 'Open',
   'Ngừng mở': 'Closed',
   'Tải lại danh mục': 'Reload catalog',
@@ -1281,7 +1264,7 @@ export const en = {
   'Giá năm tham khảo: {p1}': 'Reference yearly price: {p1}',
   '{durationDays} ngày': '{durationDays} days',
   'Dùng thử: {trialDays} ngày': 'Trial: {trialDays} days',
-  'Tối đa 3 VIU theo chính sách B2C': 'At most 3 VIUs under the B2C policy',
+  'Tối đa {max} VIU theo chính sách B2C': 'At most {max} VIUs under the B2C policy',
   '{includedLicenses} license bao gồm': '{includedLicenses} licenses included',
   'Chọn gói {name}': 'Choose plan {name}',
   'Gói chưa hỗ trợ thanh toán online.': 'This plan does not support online payment yet.',
@@ -1523,7 +1506,6 @@ export const en = {
   'Chọn người được chăm sóc của tổ chức. Thao tác sử dụng một suất trong kho hiện tại; có thể cấp lại cho người đã bị thu hồi.':
     'Choose a care recipient of the organization. This uses one seat from the current pool; a revoked person can be assigned again.',
   'Đang tải danh sách người được chăm sóc…': 'Loading care recipients…',
-  'Nhập mã UUID tài khoản VIU của tổ chức.': "Enter the UUID of the organization's VIU account.",
   'Trung tâm chưa có người được chăm sóc đang hoạt động.':
     'The center has no active care recipients yet.',
   'Xác nhận cấp license': 'Confirm license assignment',
@@ -1955,8 +1937,8 @@ export const en = {
   'Kiểm tra họ tên, email, số điện thoại và mật khẩu. Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.':
     'Check the full name, email, phone number and password. Password must be at least 8 characters with uppercase, lowercase, a number and a special character.',
   'Liên kết không thuộc tài khoản hiện tại.': 'The link does not belong to the current account.',
-  'Bạn đã có tối đa 3 liên kết hoạt động. Chưa tạo tài khoản mới.':
-    'You already have the maximum of 3 active links. No new account was created.',
+  'Bạn đã có tối đa {max} liên kết hoạt động. Chưa tạo tài khoản mới.':
+    'You already have the maximum of {max} active links. No new account was created.',
   'Mã liên kết không hợp lệ.': 'Invalid link ID.',
   'Chỉ có thể gỡ liên kết cá nhân đang hoạt động của bạn.':
     'You can only remove your own active personal links.',
@@ -2396,4 +2378,25 @@ export const en = {
   'Key license': 'License key',
   'Trang sau': 'Next page',
   'VisionAid · Đồng hành an tâm': 'VisionAid · Care with peace of mind',
+  'Gõ tên hoặc email để tìm': 'Type a name or email to search',
+  'Gõ tên hoặc email; để trống xem tất cả': 'Type a name or email; leave empty to see all',
+  'Gõ tên tổ chức; để trống xem tất cả': 'Type an organization name; leave empty to see all',
+  'Bỏ chọn {name}': 'Clear {name}',
+  'Đang tìm…': 'Searching…',
+  'Không tải được kết quả. Thử gõ lại.': 'Could not load results. Try typing again.',
+  'Không có kết quả phù hợp.': 'No matching results.',
+  'Bỏ lọc này': 'Remove this filter',
+  'Đang xem các bản ghi của một phiên điều hướng.': 'Showing records from one navigation session.',
+  'Đang xem các thao tác trên một bản ghi của bảng {table}.':
+    'Showing actions on one record of table {table}.',
+  'đã chọn': 'selected',
+  'Xem cùng phiên điều hướng': 'Show this navigation session',
+  'Xem các thao tác trên đối tượng này': 'Show actions on this record',
+  'Bắt buộc với vai trò không phải Admin; tổ chức phải hoạt động.':
+    'Required for non-Admin roles; the organization must be active.',
+  'Để trống để áp dụng toàn hệ thống.': 'Leave empty to apply system-wide.',
+  'Không tải được danh sách tổ chức; tìm theo tên hoặc email.':
+    'Could not load the organization list; search by name or email.',
+  'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo hai tài khoản và tải lại trước khi gửi lại.':
+    'The result is not confirmed or the link already exists. Close the form, filter by both accounts and reload before sending again.',
 } satisfies Record<string, EnMessage>;

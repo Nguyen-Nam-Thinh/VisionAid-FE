@@ -3,6 +3,7 @@ import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { searchOrganizations } from '../../services/api/pickers';
 import { useOwnOrgName } from '../../hooks/useOrgPeople';
 import { Form, type FieldSpec } from '../../components/Form';
 import { Confirm, Dialog, PageHead, State } from '../../components/UI';
@@ -356,10 +357,11 @@ function Notifications({ actor }: { actor: Person }) {
                             ? [
                                 {
                                   key: 'organizationId',
-                                  label: t('Mã trung tâm (UUID)'),
-                                  hint: t(
-                                    'Để trống để áp dụng toàn hệ thống. Lấy mã từ trang Tổ chức.',
-                                  ),
+                                  label: t('Trung tâm'),
+                                  type: 'search' as const,
+                                  search: searchOrganizations(actor),
+                                  searchKey: ['rule-org', actor.id],
+                                  hint: t('Để trống để áp dụng toàn hệ thống.'),
                                 },
                               ]
                             : []),

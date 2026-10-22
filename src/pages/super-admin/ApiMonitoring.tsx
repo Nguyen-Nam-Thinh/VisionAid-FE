@@ -14,6 +14,8 @@ import {
   type MonitoringRecord,
 } from '../../services/api/monitoring';
 import type { Person } from '../../models/domain';
+import { SearchPicker } from '../../components/SearchPicker';
+import { searchAccounts } from '../../services/api/pickers';
 
 const titles = labelMap({
   metrics: msg('Hiệu năng AI'),
@@ -114,6 +116,13 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
   const [filters, setFilters] = useState<MonitoringFilters>({});
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<MonitoringRecord | null>(null);
+  // Person filters are picked by name/email; session/record ids only come from a record's details.
+  const [person, setPerson] = useState('');
+  const scope = (next: MonitoringFilters) => {
+    setFilters(next);
+    setPage(1);
+    setSelected(null);
+  };
   const query = useQuery({
     queryKey: ['api-monitoring', actor.id, kind, filters, page],
     queryFn: ({ signal }) => monitoringApi.list(actor, kind, page, filters, signal),
@@ -147,25 +156,27 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
             onSubmit={(e) => {
               e.preventDefault();
               const data = new FormData(e.currentTarget);
-              setFilters(
-                Object.fromEntries(
+              scope({
+                ...Object.fromEntries(
                   Array.from(data.entries()).map(([key, value]) => [key, String(value).trim()]),
                 ),
-              );
-              setPage(1);
-              setSelected(null);
+                ...(kind === 'audit' && {
+                  actorId: person,
+                  targetRecordId: filters.targetRecordId,
+                }),
+                ...(kind === 'guidance' && { userId: person, sessionId: filters.sessionId }),
+              });
             }}
           >
             {kind === 'guidance' && (
               <>
-                <label className="field">
-                  {t('Mã người dùng')}
-                  <input name="userId" placeholder="UUID" />
-                </label>
-                <label className="field">
-                  {t('Mã phiên điều hướng')}
-                  <input name="sessionId" placeholder="UUID" />
-                </label>
+                <SearchPicker
+                  label={t('Người dùng')}
+                  value={person}
+                  onChange={setPerson}
+                  search={searchAccounts(actor, 'VisuallyImpaired')}
+                  queryKey={['guidance-user', actor.id]}
+                />
                 <label className="field">
                   Engine
                   <select name="engineUsed">
@@ -193,10 +204,13 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
             )}
             {kind === 'audit' && (
               <>
-                <label className="field">
-                  {t('Mã người thực hiện')}
-                  <input name="actorId" placeholder="UUID" />
-                </label>
+                <SearchPicker
+                  label={t('Người thực hiện')}
+                  value={person}
+                  onChange={setPerson}
+                  search={searchAccounts(actor)}
+                  queryKey={['audit-actor', actor.id]}
+                />
                 <label className="field">
                   {t('Hành động')}
                   <select name="actionType">
@@ -209,10 +223,6 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                 <label className="field">
                   {t('Bảng đối tượng')}
                   <input name="targetTable" maxLength={100} />
-                </label>
-                <label className="field">
-                  {t('Mã đối tượng')}
-                  <input name="targetRecordId" placeholder="UUID" />
                 </label>
               </>
             )}
@@ -247,6 +257,24 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
               {t('Tải lại')}
             </button>
           </form>
+          {(filters.sessionId || filters.targetRecordId) && (
+            <div className="row notice">
+              <span>
+                {filters.sessionId
+                  ? t('Đang xem các bản ghi của một phiên điều hướng.')
+                  : t('Đang xem các thao tác trên một bản ghi của bảng {table}.', {
+                      table: filters.targetTable || t('đã chọn'),
+                    })}
+              </span>
+              <button
+                type="button"
+                className="btn small"
+                onClick={() => scope({ ...filters, sessionId: '', targetRecordId: '' })}
+              >
+                {t('Bỏ lọc này')}
+              </button>
+            </div>
+          )}
           {kind === 'metrics' ? (
             <p>
               {t(
@@ -388,6 +416,28 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
               </div>
             ))}
           </dl>
+          {kind === 'guidance' && selected.sessionId && (
+            <button
+              className="btn"
+              onClick={() => scope({ ...filters, sessionId: String(selected.sessionId) })}
+            >
+              {t('Xem cùng phiên điều hướng')}
+            </button>
+          )}
+          {kind === 'audit' && selected.targetRecordId && (
+            <button
+              className="btn"
+              onClick={() =>
+                scope({
+                  ...filters,
+                  targetTable: String(selected.targetTable ?? ''),
+                  targetRecordId: String(selected.targetRecordId),
+                })
+              }
+            >
+              {t('Xem các thao tác trên đối tượng này')}
+            </button>
+          )}
         </Dialog>
       )}
     </>

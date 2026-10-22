@@ -11,6 +11,7 @@ import {
   type LicenseAssignment,
 } from '../../services/api/licenseAssignments';
 import type { Person } from '../../models/domain';
+import { searchAccounts } from '../../services/api/pickers';
 
 export function LicenseAssignments({ actor }: { actor: Person }) {
   const cache = useQueryClient();
@@ -157,14 +158,13 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
             <Form
               fields={[
                 personField(
-                  {
-                    key: 'viuId',
-                    label: t('Người được chăm sóc'),
-                    required: true,
-                    hint: t('Nhập mã UUID tài khoản VIU của tổ chức.'),
-                  },
+                  { key: 'viuId', label: t('Người được chăm sóc'), required: true },
                   vius,
                   t('Trung tâm chưa có người được chăm sóc đang hoạt động.'),
+                  {
+                    search: searchAccounts(actor, 'VisuallyImpaired'),
+                    searchKey: ['license-viu', actor.id, actor.orgId],
+                  },
                 ),
               ]}
               submit={t('Xác nhận cấp license')}
