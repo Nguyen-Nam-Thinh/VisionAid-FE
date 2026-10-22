@@ -20,7 +20,8 @@ describe('i18n coverage', () => {
       ),
     );
     expect(leftovers).toEqual([]);
-  });
+    // Parses every source file; allow more than the 5 s default on a busy machine.
+  }, 30_000);
   it('keeps placeholders and edge spaces of each message', () => {
     const names = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
     const edges = (text: string) => [/^\s/.test(text), /\s$/.test(text)];

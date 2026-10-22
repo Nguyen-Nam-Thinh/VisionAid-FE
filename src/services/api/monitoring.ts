@@ -98,6 +98,8 @@ export const auditActions = [
   'OrganizationUpdated',
   'UserAssignedToOrg',
   'UserRemovedFromOrg',
+  'LicensePoolSuspended',
+  'LicensePoolReactivated',
 ] as const;
 const kinds = {
   metrics: { path: '/api/ai-metrics', schema: metric },

@@ -17,7 +17,7 @@ Release này triển khai Web bằng mock. `VisionService` trong `src/services/c
 | VITE_SERVICE_MODE | mock hoặc api | Chọn api sau khi adapter có contract thật |
 | VITE_API_BASE_URL | Đọc vào runtime, adapter chưa gọi API | Public base URL và CORS |
 | VITE_SIGNALR_URL | Dự phòng | Hub URL, auth, subscription/event contract |
-| VITE_MAPBOX_PUBLIC_TOKEN | Dự phòng, chưa khởi tạo SDK | Public token giới hạn origin/scope và style |
+| VITE_MAPBOX_PUBLIC_TOKEN | Bản đồ GPS (FE-17) ở trang theo dõi, mapbox-gl tải lười; để trống thì chỉ hiện bảng tọa độ | Public token `pk.` giới hạn URL (origin) và scope `styles:read`/`fonts:read`; không dùng secret token `sk.` |
 
 Chưa có cấu hình Firebase vì chưa có project/VAPID/token registration contract. Không thêm Firebase Admin credentials vào FE. Biến Vite được chèn khi build, không tự đổi theo môi trường của static host.
 

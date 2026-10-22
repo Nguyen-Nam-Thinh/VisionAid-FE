@@ -333,10 +333,17 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
       {action && event && !detail.isError && (
         <Confirm
           title={actionLabels[action]}
-          description={t('Xác nhận xử lý cảnh báo {id}? {p1}', {
-            id,
-            p1: notes || t('Không có ghi chú.'),
-          })}
+          description={
+            action === 'called'
+              ? t(
+                  'Chỉ xác nhận khi bạn đã thực sự gọi cho người được chăm sóc, người thân hoặc 115; Web không tự gọi. Sau khi xác nhận, cảnh báo kết thúc ở trạng thái Đã gọi và không chuyển sang Đã giải quyết được nữa. {p1}',
+                  { p1: notes || t('Không có ghi chú.') },
+                )
+              : t('Xác nhận xử lý cảnh báo {id}? {p1}', {
+                  id,
+                  p1: notes || t('Không có ghi chú.'),
+                })
+          }
           onClose={() => setAction(null)}
           onConfirm={async () => {
             setPending(true);
