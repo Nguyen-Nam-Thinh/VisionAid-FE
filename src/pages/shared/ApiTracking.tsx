@@ -1,5 +1,5 @@
 import { t, formatLocaleDateTime } from '../../i18n';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { useNow } from '../../hooks/useNow';
@@ -8,6 +8,7 @@ import { accountsApi } from '../../services/api/accounts';
 import { locationsApi, historyRange, locationAge } from '../../services/api/locations';
 import { ServiceError } from '../../services/contracts';
 import { Badge, PageHead, State } from '../../components/UI';
+import { GpsMap } from '../../components/GpsMap';
 import type { Person } from '../../models/domain';
 
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -54,7 +55,7 @@ function Tracking({ actor }: { actor: Person }) {
       />
       <p className="notice">
         {t(
-          'Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật; trạng thái kết nối hiển thị phía trên. Bản đồ nền đang chờ cấu hình Mapbox; bên dưới là dữ liệu tọa độ từ máy chủ.',
+          'Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật; trạng thái kết nối hiển thị phía trên. Bản đồ Mapbox và bảng tọa độ cùng dùng vị trí mới nhất từ máy chủ.',
         )}
       </p>
       <section className="glass card stack">
@@ -133,6 +134,32 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
       retry: false,
     })),
   });
+  const fixes = live.map((q) => (q.isError ? '' : (q.data?.cachedAt ?? ''))).join('|');
+  const freshness = Math.floor(now / 30000);
+  const points = useMemo(
+    () =>
+      people.flatMap((person, i) => {
+        const point = live[i]?.isError ? undefined : live[i]?.data;
+        return point
+          ? [
+              {
+                id: person.id,
+                label: person.fullName,
+                lat: point.latitude,
+                lng: point.longitude,
+                stale: now - Date.parse(point.cachedAt) > 120000,
+                details: [
+                  point.formattedAddress || t('Chưa có địa chỉ'),
+                  t('Ghi nhận GPS: {time}', { time: time(point.cachedAt) }),
+                ],
+              },
+            ]
+          : [];
+      }),
+    // `fixes` tracks each person's latest fix; `live` itself is a new array every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [people, fixes, freshness],
+  );
   const selectedIndex = people.findIndex((p) => p.id === selected);
   const person = people[selectedIndex];
   const current = live[selectedIndex];
@@ -146,6 +173,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
           { timezone },
         )}
       </p>
+      <GpsMap points={points} selected={selected} onSelect={setSelected} />
       <button
         className="btn"
         disabled={live.some((q) => q.isFetching)}

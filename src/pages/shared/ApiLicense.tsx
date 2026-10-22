@@ -5,8 +5,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useSession } from '../../hooks/useService';
 import { useLimit } from '../../hooks/useLimit';
-import { PageHead, State } from '../../components/UI';
+import { Confirm, PageHead, State, Toast } from '../../components/UI';
 import {
+  cancelMySubscription,
   getMySubscription,
   isPersonalCaregiver,
   licenseSummary,
@@ -33,6 +34,16 @@ export function ApiLicense() {
     refetchInterval: 60000,
   });
   const [checking, setChecking] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  // BE confirmed the cancel; its GET has no cancelledAt yet, so remember it for this page view.
+  const [cancelledNow, setCancelledNow] = useState(false);
+  const [notice, setNotice] = useState('');
+  const periodEnd = detail.data
+    ? detail.data.status === 'Trial'
+      ? detail.data.trialEndsAt
+      : detail.data.currentPeriodEnd
+    : null;
+  const cancelled = cancelledNow || !!detail.data?.cancelledAt;
   if (!user) return null;
   return (
     <>
@@ -93,15 +104,24 @@ export function ApiLicense() {
                   </div>
                   <div>
                     <dt>{t('Hết hạn kỳ sử dụng')}</dt>
-                    <dd>
-                      {dateLabel(
-                        detail.data.status === 'Trial'
-                          ? detail.data.trialEndsAt
-                          : detail.data.currentPeriodEnd,
-                      )}
-                    </dd>
+                    <dd>{dateLabel(periodEnd)}</dd>
                   </div>
                 </dl>
+              )}
+              {detail.data && ['Active', 'Trial'].includes(detail.data.status) && (
+                <div className="row">
+                  {cancelled ? (
+                    <p className="notice" role="status">
+                      {t('Đã hủy gói. Bạn vẫn dùng được đến {date}; sau đó cần mua gói mới.', {
+                        date: dateLabel(periodEnd),
+                      })}
+                    </p>
+                  ) : (
+                    <button className="btn danger small" onClick={() => setCancelling(true)}>
+                      {t('Hủy gói')}
+                    </button>
+                  )}
+                </div>
               )}
             </State>
           )}
@@ -117,6 +137,25 @@ export function ApiLicense() {
             )}
           </p>
         </section>
+      )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
+      {cancelling && detail.data && (
+        <Confirm
+          title={t('Hủy gói sử dụng')}
+          description={t(
+            'Hủy gói {name}? Gói sẽ không tiếp tục sau kỳ hiện tại; bạn vẫn dùng được đến {date}. Gói kích hoạt bằng key của trung tâm không tự hủy được.',
+            { name: detail.data.package.name, date: dateLabel(periodEnd) },
+          )}
+          onClose={() => setCancelling(false)}
+          onConfirm={async () => {
+            await cancelMySubscription(user);
+            setCancelledNow(true);
+            setNotice(
+              t('Đã hủy gói. Bạn vẫn dùng được đến {date}.', { date: dateLabel(periodEnd) }),
+            );
+            await cache.invalidateQueries({ queryKey: ['license-subscription'] });
+          }}
+        />
       )}
       <LicenseKeys key={user.id + user.orgId} actor={user} mode="activate" />
       {user.role === 'CenterAdmin' && user.orgId ? (

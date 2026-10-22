@@ -3,6 +3,14 @@ import { Toast } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
+import { ServiceError } from '../../services/contracts';
+import {
+  getAdminOrganizationPool,
+  setPoolSuspended,
+  subscriptionLabels,
+  type OrganizationPool,
+} from '../../services/api/licenses';
+import { formatLocaleDateTime } from '../../i18n';
 import {
   organizationsApi,
   type Organization,
@@ -470,6 +478,7 @@ function OrganizationDetails({
           }}
         />
       )}
+      {user.role === 'Admin' && !org.deletedAt && <OrganizationPoolAdmin user={user} org={org} />}
       {!org.deletedAt && (
         <>
           <h3>{t('Thành viên tổ chức')}</h3>
@@ -551,6 +560,165 @@ function OrganizationDetails({
             )}
           </State>
         </>
+      )}
+    </section>
+  );
+}
+
+// UC-130: Super Admin suspends or reactivates the organization's license pool.
+function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization }) {
+  const [action, setAction] = useState<'suspend' | 'reactivate' | null>(null);
+  const [notice, setNotice] = useState('');
+  const pool = useQuery({
+    queryKey: ['api-admin-pool', user.id, org.id],
+    queryFn: ({ signal }) => getAdminOrganizationPool(user, org.id, signal),
+    retry: false,
+  });
+  const reload = async () => (await pool.refetch()).data;
+  const done = (next?: OrganizationPool) =>
+    setNotice(
+      !next
+        ? t('Đã gửi yêu cầu. Tải lại kho license để xem trạng thái mới.')
+        : next.status === 'Suspended'
+          ? t('Đã tạm ngưng kho license.')
+          : next.status === 'Expired'
+            ? t('Đã kích hoạt lại, nhưng kho đã quá hạn nên ở trạng thái Đã hết hạn.')
+            : t('Đã kích hoạt lại kho license.'),
+    );
+  const missing = pool.error instanceof ServiceError && pool.error.status === 404;
+  return (
+    <section className="stack" aria-labelledby={'pool-' + org.id}>
+      <div className="row between">
+        <h3 id={'pool-' + org.id}>{t('Kho license')}</h3>
+        <button className="btn small" disabled={pool.isFetching} onClick={() => void reload()}>
+          {t('Tải lại kho license')}
+        </button>
+      </div>
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
+      {missing ? (
+        <p>{t('Tổ chức chưa có kho license.')}</p>
+      ) : (
+        <State loading={pool.isPending} error={pool.error} retry={() => void reload()}>
+          {pool.data && (
+            <>
+              <dl className="record-details">
+                <div>
+                  <dt>{t('Gói')}</dt>
+                  <dd>{pool.data.package.name}</dd>
+                </div>
+                <div>
+                  <dt>{t('Trạng thái')}</dt>
+                  <dd>
+                    <Badge tone={pool.data.status === 'Active' ? 'green' : 'amber'}>
+                      {subscriptionLabels[pool.data.status]}
+                    </Badge>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('Đã cấp')}</dt>
+                  <dd>
+                    {t('{used}/{total} suất · còn {available}', {
+                      used: pool.data.usedLicenses,
+                      total: pool.data.totalLicenses,
+                      available: pool.data.availableLicenses,
+                    })}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('Hết hạn')}</dt>
+                  <dd>
+                    {pool.data.expiresAt
+                      ? formatLocaleDateTime(pool.data.expiresAt)
+                      : t('Không giới hạn')}
+                  </dd>
+                </div>
+                {pool.data.status === 'Suspended' && (
+                  <>
+                    <div>
+                      <dt>{t('Tạm ngưng lúc')}</dt>
+                      <dd>
+                        {pool.data.suspendedAt
+                          ? formatLocaleDateTime(pool.data.suspendedAt)
+                          : t('Chưa ghi nhận')}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>{t('Lý do tạm ngưng')}</dt>
+                      <dd style={{ whiteSpace: 'pre-wrap' }}>
+                        {pool.data.suspendedReason || t('Không ghi lý do')}
+                      </dd>
+                    </div>
+                  </>
+                )}
+              </dl>
+              <div className="row">
+                {pool.data.status === 'Suspended' ? (
+                  <button className="btn primary" onClick={() => setAction('reactivate')}>
+                    {t('Kích hoạt lại kho')}
+                  </button>
+                ) : (
+                  <button className="btn danger" onClick={() => setAction('suspend')}>
+                    {t('Tạm ngưng kho')}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </State>
+      )}
+      {action === 'suspend' && pool.data && (
+        <Dialog title={t('Tạm ngưng kho license')} onClose={() => setAction(null)}>
+          <div className="stack">
+            <p>
+              {t(
+                '{name}: người được chăm sóc đang dùng license của kho sẽ chuyển về Chưa có license cho tới khi kích hoạt lại. Trung tâm không cấp thêm suất hoặc tạo mã được.',
+                { name: org.name },
+              )}
+            </p>
+            <Form
+              submit={t('Xác nhận tạm ngưng')}
+              fields={[
+                {
+                  key: 'reason',
+                  label: t('Lý do tạm ngưng'),
+                  type: 'textarea',
+                  max: 500,
+                  hint: t('Không bắt buộc. Quản trị trung tâm có thể đọc lý do này.'),
+                },
+              ]}
+              onSubmit={async (values) => {
+                try {
+                  await setPoolSuspended(user, pool.data!.id, true, String(values.reason ?? ''));
+                } catch (error) {
+                  // Another admin may have changed it; show the current state behind the error.
+                  await reload();
+                  throw error;
+                }
+                done(await reload());
+                setAction(null);
+              }}
+            />
+          </div>
+        </Dialog>
+      )}
+      {action === 'reactivate' && pool.data && (
+        <Confirm
+          title={t('Kích hoạt lại kho license')}
+          description={t(
+            '{name}: kho trở về Đang hoạt động, hoặc Đã hết hạn nếu đã qua ngày hết hạn. License của người được chăm sóc được khôi phục theo trạng thái đó.',
+            { name: org.name },
+          )}
+          onClose={() => setAction(null)}
+          onConfirm={async () => {
+            try {
+              await setPoolSuspended(user, pool.data!.id, false);
+            } catch (error) {
+              await reload();
+              throw error;
+            }
+            done(await reload());
+          }}
+        />
       )}
     </section>
   );

@@ -118,8 +118,8 @@ export const en = {
     'Pick a location on the demo diagram; use the coordinate fields to enter it with the keyboard',
   'Tâm: {p1}, {p3} · {p5} m': 'Center: {p1}, {p3} · {p5} m',
   'Đang xử lý…': 'Processing…',
-  'Tối đa 3 người chăm sóc/người dùng và 3 người dùng/người chăm sóc. Duy trì một người chăm sóc chính.':
-    'At most 3 caregivers per user and 3 users per caregiver. Keep one primary caregiver.',
+  'Tối đa {maxCaregivers} người chăm sóc/người dùng và {maxVius} người dùng/người chăm sóc. Duy trì một người chăm sóc chính.':
+    'At most {maxCaregivers} caregivers per user and {maxVius} users per caregiver. Keep one primary caregiver.',
   'Thêm liên kết': 'Add link',
   'Chỉ người chăm sóc chính được quản lý liên kết này.':
     'Only the primary caregiver can manage this link.',
@@ -1093,8 +1093,6 @@ export const en = {
   'Số lượng và thời hạn do máy chủ xác nhận.':
     'Quantities and expiry dates are confirmed by the server.',
   'Lịch sử thanh toán': 'Payment history',
-  'Chỉ hiển thị liên kết của chính bạn. Chưa có API mời người chăm sóc phụ bằng email hoặc QR.':
-    'Only your own links are shown. There is no API yet to invite secondary caregivers by email or QR.',
   'Phân công tài khoản Caregiver và VIU đã có; mỗi VIU tối đa {maxCaregivers} người chăm sóc, mỗi Caregiver tối đa {maxVius} VIU đang liên kết.':
     'Assign existing Caregiver and VIU accounts; each VIU can have at most {maxCaregivers} caregivers and each Caregiver at most {maxVius} linked VIUs.',
   'Tạo liên kết': 'Create link',
@@ -1365,8 +1363,6 @@ export const en = {
   'Theo dõi vị trí GPS': 'GPS location tracking',
   'Vị trí ghi nhận và lịch sử di chuyển của người được phép theo dõi.':
     'Recorded locations and movement history of the people you may track.',
-  'Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật; trạng thái kết nối hiển thị phía trên. Bản đồ nền đang chờ cấu hình Mapbox; bên dưới là dữ liệu tọa độ từ máy chủ.':
-    'Locations reload every 30 seconds while the tab is active. SignalR reloads data when updates arrive; the connection status is shown above. The base map awaits Mapbox configuration; below is the coordinate data from the server.',
   'Tìm người được theo dõi': 'Find a tracked person',
   'Tải lại danh sách': 'Reload list',
   'Chưa có người dùng phù hợp hoặc liên kết được phép xem.':
@@ -2069,7 +2065,6 @@ export const en = {
   'Mã hoặc dữ liệu liên kết không hợp lệ.': 'Invalid link ID or data.',
   'Phản hồi liên kết không hợp lệ.': 'Invalid link response.',
   'Không có quyền quản lý liên kết.': 'You are not allowed to manage links.',
-  'Chỉ được xem liên kết của chính bạn.': 'You can only view your own links.',
   'Màn phân công trung tâm chỉ quản lý liên kết tổ chức.':
     'The center assignment screen only manages organization links.',
   'Sai tài khoản Caregiver hoặc VIU.': 'Wrong Caregiver or VIU account.',
@@ -2378,6 +2373,82 @@ export const en = {
   'Key license': 'License key',
   'Trang sau': 'Next page',
   'VisionAid · Đồng hành an tâm': 'VisionAid · Care with peace of mind',
+  'Chỉ quản trị hệ thống được tạm ngưng hoặc kích hoạt lại kho license.':
+    'Only system administrators can suspend or reactivate a license pool.',
+  'Kho license không hợp lệ. Hãy tải lại.': 'Invalid license pool. Please reload.',
+  'Chưa ghi nhận': 'Not recorded',
+  'Bản đồ vị trí; danh sách tương đương ở bảng bên dưới':
+    'Location map; the equivalent list is in the table below',
+  'Chưa cấu hình VITE_MAPBOX_PUBLIC_TOKEN nên chưa hiển thị bản đồ; dữ liệu tọa độ ở bảng bên dưới.':
+    'VITE_MAPBOX_PUBLIC_TOKEN is not configured, so no map is shown; coordinates are in the table below.',
+  'Không hiển thị được bản đồ. Dữ liệu tọa độ vẫn ở bảng bên dưới.':
+    'The map could not be shown. Coordinates are still in the table below.',
+  'Không tải được bản đồ Mapbox ({p1}). Dữ liệu tọa độ vẫn ở bảng bên dưới.':
+    'Could not load the Mapbox map ({p1}). Coordinates are still in the table below.',
+  'Trình duyệt không hỗ trợ WebGL nên không hiển thị được bản đồ.':
+    'This browser does not support WebGL, so the map cannot be shown.',
+  'Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật; trạng thái kết nối hiển thị phía trên. Bản đồ Mapbox và bảng tọa độ cùng dùng vị trí mới nhất từ máy chủ.':
+    'Locations reload every 30 seconds while the tab is active. SignalR reloads data on updates; the connection status is shown above. The Mapbox map and the coordinate table both use the latest position from the server.',
+  'lỗi mạng': 'network error',
+  '{name} · {state}': '{name} · {state}',
+  'Đang tải bản đồ…': 'Loading map…',
+  'Bản đồ': 'Map',
+  'Vệ tinh': 'Satellite',
+  'Kiểu bản đồ': 'Map type',
+  'Ghi nhận GPS: {time}': 'GPS recorded: {time}',
+  'Bạn là người chăm sóc phụ: quyền của liên kết do người chăm sóc chính quyết định. Bạn chỉ có thể tự hủy liên kết.':
+    'You are a secondary caregiver: the primary caregiver decides this link’s permissions. You can only cancel your own link.',
+  'Chỉ xác nhận khi bạn đã thực sự gọi cho người được chăm sóc, người thân hoặc 115; Web không tự gọi. Sau khi xác nhận, cảnh báo kết thúc ở trạng thái Đã gọi và không chuyển sang Đã giải quyết được nữa. {p1}':
+    'Confirm only after you have actually called the care recipient, a relative or 115; the Web never calls. After confirming, the alert ends as Called and can no longer be marked Resolved. {p1}',
+  'Chỉ được xem liên kết của bạn hoặc của người bạn chăm sóc chính.':
+    'You can only view your own links or those of people you are primary caregiver for.',
+  'Hủy liên kết của tôi': 'Cancel my link',
+  'Liên kết của bạn, và liên kết của người chăm sóc phụ với người bạn chăm sóc chính. Chưa có API mời người chăm sóc phụ bằng email hoặc QR.':
+    'Your links, plus secondary caregivers’ links for people you are primary caregiver for. There is no API yet to invite secondary caregivers by email or QR.',
+  'Xác nhận đã gọi hỗ trợ': 'Confirm help was called',
+  'Chỉ người chăm sóc cá nhân được hủy gói của mình.':
+    'Only personal caregivers can cancel their own plan.',
+  'Gói này được kích hoạt bằng key của trung tâm nên không tự hủy được. Hãy liên hệ quản trị trung tâm.':
+    'This plan was activated with a center key, so you cannot cancel it yourself. Please contact the center administrator.',
+  'Hủy gói sử dụng': 'Cancel plan',
+  'Hủy gói {name}? Gói sẽ không tiếp tục sau kỳ hiện tại; bạn vẫn dùng được đến {date}. Gói kích hoạt bằng key của trung tâm không tự hủy được.':
+    'Cancel the {name} plan? It will not continue after the current period; you can keep using it until {date}. Plans activated with a center key cannot be cancelled here.',
+  'Hủy gói': 'Cancel plan',
+  'Đã hủy gói. Bạn vẫn dùng được đến {date}.':
+    'Plan cancelled. You can keep using it until {date}.',
+  'Đã hủy gói. Bạn vẫn dùng được đến {date}; sau đó cần mua gói mới.':
+    'Plan cancelled. You can keep using it until {date}; after that you need to buy a new plan.',
+  'Chỉ quản trị hệ thống được xem kho license của tổ chức khác.':
+    "Only system administrators can view another organization's license pool.",
+  'Kho license trả về không thuộc tổ chức đã chọn.':
+    'The returned license pool does not belong to the selected organization.',
+  'Không bắt buộc. Quản trị trung tâm có thể đọc lý do này.':
+    'Optional. The center administrator can read this reason.',
+  'Không giới hạn': 'No limit',
+  'Kích hoạt lại kho license': 'Reactivate license pool',
+  'Kích hoạt lại kho': 'Reactivate pool',
+  'Lý do tạm ngưng': 'Suspension reason',
+  'Tạm ngưng kho license': 'Suspend license pool',
+  'Tạm ngưng kho': 'Suspend pool',
+  'Tạm ngưng lúc': 'Suspended at',
+  'Tổ chức chưa có kho license.': 'This organization has no license pool yet.',
+  'Tổ chức không hợp lệ.': 'Invalid organization.',
+  'Xác nhận tạm ngưng': 'Confirm suspension',
+  '{name}: kho trở về Đang hoạt động, hoặc Đã hết hạn nếu đã qua ngày hết hạn. License của người được chăm sóc được khôi phục theo trạng thái đó.':
+    '{name}: the pool returns to Active, or Expired if its end date has passed. Care recipients get their licenses back according to that status.',
+  '{name}: người được chăm sóc đang dùng license của kho sẽ chuyển về Chưa có license cho tới khi kích hoạt lại. Trung tâm không cấp thêm suất hoặc tạo mã được.':
+    '{name}: care recipients using licenses from this pool will have no license until it is reactivated. The center cannot assign seats or generate keys.',
+  '{used}/{total} suất · còn {available}': '{used}/{total} seats · {available} left',
+  'Đã gửi yêu cầu. Tải lại kho license để xem trạng thái mới.':
+    'Request sent. Reload the license pool to see the new status.',
+  'Đã kích hoạt lại kho license.': 'License pool reactivated.',
+  'Đã kích hoạt lại, nhưng kho đã quá hạn nên ở trạng thái Đã hết hạn.':
+    'Reactivated, but the pool is past its end date so it is Expired.',
+  'Đã tạm ngưng kho license.': 'License pool suspended.',
+  'Kho license đã ở trạng thái tạm ngưng. Tải lại để xem trạng thái mới.':
+    'The license pool is already suspended. Reload to see the current status.',
+  'Kho license không còn tạm ngưng. Tải lại để xem trạng thái mới.':
+    'The license pool is no longer suspended. Reload to see the current status.',
   'Gõ tên hoặc email để tìm': 'Type a name or email to search',
   'Gõ tên hoặc email; để trống xem tất cả': 'Type a name or email; leave empty to see all',
   'Gõ tên tổ chức; để trống xem tất cả': 'Type an organization name; leave empty to see all',

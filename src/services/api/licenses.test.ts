@@ -1,9 +1,12 @@
 import { expect, it, vi } from 'vitest';
 import {
+  cancelMySubscription,
+  getAdminOrganizationPool,
   getMySubscription,
   getOrganizationPool,
   licenseSummary,
   personalLicenseBlock,
+  setPoolSuspended,
 } from './licenses';
 import type { Person } from '../../models/domain';
 const actor: Person = {
@@ -117,4 +120,76 @@ it('blocks licensed screens only for personal caregivers without license or past
   expect(
     personalLicenseBlock({ ...actor, role: 'CenterAdmin', licenseStatus: null }, now),
   ).toBeNull();
+});
+it('UC-130: only Admin suspends with an encoded reason or reactivates a valid pool', async () => {
+  const admin = { ...actor, role: 'Admin' as const };
+  const poolId = '01900000-0000-7000-8000-000000000009';
+  const write = vi.fn(async () => undefined);
+  await setPoolSuspended(admin, poolId, true, '  Nợ phí & vi phạm  ', write);
+  expect(write).toHaveBeenLastCalledWith(
+    `/api/licenses/pool/${poolId}/suspend?reason=N%E1%BB%A3+ph%C3%AD+%26+vi+ph%E1%BA%A1m`,
+    { method: 'POST' },
+  );
+  await setPoolSuspended(admin, poolId, true, '   ', write);
+  expect(write).toHaveBeenLastCalledWith(`/api/licenses/pool/${poolId}/suspend`, {
+    method: 'POST',
+  });
+  await setPoolSuspended(admin, poolId, false, 'ignored', write);
+  expect(write).toHaveBeenLastCalledWith(`/api/licenses/pool/${poolId}/reactivate`, {
+    method: 'POST',
+  });
+  const center = { ...actor, role: 'CenterAdmin' as const, orgId: actor.id };
+  await expect(setPoolSuspended(center, poolId, true, '', write)).rejects.toMatchObject({
+    status: 403,
+  });
+  await expect(setPoolSuspended(admin, 'not-an-id', true, '', write)).rejects.toMatchObject({
+    status: 400,
+  });
+  await expect(setPoolSuspended(admin, poolId, true, 'x'.repeat(501), write)).rejects.toMatchObject(
+    { status: 400 },
+  );
+  expect(write).toHaveBeenCalledTimes(3);
+});
+it('UC-130: Admin reads a chosen organization pool with suspension details', async () => {
+  const admin = { ...actor, role: 'Admin' as const };
+  const orgId = '01900000-0000-7000-8000-000000000021';
+  const data = {
+    id: actor.id,
+    organizationId: orgId,
+    package: { id: actor.id, name: 'Business', code: 'BUSINESS', packageType: 'Business' },
+    totalLicenses: 50,
+    usedLicenses: 3,
+    availableLicenses: 47,
+    status: 'Suspended',
+    purchasedAt: '2026-10-06T00:00:00Z',
+    expiresAt: '2026-11-06T00:00:00Z',
+    suspendedReason: 'Chưa thanh toán',
+    suspendedAt: '2026-10-20T00:00:00Z',
+  };
+  const get = vi.fn().mockResolvedValue(data);
+  await expect(getAdminOrganizationPool(admin, orgId, undefined, get)).resolves.toEqual(data);
+  expect(get).toHaveBeenCalledWith('/api/licenses/pool?organizationId=' + orgId, undefined);
+  get.mockResolvedValueOnce({ ...data, organizationId: actor.id });
+  await expect(getAdminOrganizationPool(admin, orgId, undefined, get)).rejects.toMatchObject({
+    status: 502,
+  });
+  const center = { ...actor, role: 'CenterAdmin' as const, orgId };
+  await expect(getAdminOrganizationPool(center, orgId, undefined, get)).rejects.toMatchObject({
+    status: 403,
+  });
+  await expect(getAdminOrganizationPool(admin, 'bad', undefined, get)).rejects.toMatchObject({
+    status: 400,
+  });
+  expect(get).toHaveBeenCalledTimes(2);
+});
+it('UC-80: only a personal caregiver sends the cancel request', async () => {
+  const write = vi.fn(async () => undefined);
+  await cancelMySubscription(actor, write);
+  expect(write).toHaveBeenCalledWith('/api/licenses/subscription', { method: 'DELETE' });
+  const staff = { ...actor, orgId: '01900000-0000-7000-8000-000000000021' };
+  await expect(cancelMySubscription(staff, write)).rejects.toMatchObject({ status: 403 });
+  await expect(
+    cancelMySubscription({ ...actor, role: 'CenterAdmin' as const }, write),
+  ).rejects.toMatchObject({ status: 403 });
+  expect(write).toHaveBeenCalledTimes(1);
 });

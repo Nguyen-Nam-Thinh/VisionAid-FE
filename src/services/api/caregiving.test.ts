@@ -125,6 +125,9 @@ it('rejects malformed data and links outside the selected user/account scope', a
   await expect(api.detail(id, viuId, caregiverId)).rejects.toMatchObject({ status: 403 });
   read.mockResolvedValue({ ...link, canManageRegistry: 'true' });
   await expect(api.detail(id, caregiverId, viuId)).rejects.toMatchObject({ status: 502 });
-  read.mockResolvedValue(page([{ ...link, caregiverId: viuId }]));
+  // A primary also receives secondaries' links; links() keeps only the caller's own link.
+  read.mockResolvedValue(page([link, { ...link, id: viuId, caregiverId: viuId }]));
+  expect((await api.links(caregiverId, viuId, 1)).items).toEqual([link]);
+  read.mockResolvedValue(page([{ ...link, visuallyImpairedUserId: caregiverId }]));
   await expect(api.links(caregiverId, viuId, 1)).rejects.toMatchObject({ status: 403 });
 });

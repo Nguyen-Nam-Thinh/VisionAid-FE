@@ -2,6 +2,7 @@ import { t } from '../i18n';
 import { useState } from 'react';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { useCommand, useLinkActions } from '../hooks/useService';
+import { useLimit } from '../hooks/useLimit';
 import type { Link } from '../models/domain';
 import { Form } from './Form';
 import { ViuSelect } from './ViuSelect';
@@ -10,6 +11,8 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
   const { query, db, user, selected, permission } = useWorkspace();
   const cmd = useCommand();
   const actions = useLinkActions();
+  const maxCaregivers = useLimit('caregiving.max_caregivers_per_viu');
+  const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const [edit, setEdit] = useState<Link | null>(null);
   const [adding, setAdding] = useState(false);
   const [remove, setRemove] = useState<Link | null>(null);
@@ -21,7 +24,8 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
       <PageHead
         title={family ? t('Người chăm sóc phụ') : t('Phân công chăm sóc')}
         description={t(
-          'Tối đa 3 người chăm sóc/người dùng và 3 người dùng/người chăm sóc. Duy trì một người chăm sóc chính.',
+          'Tối đa {maxCaregivers} người chăm sóc/người dùng và {maxVius} người dùng/người chăm sóc. Duy trì một người chăm sóc chính.',
+          { maxCaregivers, maxVius },
         )}
         actions={
           <>

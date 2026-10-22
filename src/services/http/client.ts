@@ -53,7 +53,16 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   LICENSE_KEY_EXPIRED: msg('Key đã hết hạn.'),
   LICENSE_POOL_FULL: msg('Kho license đã hết suất. Mua thêm gói Business.'),
   LICENSE_POOL_NOT_ACTIVE: msg('Kho license không còn hiệu lực. Kiểm tra gói Business.'),
+  CANNOT_CANCEL_ORG_SUBSCRIPTION: msg(
+    'Gói này được kích hoạt bằng key của trung tâm nên không tự hủy được. Hãy liên hệ quản trị trung tâm.',
+  ),
   LICENSE_POOL_NOT_FOUND: msg('Tổ chức chưa có kho license. Mua gói Business trước.'),
+  LICENSE_POOL_ALREADY_SUSPENDED: msg(
+    'Kho license đã ở trạng thái tạm ngưng. Tải lại để xem trạng thái mới.',
+  ),
+  LICENSE_POOL_NOT_SUSPENDED: msg(
+    'Kho license không còn tạm ngưng. Tải lại để xem trạng thái mới.',
+  ),
   VIU_LICENSE_ALREADY_ASSIGNED: msg('Người này đã được cấp license.'),
   GRACE_PERIOD_EXPIRED: msg('Đã quá thời gian gia hạn. Vui lòng mua hoặc gia hạn gói.'),
   WRONG_PACKAGE_TYPE: msg('Loại gói không phù hợp với tài khoản.'),

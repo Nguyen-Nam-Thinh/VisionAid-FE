@@ -1,6 +1,6 @@
 import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
-import { apiGet } from './adapter';
+import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 
@@ -20,6 +20,8 @@ export const subscription = z.object({
   currentPeriodEnd: date.nullable(),
   autoRenew: z.boolean(),
   daysRemaining: z.number().int().nonnegative().nullable(),
+  // UC-80: not returned by BE yet (cancel keeps Active/Trial); read it once BE adds it.
+  cancelledAt: date.nullable().optional(),
 });
 export const subscriptionLabels = labelMap({
   Trial: msg('Dùng thử'),
@@ -51,7 +53,11 @@ const pool = z.object({
   status: z.enum(['Active', 'Expired', 'Suspended']),
   purchasedAt: date,
   expiresAt: date.nullable(),
+  // Added with UC-130 suspension; optional so older deploys still parse.
+  suspendedReason: z.string().nullable().optional(),
+  suspendedAt: date.nullable().optional(),
 });
+export type OrganizationPool = z.infer<typeof pool>;
 export async function getOrganizationPool(user: Person, signal?: AbortSignal, get = apiGet) {
   if (!isOrganizationBuyer(user))
     throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được xem kho license.'), 403);
@@ -61,6 +67,62 @@ export async function getOrganizationPool(user: Person, signal?: AbortSignal, ge
   if (parsed.data.organizationId !== user.orgId)
     throw new ServiceError(t('Máy chủ trả về kho license không thuộc tổ chức của bạn.'), 403);
   return parsed.data;
+}
+
+/**
+ * UC-130: Admin suspends or reactivates an organization's license pool. BE replies without data,
+ * so callers reload the pool; reactivation may land on Expired when the pool is past its end date.
+ */
+export async function setPoolSuspended(
+  user: Person,
+  poolId: string,
+  suspended: boolean,
+  reason = '',
+  write = apiWrite,
+) {
+  if (user.role !== 'Admin')
+    throw new ServiceError(
+      t('Chỉ quản trị hệ thống được tạm ngưng hoặc kích hoạt lại kho license.'),
+      403,
+    );
+  if (!z.string().uuid().safeParse(poolId).success)
+    throw new ServiceError(t('Kho license không hợp lệ. Hãy tải lại.'), 400);
+  const note = reason.trim();
+  if (note.length > 500) throw new ServiceError(t('Lý do tối đa 500 ký tự.'), 400);
+  const query = suspended && note ? '?' + new URLSearchParams({ reason: note }) : '';
+  await write(`/api/licenses/pool/${poolId}/${suspended ? 'suspend' : 'reactivate'}${query}`, {
+    method: 'POST',
+  });
+}
+
+/** UC-130: Admin reads one organization's current pool (Active/Suspended first, else the latest). */
+export async function getAdminOrganizationPool(
+  user: Person,
+  organizationId: string,
+  signal?: AbortSignal,
+  get = apiGet,
+) {
+  if (user.role !== 'Admin')
+    throw new ServiceError(t('Chỉ quản trị hệ thống được xem kho license của tổ chức khác.'), 403);
+  if (!z.string().uuid().safeParse(organizationId).success)
+    throw new ServiceError(t('Tổ chức không hợp lệ.'), 400);
+  const query = new URLSearchParams({ organizationId });
+  const parsed = pool.safeParse(await get('/api/licenses/pool?' + query, signal));
+  if (!parsed.success)
+    throw new ServiceError(t('Dữ liệu kho license không hợp lệ. Hãy tải lại.'), 502);
+  if (parsed.data.organizationId !== organizationId)
+    throw new ServiceError(t('Kho license trả về không thuộc tổ chức đã chọn.'), 502);
+  return parsed.data;
+}
+
+/**
+ * UC-80: a personal caregiver cancels their own plan. BE keeps access until the current period
+ * ends and rejects key-activated (organization) plans with CANNOT_CANCEL_ORG_SUBSCRIPTION.
+ */
+export async function cancelMySubscription(user: Person, write = apiWrite) {
+  if (!isPersonalCaregiver(user))
+    throw new ServiceError(t('Chỉ người chăm sóc cá nhân được hủy gói của mình.'), 403);
+  await write('/api/licenses/subscription', { method: 'DELETE' });
 }
 
 export async function getMySubscription(user: Person, signal?: AbortSignal, get = apiGet) {

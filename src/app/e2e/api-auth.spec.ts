@@ -1855,7 +1855,18 @@ async function pick(scope: Page | Locator, label: string, term: string, option: 
   await scope.getByRole('combobox', { name: label, exact: true }).fill(term);
   await scope.getByRole('option', { name: option }).click();
 }
+// Tests never reach Mapbox: styles get an offline background-only style (no tiles, sprites or
+// fonts) and every other *.mapbox.com request fails fast. A test may override either route.
+const mapboxHost = /^https:\/\/([a-z0-9-]+\.)*mapbox\.com\//;
+const mapboxStyles = /^https:\/\/api\.mapbox\.com\/styles\//;
+const offlineStyle = {
+  version: 8,
+  sources: {},
+  layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#e9f2ef' } }],
+};
 async function stubApi(page: Page, role = 'Caregiver', organizationId: string | null = null) {
+  await page.route(mapboxHost, (route) => route.abort());
+  await page.route(mapboxStyles, (route) => route.fulfill({ json: offlineStyle }));
   const calls: string[] = [];
   await page.route('http://localhost:5176/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -2397,6 +2408,9 @@ test('5a Admin: create, detail, update, status, delete and restore with confirma
   page,
 }) => {
   await stubApi(page, 'Admin');
+  await page.route('http://localhost:5176/api/licenses/pool?*', (route) =>
+    route.fulfill({ status: 404, json: { detail: 'License pool not found' } }),
+  );
   let org = { ...organizationFixture };
   let exists = false,
     writes = 0,
@@ -2485,6 +2499,110 @@ test('5a Admin: create, detail, update, status, delete and restore with confirma
   await dialog.getByRole('button', { name: 'Xác nhận' }).click();
   await expect(dialog).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Sửa tổ chức', exact: true })).toBeVisible();
+});
+test('UC-130 Admin: suspend with reason, conflict reload and reactivate to expired', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  const poolId = '01900000-0000-7000-8000-000000000061';
+  let pool = {
+    id: poolId,
+    organizationId,
+    package: { id: poolId, name: 'Business 50', code: 'BUSINESS_50', packageType: 'Business' },
+    totalLicenses: 50,
+    usedLicenses: 20,
+    availableLicenses: 30,
+    status: 'Active',
+    purchasedAt: '2026-09-01T00:00:00Z',
+    expiresAt: '2099-01-01T00:00:00Z',
+    suspendedReason: null as string | null,
+    suspendedAt: null as string | null,
+  };
+  const writes: URL[] = [];
+  let conflict = false;
+  await page.route('http://localhost:5176/api/organizations**', (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/members'))
+      return route.fulfill({ json: { success: true, data: organizationPage([]) } });
+    return route.fulfill({
+      json: {
+        success: true,
+        data:
+          url.pathname === '/api/organizations'
+            ? organizationPage([organizationFixture])
+            : organizationFixture,
+      },
+    });
+  });
+  await page.route('http://localhost:5176/api/licenses/pool**', (route) => {
+    const url = new URL(route.request().url());
+    if (route.request().method() === 'GET') {
+      expect(url.searchParams.get('organizationId')).toBe(organizationId);
+      return route.fulfill({ json: { success: true, data: pool } });
+    }
+    writes.push(url);
+    if (url.pathname.endsWith('/suspend')) {
+      pool = {
+        ...pool,
+        status: 'Suspended',
+        suspendedReason: url.searchParams.get('reason'),
+        suspendedAt: '2026-10-22T03:00:00Z',
+      };
+      return route.fulfill({ json: { success: true, data: null } });
+    }
+    if (conflict) {
+      // Another admin reactivated first.
+      pool = { ...pool, status: 'Active', suspendedReason: null, suspendedAt: null };
+      return route.fulfill({
+        status: 422,
+        json: { detail: 'License pool is not suspended', errorCode: 'LICENSE_POOL_NOT_SUSPENDED' },
+      });
+    }
+    pool = {
+      ...pool,
+      status: 'Expired',
+      expiresAt: '2026-10-01T00:00:00Z',
+      suspendedReason: null,
+      suspendedAt: null,
+    };
+    return route.fulfill({ json: { success: true, data: null } });
+  });
+  await login(page);
+  await page.goto('/admin/organizations');
+  await page.getByRole('button', { name: 'Xem tổ chức ' + organizationFixture.name }).click();
+  const section = page.getByRole('region', { name: 'Kho license' });
+  await expect(section).toContainText('Đang hoạt động');
+  await expect(section).toContainText('20/50 suất · còn 30');
+  await section.getByRole('button', { name: 'Tạm ngưng kho' }).click();
+  const dialog = actionDialog(page);
+  await expect(dialog).toContainText('Chưa có license cho tới khi kích hoạt lại');
+  await dialog.getByLabel('Lý do tạm ngưng').fill('Chưa thanh toán & vi phạm');
+  await dialog.getByRole('button', { name: 'Xác nhận tạm ngưng' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(writes.at(-1)?.pathname).toBe(`/api/licenses/pool/${poolId}/suspend`);
+  expect(writes.at(-1)?.searchParams.get('reason')).toBe('Chưa thanh toán & vi phạm');
+  await expect(page.getByText('Đã tạm ngưng kho license.')).toBeVisible();
+  await expect(section).toContainText('Tạm ngưng');
+  await expect(section).toContainText('Chưa thanh toán & vi phạm');
+  await page.screenshot({ path: 'test-results/uc130-pool-suspended.png', fullPage: true });
+  conflict = true;
+  await section.getByRole('button', { name: 'Kích hoạt lại kho' }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Kho license không còn tạm ngưng');
+  await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
+  await expect(section.getByRole('button', { name: 'Tạm ngưng kho' })).toBeVisible();
+  conflict = false;
+  await section.getByRole('button', { name: 'Tạm ngưng kho' }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận tạm ngưng' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(writes.at(-1)?.searchParams.has('reason')).toBe(false);
+  await section.getByRole('button', { name: 'Kích hoạt lại kho' }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(writes.at(-1)?.pathname).toBe(`/api/licenses/pool/${poolId}/reactivate`);
+  await expect(page.getByText('kho đã quá hạn nên ở trạng thái Đã hết hạn')).toBeVisible();
+  await expect(section).toContainText('Đã hết hạn');
+  expect(writes).toHaveLength(4);
 });
 test('5a CenterAdmin: own profile, member paging/filter and no platform mutations', async ({
   page,
@@ -2891,41 +3009,232 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
     },
   );
 }
-test('5c Caregiver: own Personal permissions only, Organization read-only and no promote', async ({
+test('5c Caregiver (UC-32–34): primary manages a secondary; secondary only cancels own link', async ({
   page,
 }) => {
   await stubApi(page);
-  let link = { ...managedLink, linkType: 'Personal' };
+  const secondaryId = '01900000-0000-7000-8000-000000000043';
+  const secondaryLinkId = '01900000-0000-7000-8000-000000000044';
+  let mine = { ...managedLink, linkType: 'Personal', isPrimary: true };
+  let secondary = {
+    ...managedLink,
+    id: secondaryLinkId,
+    caregiverId: secondaryId,
+    caregiverFullName: 'Người chăm sóc phụ',
+    caregiverEmail: 'sub@example.test',
+    linkType: 'Personal',
+  };
+  const writes: { method: string; path: string }[] = [];
   await page.route('http://localhost:5176/api/caregiver-links**', (route) => {
-    const url = new URL(route.request().url());
-    if (route.request().method() === 'PUT') link = { ...link, ...route.request().postDataJSON() };
+    const req = route.request();
+    const url = new URL(req.url());
+    // BE scopes a caregiver itself; the Web must not pin caregiverId for the list.
+    if (url.pathname === '/api/caregiver-links')
+      expect(url.searchParams.has('caregiverId')).toBe(false);
+    if (req.method() !== 'GET') writes.push({ method: req.method(), path: url.pathname });
+    if (req.method() === 'PUT') secondary = { ...secondary, ...req.postDataJSON() };
+    if (req.method() === 'DELETE') {
+      if (url.pathname.endsWith(secondaryLinkId))
+        secondary = { ...secondary, unlinkedAt: '2026-10-22' };
+      else mine = { ...mine, unlinkedAt: '2026-10-22' };
+      return route.fulfill({ status: 204 });
+    }
+    const visible = [mine, ...(mine.isPrimary ? [secondary] : [])].filter((l) => !l.unlinkedAt);
     return route.fulfill({
       json: {
         success: true,
-        data: url.pathname === '/api/caregiver-links' ? organizationPage([link]) : link,
+        data:
+          url.pathname === '/api/caregiver-links'
+            ? organizationPage(visible)
+            : url.pathname.includes(secondaryLinkId)
+              ? secondary
+              : mine,
       },
     });
   });
   await login(page);
   await page.goto('/caregiver/caregivers');
-  await page.getByRole('button', { name: 'Xem liên kết ' + cgLinkId }).click();
-  await expect(page.getByRole('button', { name: 'Chuyển thành chăm sóc chính' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true }).click();
-  await actionDialog(page).getByLabel('Nhận cảnh báo').uncheck();
+  await page.getByRole('button', { name: 'Xem liên kết ' + secondaryLinkId }).click();
+  const info = page.getByRole('dialog', { name: 'Thông tin liên kết', exact: true });
+  await expect(info).toContainText('Người chăm sóc phụ');
+  await expect(info.getByRole('button', { name: 'Chuyển thành chăm sóc chính' })).toHaveCount(0);
+  await info.getByRole('button', { name: 'Sửa quyền liên kết', exact: true }).click();
+  await actionDialog(page).getByLabel('Quản lý gương mặt').check();
   await actionDialog(page).getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
   await page.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
   await expect(actionDialog(page)).toHaveCount(0);
-  expect(link.canReceiveAlerts).toBe(false);
-  link = { ...link, linkType: 'Organization' };
-  await page
-    .getByRole('dialog', { name: 'Thông tin liên kết', exact: true })
-    .getByRole('button', { name: 'Đóng hộp thoại' })
-    .click();
-  await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true })).toHaveCount(
+  expect(secondary.canManageRegistry).toBe(true);
+  await info.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
+  await actionDialog(page).getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(writes.map((w) => w.method)).toEqual(['PUT', 'DELETE']);
+  // Own primary link: always full permissions, so no edit; leaving is still possible.
+  await page.getByRole('button', { name: 'Xem liên kết ' + cgLinkId }).click();
+  await expect(info.getByRole('button', { name: 'Sửa quyền liên kết', exact: true })).toHaveCount(
     0,
   );
-  await expect(page.getByRole('button', { name: 'Gỡ liên kết', exact: true })).toHaveCount(0);
+  await expect(info.getByRole('button', { name: 'Hủy liên kết của tôi' })).toBeVisible();
+  await info.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  // As a secondary: only cancel own link, permissions decided by the primary.
+  mine = { ...mine, isPrimary: false };
+  await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem liên kết ' + cgLinkId }).click();
+  await expect(info).toContainText('Bạn là người chăm sóc phụ');
+  await expect(info.getByRole('button', { name: 'Sửa quyền liên kết', exact: true })).toHaveCount(
+    0,
+  );
+  await info.getByRole('button', { name: 'Hủy liên kết của tôi' }).click();
+  await actionDialog(page).getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(writes.at(-1)).toEqual({ method: 'DELETE', path: '/api/caregiver-links/' + cgLinkId });
+});
+
+test('FE-17: Mapbox map shows live positions, stale state and selects a person', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const styles: URL[] = [];
+  await page.route(mapboxStyles, (route) => {
+    styles.push(new URL(route.request().url()));
+    return route.fulfill({ json: offlineStyle });
+  });
+  const fresh = '01900000-0000-7000-8000-000000000051';
+  const old = '01900000-0000-7000-8000-000000000052';
+  const person = (viuId: string, fullName: string) => ({
+    id: viuId,
+    fullName,
+    email: viuId.slice(-4) + '@test.test',
+    phoneNumber: null,
+    role: 'VisuallyImpaired',
+    organizationId: null,
+    isActive: true,
+    avatarUrl: null,
+    deletedAt: null,
+    lastLoginAt: null,
+    createdAt: '2026-09-26',
+    updatedAt: '2026-09-26',
+  });
+  await page.route('http://localhost:5176/api/users?*', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          person(fresh, 'Người mới cập nhật'),
+          person(old, 'Người dữ liệu cũ'),
+        ]),
+      },
+    }),
+  );
+  await page.route('http://localhost:5176/api/locations/live?*', (route) => {
+    const viuId = new URL(route.request().url()).searchParams.get('viuId')!;
+    const at = new Date(Date.now() - (viuId === fresh ? 30_000 : 10 * 60_000)).toISOString();
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          userId: viuId,
+          latitude: viuId === fresh ? 10.7769 : 10.7626,
+          longitude: viuId === fresh ? 106.7009 : 106.6602,
+          formattedAddress: 'Địa chỉ thử',
+          street: null,
+          district: null,
+          city: null,
+          geocodeProvider: null,
+          cachedAt: at,
+          updatedAt: at,
+        },
+      },
+    });
+  });
+  await page.route('http://localhost:5176/api/locations/history?*', (route) =>
+    route.fulfill({ json: { success: true, data: { ...organizationPage([]), pageSize: 20 } } }),
+  );
+  await login(page);
+  await page.goto('/caregiver/map');
+  const map = page.getByRole('region', { name: /Bản đồ vị trí/ });
+  await expect(map).toBeVisible();
+  await expect(map.locator('canvas.mapboxgl-canvas')).toHaveCount(1);
+  const freshMarker = page.getByRole('button', {
+    name: 'Người mới cập nhật · Ghi nhận trong 2 phút gần đây',
+  });
+  const oldMarker = page.getByRole('button', { name: 'Người dữ liệu cũ · Dữ liệu cũ hơn 2 phút' });
+  await expect(freshMarker).toBeVisible();
+  await expect(oldMarker).toHaveClass(/stale/);
+  expect(styles[0]?.pathname).toContain('/styles/v1/mapbox/streets-v12');
+  await page.screenshot({ path: 'test-results/fe17-map-desktop.png', fullPage: true });
+  await oldMarker.click();
+  await expect(
+    page.getByRole('heading', { name: 'Người dữ liệu cũ — vị trí & lịch sử' }),
+  ).toBeVisible();
+  await expect(oldMarker).toHaveClass(/selected/);
+  // Popup content is plain text from the live API (address and recorded time).
+  const popup = page.locator('.mapboxgl-popup');
+  await expect(popup).toContainText('Người dữ liệu cũ');
+  await expect(popup).toContainText('Địa chỉ thử');
+  await expect(popup).toContainText('Ghi nhận GPS:');
+  await page.locator('.gps-map').screenshot({ path: 'test-results/fe17-map-popup.png' });
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  // Satellite toggle swaps the style, keeps markers and is remembered for this viewer.
+  const types = page.getByRole('group', { name: 'Kiểu bản đồ' });
+  await types.getByRole('button', { name: 'Vệ tinh' }).click();
+  await expect
+    .poll(() => styles.at(-1)?.pathname)
+    .toContain('/styles/v1/mapbox/satellite-streets-v12');
+  await expect(types.getByRole('button', { name: 'Vệ tinh' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(oldMarker).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole('group', { name: 'Kiểu bản đồ' }).getByRole('button', { name: 'Vệ tinh' }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => styles.at(-1)?.pathname).toContain('satellite-streets-v12');
+  await expect(freshMarker).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    .toBe(true);
+  await page.screenshot({ path: 'test-results/fe17-map-mobile.png', fullPage: true });
+});
+
+test('FE-17: Mapbox failure keeps the coordinate table usable', async ({ page }) => {
+  await stubApi(page);
+  const viuId = '01900000-0000-7000-8000-000000000053';
+  await page.route('http://localhost:5176/api/users?*', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: viuId,
+            fullName: 'Người thử lỗi bản đồ',
+            email: 'map@test.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId: null,
+            isActive: true,
+            avatarUrl: null,
+            deletedAt: null,
+            lastLoginAt: null,
+            createdAt: '2026-09-26',
+            updatedAt: '2026-09-26',
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route('http://localhost:5176/api/locations/live?*', (route) =>
+    route.fulfill({ status: 404, json: { detail: 'No GPS cache' } }),
+  );
+  await page.route(mapboxStyles, (route) =>
+    route.fulfill({ status: 401, json: { message: 'Not Authorized - Invalid Token' } }),
+  );
+  await login(page);
+  await page.goto('/caregiver/map');
+  await expect(page.getByRole('alert')).toContainText('Không tải được bản đồ Mapbox (401)');
+  await expect(page.getByRole('cell', { name: /Người thử lỗi bản đồ/ }).first()).toBeVisible();
+  await expect(page.getByText('Chưa có vị trí khả dụng', { exact: true })).toBeVisible();
 });
 
 for (const role of ['Caregiver', 'CenterAdmin']) {
@@ -3148,7 +3457,9 @@ for (const simulateConflict of [false, true]) {
         ? 'Escalated'
         : url.pathname.endsWith('/resolve')
           ? 'Resolved'
-          : 'Acknowledged';
+          : url.pathname.endsWith('/called')
+            ? 'Called'
+            : 'Acknowledged';
       history.push({
         id: `01900000-0000-7000-8000-${String(history.length + 10).padStart(12, '0')}`,
         fromStatus: from,
@@ -3210,6 +3521,24 @@ for (const simulateConflict of [false, true]) {
       page.getByRole('button', { name: 'Đánh dấu đã giải quyết', exact: true }),
     ).toHaveCount(0);
     expect(writes).toBe(3);
+    // WF-01: confirming a call is manual and final; it is not offered after Called.
+    state = 'Escalated';
+    await page.reload();
+    await page.getByRole('button', { name: 'Xem chi tiết' }).click();
+    await page.getByRole('button', { name: 'Xác nhận đã gọi hỗ trợ', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Xác nhận đã gọi hỗ trợ' })).toContainText(
+      'Web không tự gọi',
+    );
+    expect(writes).toBe(3);
+    await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('Máy chủ đã xác nhận cập nhật.');
+    await expect(
+      page.getByRole('button', { name: 'Xác nhận đã gọi hỗ trợ', exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Đánh dấu đã giải quyết', exact: true }),
+    ).toHaveCount(0);
+    expect(writes).toBe(4);
     denied = true;
     state = 'Sent';
     await page.reload();
@@ -3439,6 +3768,9 @@ test('layout: filter control baseline and centered organization popup on desktop
         : organizationPage([organizationFixture]);
     return route.fulfill({ json: { success: true, data } });
   });
+  await page.route('http://localhost:5176/api/licenses/pool?*', (route) =>
+    route.fulfill({ status: 404, json: { detail: 'License pool not found' } }),
+  );
   await login(page);
   await page.goto('/admin/organizations');
   for (const width of [1440, 768]) {
@@ -3453,7 +3785,8 @@ test('layout: filter control baseline and centered organization popup on desktop
     const box = await dialog.boundingBox();
     expect(Math.abs(box!.x + box!.width / 2 - width / 2)).toBeLessThan(2);
     expect(Math.abs(box!.y + box!.height / 2 - 500)).toBeLessThan(2);
-    expect(box!.height).toBeLessThanOrEqual(900);
+    // .dialog caps at 100dvh - 64px and scrolls its body.
+    expect(box!.height).toBeLessThanOrEqual(1000 - 64);
     await page.screenshot({ path: 'test-results/organization-popup-' + width + '.png' });
     await dialog.getByRole('button', { name: 'Đóng hộp thoại', exact: true }).click();
     await expect(dialog).toHaveCount(0);
@@ -3531,6 +3864,86 @@ test('U1: trial, 402 keeps session, subscription recovery and refreshed status',
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
   await expect(page.getByText('Personal', { exact: true })).toHaveCount(0);
+});
+
+test('UC-80: cancel plan confirms, maps org-key error and keeps access until period end', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const expiry = new Date(Date.now() + 20 * 86400000).toISOString();
+  let cancelledAt = '';
+  let deletes = 0;
+  await page.route('**/api/users/me', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          email: 'api@example.test',
+          fullName: 'Người dùng API',
+          role: 'Caregiver',
+          isActive: true,
+          organizationId: null,
+          licenseStatus: 'Active',
+          licenseExpiresAt: expiry,
+        },
+      },
+    }),
+  );
+  await page.route('**/api/licenses/subscription', (route) => {
+    if (route.request().method() === 'DELETE') {
+      deletes++;
+      return deletes === 1
+        ? route.fulfill({
+            status: 422,
+            json: { detail: 'Org plan', errorCode: 'CANNOT_CANCEL_ORG_SUBSCRIPTION' },
+          })
+        : route.fulfill({ json: { success: true, data: null } });
+    }
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          status: 'Active',
+          package: { id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+          startedAt: '2026-10-01T00:00:00Z',
+          trialEndsAt: null,
+          currentPeriodStart: '2026-10-01T00:00:00Z',
+          currentPeriodEnd: expiry,
+          autoRenew: false,
+          daysRemaining: 20,
+          ...(cancelledAt ? { cancelledAt } : {}),
+        },
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/license');
+  await page.getByRole('button', { name: 'Hủy gói', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Hủy gói sử dụng' });
+  await expect(dialog).toContainText('Hủy gói Personal?');
+  await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
+  expect(deletes).toBe(0);
+  await page.getByRole('button', { name: 'Hủy gói', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('key của trung tâm');
+  await dialog.getByRole('button', { name: 'Xác nhận' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(deletes).toBe(2);
+  await expect(
+    page.getByRole('status').filter({ hasText: 'sau đó cần mua gói mới' }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Hủy gói', exact: true })).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/uc80-cancelled.png', fullPage: true });
+  // After reload only a BE-provided cancelledAt can keep the button hidden.
+  cancelledAt = '2026-10-22T03:00:00Z';
+  await page.reload();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'sau đó cần mua gói mới' }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Hủy gói', exact: true })).toHaveCount(0);
+  expect(deletes).toBe(2);
 });
 
 for (const role of ['Staff', 'Admin', 'CenterAdmin']) {

@@ -58,18 +58,44 @@ function authorize(actor: Actor) {
     throw new ServiceError(t('Không có quyền quản lý liên kết.'), 403);
 }
 const uuid = (id: string) => parse(z.string().uuid(), id, 400);
-function own(actor: Actor, link: CareLink) {
-  if (actor.role === 'Caregiver' && link.caregiverId !== actor.id)
-    throw new ServiceError(t('Chỉ được xem liên kết của chính bạn.'), 403);
+// primaryVius: VIUs the caregiver is primary for; only then may they see other caregivers' links.
+function own(actor: Actor, link: CareLink, primaryVius: ReadonlySet<string> = new Set()) {
+  if (
+    actor.role === 'Caregiver' &&
+    link.caregiverId !== actor.id &&
+    !primaryVius.has(link.visuallyImpairedUserId)
+  )
+    throw new ServiceError(
+      t('Chỉ được xem liên kết của bạn hoặc của người bạn chăm sóc chính.'),
+      403,
+    );
   if (actor.role === 'CenterAdmin' && link.linkType !== 'Organization')
     throw new ServiceError(t('Màn phân công trung tâm chỉ quản lý liên kết tổ chức.'), 403);
   return link;
 }
-export const canManageLink = (actor: Actor, link: CareLink) =>
-  !link.unlinkedAt &&
-  (actor.role === 'Admin' ||
-    (actor.role === 'CenterAdmin' && !!actor.orgId && link.linkType === 'Organization') ||
-    (actor.role === 'Caregiver' && link.caregiverId === actor.id && link.linkType === 'Personal'));
+export type LinkAccess = { edit: boolean; remove: boolean; promote: boolean };
+/**
+ * UC-32–34 / BR-04: the primary caregiver edits and removes secondaries' Personal links; a
+ * secondary may only remove their own link. A primary link always keeps full permissions.
+ */
+export function linkAccess(
+  actor: Actor,
+  link: CareLink,
+  primaryVius: ReadonlySet<string>,
+): LinkAccess {
+  const none = { edit: false, remove: false, promote: false };
+  if (link.unlinkedAt) return none;
+  if (actor.role === 'Admin') return { edit: true, remove: true, promote: true };
+  if (actor.role === 'CenterAdmin')
+    return actor.orgId && link.linkType === 'Organization'
+      ? { edit: true, remove: true, promote: true }
+      : none;
+  if (actor.role !== 'Caregiver' || link.linkType !== 'Personal') return none;
+  if (link.caregiverId === actor.id) return { ...none, remove: true };
+  return primaryVius.has(link.visuallyImpairedUserId) && !link.isPrimary
+    ? { ...none, edit: true, remove: true }
+    : none;
+}
 export function createLinksApi(get = apiGet, write = apiWrite) {
   const json = (method: string, body: unknown): RequestInit => ({
     method,
@@ -105,15 +131,32 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
     if (requireActive && (!cg.isActive || !viu.isActive || cg.deletedAt || viu.deletedAt))
       throw new ServiceError(t('Hai tài khoản phải hoạt động và chưa bị xóa.'), 422);
   };
-  const checked = (actor: Actor, raw: unknown, id?: string) => {
-    const link = own(actor, parse(schema, raw));
+  // Caregiver only: VIUs where the actor holds the active primary link.
+  const primaryVius = async (actor: Actor, signal?: AbortSignal) => {
+    if (actor.role !== 'Caregiver') return new Set<string>();
+    const query = new URLSearchParams({ page: '1', pageSize: '50', isActive: 'true' });
+    const result = parse(pageSchema, await get('/api/caregiver-links?' + query, signal));
+    return new Set(
+      result.items
+        .filter((l) => l.caregiverId === actor.id && l.isPrimary && !l.unlinkedAt)
+        .map((l) => l.visuallyImpairedUserId),
+    );
+  };
+  const checked = (
+    actor: Actor,
+    raw: unknown,
+    id?: string,
+    primary: ReadonlySet<string> = new Set(),
+  ) => {
+    const link = own(actor, parse(schema, raw), primary);
     if (id && link.id !== id)
       throw new ServiceError(t('Liên kết trả về không khớp lựa chọn.'), 403);
     return link;
   };
   const detail = async (actor: Actor, id: string, signal?: AbortSignal) => {
     authorize(actor);
-    const link = checked(actor, await get('/api/caregiver-links/' + uuid(id), signal), id);
+    const raw = await get('/api/caregiver-links/' + uuid(id), signal);
+    const link = checked(actor, raw, id, await primaryVius(actor, signal));
     if (actor.role === 'CenterAdmin')
       await checkPeople(
         actor,
@@ -125,9 +168,9 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
       );
     return link;
   };
-  const writable = async (actor: Actor, id: string) => {
+  const writable = async (actor: Actor, id: string, need: keyof LinkAccess) => {
     const link = await detail(actor, id);
-    if (!canManageLink(actor, link))
+    if (!linkAccess(actor, link, await primaryVius(actor))[need])
       throw new ServiceError(t('Không thể sửa liên kết đã gỡ hoặc ngoài quyền của bạn.'), 403);
     return link;
   };
@@ -143,17 +186,22 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
     );
   return {
     detail,
+    primaryVius,
     async list(actor: Actor, filters: LinkFilters, signal?: AbortSignal) {
       authorize(actor);
       const query = new URLSearchParams({ page: String(filters.page), pageSize: '10' });
       if (filters.viuId) query.set('viuId', uuid(filters.viuId));
-      if (actor.role === 'Caregiver') query.set('caregiverId', actor.id);
-      else if (filters.caregiverId) query.set('caregiverId', uuid(filters.caregiverId));
+      // BE scopes a caregiver to their own links plus links of VIUs they are primary for.
+      if (actor.role !== 'Caregiver' && filters.caregiverId)
+        query.set('caregiverId', uuid(filters.caregiverId));
       const type = actor.role === 'CenterAdmin' ? 'Organization' : filters.linkType;
       if (type) query.set('linkType', parse(z.enum(['Personal', 'Organization']), type, 400));
       if (filters.active) query.set('isActive', filters.active);
       const result = parse(pageSchema, await get('/api/caregiver-links?' + query, signal));
-      result.items.forEach((link) => own(actor, link));
+      const primary = result.items.some((l) => l.caregiverId !== actor.id)
+        ? await primaryVius(actor, signal)
+        : new Set<string>();
+      result.items.forEach((link) => own(actor, link, primary));
       return result;
     },
     async create(
@@ -195,17 +243,18 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
     },
     async permissions(actor: Actor, id: string, values: LinkPermissions) {
       const data = permissions(values);
-      await writable(actor, id);
+      const link = await writable(actor, id, 'edit');
       return checked(
         actor,
         await write('/api/caregiver-links/' + id + '/permissions', json('PUT', data)),
         id,
+        new Set([link.visuallyImpairedUserId]),
       );
     },
     async promote(actor: Actor, id: string) {
       if (!['Admin', 'CenterAdmin'].includes(actor.role))
         throw new ServiceError(t('Chỉ quản trị viên được chuyển người chăm sóc chính.'), 403);
-      const link = await writable(actor, id);
+      const link = await writable(actor, id, 'promote');
       if (link.isPrimary)
         throw new ServiceError(t('Liên kết đã là chăm sóc chính; hãy tải lại.'), 422);
       return checked(
@@ -215,7 +264,7 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
       );
     },
     async remove(actor: Actor, id: string) {
-      await writable(actor, id);
+      await writable(actor, id, 'remove');
       await write('/api/caregiver-links/' + id, { method: 'DELETE' });
     },
   };
