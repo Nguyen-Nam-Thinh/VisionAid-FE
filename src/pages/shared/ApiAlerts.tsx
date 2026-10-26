@@ -7,12 +7,14 @@ import {
   alertLabels,
   actionLabels,
   alertActions,
+  overdueAlerts,
   type AlertAction,
   type AlertFilters,
   type Escalation,
 } from '../../services/api/emergencies';
 import { historyRange } from '../../services/api/locations';
 import { PageHead, State, Dialog, Confirm } from '../../components/UI';
+import { useNow } from '../../hooks/useNow';
 import type { Person } from '../../models/domain';
 const time = (value: string) => formatLocaleDateTime(value);
 const methods: Record<string, string> = labelMap({
@@ -33,6 +35,7 @@ function Alerts({ actor }: { actor: Person }) {
     dateTo: '',
     page: 1,
   });
+  const cache = useQueryClient();
   const [selected, setSelected] = useState('');
   const [error, setError] = useState('');
   const query = useQuery({
@@ -49,6 +52,7 @@ function Alerts({ actor }: { actor: Person }) {
           'Cảnh báo trong phạm vi liên kết được phép xem. Cập nhật qua SignalR và tải lại dự phòng mỗi 30 giây.',
         )}
       />
+      <EscalationBanner actor={actor} open={setSelected} />
       <section className="glass card stack">
         <form
           className="row"
@@ -98,7 +102,9 @@ function Alerts({ actor }: { actor: Person }) {
             type="button"
             className="btn"
             disabled={query.isFetching}
-            onClick={() => void query.refetch()}
+            onClick={() =>
+              void cache.invalidateQueries({ queryKey: ['api-alerts', actor.id, actor.orgId] })
+            }
           >
             {t('Tải lại cảnh báo')}
           </button>
@@ -183,6 +189,67 @@ function Alerts({ actor }: { actor: Person }) {
         <AlertDetail key={selected} actor={actor} id={selected} onClose={() => setSelected('')} />
       )}
     </>
+  );
+}
+// BR-29 / UC-132: alerts still Sent after 5 minutes. SignalR EscalationSuggestion (every minute)
+// refreshes this 'api-alerts' query; the Web only suggests and never calls or escalates by itself.
+function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) => void }) {
+  const now = useNow();
+  const sent = useQuery({
+    queryKey: ['api-alerts', actor.id, actor.orgId, 'escalation-suggestion'],
+    queryFn: ({ signal }) =>
+      emergenciesApi.list(
+        actor,
+        { viuId: '', status: 'Sent', dateFrom: '', dateTo: '', page: 1 },
+        signal,
+      ),
+    refetchInterval: 30000,
+    retry: false,
+  });
+  const overdue = sent.data ? overdueAlerts(sent.data.items, now) : [];
+  if (!overdue.length) return null;
+  return (
+    <section
+      className="glass card stack escalation-banner"
+      aria-labelledby="escalation-banner-title"
+    >
+      <h2 id="escalation-banner-title">{t('Gợi ý chuyển cấp lên 115')}</h2>
+      {/* Only the count is announced, so the minute counter does not re-read every tick. */}
+      <p role="status">
+        {t('{count} cảnh báo chưa có ai tiếp nhận sau hơn 5 phút.', { count: overdue.length })}
+      </p>
+      <ul className="stack">
+        {overdue.map(({ event, minutes }) => (
+          <li key={event.id} className="row between">
+            <span>
+              <strong>
+                {t('Chưa có ai tiếp nhận sau {minutes} phút — cân nhắc gọi 115.', { minutes })}
+              </strong>{' '}
+              {t('VIU {viu} · gửi lúc {time}', {
+                viu: event.visuallyImpairedUserId,
+                time: time(event.sentAt!),
+              })}
+            </span>
+            <button className="btn danger" onClick={() => open(event.id)}>
+              {t('Xem và chuyển cấp')}
+            </button>
+          </li>
+        ))}
+      </ul>
+      {sent.data?.hasNextPage && (
+        <small>{t('Còn cảnh báo Đã gửi khác; lọc theo trạng thái Đã gửi để xem đủ.')}</small>
+      )}
+      <div className="row">
+        <a className="btn" href="tel:115">
+          {t('Mở trình gọi 115')}
+        </a>
+        <small>
+          {t(
+            'Mở trình gọi không xác nhận cuộc gọi đã diễn ra. Web không tự gọi hoặc tự chuyển trạng thái “Đã gọi”.',
+          )}
+        </small>
+      </div>
+    </section>
   );
 }
 function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClose: () => void }) {

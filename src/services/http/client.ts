@@ -56,9 +56,20 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   CANNOT_CANCEL_ORG_SUBSCRIPTION: msg(
     'Gói này được kích hoạt bằng key của trung tâm nên không tự hủy được. Hãy liên hệ quản trị trung tâm.',
   ),
+  CANNOT_AUTO_RENEW_ORG_SUBSCRIPTION: msg(
+    'Gói do trung tâm cấp được gia hạn theo kho license của tổ chức. Hãy liên hệ quản trị trung tâm.',
+  ),
+  SUBSCRIPTION_NOT_ACTIVE: msg('Gói không còn hiệu lực. Tải lại hoặc mua gói mới.'),
+  AUTO_RENEW_REQUIRES_ACTIVE: msg('Chỉ bật tự gia hạn được khi gói trả phí đang hoạt động.'),
   LICENSE_POOL_NOT_FOUND: msg('Tổ chức chưa có kho license. Mua gói Business trước.'),
   LICENSE_POOL_ALREADY_SUSPENDED: msg(
     'Kho license đã ở trạng thái tạm ngưng. Tải lại để xem trạng thái mới.',
+  ),
+  LICENSE_POOL_SUSPENDED: msg(
+    'Kho license đang tạm ngưng. Liên hệ quản trị hệ thống, hoặc kích hoạt lại kho trước khi gia hạn.',
+  ),
+  NEW_EXPIRY_NOT_AFTER_CURRENT: msg(
+    'Ngày hết hạn mới phải sau ngày hết hạn hiện tại. Tải lại kho để xem hạn mới nhất.',
   ),
   LICENSE_POOL_NOT_SUSPENDED: msg(
     'Kho license không còn tạm ngưng. Tải lại để xem trạng thái mới.',

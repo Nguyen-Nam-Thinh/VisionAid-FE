@@ -20,9 +20,12 @@ export const subscription = z.object({
   currentPeriodEnd: date.nullable(),
   autoRenew: z.boolean(),
   daysRemaining: z.number().int().nonnegative().nullable(),
-  // UC-80: not returned by BE yet (cancel keeps Active/Trial); read it once BE adds it.
+  // UC-80: cancel keeps the status and sets cancelledAt + autoRenew=false. Optional so older
+  // deploys without these fields still parse.
   cancelledAt: date.nullable().optional(),
+  isOrgIssued: z.boolean().optional(),
 });
+export type MySubscription = z.infer<typeof subscription>;
 export const subscriptionLabels = labelMap({
   Trial: msg('Dùng thử'),
   Active: msg('Đang hoạt động'),
@@ -56,6 +59,8 @@ const pool = z.object({
   // Added with UC-130 suspension; optional so older deploys still parse.
   suspendedReason: z.string().nullable().optional(),
   suspendedAt: date.nullable().optional(),
+  // BR-57: optional so older deploys without the field still parse.
+  autoRenew: z.boolean().optional(),
 });
 export type OrganizationPool = z.infer<typeof pool>;
 export async function getOrganizationPool(user: Person, signal?: AbortSignal, get = apiGet) {
@@ -95,6 +100,72 @@ export async function setPoolSuspended(
   });
 }
 
+/**
+ * WF-04: Admin renews a pool by hand (CenterAdmin renews through PayOS). BE extends the pool and
+ * every distributed code; it rejects Suspended pools (reactivate first) and dates not after the
+ * current expiry. Mirrors the BE validator: future, at most 5 years, 0..10,000 extra seats.
+ */
+export async function renewPool(
+  user: Person,
+  current: OrganizationPool,
+  newExpiresAt: string,
+  additionalSeats: number,
+  write = apiWrite,
+  now = Date.now(),
+) {
+  if (user.role !== 'Admin')
+    throw new ServiceError(t('Chỉ quản trị hệ thống được gia hạn kho license thủ công.'), 403);
+  if (current.status === 'Suspended')
+    throw new ServiceError(t('Kho đang tạm ngưng. Kích hoạt lại kho trước khi gia hạn.'), 422);
+  const expiry = Date.parse(newExpiresAt);
+  if (!Number.isFinite(expiry) || expiry <= now)
+    throw new ServiceError(t('Ngày hết hạn mới phải ở tương lai.'), 400);
+  if (expiry > new Date(now).setFullYear(new Date(now).getFullYear() + 5))
+    throw new ServiceError(t('Ngày hết hạn mới không được quá 5 năm kể từ hôm nay.'), 400);
+  if (current.expiresAt && expiry <= Date.parse(current.expiresAt))
+    throw new ServiceError(t('Ngày hết hạn mới phải sau ngày hết hạn hiện tại.'), 400);
+  if (!Number.isInteger(additionalSeats) || additionalSeats < 0 || additionalSeats > 10000)
+    throw new ServiceError(t('Số suất thêm phải là số nguyên từ 0 đến 10.000.'), 400);
+  const raw = await write(`/api/licenses/pool/${current.id}/renew`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ newExpiresAt: new Date(expiry).toISOString(), additionalSeats }),
+  });
+  const parsed = pool.safeParse(raw);
+  // A valid reply is authoritative; otherwise callers reload the pool.
+  return parsed.success && parsed.data.id === current.id ? parsed.data : undefined;
+}
+
+/**
+ * BR-57: CenterAdmin (own organization) or Admin toggles pool auto-renew. When on, BE emails the
+ * CenterAdmin a PayOS top-up link before an Active pool expires; nothing is charged automatically.
+ */
+export async function setPoolAutoRenew(
+  user: Person,
+  current: OrganizationPool,
+  autoRenew: boolean,
+  write = apiWrite,
+) {
+  if (
+    user.role !== 'Admin' &&
+    !(isOrganizationBuyer(user) && current.organizationId === user.orgId)
+  )
+    throw new ServiceError(
+      t('Chỉ quản trị hệ thống hoặc quản trị trung tâm của tổ chức được đổi tự gia hạn kho.'),
+      403,
+    );
+  if (!z.string().uuid().safeParse(current.id).success)
+    throw new ServiceError(t('Kho license không hợp lệ. Hãy tải lại.'), 400);
+  const raw = await write(`/api/licenses/pool/${current.id}/auto-renew`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ autoRenew }),
+  });
+  const parsed = pool.safeParse(raw);
+  // A valid reply for the same pool is authoritative; otherwise callers reload.
+  return parsed.success && parsed.data.id === current.id ? parsed.data : undefined;
+}
+
 /** UC-130: Admin reads one organization's current pool (Active/Suspended first, else the latest). */
 export async function getAdminOrganizationPool(
   user: Person,
@@ -123,6 +194,55 @@ export async function cancelMySubscription(user: Person, write = apiWrite) {
   if (!isPersonalCaregiver(user))
     throw new ServiceError(t('Chỉ người chăm sóc cá nhân được hủy gói của mình.'), 403);
   await write('/api/licenses/subscription', { method: 'DELETE' });
+}
+
+/**
+ * UC-80 button rule: only a paid Personal plan that is Active, not yet cancelled and not issued
+ * from an organization key. Trial has no renewal to stop. UI hint only; BE still decides.
+ */
+export const canCancelRenewal = (sub: MySubscription) =>
+  sub.status === 'Active' &&
+  sub.package.packageType === 'Personal' &&
+  !sub.isOrgIssued &&
+  !sub.cancelledAt;
+
+/**
+ * Why the auto-renew switch cannot change, or null. Mirrors SetSubscriptionAutoRenew: org-issued
+ * codes renew through the pool; only Active can turn it on (Trial may only turn it off).
+ */
+export function autoRenewBlock(sub: MySubscription) {
+  if (sub.isOrgIssued) return t('Gói do trung tâm cấp được gia hạn theo kho license của tổ chức.');
+  if (sub.status === 'Active' || (sub.status === 'Trial' && sub.autoRenew)) return null;
+  return sub.status === 'Trial'
+    ? t('Gói dùng thử không tự gia hạn. Mua gói Personal để bật tự gia hạn.')
+    : t('Gói không còn hiệu lực nên không đổi được tự gia hạn. Hãy mua gói mới.');
+}
+
+/**
+ * Turning it on also clears cancelledAt (resumes a UC-80 cancel). Auto-renew only makes BE send a
+ * PayOS link by email/push before the period ends; nothing is charged automatically.
+ */
+export async function setMyAutoRenew(
+  user: Person,
+  sub: MySubscription,
+  autoRenew: boolean,
+  write = apiWrite,
+) {
+  if (!isPersonalCaregiver(user))
+    throw new ServiceError(t('Chỉ người chăm sóc cá nhân được đổi tự gia hạn gói của mình.'), 403);
+  if (!z.string().uuid().safeParse(sub.id).success)
+    throw new ServiceError(t('Dữ liệu subscription không hợp lệ. Hãy tải lại.'), 400);
+  const blocked = autoRenewBlock(sub);
+  if (blocked || (autoRenew && sub.status !== 'Active'))
+    throw new ServiceError(blocked ?? t('Chỉ bật tự gia hạn được khi gói đang hoạt động.'), 422);
+  const raw = await write(`/api/licenses/subscription/${sub.id}/auto-renew`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ autoRenew }),
+  });
+  const parsed = subscription.safeParse(raw);
+  // A valid reply for the same plan is authoritative; otherwise callers reload.
+  return parsed.success && parsed.data.id === sub.id ? parsed.data : undefined;
 }
 
 export async function getMySubscription(user: Person, signal?: AbortSignal, get = apiGet) {

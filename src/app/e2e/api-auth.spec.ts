@@ -2604,6 +2604,102 @@ test('UC-130 Admin: suspend with reason, conflict reload and reactivate to expir
   await expect(section).toContainText('Đã hết hạn');
   expect(writes).toHaveLength(4);
 });
+test('WF-04 Admin: manual pool renewal validates, maps BE errors and shows the new expiry', async ({
+  page,
+}) => {
+  await stubApi(page, 'Admin');
+  const poolId = '01900000-0000-7000-8000-000000000062';
+  const day = (offset: number) =>
+    new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+  let pool = {
+    id: poolId,
+    organizationId,
+    package: { id: poolId, name: 'Business 50', code: 'BUSINESS_50', packageType: 'Business' },
+    totalLicenses: 50,
+    usedLicenses: 20,
+    availableLicenses: 30,
+    status: 'Active',
+    purchasedAt: '2026-09-01T00:00:00Z',
+    expiresAt: new Date(Date.now() + 10 * 86400000).toISOString(),
+    suspendedReason: null as string | null,
+    suspendedAt: null as string | null,
+    autoRenew: true,
+  };
+  const bodies: { newExpiresAt: string; additionalSeats: number }[] = [];
+  await page.route('http://localhost:5176/api/organizations**', (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/members'))
+      return route.fulfill({ json: { success: true, data: organizationPage([]) } });
+    return route.fulfill({
+      json: {
+        success: true,
+        data:
+          url.pathname === '/api/organizations'
+            ? organizationPage([organizationFixture])
+            : organizationFixture,
+      },
+    });
+  });
+  await page.route('http://localhost:5176/api/licenses/pool**', (route) => {
+    const request = route.request();
+    if (request.method() === 'GET') return route.fulfill({ json: { success: true, data: pool } });
+    if (request.method() === 'PATCH') {
+      expect(new URL(request.url()).pathname).toBe(`/api/licenses/pool/${poolId}/auto-renew`);
+      pool = { ...pool, autoRenew: request.postDataJSON().autoRenew };
+      return route.fulfill({ json: { success: true, data: pool } });
+    }
+    expect(new URL(request.url()).pathname).toBe(`/api/licenses/pool/${poolId}/renew`);
+    const body = request.postDataJSON();
+    bodies.push(body);
+    if (bodies.length === 1)
+      return route.fulfill({
+        status: 422,
+        json: { detail: 'Not after current', errorCode: 'NEW_EXPIRY_NOT_AFTER_CURRENT' },
+      });
+    pool = {
+      ...pool,
+      expiresAt: body.newExpiresAt,
+      totalLicenses: pool.totalLicenses + body.additionalSeats,
+      availableLicenses: pool.availableLicenses + body.additionalSeats,
+    };
+    return route.fulfill({ json: { success: true, data: pool } });
+  });
+  await login(page);
+  await page.goto('/admin/organizations');
+  await page.getByRole('button', { name: 'Xem tổ chức ' + organizationFixture.name }).click();
+  const section = page.getByRole('region', { name: 'Kho license' });
+  await section.getByRole('button', { name: 'Gia hạn thủ công' }).click();
+  const dialog = actionDialog(page);
+  await expect(dialog).toContainText('mọi mã đã phát cho gia đình');
+  // Not after the current expiry: blocked in the browser, nothing sent.
+  await dialog.getByLabel('Ngày hết hạn mới').fill(day(5));
+  await dialog.getByRole('button', { name: 'Xác nhận gia hạn' }).click();
+  await expect(dialog).toContainText('phải sau ngày hết hạn hiện tại');
+  expect(bodies).toHaveLength(0);
+  await dialog.getByLabel('Ngày hết hạn mới').fill(day(40));
+  await dialog.getByLabel('Số suất thêm').fill('10');
+  await dialog.getByRole('button', { name: 'Xác nhận gia hạn' }).click();
+  await expect(dialog).toContainText('Tải lại kho để xem hạn mới nhất');
+  await dialog.getByRole('button', { name: 'Xác nhận gia hạn' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(bodies).toHaveLength(2);
+  expect(bodies[1].additionalSeats).toBe(10);
+  expect(Date.parse(bodies[1].newExpiresAt)).toBeGreaterThan(Date.now() + 39 * 86400000);
+  await expect(page.getByText('Đã gia hạn kho license đến')).toBeVisible();
+  await expect(section).toContainText('20/60 suất · còn 40');
+  await page.screenshot({ path: 'test-results/wf04-pool-renewed.png', fullPage: true });
+  // A suspended pool offers reactivation only, never renewal.
+  pool = { ...pool, status: 'Suspended', suspendedAt: '2026-10-22T03:00:00Z' };
+  await section.getByRole('button', { name: 'Tải lại kho license' }).click();
+  await expect(section.getByRole('button', { name: 'Kích hoạt lại kho' })).toBeVisible();
+  await expect(section.getByRole('button', { name: 'Gia hạn thủ công' })).toHaveCount(0);
+  // BR-57: Admin can toggle auto-renew on any pool, suspended included.
+  const toggle = section.getByRole('switch', { name: 'Tự gia hạn kho' });
+  await expect(toggle).toBeChecked();
+  await toggle.click();
+  await expect(toggle).not.toBeChecked();
+  await expect(section.getByText('Đã tắt tự gia hạn kho.')).toBeVisible();
+});
 test('5a CenterAdmin: own profile, member paging/filter and no platform mutations', async ({
   page,
 }) => {
@@ -3552,6 +3648,65 @@ for (const simulateConflict of [false, true]) {
   });
 }
 
+test('BR-29: Sent alert past 5 minutes shows the 115 banner and opens the alert to escalate', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const viu = '01900000-0000-7000-8000-000000000002';
+  let state = 'Sent';
+  const sentAt = new Date(Date.now() - 7 * 60000).toISOString();
+  const event = () => ({
+    id,
+    visuallyImpairedUserId: viu,
+    detectionMethod: 'Manual',
+    currentStatus: state,
+    latitude: null,
+    longitude: null,
+    notes: null,
+    snapshotPath: null,
+    detectedAt: sentAt,
+    gracePeriodEndsAt: null,
+    sentAt,
+    acknowledgedAt: null,
+    acknowledgedBy: null,
+    escalatedAt: null,
+    resolvedAt: null,
+    resolvedBy: null,
+    dismissedAt: null,
+  });
+  const statusQueries: (string | null)[] = [];
+  await page.route('http://localhost:5176/api/emergency-events**', (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname !== '/api/emergency-events')
+      return route.fulfill({ json: { success: true, data: { ...event(), statusHistory: [] } } });
+    const status = url.searchParams.get('status');
+    statusQueries.push(status);
+    const items = !status || status === state ? [event()] : [];
+    return route.fulfill({
+      json: { success: true, data: { ...organizationPage(items), pageSize: 20 } },
+    });
+  });
+  await login(page);
+  await page.goto('/caregiver/alerts');
+  const banner = page.getByRole('region', { name: 'Gợi ý chuyển cấp lên 115' });
+  await expect(banner).toContainText('Chưa có ai tiếp nhận sau 7 phút — cân nhắc gọi 115.');
+  await expect(banner.getByRole('status')).toHaveText(
+    '1 cảnh báo chưa có ai tiếp nhận sau hơn 5 phút.',
+  );
+  await expect(banner.getByRole('link', { name: 'Mở trình gọi 115' })).toHaveAttribute(
+    'href',
+    'tel:115',
+  );
+  expect(statusQueries).toContain('Sent');
+  await page.screenshot({ path: 'test-results/br29-escalation-banner.png', fullPage: true });
+  await banner.getByRole('button', { name: 'Xem và chuyển cấp' }).click();
+  await expect(page.getByRole('dialog', { name: 'Chi tiết cảnh báo' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  // Once someone acknowledges, the next refresh drops the suggestion.
+  state = 'Acknowledged';
+  await page.getByRole('button', { name: 'Tải lại cảnh báo' }).click();
+  await expect(banner).toHaveCount(0);
+});
 test('8a SignalR: receives event, refreshes REST and stops after logout', async ({ page }) => {
   await stubApi(page);
   let send: ((data: string) => void) | undefined;
@@ -3866,7 +4021,7 @@ test('U1: trial, 402 keeps session, subscription recovery and refreshed status',
   await expect(page.getByText('Personal', { exact: true })).toHaveCount(0);
 });
 
-test('UC-80: cancel plan confirms, maps org-key error and keeps access until period end', async ({
+test('UC-80: cancel renewal confirms, maps org-key error and keeps access until period end', async ({
   page,
 }) => {
   await stubApi(page);
@@ -3898,7 +4053,8 @@ test('UC-80: cancel plan confirms, maps org-key error and keeps access until per
             status: 422,
             json: { detail: 'Org plan', errorCode: 'CANNOT_CANCEL_ORG_SUBSCRIPTION' },
           })
-        : route.fulfill({ json: { success: true, data: null } });
+        : ((cancelledAt = '2026-10-22T03:00:00Z'),
+          route.fulfill({ json: { success: true, data: null } }));
     }
     return route.fulfill({
       json: {
@@ -3911,7 +4067,7 @@ test('UC-80: cancel plan confirms, maps org-key error and keeps access until per
           trialEndsAt: null,
           currentPeriodStart: '2026-10-01T00:00:00Z',
           currentPeriodEnd: expiry,
-          autoRenew: false,
+          autoRenew: !cancelledAt,
           daysRemaining: 20,
           ...(cancelledAt ? { cancelledAt } : {}),
         },
@@ -3920,30 +4076,134 @@ test('UC-80: cancel plan confirms, maps org-key error and keeps access until per
   });
   await login(page);
   await page.goto('/license');
-  await page.getByRole('button', { name: 'Hủy gói', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Hủy gói sử dụng' });
-  await expect(dialog).toContainText('Hủy gói Personal?');
+  await page.getByRole('button', { name: 'Hủy gia hạn', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Hủy gia hạn gói' });
+  await expect(dialog).toContainText('Hủy gia hạn gói Personal?');
   await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
   expect(deletes).toBe(0);
-  await page.getByRole('button', { name: 'Hủy gói', exact: true }).click();
+  await page.getByRole('button', { name: 'Hủy gia hạn', exact: true }).click();
   await dialog.getByRole('button', { name: 'Xác nhận' }).click();
   await expect(dialog.getByRole('alert')).toContainText('key của trung tâm');
   await dialog.getByRole('button', { name: 'Xác nhận' }).click();
   await expect(dialog).toHaveCount(0);
   expect(deletes).toBe(2);
   await expect(
-    page.getByRole('status').filter({ hasText: 'sau đó cần mua gói mới' }),
+    page.getByRole('status').filter({ hasText: 'Sau đó gói không tự gia hạn' }),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Hủy gói', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hủy gia hạn', exact: true })).toHaveCount(0);
   await page.screenshot({ path: 'test-results/uc80-cancelled.png', fullPage: true });
-  // After reload only a BE-provided cancelledAt can keep the button hidden.
-  cancelledAt = '2026-10-22T03:00:00Z';
+  await expect(page.locator('.license-details')).toContainText('Tắt');
+  // After reload only the BE-provided cancelledAt keeps the button hidden.
   await page.reload();
   await expect(
-    page.getByRole('status').filter({ hasText: 'sau đó cần mua gói mới' }),
+    page.getByRole('status').filter({ hasText: 'Sau đó gói không tự gia hạn' }),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Hủy gói', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hủy gia hạn', exact: true })).toHaveCount(0);
   expect(deletes).toBe(2);
+});
+
+test('auto-renew switch: off/on via PATCH, resumes a cancelled plan, maps BE error, Trial disabled', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const expiry = new Date(Date.now() + 20 * 86400000).toISOString();
+  let sub = {
+    id,
+    status: 'Active',
+    package: { id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+    startedAt: '2026-10-01T00:00:00Z',
+    trialEndsAt: null as string | null,
+    currentPeriodStart: '2026-10-01T00:00:00Z',
+    currentPeriodEnd: expiry as string | null,
+    autoRenew: true,
+    daysRemaining: 20,
+    cancelledAt: null as string | null,
+    isOrgIssued: false,
+  };
+  const patches: boolean[] = [];
+  let fail = false;
+  await page.route('**/api/licenses/subscription**', (route) => {
+    const request = route.request();
+    if (request.method() === 'PATCH') {
+      expect(new URL(request.url()).pathname).toBe(`/api/licenses/subscription/${id}/auto-renew`);
+      const { autoRenew } = request.postDataJSON();
+      patches.push(autoRenew);
+      if (fail)
+        return route.fulfill({
+          status: 422,
+          json: { detail: 'not active', errorCode: 'SUBSCRIPTION_NOT_ACTIVE' },
+        });
+      sub = { ...sub, autoRenew, ...(autoRenew ? { cancelledAt: null } : {}) };
+      return route.fulfill({ json: { success: true, data: sub } });
+    }
+    if (request.method() === 'DELETE') {
+      sub = { ...sub, autoRenew: false, cancelledAt: '2026-10-22T03:00:00Z' };
+      return route.fulfill({ json: { success: true, data: null } });
+    }
+    return route.fulfill({ json: { success: true, data: sub } });
+  });
+  await login(page);
+  await page.goto('/license');
+  const toggle = page.getByRole('switch', { name: 'Tự gia hạn' });
+  await expect(toggle).toBeChecked();
+  await expect(page.locator('#auto-renew-hint')).toContainText('Không tự trừ tiền');
+  await toggle.click();
+  await expect(toggle).not.toBeChecked();
+  await expect(page.getByText('Đã tắt tự gia hạn.')).toBeVisible();
+  // Cancel, then turning it back on resumes the plan and brings the cancel button back.
+  await page.getByRole('button', { name: 'Hủy gia hạn', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Hủy gia hạn gói' })
+    .getByRole('button', { name: 'Xác nhận' })
+    .click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Sau đó gói không tự gia hạn' }),
+  ).toBeVisible();
+  await expect(page.locator('#auto-renew-hint')).toContainText('Bật lại để tiếp tục');
+  await toggle.click();
+  await expect(toggle).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Hủy gia hạn', exact: true })).toBeVisible();
+  expect(patches).toEqual([false, true]);
+  fail = true;
+  await toggle.click();
+  await expect(page.getByRole('alert')).toContainText('Gói không còn hiệu lực');
+  await expect(toggle).toBeChecked();
+  await page.screenshot({ path: 'test-results/auto-renew-switch.png', fullPage: true });
+  // Trial: switch disabled with the reason; no request.
+  fail = false;
+  sub = { ...sub, status: 'Trial', autoRenew: false, trialEndsAt: expiry, currentPeriodEnd: null };
+  await page.reload();
+  await expect(toggle).toBeDisabled();
+  await expect(page.locator('#auto-renew-hint')).toContainText('Gói dùng thử không tự gia hạn');
+  await expect(page.getByRole('button', { name: 'Hủy gia hạn', exact: true })).toHaveCount(0);
+  expect(patches).toHaveLength(3);
+});
+test('UC-80: org-issued personal plan shows no cancel-renewal button', async ({ page }) => {
+  await stubApi(page);
+  await page.route('**/api/licenses/subscription', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          id,
+          status: 'Active',
+          package: { id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+          startedAt: '2026-10-01T00:00:00Z',
+          trialEndsAt: null,
+          currentPeriodStart: '2026-10-01T00:00:00Z',
+          currentPeriodEnd: new Date(Date.now() + 20 * 86400000).toISOString(),
+          autoRenew: false,
+          daysRemaining: 20,
+          cancelledAt: null,
+          isOrgIssued: true,
+        },
+      },
+    }),
+  );
+  await login(page);
+  await page.goto('/license');
+  await expect(page.getByText('key của trung tâm. Liên hệ quản trị trung tâm')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Hủy gia hạn', exact: true })).toHaveCount(0);
 });
 
 for (const role of ['Staff', 'Admin', 'CenterAdmin']) {
@@ -4418,6 +4678,42 @@ const u3Pool = (status = 'Active', total = 50) => ({
   status,
   purchasedAt: '2026-10-06T00:00:00Z',
   expiresAt: '2026-11-05T00:00:00Z',
+});
+test('BR-57: CenterAdmin toggles pool auto-renew, failure keeps the server value', async ({
+  page,
+}) => {
+  await stubApi(page, 'CenterAdmin', id);
+  let pool = { ...u3Pool(), autoRenew: false };
+  const patches: boolean[] = [];
+  let fail = false;
+  await page.route('**/api/licenses/pool**', (route) => {
+    const request = route.request();
+    if (request.method() === 'PATCH') {
+      expect(new URL(request.url()).pathname).toBe(`/api/licenses/pool/${id}/auto-renew`);
+      const { autoRenew } = request.postDataJSON();
+      patches.push(autoRenew);
+      if (fail) return route.fulfill({ status: 403, json: { detail: 'Forbidden' } });
+      pool = { ...pool, autoRenew };
+      return route.fulfill({ json: { success: true, data: pool } });
+    }
+    return route.fulfill({ json: { success: true, data: pool } });
+  });
+  await page.route('**/api/licenses/assignments?**', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([]) } }),
+  );
+  await login(page);
+  await page.goto('/center-admin/licenses');
+  const toggle = page.getByRole('switch', { name: 'Tự gia hạn kho' });
+  await expect(toggle).not.toBeChecked();
+  await toggle.click();
+  await expect(toggle).toBeChecked();
+  await expect(page.getByText('Đã bật tự gia hạn kho.')).toBeVisible();
+  await page.screenshot({ path: 'test-results/br57-pool-auto-renew.png', fullPage: true });
+  fail = true;
+  await toggle.click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(toggle).toBeChecked();
+  expect(patches).toEqual([true, false]);
 });
 test('11a: staff manages contacts with conflict recovery, confirmations and revoked-link protection', async ({
   page,
