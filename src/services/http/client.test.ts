@@ -72,3 +72,17 @@ it('keeps the BE errorCode and translates known codes, leaving unknown ones as s
     message: 'No code.',
   });
 });
+it('reports 413 with a fixed message without reading the proxy body', async () => {
+  const html = vi.fn(
+    async () =>
+      new Response('<html>413 Request Entity Too Large</html>', {
+        status: 413,
+        headers: { 'Content-Type': 'text/html' },
+      }),
+  );
+  await expect(request('/upload', {}, html)).rejects.toMatchObject({
+    status: 413,
+    code: 'PAYLOAD_TOO_LARGE',
+    message: 'Tệp vượt quá giới hạn tải lên của máy chủ.',
+  });
+});

@@ -2200,6 +2200,18 @@ export const en = {
     'The photo no longer belongs to the selected person. Please reload.',
   'Danh sách gương mặt không hợp lệ.': 'Invalid face list.',
   'Kiểm tra tên, mối quan hệ và ghi chú.': 'Check the name, relationship and notes.',
+  'Tệp vượt quá giới hạn tải lên của máy chủ.': 'The file exceeds the server upload limit.',
+  'Máy chủ phản hồi quá thời gian chờ. Kiểm tra mạng rồi thử lại.':
+    'The server took too long to respond. Check your connection and try again.',
+  'Ảnh không được vượt quá 10 MB.': 'The photo must not exceed 10 MB.',
+  'Thiếu người cần thêm ảnh. Tải lại trang rồi thử lại.':
+    'The person for this photo is missing. Reload the page and try again.',
+  'Ảnh vượt quá giới hạn tải lên của máy chủ (tối đa 10 MB).':
+    'The photo exceeds the server upload limit (10 MB max).',
+  'Tải ảnh quá thời gian chờ. Kiểm tra mạng rồi thử lại.':
+    'The photo upload timed out. Check your connection and try again.',
+  'Không gửi được ảnh. Có thể ảnh quá lớn hoặc mạng không ổn định.':
+    'The photo could not be sent. It may be too large or the connection is unstable.',
   'Không nhận được ảnh từ máy chủ.': 'No photo received from the server.',
   'Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.':
     'No face found in the photo. Choose a clear, well-lit photo with only one person.',
