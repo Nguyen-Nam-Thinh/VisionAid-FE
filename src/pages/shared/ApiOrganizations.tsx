@@ -6,6 +6,7 @@ import { useSession } from '../../hooks/useService';
 import { ServiceError } from '../../services/contracts';
 import {
   getAdminOrganizationPool,
+  renewPool,
   setPoolSuspended,
   subscriptionLabels,
   type OrganizationPool,
@@ -19,6 +20,7 @@ import {
 import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import { roles } from '../../constants/labels';
+import { PoolAutoRenew } from './PoolAutoRenew';
 import type { Person } from '../../models/domain';
 
 const fields: FieldSpec[] = [
@@ -565,9 +567,9 @@ function OrganizationDetails({
   );
 }
 
-// UC-130: Super Admin suspends or reactivates the organization's license pool.
+// UC-130 / WF-04: Super Admin suspends, reactivates or manually renews the organization's pool.
 function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization }) {
-  const [action, setAction] = useState<'suspend' | 'reactivate' | null>(null);
+  const [action, setAction] = useState<'suspend' | 'reactivate' | 'renew' | null>(null);
   const [notice, setNotice] = useState('');
   const pool = useQuery({
     queryKey: ['api-admin-pool', user.id, org.id],
@@ -651,15 +653,21 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
                   </>
                 )}
               </dl>
+              <PoolAutoRenew actor={user} pool={pool.data} reload={reload} />
               <div className="row">
                 {pool.data.status === 'Suspended' ? (
                   <button className="btn primary" onClick={() => setAction('reactivate')}>
                     {t('Kích hoạt lại kho')}
                   </button>
                 ) : (
-                  <button className="btn danger" onClick={() => setAction('suspend')}>
-                    {t('Tạm ngưng kho')}
-                  </button>
+                  <>
+                    <button className="btn primary" onClick={() => setAction('renew')}>
+                      {t('Gia hạn thủ công')}
+                    </button>
+                    <button className="btn danger" onClick={() => setAction('suspend')}>
+                      {t('Tạm ngưng kho')}
+                    </button>
+                  </>
                 )}
               </div>
             </>
@@ -695,6 +703,67 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
                   throw error;
                 }
                 done(await reload());
+                setAction(null);
+              }}
+            />
+          </div>
+        </Dialog>
+      )}
+      {action === 'renew' && pool.data && (
+        <Dialog title={t('Gia hạn kho license')} onClose={() => setAction(null)}>
+          <div className="stack">
+            <p>
+              {t(
+                '{name}: kho và mọi mã đã phát cho gia đình được kéo dài đến ngày mới. Hạn hiện tại: {date}. Gia hạn thủ công không tạo giao dịch PayOS.',
+                {
+                  name: org.name,
+                  date: pool.data.expiresAt
+                    ? formatLocaleDateTime(pool.data.expiresAt)
+                    : t('Không giới hạn'),
+                },
+              )}
+            </p>
+            <Form
+              submit={t('Xác nhận gia hạn')}
+              fields={[
+                {
+                  key: 'newExpiresAt',
+                  label: t('Ngày hết hạn mới'),
+                  type: 'date',
+                  required: true,
+                  hint: t('Hết ngày đã chọn theo giờ máy của bạn; tối đa 5 năm kể từ hôm nay.'),
+                },
+                {
+                  key: 'additionalSeats',
+                  label: t('Số suất thêm'),
+                  type: 'number',
+                  min: 0,
+                  max: 10000,
+                  step: 1,
+                },
+              ]}
+              onSubmit={async (values) => {
+                let next: OrganizationPool | undefined;
+                try {
+                  next = await renewPool(
+                    user,
+                    pool.data!,
+                    String(values.newExpiresAt) + 'T23:59:59',
+                    Number(values.additionalSeats),
+                  );
+                } catch (error) {
+                  if (error instanceof ServiceError && error.status >= 409) await reload();
+                  throw error;
+                }
+                const fresh = await reload();
+                const shown = fresh ?? next;
+                setNotice(
+                  shown?.expiresAt
+                    ? t('Đã gia hạn kho license đến {date}.', {
+                        date: formatLocaleDateTime(shown.expiresAt),
+                      })
+                    : t('Đã gửi yêu cầu. Tải lại kho license để xem trạng thái mới.'),
+                );
                 setAction(null);
               }}
             />

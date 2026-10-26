@@ -2410,14 +2410,82 @@ export const en = {
     'Only personal caregivers can cancel their own plan.',
   'Gói này được kích hoạt bằng key của trung tâm nên không tự hủy được. Hãy liên hệ quản trị trung tâm.':
     'This plan was activated with a center key, so you cannot cancel it yourself. Please contact the center administrator.',
-  'Hủy gói sử dụng': 'Cancel plan',
-  'Hủy gói {name}? Gói sẽ không tiếp tục sau kỳ hiện tại; bạn vẫn dùng được đến {date}. Gói kích hoạt bằng key của trung tâm không tự hủy được.':
-    'Cancel the {name} plan? It will not continue after the current period; you can keep using it until {date}. Plans activated with a center key cannot be cancelled here.',
-  'Hủy gói': 'Cancel plan',
-  'Đã hủy gói. Bạn vẫn dùng được đến {date}.':
-    'Plan cancelled. You can keep using it until {date}.',
-  'Đã hủy gói. Bạn vẫn dùng được đến {date}; sau đó cần mua gói mới.':
-    'Plan cancelled. You can keep using it until {date}; after that you need to buy a new plan.',
+  'Hủy gia hạn gói': 'Cancel plan renewal',
+  'Hủy gia hạn gói {name}? Bạn vẫn dùng được tới hết kỳ hiện tại ({date}); sau đó gói không tự gia hạn.':
+    'Cancel renewal of the {name} plan? You can keep using it until the end of the current period ({date}); after that the plan will not renew.',
+  'Hủy gia hạn': 'Cancel renewal',
+  'Đã hủy gia hạn, còn dùng đến {date}.': 'Renewal cancelled. Access remains until {date}.',
+  'Đã hủy gia hạn, còn dùng đến {date}. Sau đó gói không tự gia hạn; bạn có thể mua lại từ danh mục gói.':
+    'Renewal cancelled. Access remains until {date}. The plan will not renew after that; you can buy it again from the plan catalog.',
+  'Gói này được kích hoạt bằng key của trung tâm. Liên hệ quản trị trung tâm để thay đổi.':
+    'This plan was activated with a center key. Contact the center administrator to change it.',
+  'Tự gia hạn': 'Auto-renew',
+  'Chỉ quản trị hệ thống hoặc quản trị trung tâm của tổ chức được đổi tự gia hạn kho.':
+    "Only system administrators or the organization's center administrator can change pool auto-renew.",
+  'Đã bật tự gia hạn kho.': 'Pool auto-renew turned on.',
+  'Đã tắt tự gia hạn kho.': 'Pool auto-renew turned off.',
+  'Tự gia hạn kho': 'Pool auto-renew',
+  'Chưa có từ máy chủ': 'Not provided by the server',
+  'Máy chủ chưa trả trạng thái tự gia hạn. Hãy tải lại kho license.':
+    'The server did not return the auto-renew state. Reload the license pool.',
+  'Khi bật, trước ngày hết hạn máy chủ gửi link thanh toán PayOS cho quản trị trung tâm qua email và thông báo. Chỉ áp dụng khi kho đang hoạt động; không tự trừ tiền.':
+    'When on, before the expiry date the server sends the center administrator a PayOS payment link by email and notification. Applies only while the pool is active; nothing is charged automatically.',
+  'Gói do trung tâm cấp được gia hạn theo kho license của tổ chức.':
+    'Center-issued plans renew with the organization license pool.',
+  'Gói dùng thử không tự gia hạn. Mua gói Personal để bật tự gia hạn.':
+    'Trial plans do not auto-renew. Buy a Personal plan to turn on auto-renew.',
+  'Gói không còn hiệu lực nên không đổi được tự gia hạn. Hãy mua gói mới.':
+    'This plan is no longer valid, so auto-renew cannot be changed. Please buy a new plan.',
+  'Chỉ người chăm sóc cá nhân được đổi tự gia hạn gói của mình.':
+    'Only personal caregivers can change auto-renew on their own plan.',
+  'Chỉ bật tự gia hạn được khi gói đang hoạt động.':
+    'Auto-renew can only be turned on while the plan is active.',
+  'Gói do trung tâm cấp được gia hạn theo kho license của tổ chức. Hãy liên hệ quản trị trung tâm.':
+    'Center-issued plans renew with the organization license pool. Please contact the center administrator.',
+  'Gói không còn hiệu lực. Tải lại hoặc mua gói mới.':
+    'The plan is no longer valid. Reload or buy a new plan.',
+  'Chỉ bật tự gia hạn được khi gói trả phí đang hoạt động.':
+    'Auto-renew can only be turned on for an active paid plan.',
+  'Đã bật tự gia hạn.': 'Auto-renew turned on.',
+  'Đã tắt tự gia hạn.': 'Auto-renew turned off.',
+  'Bật lại để tiếp tục gia hạn gói đã hủy.':
+    'Turn it back on to resume renewing the cancelled plan.',
+  'Khi bật, trước ngày hết hạn máy chủ gửi link thanh toán PayOS qua email và thông báo. Không tự trừ tiền.':
+    'When on, before the expiry date the server sends a PayOS payment link by email and notification. Nothing is charged automatically.',
+  'Gợi ý chuyển cấp lên 115': 'Suggested escalation to 115',
+  '{count} cảnh báo chưa có ai tiếp nhận sau hơn 5 phút.':
+    '{count} alert(s) not acknowledged by anyone after more than 5 minutes.',
+  'Chưa có ai tiếp nhận sau {minutes} phút — cân nhắc gọi 115.':
+    'Nobody has acknowledged after {minutes} minutes — consider calling 115.',
+  'VIU {viu} · gửi lúc {time}': 'VIU {viu} · sent at {time}',
+  'Xem và chuyển cấp': 'Review and escalate',
+  'Còn cảnh báo Đã gửi khác; lọc theo trạng thái Đã gửi để xem đủ.':
+    'More Sent alerts exist; filter by the Sent status to see them all.',
+  'Chỉ quản trị hệ thống được gia hạn kho license thủ công.':
+    'Only system administrators can renew a license pool manually.',
+  'Kho đang tạm ngưng. Kích hoạt lại kho trước khi gia hạn.':
+    'The pool is suspended. Reactivate it before renewing.',
+  'Ngày hết hạn mới phải ở tương lai.': 'The new expiry date must be in the future.',
+  'Ngày hết hạn mới không được quá 5 năm kể từ hôm nay.':
+    'The new expiry date cannot be more than 5 years from today.',
+  'Ngày hết hạn mới phải sau ngày hết hạn hiện tại.':
+    'The new expiry date must be after the current expiry date.',
+  'Số suất thêm phải là số nguyên từ 0 đến 10.000.':
+    'Additional seats must be a whole number from 0 to 10,000.',
+  'Kho license đang tạm ngưng. Liên hệ quản trị hệ thống, hoặc kích hoạt lại kho trước khi gia hạn.':
+    'The license pool is suspended. Contact the system administrator, or reactivate the pool before renewing.',
+  'Ngày hết hạn mới phải sau ngày hết hạn hiện tại. Tải lại kho để xem hạn mới nhất.':
+    'The new expiry date must be after the current expiry. Reload the pool to see the latest expiry.',
+  'Gia hạn thủ công': 'Renew manually',
+  'Gia hạn kho license': 'Renew license pool',
+  '{name}: kho và mọi mã đã phát cho gia đình được kéo dài đến ngày mới. Hạn hiện tại: {date}. Gia hạn thủ công không tạo giao dịch PayOS.':
+    '{name}: the pool and every code issued to families are extended to the new date. Current expiry: {date}. Manual renewal does not create a PayOS transaction.',
+  'Xác nhận gia hạn': 'Confirm renewal',
+  'Ngày hết hạn mới': 'New expiry date',
+  'Hết ngày đã chọn theo giờ máy của bạn; tối đa 5 năm kể từ hôm nay.':
+    'End of the chosen day in your device time; at most 5 years from today.',
+  'Số suất thêm': 'Additional seats',
+  'Đã gia hạn kho license đến {date}.': 'License pool renewed until {date}.',
   'Chỉ quản trị hệ thống được xem kho license của tổ chức khác.':
     "Only system administrators can view another organization's license pool.",
   'Kho license trả về không thuộc tổ chức đã chọn.':
