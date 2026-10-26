@@ -38,7 +38,7 @@ const passwordSchema = z
   .regex(/[0-9]/)
   .regex(/[^a-zA-Z0-9]/);
 const profileSchema = z.object({
-  fullName: z.string().trim().min(1).max(200),
+  fullName: z.string().trim().min(2).max(200),
   phoneNumber: z
     .string()
     .trim()
@@ -85,7 +85,7 @@ const profile = (values: unknown) =>
   parse(
     profileSchema,
     values,
-    t('Kiểm tra họ tên tối đa 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.'),
+    t('Kiểm tra họ tên từ 2 đến 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.'),
     400,
   );
 export function createAccountsApi(get = apiGet, write = apiWrite) {

@@ -341,8 +341,8 @@ export function createApiAuth(
     async profile(values: Pick<Person, 'name' | 'phone' | 'avatar'>) {
       const fullName = values.name.trim();
       const phoneNumber = values.phone.trim();
-      if (!fullName || fullName.length > 200)
-        throw new ServiceError(t('Họ tên phải có từ 1 đến 200 ký tự.'), 400);
+      if (fullName.length < 2 || fullName.length > 200)
+        throw new ServiceError(t('Họ tên phải có từ 2 đến 200 ký tự.'), 400);
       if (phoneNumber && !/^0[35789][0-9]{8}$/.test(phoneNumber))
         throw new ServiceError(t('Số điện thoại Việt Nam phải có 10 số, ví dụ 0901234567.'), 400);
       return mapProfile(
@@ -388,8 +388,8 @@ export function createApiAuth(
       return authenticate('/api/auth/login', { email: email.trim(), password });
     },
     async register(name: string, email: string, password: string) {
-      if (!name.trim() || name.trim().length > 200)
-        throw new ServiceError(t('Họ tên phải có từ 1 đến 200 ký tự.'), 400);
+      if (name.trim().length < 2 || name.trim().length > 200)
+        throw new ServiceError(t('Họ tên phải có từ 2 đến 200 ký tự.'), 400);
       if (!z.string().email().max(255).safeParse(email.trim()).success)
         throw new ServiceError(t('Email không hợp lệ hoặc quá dài.'), 400);
       if (

@@ -21,6 +21,7 @@ export interface FieldSpec {
     | 'date'
     | 'search';
   required?: boolean;
+  /** Number fields: minimum value. Text fields: minimum characters after trimming. */
   min?: number;
   max?: number;
   options?: { value: string; label: string }[];
@@ -60,13 +61,21 @@ export function Form({
       let rule = z.string();
       if (field.required)
         rule = rule.min(
-          field.type === 'password' ? 8 : field.key === 'name' ? 2 : 1,
+          field.type === 'password' ? 8 : 1,
           field.type === 'password'
             ? t('Mật khẩu cần ít nhất 8 ký tự.')
             : t('Vui lòng nhập thông tin.'),
         );
       if (field.max) rule = rule.max(field.max, t('Tối đa {max} ký tự.', { max: field.max }));
-      shape[field.key] = field.type === 'email' ? rule.email(t('Email không hợp lệ.')) : rule;
+      const min = field.min;
+      // Text minimums count characters after trimming, like the BE validators (e.g. BR-10 names).
+      const text =
+        min !== undefined && field.type !== 'password'
+          ? rule.refine((v) => !v.trim() || v.trim().length >= min, {
+              error: t('Cần ít nhất {min} ký tự.', { min }),
+            })
+          : rule;
+      shape[field.key] = field.type === 'email' ? rule.email(t('Email không hợp lệ.')) : text;
     }
   }
   const {

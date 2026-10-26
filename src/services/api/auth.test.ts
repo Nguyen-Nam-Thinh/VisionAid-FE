@@ -431,3 +431,15 @@ it('separates request timeouts from dropped connections', async () => {
     message: 'Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web.',
   });
 });
+it('BR-10: register and profile reject full names shorter than 2 characters before calling the BE', async () => {
+  const fetcher = vi.fn<typeof fetch>();
+  const auth = createApiAuth('http://example.test', memory(), fetcher);
+  await expect(auth.register(' A ', user.email, 'Password@1')).rejects.toMatchObject({
+    status: 400,
+    message: 'Họ tên phải có từ 2 đến 200 ký tự.',
+  });
+  await expect(auth.profile({ name: 'B', phone: '', avatar: '' })).rejects.toMatchObject({
+    status: 400,
+  });
+  expect(fetcher).not.toHaveBeenCalled();
+});

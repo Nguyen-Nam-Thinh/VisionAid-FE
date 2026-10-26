@@ -2,6 +2,7 @@ import type { Person } from '../../models/domain';
 import { accountsApi, type Account } from './accounts';
 import { organizationsApi } from './organizations';
 import { caregivingApi } from './caregiving';
+import { linksApi } from './links';
 
 // Search sources for SearchPicker: users pick a record by name/email and the id is sent to BE.
 export type PickerOption = { value: string; label: string; detail?: string };
@@ -36,3 +37,13 @@ export const searchOrganizations =
 /** Caregiver: care recipients BE returns for the current session's links. */
 export const searchCareRecipients = () => async (term: string, signal?: AbortSignal) =>
   options((await caregivingApi.users(1, term, signal)).items);
+
+/** Caregiver: only the care recipients they are the primary caregiver of (may add secondaries). */
+export const searchPrimaryCareRecipients =
+  (actor: Scope) => async (term: string, signal?: AbortSignal) => {
+    const [users, primary] = await Promise.all([
+      caregivingApi.users(1, term, signal),
+      linksApi.primaryVius(actor, signal),
+    ]);
+    return options(users.items.filter((p) => primary.has(p.id)));
+  };

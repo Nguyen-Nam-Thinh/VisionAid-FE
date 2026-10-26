@@ -184,6 +184,47 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
       value,
       400,
     );
+  /**
+   * BR-04/BR-33 (BE be6a872): a caregiver may only add another caregiver, by exact email, to a VIU
+   * they are the active primary of. Linking oneself happens when creating the VIU account (WF-03).
+   */
+  const addSecondary = async (
+    actor: Actor,
+    values: { caregiverEmail?: string; viuId: string } & LinkPermissions,
+  ) => {
+    const email = parse(
+      z.string().trim().toLowerCase().email().max(255),
+      values.caregiverEmail ?? '',
+      400,
+    );
+    const viuId = uuid(values.viuId.trim());
+    if (!(await primaryVius(actor)).has(viuId))
+      throw new ServiceError(t('Chỉ người chăm sóc chính mới thêm được người chăm sóc khác.'), 403);
+    const link = checked(
+      actor,
+      await write(
+        '/api/caregiver-links',
+        json('POST', {
+          caregiverEmail: email,
+          visuallyImpairedUserId: viuId,
+          linkType: 'Personal',
+          isPrimary: false,
+          ...permissions(values),
+        }),
+      ),
+      undefined,
+      new Set([viuId]),
+    );
+    if (
+      link.caregiverId === actor.id ||
+      link.caregiverEmail.toLowerCase() !== email ||
+      link.visuallyImpairedUserId !== viuId ||
+      link.linkType !== 'Personal' ||
+      link.isPrimary
+    )
+      throw new ServiceError(t('Kết quả không khớp phân công; hãy tải lại để xác minh.'), 502);
+    return link;
+  };
   return {
     detail,
     primaryVius,
@@ -206,20 +247,24 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
     },
     async create(
       actor: Actor,
-      values: { caregiverId: string; viuId: string; linkType: string } & LinkPermissions,
+      values: {
+        caregiverId: string;
+        caregiverEmail?: string;
+        viuId: string;
+        linkType: string;
+      } & LinkPermissions,
     ) {
       authorize(actor);
-      const caregiverId = actor.role === 'Caregiver' ? actor.id : uuid(values.caregiverId.trim());
+      if (actor.role === 'Caregiver') return addSecondary(actor, values);
+      const caregiverId = uuid(values.caregiverId.trim());
       const viuId = uuid(values.viuId.trim());
       const linkType =
         actor.role === 'CenterAdmin'
           ? 'Organization'
-          : actor.role === 'Caregiver'
-            ? 'Personal'
-            : parse(z.enum(['Personal', 'Organization']), values.linkType, 400);
+          : parse(z.enum(['Personal', 'Organization']), values.linkType, 400);
       if (caregiverId === viuId)
         throw new ServiceError(t('Không thể liên kết với chính mình.'), 400);
-      if (actor.role !== 'Caregiver') await checkPeople(actor, caregiverId, viuId, linkType, true);
+      await checkPeople(actor, caregiverId, viuId, linkType, true);
       const link = checked(
         actor,
         await write(

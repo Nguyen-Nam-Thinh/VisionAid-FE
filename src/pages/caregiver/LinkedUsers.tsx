@@ -108,7 +108,7 @@ export function LinkedUsers() {
           {modal === 'new' ? (
             <Form
               fields={[
-                { key: 'name', label: t('Họ và tên'), required: true, max: 200 },
+                { key: 'name', label: t('Họ và tên'), required: true, min: 2, max: 200 },
                 { key: 'email', label: 'Email', type: 'email', required: true },
                 { key: 'phone', label: t('Số điện thoại') },
               ]}
