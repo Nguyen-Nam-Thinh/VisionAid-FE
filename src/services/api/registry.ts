@@ -1,9 +1,70 @@
-import { t } from '../../i18n';
+import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
 import { apiBlob, apiGet, apiWrite } from './adapter';
 import { createCaregivingApi } from './caregiving';
 import { ServiceError } from '../contracts';
+import { NETWORK_ERROR, PAYLOAD_TOO_LARGE, REQUEST_TIMEOUT } from '../http/client';
 import type { Person } from '../../models/domain';
+
+// UploadFacePhotoValidator messages (BE fb735df) returned as 400 field errors.
+const uploadFieldMessages: Record<string, string> = labelMap({
+  'Photo must not exceed 10 MB.': msg('Ảnh không được vượt quá 10 MB.'),
+  'Only JPEG, PNG, or WebP images are allowed.': msg('Chỉ nhận ảnh JPEG, PNG hoặc WebP.'),
+  'PersonId is required.': msg('Thiếu người cần thêm ảnh. Tải lại trang rồi thử lại.'),
+});
+/** Turns transport and BE failures of a photo upload into messages a caregiver can act on. */
+export function uploadError(error: unknown): unknown {
+  if (!(error instanceof ServiceError)) return error;
+  // BE rejects photos where FaceNet finds no face (422 NO_FACE_DETECTED); nothing was saved.
+  if (error.status === 422 && error.code === 'NO_FACE_DETECTED')
+    return new ServiceError(
+      t('Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.'),
+      422,
+      {},
+      error.code,
+    );
+  if (error.code === PAYLOAD_TOO_LARGE)
+    return new ServiceError(
+      t('Ảnh vượt quá giới hạn tải lên của máy chủ (tối đa 10 MB).'),
+      413,
+      {},
+      error.code,
+    );
+  if (error.code === REQUEST_TIMEOUT)
+    return new ServiceError(
+      t('Tải ảnh quá thời gian chờ. Kiểm tra mạng rồi thử lại.'),
+      504,
+      {},
+      error.code,
+    );
+  // The browser cannot read a 413 sent while the body is still uploading; fetch reports a network error.
+  if (error.code === NETWORK_ERROR)
+    return new ServiceError(
+      t('Không gửi được ảnh. Có thể ảnh quá lớn hoặc mạng không ổn định.'),
+      503,
+      {},
+      error.code,
+    );
+  const fields = Object.values(error.fields);
+  if (error.status === 400 && fields.length)
+    return new ServiceError(
+      fields.map((m) => uploadFieldMessages[m] ?? m).join(' '),
+      400,
+      error.fields,
+      error.code,
+    );
+  return error;
+}
+
+/** A real 5xx from the BE (not a timeout or dropped connection), where the photo may have been saved. */
+export function serverFailed(error: unknown) {
+  return (
+    error instanceof ServiceError &&
+    error.status >= 500 &&
+    error.code !== REQUEST_TIMEOUT &&
+    error.code !== NETWORK_ERROR
+  );
+}
 
 const input = z.object({
   displayName: z.string().trim().min(1).max(200),
@@ -155,17 +216,7 @@ export function createRegistryApi(get = apiGet, write = apiWrite, blob = apiBlob
           signal: AbortSignal.timeout(90000),
         });
       } catch (error) {
-        // BE rejects photos where FaceNet finds no face (422 FACE_NOT_DETECTED); nothing was saved.
-        if (
-          error instanceof ServiceError &&
-          (error.code === 'FACE_NOT_DETECTED' ||
-            (error.status === 422 && /no face/i.test(error.message)))
-        )
-          throw new ServiceError(
-            t('Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.'),
-            422,
-          );
-        throw error;
+        throw uploadError(error);
       }
       const result = imageSchema.safeParse(raw);
       if (!result.success || result.data.personId !== id)

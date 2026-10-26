@@ -1,8 +1,9 @@
 import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
-import { apiGet, apiWrite } from './adapter';
+import { apiBlob, apiGet, apiWrite } from './adapter';
 import { caregivingApi } from './caregiving';
 import { historyRange } from './locations';
+import { registryPhoto } from './registry';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 const status = z.enum([
@@ -135,7 +136,20 @@ function uuid(id: string) {
   if (!z.string().uuid().safeParse(id).success)
     throw new ServiceError(t('Mã định danh không hợp lệ.'), 400);
 }
-export function createEmergenciesApi(get = apiGet, write = apiWrite, links = caregivingApi.links) {
+/**
+ * WF-01 scene snapshot: GET /api/emergency-events/{id}/snapshot (BE 148ed50) streams the image bytes
+ * with the same permission as acknowledging the alert (active link + canReceiveAlerts). 404 when the
+ * event has no photo or retention cleanup removed it. Set to false only to hide the viewer again.
+ */
+export const SNAPSHOT_API_READY = true;
+export const snapshotPath = (id: string) => '/api/emergency-events/' + id + '/snapshot';
+export function createEmergenciesApi(
+  get = apiGet,
+  write = apiWrite,
+  links = caregivingApi.links,
+  blob = apiBlob,
+  snapshotReady = SNAPSHOT_API_READY,
+) {
   async function detail(actor: Actor, id: string, signal?: AbortSignal) {
     authorize(actor);
     uuid(id);
@@ -159,6 +173,28 @@ export function createEmergenciesApi(get = apiGet, write = apiWrite, links = car
   return {
     detail,
     canAct,
+    snapshotReady,
+    async snapshot(actor: Actor, id: string, signal?: AbortSignal) {
+      authorize(actor);
+      uuid(id);
+      if (!snapshotReady)
+        throw new ServiceError(t('Máy chủ chưa hỗ trợ tải ảnh hiện trường.'), 501);
+      let result: unknown;
+      try {
+        result = await blob(snapshotPath(id), signal);
+      } catch (error) {
+        // Retention cleanup deletes snapshot files after the configured months; the row stays.
+        if (error instanceof ServiceError && error.status === 404)
+          throw new ServiceError(
+            t('Ảnh hiện trường không còn trên máy chủ (có thể đã hết hạn lưu trữ).'),
+            404,
+          );
+        throw error;
+      }
+      if (!(result instanceof Blob))
+        throw new ServiceError(t('Không nhận được ảnh từ máy chủ.'), 502);
+      return registryPhoto(result);
+    },
     async list(actor: Actor, filters: AlertFilters, signal?: AbortSignal) {
       authorize(actor);
       if (filters.viuId) uuid(filters.viuId);

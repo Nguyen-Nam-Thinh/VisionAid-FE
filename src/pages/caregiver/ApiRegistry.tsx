@@ -5,7 +5,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { useLimit } from '../../hooks/useLimit';
 import { caregivingApi } from '../../services/api/caregiving';
-import { registryApi, type RegistryPerson, type RegistryImage } from '../../services/api/registry';
+import {
+  registryApi,
+  serverFailed,
+  type RegistryPerson,
+  type RegistryImage,
+} from '../../services/api/registry';
 import { onSessionEnded } from '../../services/sessionLifecycle';
 import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
 import { Form, type FieldSpec } from '../../components/Form';
@@ -457,7 +462,7 @@ function RegistryPhotos({
                     } catch (err) {
                       setError(
                         (err instanceof Error ? err.message : t('Không thể tải ảnh.')) +
-                          ((err as { status?: number }).status! >= 500
+                          (serverFailed(err)
                             ? t(' Tải lại và kiểm tra số ảnh trước khi gửi lại để tránh trùng.')
                             : ''),
                       );

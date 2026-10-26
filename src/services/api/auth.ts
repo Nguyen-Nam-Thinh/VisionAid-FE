@@ -1,7 +1,7 @@
 import { t } from '../../i18n';
 import { z } from 'zod';
 import { ServiceError } from '../contracts';
-import { request } from '../http/client';
+import { request, REQUEST_TIMEOUT, NETWORK_ERROR } from '../http/client';
 import type { Person } from '../../models/domain';
 
 const tokensSchema = z.object({ accessToken: z.string().min(1), refreshToken: z.string().min(1) });
@@ -91,7 +91,19 @@ export function createApiAuth(
       );
     } catch (error) {
       if (error instanceof ServiceError) throw error;
-      throw new ServiceError(t('Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web.'), 503);
+      if (error instanceof DOMException && error.name === 'TimeoutError')
+        throw new ServiceError(
+          t('Máy chủ phản hồi quá thời gian chờ. Kiểm tra mạng rồi thử lại.'),
+          504,
+          {},
+          REQUEST_TIMEOUT,
+        );
+      throw new ServiceError(
+        t('Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web.'),
+        503,
+        {},
+        NETWORK_ERROR,
+      );
     }
     if (response === undefined) return undefined;
     if (responseType === 'blob') return response;

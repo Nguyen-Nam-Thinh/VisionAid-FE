@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { createRegistryApi, registryPhoto } from './registry';
+import { createRegistryApi, registryPhoto, serverFailed, uploadError } from './registry';
 import type { Person } from '../../models/domain';
 import { ServiceError } from '../contracts';
 
@@ -154,7 +154,12 @@ it('registry rejects malformed input, no retry on upload or delete failure, no f
   ).rejects.toMatchObject({ status: 503 });
   expect(f.write).toHaveBeenCalledTimes(1);
   f.write.mockRejectedValue(
-    new ServiceError('No face detected in the uploaded photo. Please upload a clear photo.', 422),
+    new ServiceError(
+      'Không tìm thấy khuôn mặt trong ảnh. Vui lòng chụp lại rõ hơn và thử lại.',
+      422,
+      {},
+      'NO_FACE_DETECTED',
+    ),
   );
   await expect(
     f.api.upload(actor, viuId, id, new File([png], 'p.png'), false),
@@ -178,4 +183,35 @@ it('photo signatures correct wrong MIME and reject empty, oversized and non-imag
     new Blob([new Uint8Array(10 * 1024 * 1024 + 1)]),
   ])
     await expect(registryPhoto(b)).rejects.toMatchObject({ status: 400 });
+});
+it('maps photo upload failures to actionable messages', () => {
+  const noFace = uploadError(new ServiceError('no face', 422, {}, 'NO_FACE_DETECTED'));
+  expect(noFace).toMatchObject({ status: 422, message: expect.stringContaining('khuôn mặt') });
+  expect(uploadError(new ServiceError('x', 413, {}, 'PAYLOAD_TOO_LARGE'))).toMatchObject({
+    status: 413,
+    message: 'Ảnh vượt quá giới hạn tải lên của máy chủ (tối đa 10 MB).',
+  });
+  const timeout = uploadError(new ServiceError('x', 504, {}, 'REQUEST_TIMEOUT'));
+  expect(timeout).toMatchObject({
+    message: 'Tải ảnh quá thời gian chờ. Kiểm tra mạng rồi thử lại.',
+  });
+  const dropped = uploadError(new ServiceError('x', 503, {}, 'NETWORK_ERROR'));
+  expect(dropped).toMatchObject({
+    message: 'Không gửi được ảnh. Có thể ảnh quá lớn hoặc mạng không ổn định.',
+  });
+  expect(
+    uploadError(
+      new ServiceError('Validation failed', 400, {
+        PhotoStream: 'Photo must not exceed 10 MB.',
+        ContentType: 'Some new rule.',
+      }),
+    ),
+  ).toMatchObject({ status: 400, message: 'Ảnh không được vượt quá 10 MB. Some new rule.' });
+  const other = new ServiceError('Conflict', 409);
+  expect(uploadError(other)).toBe(other);
+  // Only a real BE 5xx suggests reloading to check for a duplicate photo.
+  expect(serverFailed(new ServiceError('x', 500))).toBe(true);
+  expect(serverFailed(timeout)).toBe(false);
+  expect(serverFailed(dropped)).toBe(false);
+  expect(serverFailed(new ServiceError('x', 413))).toBe(false);
 });

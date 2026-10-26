@@ -414,3 +414,20 @@ it('SignalR token and REST share one refresh and reject tokens after logout', as
   await auth.logout();
   await expect(auth.accessToken()).rejects.toMatchObject({ status: 401 });
 });
+it('separates request timeouts from dropped connections', async () => {
+  const timeout = createApiAuth('http://example.test', memory(), async () => {
+    throw new DOMException('signal timed out', 'TimeoutError');
+  });
+  await expect(timeout.login(user.email, 'Password@1')).rejects.toMatchObject({
+    status: 504,
+    code: 'REQUEST_TIMEOUT',
+  });
+  const offline = createApiAuth('http://example.test', memory(), async () => {
+    throw new TypeError('Failed to fetch');
+  });
+  await expect(offline.login(user.email, 'Password@1')).rejects.toMatchObject({
+    status: 503,
+    code: 'NETWORK_ERROR',
+    message: 'Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web.',
+  });
+});

@@ -3686,10 +3686,31 @@ test('BR-29: Sent alert past 5 minutes shows the 115 banner and opens the alert 
       json: { success: true, data: { ...organizationPage(items), pageSize: 20 } },
     });
   });
+  await page.route('**/api/users?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: viu,
+            fullName: 'Nguyễn Văn An',
+            email: 'an@example.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId: null,
+            isActive: true,
+          },
+        ]),
+      },
+    }),
+  );
   await login(page);
   await page.goto('/caregiver/alerts');
   const banner = page.getByRole('region', { name: 'Gợi ý chuyển cấp lên 115' });
   await expect(banner).toContainText('Chưa có ai tiếp nhận sau 7 phút — cân nhắc gọi 115.');
+  // The banner names the VIU instead of showing the raw UUID.
+  await expect(banner).toContainText('Nguyễn Văn An · gửi lúc');
+  await expect(banner).not.toContainText(viu);
   await expect(banner.getByRole('status')).toHaveText(
     '1 cảnh báo chưa có ai tiếp nhận sau hơn 5 phút.',
   );
@@ -5589,4 +5610,111 @@ test('license gate: unpaid caregiver is sent to plans, paid caregiver opens lice
     page.getByRole('heading', { name: 'Cần gói dịch vụ để dùng chức năng này' }),
   ).toHaveCount(0);
   await expect(page.getByRole('link', { name: /\(cần gói dịch vụ\)/ })).toHaveCount(0);
+});
+test('WF-01: alert detail shows the scene snapshot from the authorized BE endpoint', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const viu = '01900000-0000-7000-8000-000000000002';
+  let canReceiveAlerts = true;
+  let snapshotStatus = 200;
+  let snapshotCalls = 0;
+  // 1x1 PNG, enough for the signature check and for the browser to decode.
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    'base64',
+  );
+  const event = {
+    id,
+    visuallyImpairedUserId: viu,
+    detectionMethod: 'AccelerometerCamera',
+    currentStatus: 'Sent',
+    latitude: null,
+    longitude: null,
+    notes: null,
+    snapshotPath: 'snapshots/' + id + '.png',
+    detectedAt: '2026-10-01T00:00:00Z',
+    gracePeriodEndsAt: null,
+    sentAt: new Date().toISOString(),
+    acknowledgedAt: null,
+    acknowledgedBy: null,
+    escalatedAt: null,
+    resolvedAt: null,
+    resolvedBy: null,
+    dismissedAt: null,
+  };
+  await page.route('http://localhost:5176/api/caregiver-links?*', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id,
+            caregiverId: id,
+            visuallyImpairedUserId: viu,
+            viuFullName: 'VIU test',
+            linkType: 'Personal',
+            isPrimary: true,
+            canReceiveAlerts,
+            canManageLocations: false,
+            canManageRegistry: false,
+            linkedAt: '2026-10-01',
+            unlinkedAt: null,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route('http://localhost:5176/api/emergency-events**', (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/snapshot')) {
+      snapshotCalls++;
+      return snapshotStatus === 200
+        ? route.fulfill({ status: 200, contentType: 'image/png', body: png })
+        : route.fulfill({
+            status: 404,
+            json: { title: 'Not Found', status: 404, detail: 'Emergency snapshot not found' },
+          });
+    }
+    if (url.pathname !== '/api/emergency-events')
+      return route.fulfill({ json: { success: true, data: { ...event, statusHistory: [] } } });
+    return route.fulfill({
+      json: { success: true, data: { ...organizationPage([event]), pageSize: 20 } },
+    });
+  });
+  await login(page);
+  await page.goto('/caregiver/alerts');
+  const openDetail = async () => {
+    await page.getByRole('button', { name: 'Xem chi tiết' }).click();
+    return page.getByRole('dialog', { name: 'Chi tiết cảnh báo' });
+  };
+  let dialog = await openDetail();
+  const photo = dialog.getByRole('img', { name: 'Ảnh hiện trường lúc phát hiện cảnh báo' });
+  await expect(photo).toBeVisible();
+  await expect(photo).toHaveAttribute('src', /^blob:/);
+  expect(await photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  await expect(dialog.getByRole('link', { name: /Mở ảnh cỡ lớn/ })).toBeVisible();
+  await expect(dialog).not.toContainText('API chưa cung cấp URL');
+  await page.screenshot({ path: 'test-results/wf01-scene-snapshot.png', fullPage: true });
+  await page.keyboard.press('Escape');
+
+  // Retention cleanup removed the file: friendly message plus retry.
+  snapshotStatus = 404;
+  dialog = await openDetail();
+  await expect(dialog.getByRole('alert')).toContainText(
+    'Ảnh hiện trường không còn trên máy chủ (có thể đã hết hạn lưu trữ).',
+  );
+  await expect(dialog.getByRole('button', { name: 'Thử tải ảnh lại' })).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  // Without canReceiveAlerts the BE would answer 403, so the Web does not request the photo.
+  // Reload so the cached permission check from the earlier dialogs is not reused.
+  canReceiveAlerts = false;
+  await page.reload();
+  const callsBefore = snapshotCalls;
+  dialog = await openDetail();
+  await expect(dialog).toContainText(
+    'Chỉ người có quyền nhận và xử lý cảnh báo mới xem được ảnh hiện trường.',
+  );
+  expect(snapshotCalls).toBe(callsBefore);
 });
