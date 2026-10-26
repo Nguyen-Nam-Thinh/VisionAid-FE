@@ -3686,10 +3686,31 @@ test('BR-29: Sent alert past 5 minutes shows the 115 banner and opens the alert 
       json: { success: true, data: { ...organizationPage(items), pageSize: 20 } },
     });
   });
+  await page.route('**/api/users?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: viu,
+            fullName: 'Nguyễn Văn An',
+            email: 'an@example.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId: null,
+            isActive: true,
+          },
+        ]),
+      },
+    }),
+  );
   await login(page);
   await page.goto('/caregiver/alerts');
   const banner = page.getByRole('region', { name: 'Gợi ý chuyển cấp lên 115' });
   await expect(banner).toContainText('Chưa có ai tiếp nhận sau 7 phút — cân nhắc gọi 115.');
+  // The banner names the VIU instead of showing the raw UUID.
+  await expect(banner).toContainText('Nguyễn Văn An · gửi lúc');
+  await expect(banner).not.toContainText(viu);
   await expect(banner.getByRole('status')).toHaveText(
     '1 cảnh báo chưa có ai tiếp nhận sau hơn 5 phút.',
   );
