@@ -1049,6 +1049,9 @@ export const en = {
   'Mở ảnh cỡ lớn': 'Open full-size photo',
   'Máy chủ chưa hỗ trợ tải ảnh hiện trường.':
     'The server does not support scene photo downloads yet.',
+  'Đang kiểm tra quyền xem ảnh…': 'Checking photo access…',
+  'Chỉ người có quyền nhận và xử lý cảnh báo mới xem được ảnh hiện trường.':
+    'Only caregivers allowed to receive and handle this alert can view the scene photo.',
   'Ảnh hiện trường không còn trên máy chủ (có thể đã hết hạn lưu trữ).':
     'The scene photo is no longer on the server (its retention period may have ended).',
   'Ghi chú xử lý': 'Handling notes',
