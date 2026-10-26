@@ -52,6 +52,9 @@ it('limits CenterAdmin create roles and forces own active organization', async (
   await expect(api.create(center, { ...values, role: 'Admin' })).rejects.toMatchObject({
     status: 403,
   });
+  await expect(api.create(center, { ...values, fullName: 'A' })).rejects.toMatchObject({
+    status: 400,
+  });
   await expect(api.create(admin, { ...values, organizationId: '' })).rejects.toMatchObject({
     status: 400,
   });

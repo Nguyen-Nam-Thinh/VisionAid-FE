@@ -20,7 +20,7 @@ import { SearchPicker } from '../../components/SearchPicker';
 import { searchOrganizations } from '../../services/api/pickers';
 
 const profileFields: FieldSpec[] = [
-  { key: 'fullName', label: msg('Họ và tên'), required: true, max: 200 },
+  { key: 'fullName', label: msg('Họ và tên'), required: true, min: 2, max: 200 },
   {
     key: 'phoneNumber',
     label: msg('Điện thoại'),

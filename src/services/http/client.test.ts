@@ -86,3 +86,20 @@ it('reports 413 with a fixed message without reading the proxy body', async () =
     message: 'Tệp vượt quá giới hạn tải lên của máy chủ.',
   });
 });
+
+it('keeps the localized message of a known errorCode on 403', async () => {
+  const forbid = (errorCode?: string) => async () =>
+    new Response(JSON.stringify({ title: 'Forbidden', status: 403, errorCode }), { status: 403 });
+  await expect(request('/test', {}, forbid('NOT_PRIMARY_CAREGIVER'))).rejects.toMatchObject({
+    status: 403,
+    code: 'NOT_PRIMARY_CAREGIVER',
+    message: 'Chỉ người chăm sóc chính mới thêm được người chăm sóc khác.',
+  });
+  await expect(request('/test', {}, forbid())).rejects.toMatchObject({
+    status: 403,
+    message: 'Bạn không có quyền thực hiện thao tác này.',
+  });
+  await expect(request('/test', {}, forbid('SOMETHING_NEW'))).rejects.toMatchObject({
+    message: 'Bạn không có quyền thực hiện thao tác này.',
+  });
+});

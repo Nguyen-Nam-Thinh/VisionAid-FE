@@ -63,7 +63,7 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
     ) {
       const input = z
         .object({
-          fullName: z.string().trim().min(1).max(200),
+          fullName: z.string().trim().min(2).max(200),
           email: z.string().trim().email().max(255),
           password: z
             .string()

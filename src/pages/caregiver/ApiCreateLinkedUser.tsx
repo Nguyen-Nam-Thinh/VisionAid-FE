@@ -85,7 +85,7 @@ export function ApiCreateLinkedUser({
                 key="create"
                 submit={t('Bước 1: Tạo tài khoản VIU')}
                 fields={[
-                  { key: 'fullName', label: t('Họ và tên'), required: true, max: 200 },
+                  { key: 'fullName', label: t('Họ và tên'), required: true, min: 2, max: 200 },
                   { key: 'email', label: 'Email', type: 'email', required: true, max: 255 },
                   {
                     key: 'phoneNumber',

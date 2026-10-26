@@ -3,6 +3,8 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ServiceError } from '../services/contracts';
+import { useSession } from '../hooks/useService';
+import { canBrowsePackages } from '../services/api/packages';
 export const Brand = () => (
   <Link className="brand" to="/">
     <img className="brand-icon" src="/branding/visionaid-icon.png" alt="" width={40} height={40} />
@@ -63,6 +65,31 @@ export function Toast({ message, onDismiss }: { message: string; onDismiss: () =
     </div>
   );
 }
+/** 402 follow-up. Organization staff (UC-79) cannot buy a Personal plan; their license comes from the center. */
+function LicenseActions() {
+  const { data: user } = useSession();
+  return (
+    <>
+      {user && !canBrowsePackages(user) && (
+        <p>
+          {t(
+            'License của tài khoản do trung tâm quản lý. Hãy liên hệ quản trị trung tâm để gia hạn.',
+          )}
+        </p>
+      )}
+      <div className="row">
+        {user && canBrowsePackages(user) && (
+          <Link className="btn primary" to="/packages">
+            {t('Chọn gói dịch vụ')}
+          </Link>
+        )}
+        <Link className="btn" to="/license">
+          {t('Xem trạng thái license')}
+        </Link>
+      </div>
+    </>
+  );
+}
 export function State({
   loading,
   error,
@@ -84,16 +111,7 @@ export function State({
     return (
       <div className="notice error stack" role="alert">
         <strong>{error.message}</strong>
-        {error instanceof ServiceError && error.status === 402 && (
-          <div className="row">
-            <Link className="btn primary" to="/packages">
-              {t('Chọn gói dịch vụ')}
-            </Link>
-            <Link className="btn" to="/license">
-              {t('Xem trạng thái license')}
-            </Link>
-          </div>
-        )}
+        {error instanceof ServiceError && error.status === 402 && <LicenseActions />}
         {retry && (
           <button className="btn" onClick={retry}>
             {t('Thử lại')}

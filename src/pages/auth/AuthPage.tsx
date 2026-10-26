@@ -68,7 +68,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
       : [
           { key: 'email', label: t('Địa chỉ email'), type: 'email', required: true },
           ...(action === 'register'
-            ? [{ key: 'name', label: t('Họ và tên'), required: true }]
+            ? [{ key: 'name', label: t('Họ và tên'), required: true, min: 2, max: 200 }]
             : []),
           ...(action !== 'recover'
             ? [{ key: 'password', label: t('Mật khẩu'), type: 'password' as const, required: true }]

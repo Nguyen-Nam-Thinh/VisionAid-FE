@@ -105,19 +105,38 @@ it('CenterAdmin checks both users in own organization before mutation', async ()
   ).rejects.toMatchObject({ status: 403 });
   expect(write).not.toHaveBeenCalled();
 });
-it('forces self Personal creation, preserves false permissions and never requests forced primary', async () => {
-  const get = vi.fn(async () => link);
-  const write = vi.fn<NonNullable<Parameters<typeof createLinksApi>[1]>>(async () => link);
+it('BR-04/BR-33: a primary caregiver adds a secondary by email; non-primary is blocked before writing', async () => {
+  const primary = { ...link, id: other, isPrimary: true };
+  const added = { ...link, caregiverId: other, caregiverEmail: 'Sub@Test.test', ...flags };
+  let mine = [primary];
+  const get = vi.fn<NonNullable<Parameters<typeof createLinksApi>[0]>>(async () => linkPage(mine));
+  const write = vi.fn<NonNullable<Parameters<typeof createLinksApi>[1]>>(async () => added);
   const api = createLinksApi(get, write);
-  await api.create(caregiver, { caregiverId: viu, viuId: viu, linkType: 'Organization', ...flags });
-  expect(get).not.toHaveBeenCalled();
+  const values = { caregiverId: '', viuId: viu, linkType: '', ...flags };
+  await expect(
+    api.create(caregiver, { ...values, caregiverEmail: ' sub@test.test ' }),
+  ).resolves.toMatchObject({ caregiverId: other });
+  // Email instead of a UUID; never asks for primary; no caregiverId in the body.
   expect(JSON.parse(String(write.mock.calls[0][1].body))).toEqual({
-    caregiverId: cg,
+    caregiverEmail: 'sub@test.test',
     visuallyImpairedUserId: viu,
     linkType: 'Personal',
     isPrimary: false,
     ...flags,
   });
+  await expect(
+    api.create(caregiver, { ...values, caregiverEmail: 'not-an-email' }),
+  ).rejects.toMatchObject({ status: 400 });
+  // BE answering with the caller's own link (or another email) is not accepted as success.
+  write.mockResolvedValueOnce({ ...link, isPrimary: false });
+  await expect(
+    api.create(caregiver, { ...values, caregiverEmail: 'sub@test.test' }),
+  ).rejects.toMatchObject({ status: 502 });
+  mine = [{ ...primary, isPrimary: false }];
+  await expect(
+    api.create(caregiver, { ...values, caregiverEmail: 'sub@test.test' }),
+  ).rejects.toMatchObject({ status: 403 });
+  expect(write).toHaveBeenCalledTimes(2);
 });
 it('rejects inactive mutations and sends promote without body, unlink handles 204', async () => {
   const get = vi.fn<NonNullable<Parameters<typeof createLinksApi>[0]>>(async () => ({
