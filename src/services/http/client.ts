@@ -1,5 +1,9 @@
 import { t, msg, labelMap } from '../../i18n';
 import { ServiceError } from '../contracts';
+/** Client-side codes for failures that never reached a BE ProblemDetails body. */
+export const PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE';
+export const REQUEST_TIMEOUT = 'REQUEST_TIMEOUT';
+export const NETWORK_ERROR = 'NETWORK_ERROR';
 /** Transport only; callers must supply confirmed endpoints and payload mapping. No retries or mock fallback. */
 // Localized text for BE `errorCode` values (ProblemDetails extension), resolved at throw time.
 export const errorCodeMessages: Record<string, string> = labelMap({
@@ -35,9 +39,6 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   ZALO_LINK_REQUIRED: msg('Cần nhập liên kết Zalo cho loại liên hệ này.'),
   MAX_SAVED_LOCATIONS_REACHED: msg('Đã đủ 20 địa điểm. Xóa bớt trước khi thêm.'),
   // Gương mặt
-  FACE_NOT_DETECTED: msg(
-    'Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
-  ),
   NO_FACE_DETECTED: msg(
     'Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
   ),
@@ -102,6 +103,14 @@ export async function request<T>(
   const response = await transport(url, init);
   if (response.status === 204) return undefined;
   if (response.ok && responseType === 'blob') return (await response.blob()) as T;
+  // 413 may come from the BE (JSON) or the reverse proxy (HTML); the body adds nothing useful.
+  if (response.status === 413)
+    throw new ServiceError(
+      t('Tệp vượt quá giới hạn tải lên của máy chủ.'),
+      413,
+      {},
+      PAYLOAD_TOO_LARGE,
+    );
   let body: unknown;
   try {
     body = await response.json();
