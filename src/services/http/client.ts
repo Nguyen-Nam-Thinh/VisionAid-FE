@@ -30,6 +30,17 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   MAX_VIUS_PER_CAREGIVER_REACHED: msg('Bạn đã có tối đa 3 người được chăm sóc.'),
   NO_PRIMARY_CAREGIVER: msg('Người được chăm sóc chưa có người chăm sóc chính.'),
   CAREGIVER_ID_REQUIRED: msg('Cần chọn người chăm sóc.'),
+  CAREGIVER_NOT_FOUND: msg('Không tìm thấy tài khoản người chăm sóc với email này.'),
+  CAREGIVER_IN_ORGANIZATION: msg(
+    'Tài khoản này thuộc một trung tâm nên không thể thêm làm người chăm sóc cá nhân.',
+  ),
+  NOT_PRIMARY_CAREGIVER: msg('Chỉ người chăm sóc chính mới thêm được người chăm sóc khác.'),
+  SELF_LINK_NOT_ALLOWED_FOR_VIU: msg(
+    'Bạn chỉ tự liên kết được với tài khoản do bạn tạo và chưa có người chăm sóc. Hãy nhờ người chăm sóc chính thêm bạn.',
+  ),
+  ORG_VIU_LINK_MANAGED_BY_CENTER: msg(
+    'Người được chăm sóc thuộc trung tâm; liên kết do quản trị trung tâm quản lý.',
+  ),
   VIU_ID_REQUIRED: msg('Cần chọn người được chăm sóc.'),
   // Liên hệ, địa điểm
   CONTACT_PRIORITY_TAKEN: msg('Thứ tự ưu tiên đã được dùng cho liên hệ khác. Chọn số khác.'),
@@ -54,6 +65,9 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   LICENSE_KEY_EXPIRED: msg('Key đã hết hạn.'),
   LICENSE_POOL_FULL: msg('Kho license đã hết suất. Mua thêm gói Business.'),
   LICENSE_POOL_NOT_ACTIVE: msg('Kho license không còn hiệu lực. Kiểm tra gói Business.'),
+  ORG_STAFF_CANNOT_BUY_PERSONAL: msg(
+    'Tài khoản thuộc trung tâm không mua gói cá nhân; license do trung tâm cấp.',
+  ),
   CANNOT_CANCEL_ORG_SUBSCRIPTION: msg(
     'Gói này được kích hoạt bằng key của trung tâm nên không tự hủy được. Hãy liên hệ quản trị trung tâm.',
   ),
@@ -140,7 +154,9 @@ export async function request<T>(
     const code = typeof problem.errorCode === 'string' ? problem.errorCode : undefined;
     // Known BE error codes get a localized message; unknown codes keep the BE detail.
     if (code && errorCodeMessages[code]) message = errorCodeMessages[code];
-    if (response.status === 403) message = t('Bạn không có quyền thực hiện thao tác này.');
+    // A 403 with a known errorCode explains what to do; others stay generic.
+    if (response.status === 403 && !(code && errorCodeMessages[code]))
+      message = t('Bạn không có quyền thực hiện thao tác này.');
     if (response.status >= 500)
       message = t(
         'Máy chủ đang gặp sự cố. Vui lòng tải lại dữ liệu để kiểm tra kết quả trước khi thử lại.',

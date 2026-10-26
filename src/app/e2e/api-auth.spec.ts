@@ -5718,3 +5718,87 @@ test('WF-01: alert detail shows the scene snapshot from the authorized BE endpoi
   );
   expect(snapshotCalls).toBe(callsBefore);
 });
+test('BR-04/BR-33: primary caregiver adds a secondary by email; BE error codes show in Vietnamese', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const otherViu = '01900000-0000-7000-8000-000000000045';
+  const secondaryId = '01900000-0000-7000-8000-000000000046';
+  const mine = { ...managedLink, linkType: 'Personal', isPrimary: true };
+  const posts: Record<string, unknown>[] = [];
+  let reply: 'ok' | 'not-found' = 'not-found';
+  await page.route('http://localhost:5176/api/users?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage(
+          [
+            [linkedViuId, 'VIU test'],
+            [otherViu, 'VIU phụ trách phụ'],
+          ].map(([vid, fullName]) => ({
+            id: vid,
+            fullName,
+            email: vid.slice(-4) + '@example.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId: null,
+            isActive: true,
+          })),
+        ),
+      },
+    }),
+  );
+  await page.route('http://localhost:5176/api/caregiver-links**', (route) => {
+    const req = route.request();
+    if (req.method() === 'POST') {
+      const body = req.postDataJSON();
+      posts.push(body);
+      return reply === 'not-found'
+        ? route.fulfill({
+            status: 404,
+            json: { title: 'Not Found', status: 404, errorCode: 'CAREGIVER_NOT_FOUND' },
+          })
+        : route.fulfill({
+            json: {
+              success: true,
+              data: {
+                ...mine,
+                id: secondaryId,
+                caregiverId: secondaryId,
+                caregiverFullName: 'Người phụ',
+                caregiverEmail: body.caregiverEmail,
+                isPrimary: false,
+              },
+            },
+          });
+    }
+    return route.fulfill({ json: { success: true, data: organizationPage([mine]) } });
+  });
+  await login(page);
+  await page.goto('/caregiver/caregivers');
+  await expect(page.getByText('bằng email tài khoản của họ')).toBeVisible();
+  await page.getByRole('button', { name: 'Thêm người chăm sóc phụ' }).click();
+  const dialog = actionDialog(page);
+  // Only VIUs the caregiver is primary for are offered; no UUID field.
+  await dialog.getByRole('combobox', { name: 'Người được chăm sóc *', exact: true }).fill('VIU');
+  await expect(dialog.getByRole('option', { name: /VIU test/ })).toBeVisible();
+  await expect(dialog.getByRole('option', { name: /VIU phụ trách phụ/ })).toHaveCount(0);
+  await dialog.getByRole('option', { name: /VIU test/ }).click();
+  await dialog.getByLabel('Email người chăm sóc phụ *').fill('Sub@Example.test');
+  await dialog.getByLabel('Tôi xác nhận tạo liên kết giữa các tài khoản trên').check();
+  await dialog.getByRole('button', { name: 'Thêm người chăm sóc phụ' }).click();
+  await expect(dialog).toContainText('Không tìm thấy tài khoản người chăm sóc với email này.');
+  expect(posts[0]).toEqual({
+    caregiverEmail: 'sub@example.test',
+    visuallyImpairedUserId: linkedViuId,
+    linkType: 'Personal',
+    isPrimary: false,
+    canReceiveAlerts: true,
+    canManageRegistry: false,
+    canManageLocations: false,
+  });
+  reply = 'ok';
+  await dialog.getByRole('button', { name: 'Thêm người chăm sóc phụ' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(posts).toHaveLength(2);
+});

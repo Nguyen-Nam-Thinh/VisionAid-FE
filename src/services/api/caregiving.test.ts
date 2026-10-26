@@ -50,6 +50,11 @@ it('creates only a VIU and prevents account creation when caregiver quota is ful
   read.mockResolvedValue({ ...page([]), totalCount: 3 });
   await expect(api.createUser(input, caregiverId)).rejects.toMatchObject({ status: 422 });
   expect(write).toHaveBeenCalledTimes(1);
+  // BR-10: names need at least 2 characters after trimming.
+  await expect(api.createUser({ ...input, fullName: ' A ' }, caregiverId)).rejects.toMatchObject({
+    status: 400,
+  });
+  expect(write).toHaveBeenCalledTimes(1);
 });
 it('uses the Admin-configured VIU limit before creating an account', async () => {
   const read = vi.fn(async (path: string) =>

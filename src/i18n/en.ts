@@ -109,6 +109,9 @@ export const en = {
   'Cần nhập một số hợp lệ.': 'Enter a valid number.',
   'Mật khẩu cần ít nhất 8 ký tự.': 'Password must be at least 8 characters.',
   'Vui lòng nhập thông tin.': 'Please fill in this field.',
+  'Cần ít nhất {min} ký tự.': 'Enter at least {min} characters.',
+  'License của tài khoản do trung tâm quản lý. Hãy liên hệ quản trị trung tâm để gia hạn.':
+    "This account's license is managed by your center. Contact your center admin to renew it.",
   'Email không hợp lệ.': 'Invalid email.',
   'Không thể lưu thay đổi.': 'Could not save changes.',
   'Chọn…': 'Select…',
@@ -1127,8 +1130,24 @@ export const en = {
   'Tôi xác nhận tạo liên kết giữa các tài khoản trên':
     'I confirm creating a link between the accounts above',
   'Sửa quyền liên kết': 'Edit link permissions',
-  'Tạo liên kết cá nhân cho chính bạn, không mời hoặc cấp quyền cho người chăm sóc khác.':
-    'Create a personal link for yourself; this does not invite or grant permissions to other caregivers.',
+  'Chỉ chọn được người bạn đang chăm sóc chính. Người được thêm là người chăm sóc phụ với các quyền bạn chọn bên dưới.':
+    'Only people you are the primary caregiver for can be chosen. The added person becomes a secondary caregiver with the permissions selected below.',
+  'Thêm người chăm sóc phụ': 'Add secondary caregiver',
+  'Email người chăm sóc phụ': 'Secondary caregiver email',
+  'Nhập đúng email tài khoản Caregiver cá nhân của người được mời. Họ cần đăng ký tài khoản trước.':
+    'Enter the exact email of the invited person’s personal Caregiver account. They must register first.',
+  'Chỉ người chăm sóc chính mới thêm được người chăm sóc khác.':
+    'Only the primary caregiver can add another caregiver.',
+  'Không tìm thấy tài khoản người chăm sóc với email này.':
+    'No caregiver account was found with this email.',
+  'Tài khoản này thuộc một trung tâm nên không thể thêm làm người chăm sóc cá nhân.':
+    'This account belongs to a center and cannot be added as a personal caregiver.',
+  'Bạn chỉ tự liên kết được với tài khoản do bạn tạo và chưa có người chăm sóc. Hãy nhờ người chăm sóc chính thêm bạn.':
+    'You can only link yourself to an account you created that has no caregiver yet. Ask the primary caregiver to add you.',
+  'Người được chăm sóc thuộc trung tâm; liên kết do quản trị trung tâm quản lý.':
+    'This care recipient belongs to a center; their links are managed by the center admin.',
+  'Tài khoản thuộc trung tâm không mua gói cá nhân; license do trung tâm cấp.':
+    'Center accounts cannot buy a personal plan; the license is provided by the center.',
   'Hai tài khoản phải hoạt động. Liên kết tổ chức yêu cầu Caregiver và VIU cùng tổ chức.':
     'Both accounts must be active. Organization links require the Caregiver and VIU to be in the same organization.',
   'Đang tải danh sách nhân viên và người được chăm sóc…': 'Loading staff and care recipients…',
@@ -1835,8 +1854,8 @@ export const en = {
   'Dữ liệu tài khoản từ máy chủ không hợp lệ.': 'Account data from the server is invalid.',
   'Không có quyền quản lý tài khoản này.': 'You are not allowed to manage this account.',
   'Mã phải là UUID hợp lệ.': 'The ID must be a valid UUID.',
-  'Kiểm tra họ tên tối đa 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.':
-    'Check that the full name is at most 200 characters, the phone is Vietnamese and the photo URL is at most 500 characters.',
+  'Kiểm tra họ tên từ 2 đến 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.':
+    'Check that the full name is 2 to 200 characters, the phone is Vietnamese and the photo URL is at most 500 characters.',
   'Tài khoản trả về không khớp lựa chọn.': 'The returned account does not match the selection.',
   'Tài khoản đã xóa; API hiện không hỗ trợ khôi phục.':
     'The account is deleted; the API does not support restoring it.',
@@ -1899,7 +1918,7 @@ export const en = {
     'Password must be 8–100 characters with uppercase, lowercase, a number and a special character.',
   'Mã không hợp lệ, đã dùng hoặc hết hạn. Hãy yêu cầu email khôi phục mới.':
     'The code is invalid, used or expired. Request a new recovery email.',
-  'Họ tên phải có từ 1 đến 200 ký tự.': 'Full name must be 1 to 200 characters.',
+  'Họ tên phải có từ 2 đến 200 ký tự.': 'Full name must be 2 to 200 characters.',
   'Số điện thoại Việt Nam phải có 10 số, ví dụ 0901234567.':
     'Vietnamese phone numbers have 10 digits, for example 0901234567.',
   'Mật khẩu mới cần 8–100 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt và khác mật khẩu cũ.':
@@ -2425,8 +2444,8 @@ export const en = {
   'Chỉ được xem liên kết của bạn hoặc của người bạn chăm sóc chính.':
     'You can only view your own links or those of people you are primary caregiver for.',
   'Hủy liên kết của tôi': 'Cancel my link',
-  'Liên kết của bạn, và liên kết của người chăm sóc phụ với người bạn chăm sóc chính. Chưa có API mời người chăm sóc phụ bằng email hoặc QR.':
-    'Your links, plus secondary caregivers’ links for people you are primary caregiver for. There is no API yet to invite secondary caregivers by email or QR.',
+  'Liên kết của bạn, và liên kết của người chăm sóc phụ với người bạn chăm sóc chính. Người chăm sóc chính thêm người chăm sóc phụ bằng email tài khoản của họ.':
+    'Your links, plus secondary caregivers’ links for people you are primary caregiver for. The primary caregiver adds a secondary caregiver by their account email.',
   'Xác nhận đã gọi hỗ trợ': 'Confirm help was called',
   'Chỉ người chăm sóc cá nhân được hủy gói của mình.':
     'Only personal caregivers can cancel their own plan.',

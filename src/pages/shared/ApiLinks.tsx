@@ -10,7 +10,11 @@ import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import type { Person } from '../../models/domain';
 import { SearchPicker } from '../../components/SearchPicker';
-import { searchAccounts, searchCareRecipients } from '../../services/api/pickers';
+import {
+  searchAccounts,
+  searchCareRecipients,
+  searchPrimaryCareRecipients,
+} from '../../services/api/pickers';
 
 const permissionFields: FieldSpec[] = [
   { key: 'canReceiveAlerts', label: msg('Nhận cảnh báo'), type: 'checkbox' },
@@ -73,7 +77,7 @@ function Links({ actor }: { actor: Person }) {
         description={
           actor.role === 'Caregiver'
             ? t(
-                'Liên kết của bạn, và liên kết của người chăm sóc phụ với người bạn chăm sóc chính. Chưa có API mời người chăm sóc phụ bằng email hoặc QR.',
+                'Liên kết của bạn, và liên kết của người chăm sóc phụ với người bạn chăm sóc chính. Người chăm sóc chính thêm người chăm sóc phụ bằng email tài khoản của họ.',
               )
             : t(
                 'Phân công tài khoản Caregiver và VIU đã có; mỗi VIU tối đa {maxCaregivers} người chăm sóc, mỗi Caregiver tối đa {maxVius} VIU đang liên kết.',
@@ -82,7 +86,7 @@ function Links({ actor }: { actor: Person }) {
         }
         actions={
           <button className="btn primary" onClick={() => setCreate(true)}>
-            {t('Tạo liên kết')}
+            {actor.role === 'Caregiver' ? t('Thêm người chăm sóc phụ') : t('Tạo liên kết')}
           </button>
         }
       />
@@ -286,8 +290,21 @@ function LinkEditor({
   const fields: FieldSpec[] = [
     ...(!link
       ? [
-          ...(actor.role !== 'Caregiver'
+          ...(actor.role === 'Caregiver'
             ? [
+                {
+                  key: 'caregiverEmail',
+                  label: t('Email người chăm sóc phụ'),
+                  type: 'email' as const,
+                  required: true,
+                  max: 255,
+                  autoComplete: 'off',
+                  hint: t(
+                    'Nhập đúng email tài khoản Caregiver cá nhân của người được mời. Họ cần đăng ký tài khoản trước.',
+                  ),
+                },
+              ]
+            : [
                 personField(
                   {
                     key: 'caregiverId',
@@ -301,8 +318,7 @@ function LinkEditor({
                     searchKey: ['link-caregiver', actor.id, actor.orgId],
                   },
                 ),
-              ]
-            : []),
+              ]),
           personField(
             { key: 'viuId', label: t('Người được chăm sóc'), required: true },
             vius,
@@ -310,7 +326,7 @@ function LinkEditor({
             {
               search:
                 actor.role === 'Caregiver'
-                  ? searchCareRecipients()
+                  ? searchPrimaryCareRecipients(actor)
                   : searchAccounts(actor, 'VisuallyImpaired'),
               searchKey: ['link-viu', actor.id, actor.orgId],
             },
@@ -342,7 +358,13 @@ function LinkEditor({
   ];
   return (
     <Dialog
-      title={link ? t('Sửa quyền liên kết') : t('Tạo liên kết')}
+      title={
+        link
+          ? t('Sửa quyền liên kết')
+          : actor.role === 'Caregiver'
+            ? t('Thêm người chăm sóc phụ')
+            : t('Tạo liên kết')
+      }
       onClose={() => {
         if (!busy) close();
       }}
@@ -352,7 +374,7 @@ function LinkEditor({
           ? link.caregiverEmail + ' → ' + link.viuEmail
           : actor.role === 'Caregiver'
             ? t(
-                'Tạo liên kết cá nhân cho chính bạn, không mời hoặc cấp quyền cho người chăm sóc khác.',
+                'Chỉ chọn được người bạn đang chăm sóc chính. Người được thêm là người chăm sóc phụ với các quyền bạn chọn bên dưới.',
               )
             : t(
                 'Hai tài khoản phải hoạt động. Liên kết tổ chức yêu cầu Caregiver và VIU cùng tổ chức.',
@@ -369,7 +391,13 @@ function LinkEditor({
             canManageLocations: link?.canManageLocations ?? false,
             linkType: 'Organization',
           }}
-          submit={link ? t('Lưu quyền liên kết') : t('Tạo liên kết')}
+          submit={
+            link
+              ? t('Lưu quyền liên kết')
+              : actor.role === 'Caregiver'
+                ? t('Thêm người chăm sóc phụ')
+                : t('Tạo liên kết')
+          }
           onSubmit={async (values) => {
             if (!values.confirmed) throw new Error(t('Vui lòng xác nhận thao tác.'));
             setBusy(true);
@@ -384,6 +412,7 @@ function LinkEditor({
                 : await linksApi.create(actor, {
                     ...permissions,
                     caregiverId: String(values.caregiverId || ''),
+                    caregiverEmail: String(values.caregiverEmail || ''),
                     viuId: String(values.viuId || ''),
                     linkType: String(values.linkType || ''),
                   });
