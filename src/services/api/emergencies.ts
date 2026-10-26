@@ -98,6 +98,19 @@ export function alertActions(s: Emergency['currentStatus']): AlertAction[] {
         ? ['called', 'resolve']
         : [];
 }
+/** BR-29 / UC-132: BE EscalationSuggestionJob suggests 115 for alerts still Sent after 5 minutes. */
+export const ESCALATION_SUGGEST_AFTER_MS = 5 * 60000;
+/** Sent alerts past the threshold, oldest first, with whole minutes since sentAt. Display only. */
+export function overdueAlerts(items: Emergency[], now = Date.now()) {
+  return items
+    .flatMap((event) => {
+      const sent = event.sentAt ? Date.parse(event.sentAt) : NaN;
+      return event.currentStatus === 'Sent' && now - sent >= ESCALATION_SUGGEST_AFTER_MS
+        ? [{ event, minutes: Math.floor((now - sent) / 60000) }]
+        : [];
+    })
+    .sort((a, b) => b.minutes - a.minutes);
+}
 type Actor = Pick<Person, 'id' | 'role' | 'orgId'>;
 export type AlertFilters = {
   viuId: string;

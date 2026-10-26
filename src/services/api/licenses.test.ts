@@ -1,13 +1,19 @@
 import { expect, it, vi } from 'vitest';
 import {
+  autoRenewBlock,
   cancelMySubscription,
+  canCancelRenewal,
   getAdminOrganizationPool,
   getMySubscription,
   getOrganizationPool,
   licenseSummary,
   personalLicenseBlock,
+  renewPool,
+  setMyAutoRenew,
+  setPoolAutoRenew,
   setPoolSuspended,
 } from './licenses';
+import type { MySubscription, OrganizationPool } from './licenses';
 import type { Person } from '../../models/domain';
 const actor: Person = {
   id: '01900000-0000-7000-8000-000000000001',
@@ -192,4 +198,177 @@ it('UC-80: only a personal caregiver sends the cancel request', async () => {
     cancelMySubscription({ ...actor, role: 'CenterAdmin' as const }, write),
   ).rejects.toMatchObject({ status: 403 });
   expect(write).toHaveBeenCalledTimes(1);
+});
+it('UC-80: cancel-renewal button only for an active, uncancelled personal plan', () => {
+  const sub: MySubscription = {
+    id: actor.id,
+    status: 'Active',
+    package: { id: actor.id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+    startedAt: '2026-10-01T00:00:00Z',
+    trialEndsAt: null,
+    currentPeriodStart: '2026-10-01T00:00:00Z',
+    currentPeriodEnd: '2026-11-01T00:00:00Z',
+    autoRenew: true,
+    daysRemaining: 20,
+    cancelledAt: null,
+    isOrgIssued: false,
+  };
+  expect(canCancelRenewal(sub)).toBe(true);
+  // Older deploys without the UC-80 fields still allow the request; BE decides.
+  expect(canCancelRenewal({ ...sub, cancelledAt: undefined, isOrgIssued: undefined })).toBe(true);
+  expect(canCancelRenewal({ ...sub, cancelledAt: '2026-10-20T00:00:00Z' })).toBe(false);
+  expect(canCancelRenewal({ ...sub, isOrgIssued: true })).toBe(false);
+  expect(canCancelRenewal({ ...sub, status: 'Trial' })).toBe(false);
+  expect(canCancelRenewal({ ...sub, status: 'Expired' })).toBe(false);
+  expect(canCancelRenewal({ ...sub, package: { ...sub.package, packageType: 'Business' } })).toBe(
+    false,
+  );
+});
+it('UC-80: subscription parses cancelledAt and isOrgIssued from BE', async () => {
+  const get = vi.fn(async () => ({
+    id: actor.id,
+    status: 'Active',
+    package: { id: actor.id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+    startedAt: '2026-10-01T00:00:00Z',
+    trialEndsAt: null,
+    currentPeriodStart: '2026-10-01T00:00:00Z',
+    currentPeriodEnd: '2026-11-01T00:00:00Z',
+    autoRenew: false,
+    daysRemaining: 20,
+    cancelledAt: '2026-10-20T03:00:00Z',
+    isOrgIssued: false,
+  }));
+  await expect(getMySubscription(actor, undefined, get)).resolves.toMatchObject({
+    cancelledAt: '2026-10-20T03:00:00Z',
+    isOrgIssued: false,
+  });
+});
+it('WF-04: only Admin renews a non-suspended pool with a valid date and seat count', async () => {
+  const admin = { ...actor, role: 'Admin' as const };
+  const current: OrganizationPool = {
+    id: '01900000-0000-7000-8000-000000000009',
+    organizationId: '01900000-0000-7000-8000-000000000021',
+    package: { id: actor.id, name: 'Business', code: 'BUSINESS', packageType: 'Business' },
+    totalLicenses: 50,
+    usedLicenses: 3,
+    availableLicenses: 47,
+    status: 'Active',
+    purchasedAt: '2026-09-01T00:00:00Z',
+    expiresAt: '2026-11-01T00:00:00Z',
+  };
+  const renewed = {
+    ...current,
+    totalLicenses: 60,
+    availableLicenses: 57,
+    expiresAt: '2026-12-31T16:59:59Z',
+  };
+  const write = vi.fn(async () => renewed);
+  await expect(renewPool(admin, current, '2026-12-31T16:59:59Z', 10, write, now)).resolves.toEqual(
+    renewed,
+  );
+  expect(write).toHaveBeenCalledWith(`/api/licenses/pool/${current.id}/renew`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ newExpiresAt: '2026-12-31T16:59:59.000Z', additionalSeats: 10 }),
+  });
+  // A reply that is not the same pool is not trusted; the page reloads instead.
+  write.mockResolvedValueOnce({ ...renewed, id: actor.id });
+  await expect(
+    renewPool(admin, current, '2026-12-31T16:59:59Z', 0, write, now),
+  ).resolves.toBeUndefined();
+  const rejects = (
+    user: Person,
+    pool: OrganizationPool,
+    date: string,
+    seats: number,
+    status: number,
+  ) => expect(renewPool(user, pool, date, seats, write, now)).rejects.toMatchObject({ status });
+  await rejects(
+    { ...actor, role: 'CenterAdmin' as const },
+    current,
+    '2026-12-31T00:00:00Z',
+    0,
+    403,
+  );
+  await rejects(admin, { ...current, status: 'Suspended' }, '2026-12-31T00:00:00Z', 0, 422);
+  await rejects(admin, current, 'bad', 0, 400);
+  await rejects(admin, { ...current, expiresAt: null }, '2026-10-02T00:00:00Z', 0, 400);
+  await rejects(admin, current, '2032-01-01T00:00:00Z', 0, 400);
+  await rejects(admin, current, '2026-10-20T00:00:00Z', 0, 400);
+  await rejects(admin, current, '2026-12-31T00:00:00Z', -1, 400);
+  await rejects(admin, current, '2026-12-31T00:00:00Z', 1.5, 400);
+  await rejects(admin, current, '2026-12-31T00:00:00Z', 10001, 400);
+  expect(write).toHaveBeenCalledTimes(2);
+});
+it('auto-renew: Active toggles both ways, Trial only off, org-issued and expired never', async () => {
+  const sub: MySubscription = {
+    id: actor.id,
+    status: 'Active',
+    package: { id: actor.id, name: 'Personal', code: 'PERSONAL', packageType: 'Personal' },
+    startedAt: '2026-10-01T00:00:00Z',
+    trialEndsAt: null,
+    currentPeriodStart: '2026-10-01T00:00:00Z',
+    currentPeriodEnd: '2026-11-01T00:00:00Z',
+    autoRenew: false,
+    daysRemaining: 20,
+    cancelledAt: '2026-10-20T00:00:00Z',
+    isOrgIssued: false,
+  };
+  const resumed = { ...sub, autoRenew: true, cancelledAt: null };
+  const write = vi.fn(async () => resumed);
+  await expect(setMyAutoRenew(actor, sub, true, write)).resolves.toEqual(resumed);
+  expect(write).toHaveBeenCalledWith(`/api/licenses/subscription/${sub.id}/auto-renew`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ autoRenew: true }),
+  });
+  write.mockResolvedValueOnce({ ...resumed, id: '01900000-0000-7000-8000-000000000099' });
+  await expect(setMyAutoRenew(actor, resumed, false, write)).resolves.toBeUndefined();
+  const trial = { ...sub, status: 'Trial' as const, cancelledAt: null };
+  expect(autoRenewBlock(trial)).toContain('dùng thử');
+  expect(autoRenewBlock({ ...trial, autoRenew: true })).toBeNull();
+  await expect(
+    setMyAutoRenew(actor, { ...trial, autoRenew: true }, true, write),
+  ).rejects.toMatchObject({ status: 422 });
+  expect(autoRenewBlock({ ...sub, isOrgIssued: true })).toContain('trung tâm');
+  expect(autoRenewBlock({ ...sub, status: 'Expired' })).toContain('không còn hiệu lực');
+  await expect(setMyAutoRenew(actor, trial, true, write)).rejects.toMatchObject({ status: 422 });
+  await expect(
+    setMyAutoRenew(actor, { ...sub, isOrgIssued: true }, false, write),
+  ).rejects.toMatchObject({ status: 422 });
+  await expect(
+    setMyAutoRenew({ ...actor, orgId: actor.id }, sub, true, write),
+  ).rejects.toMatchObject({ status: 403 });
+  expect(write).toHaveBeenCalledTimes(2);
+});
+it('BR-57: Admin or the own-org CenterAdmin toggles pool auto-renew', async () => {
+  const orgId = '01900000-0000-7000-8000-000000000021';
+  const current: OrganizationPool = {
+    id: '01900000-0000-7000-8000-000000000009',
+    organizationId: orgId,
+    package: { id: actor.id, name: 'Business', code: 'BUSINESS', packageType: 'Business' },
+    totalLicenses: 50,
+    usedLicenses: 3,
+    availableLicenses: 47,
+    status: 'Active',
+    purchasedAt: '2026-09-01T00:00:00Z',
+    expiresAt: '2026-11-01T00:00:00Z',
+    autoRenew: false,
+  };
+  const write = vi.fn(async () => ({ ...current, autoRenew: true }));
+  const center = { ...actor, role: 'CenterAdmin' as const, orgId };
+  await expect(setPoolAutoRenew(center, current, true, write)).resolves.toMatchObject({
+    autoRenew: true,
+  });
+  expect(write).toHaveBeenCalledWith(`/api/licenses/pool/${current.id}/auto-renew`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ autoRenew: true }),
+  });
+  await setPoolAutoRenew({ ...actor, role: 'Admin' as const }, current, false, write);
+  for (const user of [{ ...center, orgId: actor.id }, { ...center, orgId: '' }, actor])
+    await expect(setPoolAutoRenew(user, current, true, write)).rejects.toMatchObject({
+      status: 403,
+    });
+  expect(write).toHaveBeenCalledTimes(2);
 });

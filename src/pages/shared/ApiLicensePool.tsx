@@ -12,6 +12,7 @@ import { ServiceError } from '../../services/contracts';
 import type { Person } from '../../models/domain';
 import { LicenseAssignments } from './LicenseAssignments';
 import { LicenseKeys } from './LicenseKeys';
+import { PoolAutoRenew } from './PoolAutoRenew';
 
 export function OrganizationPool({ actor }: { actor: Person }) {
   const query = useQuery({
@@ -74,6 +75,7 @@ export function OrganizationPool({ actor }: { actor: Person }) {
                   </dd>
                 </div>
               </dl>
+              <PoolAutoRenew actor={actor} pool={item} reload={() => query.refetch()} />
               <p>
                 {t(
                   'Nhân viên chăm sóc không sử dụng license trong kho. Việc cấp license cho người được chăm sóc do máy chủ kiểm tra.',

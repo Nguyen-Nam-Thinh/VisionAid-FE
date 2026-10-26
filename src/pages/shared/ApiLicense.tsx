@@ -7,8 +7,11 @@ import { useSession } from '../../hooks/useService';
 import { useLimit } from '../../hooks/useLimit';
 import { Confirm, PageHead, State, Toast } from '../../components/UI';
 import {
+  autoRenewBlock,
   cancelMySubscription,
+  canCancelRenewal,
   getMySubscription,
+  setMyAutoRenew,
   isPersonalCaregiver,
   licenseSummary,
   subscriptionLabels,
@@ -35,9 +38,11 @@ export function ApiLicense() {
   });
   const [checking, setChecking] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  // BE confirmed the cancel; its GET has no cancelledAt yet, so remember it for this page view.
+  // BE confirmed the cancel; keep it for this page view in case an older GET lacks cancelledAt.
   const [cancelledNow, setCancelledNow] = useState(false);
   const [notice, setNotice] = useState('');
+  const [renewing, setRenewing] = useState(false);
+  const [renewError, setRenewError] = useState('');
   const periodEnd = detail.data
     ? detail.data.status === 'Trial'
       ? detail.data.trialEndsAt
@@ -106,20 +111,79 @@ export function ApiLicense() {
                     <dt>{t('Hết hạn kỳ sử dụng')}</dt>
                     <dd>{dateLabel(periodEnd)}</dd>
                   </div>
+                  <div>
+                    <dt id="auto-renew-label">{t('Tự gia hạn')}</dt>
+                    <dd className="stack">
+                      <label className="row">
+                        <input
+                          type="checkbox"
+                          role="switch"
+                          aria-labelledby="auto-renew-label"
+                          aria-describedby="auto-renew-hint"
+                          checked={detail.data.autoRenew && !cancelled}
+                          disabled={renewing || detail.isFetching || !!autoRenewBlock(detail.data)}
+                          onChange={async (e) => {
+                            const next = e.currentTarget.checked;
+                            const key = ['license-subscription', user.id, user.orgId];
+                            setRenewing(true);
+                            setRenewError('');
+                            setNotice('');
+                            try {
+                              const updated = await setMyAutoRenew(user, detail.data!, next);
+                              if (updated) cache.setQueryData(key, updated);
+                              // Turning it on resumes a cancelled plan (BE clears cancelledAt).
+                              if (next) setCancelledNow(false);
+                              setNotice(next ? t('Đã bật tự gia hạn.') : t('Đã tắt tự gia hạn.'));
+                            } catch (err) {
+                              setRenewError(
+                                err instanceof Error ? err.message : t('Không thể thực hiện.'),
+                              );
+                            } finally {
+                              await cache.invalidateQueries({ queryKey: key });
+                              setRenewing(false);
+                            }
+                          }}
+                        />
+                        {detail.data.autoRenew && !cancelled ? t('Bật') : t('Tắt')}
+                      </label>
+                      <small id="auto-renew-hint">
+                        {autoRenewBlock(detail.data) ??
+                          (cancelled
+                            ? t('Bật lại để tiếp tục gia hạn gói đã hủy.')
+                            : t(
+                                'Khi bật, trước ngày hết hạn máy chủ gửi link thanh toán PayOS qua email và thông báo. Không tự trừ tiền.',
+                              ))}
+                      </small>
+                      {renewError && (
+                        <p role="alert" className="notice error">
+                          {renewError}
+                        </p>
+                      )}
+                    </dd>
+                  </div>
                 </dl>
               )}
               {detail.data && ['Active', 'Trial'].includes(detail.data.status) && (
                 <div className="row">
                   {cancelled ? (
                     <p className="notice" role="status">
-                      {t('Đã hủy gói. Bạn vẫn dùng được đến {date}; sau đó cần mua gói mới.', {
-                        date: dateLabel(periodEnd),
-                      })}
+                      {t(
+                        'Đã hủy gia hạn, còn dùng đến {date}. Sau đó gói không tự gia hạn; bạn có thể mua lại từ danh mục gói.',
+                        { date: dateLabel(periodEnd) },
+                      )}
+                    </p>
+                  ) : detail.data.isOrgIssued ? (
+                    <p className="notice">
+                      {t(
+                        'Gói này được kích hoạt bằng key của trung tâm. Liên hệ quản trị trung tâm để thay đổi.',
+                      )}
                     </p>
                   ) : (
-                    <button className="btn danger small" onClick={() => setCancelling(true)}>
-                      {t('Hủy gói')}
-                    </button>
+                    canCancelRenewal(detail.data) && (
+                      <button className="btn danger small" onClick={() => setCancelling(true)}>
+                        {t('Hủy gia hạn')}
+                      </button>
+                    )
                   )}
                 </div>
               )}
@@ -141,18 +205,16 @@ export function ApiLicense() {
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {cancelling && detail.data && (
         <Confirm
-          title={t('Hủy gói sử dụng')}
+          title={t('Hủy gia hạn gói')}
           description={t(
-            'Hủy gói {name}? Gói sẽ không tiếp tục sau kỳ hiện tại; bạn vẫn dùng được đến {date}. Gói kích hoạt bằng key của trung tâm không tự hủy được.',
+            'Hủy gia hạn gói {name}? Bạn vẫn dùng được tới hết kỳ hiện tại ({date}); sau đó gói không tự gia hạn.',
             { name: detail.data.package.name, date: dateLabel(periodEnd) },
           )}
           onClose={() => setCancelling(false)}
           onConfirm={async () => {
             await cancelMySubscription(user);
             setCancelledNow(true);
-            setNotice(
-              t('Đã hủy gói. Bạn vẫn dùng được đến {date}.', { date: dateLabel(periodEnd) }),
-            );
+            setNotice(t('Đã hủy gia hạn, còn dùng đến {date}.', { date: dateLabel(periodEnd) }));
             await cache.invalidateQueries({ queryKey: ['license-subscription'] });
           }}
         />

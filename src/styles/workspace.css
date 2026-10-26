@@ -967,3 +967,8 @@ tbody tr:hover {
 .gps-map .mapboxgl-popup-close-button { top: 6px; right: 6px; width: 26px; height: 26px; min-height: 0; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; }
 .gps-map .mapboxgl-popup-close-button:hover { background: var(--stone); color: var(--text); }
 .gps-map .mapboxgl-popup-close-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+/* BR-29: overdue Sent alerts; same urgent palette as .urgent-summary. */
+.escalation-banner { background: #fff0f1; color: #a22931; border: 2px solid #a22931; }
+.escalation-banner h2 { color: inherit; }
+.escalation-banner ul { list-style: none; margin: 0; padding: 0; }
+.escalation-banner li { gap: 12px; flex-wrap: wrap; }
