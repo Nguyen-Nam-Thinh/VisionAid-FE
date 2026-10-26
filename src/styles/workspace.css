@@ -438,6 +438,8 @@ tbody tr:hover {
 .record-details > div:last-child { border-bottom: 0; }
 .record-details dt { font-size: .8125rem; color: var(--muted); }
 .record-details dd { margin: 0; font-size: .875rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.alert-snapshot { display: inline-flex; flex-direction: column; gap: 6px; max-width: 100%; }
+.alert-snapshot img { display: block; max-width: 100%; max-height: 320px; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; background: var(--surface, transparent); }
 .settings-details {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

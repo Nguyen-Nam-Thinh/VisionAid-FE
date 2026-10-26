@@ -1,4 +1,5 @@
 import { expect, it, vi } from 'vitest';
+import { ServiceError } from '../contracts';
 import { createEmergenciesApi, alertActions, overdueAlerts } from './emergencies';
 const id = '01900000-0000-7000-8000-000000000001';
 const viu = '01900000-0000-7000-8000-000000000002';
@@ -89,4 +90,31 @@ it('BR-29: only Sent alerts past 5 minutes are suggested, oldest first', () => {
     [b, 12],
     [a, 5],
   ]);
+});
+it('loads the scene snapshot only when the BE endpoint is enabled', async () => {
+  const get = vi.fn<NonNullable<Parameters<typeof createEmergenciesApi>[0]>>();
+  const write = vi.fn<NonNullable<Parameters<typeof createEmergenciesApi>[1]>>();
+  const jpeg = new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3])]);
+  const blob = vi.fn<NonNullable<Parameters<typeof createEmergenciesApi>[3]>>(async () => jpeg);
+  const off = createEmergenciesApi(get, write, undefined, blob, false);
+  expect(off.snapshotReady).toBe(false);
+  await expect(off.snapshot(actor, id)).rejects.toMatchObject({ status: 501 });
+  expect(blob).not.toHaveBeenCalled();
+  const on = createEmergenciesApi(get, write, undefined, blob, true);
+  await expect(on.snapshot(actor, 'bad')).rejects.toMatchObject({ status: 400 });
+  await expect(on.snapshot({ ...actor, role: 'Admin' as never }, id)).rejects.toMatchObject({
+    status: 403,
+  });
+  const photo = await on.snapshot(actor, id);
+  expect(blob).toHaveBeenCalledWith('/api/emergency-events/' + id + '/snapshot', undefined);
+  expect(photo.type).toBe('image/jpeg');
+  blob.mockResolvedValueOnce(new Blob(['<html>']));
+  await expect(on.snapshot(actor, id)).rejects.toMatchObject({ status: 400 });
+  blob.mockRejectedValueOnce(new ServiceError('missing', 404));
+  await expect(on.snapshot(actor, id)).rejects.toMatchObject({
+    status: 404,
+    message: expect.stringContaining('không còn'),
+  });
+  blob.mockResolvedValueOnce({} as Blob);
+  await expect(on.snapshot(actor, id)).rejects.toMatchObject({ status: 502 });
 });

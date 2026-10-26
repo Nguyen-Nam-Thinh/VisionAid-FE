@@ -1041,9 +1041,16 @@ export const en = {
   '· Kinh độ:': '· Longitude:',
   'Không có dữ liệu': 'No data',
   'Không có': 'None',
-  'Có thông tin ảnh trên máy chủ nhưng API chưa cung cấp URL tải ảnh được xác thực.':
-    'The server has photo information but the API does not yet provide an authenticated photo URL.',
   'Không có ảnh chụp sự kiện.': 'No event snapshot.',
+  'Ảnh hiện trường': 'Scene photo',
+  'Sự kiện này có ảnh hiện trường. Ảnh sẽ xem được tại đây khi máy chủ mở chức năng tải ảnh.':
+    'This event has a scene photo. It will be viewable here once the server enables photo downloads.',
+  'Ảnh hiện trường lúc phát hiện cảnh báo': 'Scene photo taken when the alert was detected',
+  'Mở ảnh cỡ lớn': 'Open full-size photo',
+  'Máy chủ chưa hỗ trợ tải ảnh hiện trường.':
+    'The server does not support scene photo downloads yet.',
+  'Ảnh hiện trường không còn trên máy chủ (có thể đã hết hạn lưu trữ).':
+    'The scene photo is no longer on the server (its retention period may have ended).',
   'Ghi chú xử lý': 'Handling notes',
   'Bạn có quyền xem nhưng không có quyền xử lý cảnh báo.': 'You can view but cannot handle alerts.',
   'Chuyển cấp không có nghĩa cuộc gọi đã diễn ra. Web không tự gọi hoặc mở Zalo.':
@@ -2457,7 +2464,8 @@ export const en = {
     '{count} alert(s) not acknowledged by anyone after more than 5 minutes.',
   'Chưa có ai tiếp nhận sau {minutes} phút — cân nhắc gọi 115.':
     'Nobody has acknowledged after {minutes} minutes — consider calling 115.',
-  'VIU {viu} · gửi lúc {time}': 'VIU {viu} · sent at {time}',
+  '{viu} · gửi lúc {time}': '{viu} · sent at {time}',
+  'Một người được chăm sóc': 'A care recipient',
   'Xem và chuyển cấp': 'Review and escalate',
   'Còn cảnh báo Đã gửi khác; lọc theo trạng thái Đã gửi để xem đủ.':
     'More Sent alerts exist; filter by the Sent status to see them all.',

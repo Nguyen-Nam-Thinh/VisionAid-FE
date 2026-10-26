@@ -1,5 +1,5 @@
 import { t, msg, labelMap, formatLocaleDateTime } from '../../i18n';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import {
@@ -13,8 +13,10 @@ import {
   type Escalation,
 } from '../../services/api/emergencies';
 import { historyRange } from '../../services/api/locations';
+import { caregivingApi } from '../../services/api/caregiving';
 import { PageHead, State, Dialog, Confirm } from '../../components/UI';
 import { useNow } from '../../hooks/useNow';
+import { onSessionEnded } from '../../services/sessionLifecycle';
 import type { Person } from '../../models/domain';
 const time = (value: string) => formatLocaleDateTime(value);
 const methods: Record<string, string> = labelMap({
@@ -207,6 +209,22 @@ function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) =
     retry: false,
   });
   const overdue = sent.data ? overdueAlerts(sent.data.items, now) : [];
+  // Events carry only the VIU id; resolve names from the caregiver's linked VIUs (BE-scoped list).
+  const names = useQuery({
+    queryKey: ['api-alert-viu-names', actor.id, actor.orgId],
+    queryFn: async ({ signal }) => {
+      const map: Record<string, string> = {};
+      for (let page = 1; page <= 5; page++) {
+        const result = await caregivingApi.users(page, '', signal);
+        for (const user of result.items) map[user.id] = user.fullName;
+        if (!result.hasNextPage) break;
+      }
+      return map;
+    },
+    enabled: overdue.length > 0,
+    staleTime: 5 * 60000,
+    retry: false,
+  });
   if (!overdue.length) return null;
   return (
     <section
@@ -225,8 +243,8 @@ function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) =
               <strong>
                 {t('Chưa có ai tiếp nhận sau {minutes} phút — cân nhắc gọi 115.', { minutes })}
               </strong>{' '}
-              {t('VIU {viu} · gửi lúc {time}', {
-                viu: event.visuallyImpairedUserId,
+              {t('{viu} · gửi lúc {time}', {
+                viu: names.data?.[event.visuallyImpairedUserId] ?? t('Một người được chăm sóc'),
                 time: time(event.sentAt!),
               })}
             </span>
@@ -317,13 +335,7 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                     <dd>{event.notes || t('Không có')}</dd>
                   </div>
                 </dl>
-                <p>
-                  {event.snapshotPath
-                    ? t(
-                        'Có thông tin ảnh trên máy chủ nhưng API chưa cung cấp URL tải ảnh được xác thực.',
-                      )
-                    : t('Không có ảnh chụp sự kiện.')}
-                </p>
+                <AlertSnapshot actor={actor} id={event.id} hasSnapshot={!!event.snapshotPath} />
                 <State
                   loading={permission.isPending}
                   error={permission.error}
@@ -447,5 +459,94 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
         />
       )}
     </>
+  );
+}
+
+/** WF-01: scene photo taken by Mobile when the alert fired. Loaded with auth as a blob, never a raw URL. */
+function AlertSnapshot({
+  actor,
+  id,
+  hasSnapshot,
+}: {
+  actor: Person;
+  id: string;
+  hasSnapshot: boolean;
+}) {
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  const enabled = hasSnapshot && emergenciesApi.snapshotReady;
+  useEffect(() => {
+    if (!enabled) return;
+    const controller = new AbortController();
+    let objectUrl = '';
+    const clean = () => {
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+    const off = onSessionEnded(() => {
+      clean();
+      setUrl('');
+    });
+    void emergenciesApi
+      .snapshot(actor, id, controller.signal)
+      .then((blob) => {
+        if (!controller.signal.aborted) {
+          objectUrl = URL.createObjectURL(blob);
+          setUrl(objectUrl);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted)
+          setError(err instanceof Error ? err.message : t('Không tải được ảnh.'));
+      });
+    return () => {
+      off();
+      clean();
+    };
+  }, [actor, id, enabled, attempt]);
+  let body;
+  if (!hasSnapshot) body = <p>{t('Không có ảnh chụp sự kiện.')}</p>;
+  else if (!emergenciesApi.snapshotReady)
+    body = (
+      <p>
+        {t(
+          'Sự kiện này có ảnh hiện trường. Ảnh sẽ xem được tại đây khi máy chủ mở chức năng tải ảnh.',
+        )}
+      </p>
+    );
+  else if (error)
+    body = (
+      <div role="alert">
+        <p>{error}</p>
+        <button
+          className="btn small"
+          onClick={() => {
+            setUrl('');
+            setError('');
+            setAttempt(attempt + 1);
+          }}
+        >
+          {t('Thử tải ảnh lại')}
+        </button>
+      </div>
+    );
+  else if (url)
+    body = (
+      <a href={url} target="_blank" rel="noreferrer" className="alert-snapshot">
+        <img
+          src={url}
+          alt={t('Ảnh hiện trường lúc phát hiện cảnh báo')}
+          onError={() => setError(t('Ảnh không thể hiển thị.'))}
+        />
+        <span>{t('Mở ảnh cỡ lớn')}</span>
+      </a>
+    );
+  else body = <p role="status">{t('Đang tải ảnh…')}</p>;
+  return (
+    <section className="stack" aria-label={t('Ảnh hiện trường')}>
+      <h3>{t('Ảnh hiện trường')}</h3>
+      {body}
+    </section>
   );
 }
