@@ -137,11 +137,11 @@ function uuid(id: string) {
     throw new ServiceError(t('Mã định danh không hợp lệ.'), 400);
 }
 /**
- * WF-01 scene snapshot. BE stores the photo in MinIO (snapshotPath) but has no download endpoint yet
- * (checked on BE d629f51). The FE expects GET /api/emergency-events/{id}/snapshot to return the image
- * bytes with the same authorization as the event detail. Flip this to true once BE ships it.
+ * WF-01 scene snapshot: GET /api/emergency-events/{id}/snapshot (BE 148ed50) streams the image bytes
+ * with the same permission as acknowledging the alert (active link + canReceiveAlerts). 404 when the
+ * event has no photo or retention cleanup removed it. Set to false only to hide the viewer again.
  */
-export const SNAPSHOT_API_READY = false;
+export const SNAPSHOT_API_READY = true;
 export const snapshotPath = (id: string) => '/api/emergency-events/' + id + '/snapshot';
 export function createEmergenciesApi(
   get = apiGet,

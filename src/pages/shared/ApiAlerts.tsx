@@ -335,7 +335,12 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                     <dd>{event.notes || t('Không có')}</dd>
                   </div>
                 </dl>
-                <AlertSnapshot actor={actor} id={event.id} hasSnapshot={!!event.snapshotPath} />
+                <AlertSnapshot
+                  actor={actor}
+                  id={event.id}
+                  hasSnapshot={!!event.snapshotPath}
+                  canView={permission.data}
+                />
                 <State
                   loading={permission.isPending}
                   error={permission.error}
@@ -467,15 +472,18 @@ function AlertSnapshot({
   actor,
   id,
   hasSnapshot,
+  canView,
 }: {
   actor: Person;
   id: string;
   hasSnapshot: boolean;
+  /** BE serves the photo only to caregivers allowed to handle the alert; undefined while checking. */
+  canView: boolean | undefined;
 }) {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
-  const enabled = hasSnapshot && emergenciesApi.snapshotReady;
+  const enabled = hasSnapshot && emergenciesApi.snapshotReady && canView === true;
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
@@ -515,6 +523,9 @@ function AlertSnapshot({
         )}
       </p>
     );
+  else if (canView === undefined) body = <p role="status">{t('Đang kiểm tra quyền xem ảnh…')}</p>;
+  else if (!canView)
+    body = <p>{t('Chỉ người có quyền nhận và xử lý cảnh báo mới xem được ảnh hiện trường.')}</p>;
   else if (error)
     body = (
       <div role="alert">
