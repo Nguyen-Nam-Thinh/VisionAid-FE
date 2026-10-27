@@ -60,7 +60,7 @@ it('configuration filters and cancellation are sent to server; unknown keys are 
     signal = new AbortController().signal;
   await f.api.list(actor, 1, 'trial', 'BusinessRules', signal);
   expect(f.get).toHaveBeenCalledWith(
-    '/api/system-configs?page=1&pageSize=20&search=trial&category=BusinessRules',
+    '/api/system-configs?page=1&pageSize=10&search=trial&category=BusinessRules',
     signal,
   );
   f.row.configKey = 'payos_checksum_key';

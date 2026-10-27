@@ -66,7 +66,9 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
         <button className="btn" disabled={query.isFetching} onClick={() => void refresh()}>
           {t('Tải lại danh sách')}
         </button>
-        <Link to="/packages">{t('Mua thêm license')}</Link>
+        <Link className="btn" to="/packages">
+          {t('Mua thêm license')}
+        </Link>
       </div>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>

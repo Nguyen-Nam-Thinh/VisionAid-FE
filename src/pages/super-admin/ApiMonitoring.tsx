@@ -8,6 +8,7 @@ import { formatTime } from '../../constants/labels';
 import {
   monitoringApi,
   auditActions,
+  auditActionLabels,
   guidanceEngines,
   type MonitoringKind,
   type MonitoringFilters,
@@ -16,10 +17,11 @@ import {
 import type { Person } from '../../models/domain';
 import { SearchPicker } from '../../components/SearchPicker';
 import { searchAccounts } from '../../services/api/pickers';
+import { FilterPanel } from '../../components/FilterPanel';
 
 const titles = labelMap({
   metrics: msg('Hiệu năng AI'),
-  audit: msg('Nhật ký kiểm toán'),
+  audit: msg('Nhật ký thao tác'),
   delivery: msg('Theo dõi thông báo'),
   guidance: msg('Nhật ký Hybrid'),
 });
@@ -99,9 +101,18 @@ function valueText(key: string, value: string | number | boolean | null) {
   if (key.endsWith('Ms')) return value + ' ms';
   if (key === 'avgConfidence') return (Number(value) * 100).toFixed(1) + '%';
   if (key === 'channel') return channelLabels[String(value)] ?? String(value);
+  if (key === 'actionType')
+    return auditActionLabels[String(value) as keyof typeof auditActionLabels] ?? String(value);
   if (key === 'status' && value === 'Failed') return t('Thất bại');
   return String(value);
 }
+// Audit actions are a fixed list: match the typed text against the translated labels and codes.
+const searchActions = async (term: string) => {
+  const q = term.trim().toLowerCase();
+  return auditActions
+    .filter((a) => auditActionLabels[a].toLowerCase().includes(q) || a.toLowerCase().includes(q))
+    .map((a) => ({ value: a, label: auditActionLabels[a] }));
+};
 export function ApiMonitoring({ kind }: { kind: MonitoringKind }) {
   const { data: actor } = useSession();
   if (actor?.role !== 'Admin')
@@ -118,6 +129,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
   const [selected, setSelected] = useState<MonitoringRecord | null>(null);
   // Person filters are picked by name/email; session/record ids only come from a record's details.
   const [person, setPerson] = useState('');
+  const [action, setAction] = useState('');
   const scope = (next: MonitoringFilters) => {
     setFilters(next);
     setPage(1);
@@ -135,15 +147,11 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
         title={titles[kind]}
         description={
           kind === 'metrics'
-            ? t(
-                'Số liệu theo mô hình và ngày UTC. Confidence và tỷ lệ xử lý thành công không phải độ chính xác AI.',
-              )
+            ? t('Số lần xử lý, thời gian và độ tin cậy của từng mô hình AI theo ngày.')
             : kind === 'guidance'
-              ? t(
-                  'Theo dõi quyết định và thời gian xử lý do máy chủ ghi nhận. Đây là lịch sử, không phải hướng dẫn di chuyển trực tiếp.',
-                )
+              ? t('Các chỉ dẫn di chuyển AI đã đưa ra và thời gian xử lý.')
               : kind === 'audit'
-                ? t('Tra cứu thao tác quản trị. Nhật ký chỉ đọc, không sửa hoặc xóa.')
+                ? t('Ai đã thao tác gì và khi nào trên hệ thống. Nhật ký chỉ đọc.')
                 : t('Thống kê gửi cảnh báo và tra cứu thông báo thất bại.')
         }
       />
@@ -151,17 +159,37 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
         {kind === 'delivery' && <DeliveryStatus actor={actor} />}
         <section className="glass card stack">
           <h2>{kind === 'delivery' ? t('Thông báo thất bại') : t('Tra cứu bản ghi')}</h2>
-          <form
-            className="row"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const data = new FormData(e.currentTarget);
+          <FilterPanel
+            active={
+              Object.entries(filters).filter(
+                ([key, value]) => value && key !== 'sessionId' && key !== 'targetRecordId',
+              ).length
+            }
+            submitLabel={t('Lọc bản ghi')}
+            onReset={() => {
+              setPerson('');
+              setAction('');
+              scope({});
+            }}
+            tools={
+              <button
+                className="btn"
+                type="button"
+                disabled={query.isFetching}
+                onClick={() => void query.refetch()}
+              >
+                {t('Tải lại')}
+              </button>
+            }
+            onApply={(form) => {
+              const data = new FormData(form);
               scope({
                 ...Object.fromEntries(
                   Array.from(data.entries()).map(([key, value]) => [key, String(value).trim()]),
                 ),
                 ...(kind === 'audit' && {
                   actorId: person,
+                  actionType: action,
                   targetRecordId: filters.targetRecordId,
                 }),
                 ...(kind === 'guidance' && { userId: person, sessionId: filters.sessionId }),
@@ -171,6 +199,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
             {kind === 'guidance' && (
               <>
                 <SearchPicker
+                  wide
                   label={t('Người dùng')}
                   value={person}
                   onChange={setPerson}
@@ -197,7 +226,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
               </>
             )}
             {kind === 'metrics' && (
-              <label className="field">
+              <label className="field wide">
                 {t('Tên mô hình')}
                 <input name="modelName" placeholder={t('Tên chính xác từ máy chủ')} />
               </label>
@@ -211,23 +240,22 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                   search={searchAccounts(actor)}
                   queryKey={['audit-actor', actor.id]}
                 />
-                <label className="field">
-                  {t('Hành động')}
-                  <select name="actionType">
-                    <option value="">{t('Tất cả hành động')}</option>
-                    {auditActions.map((action) => (
-                      <option key={action}>{action}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field">
+                <SearchPicker
+                  label={t('Hành động')}
+                  placeholder={t('Gõ tên hành động')}
+                  value={action}
+                  onChange={setAction}
+                  search={searchActions}
+                  queryKey={['audit-action', actor.id]}
+                />
+                <label className="field wide">
                   {t('Bảng đối tượng')}
                   <input name="targetTable" maxLength={100} />
                 </label>
               </>
             )}
             {kind === 'delivery' && (
-              <label className="field">
+              <label className="field wide">
                 {t('Kênh gửi')}
                 <select name="channel">
                   <option value="">{t('Tất cả kênh')}</option>
@@ -239,24 +267,18 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                 </select>
               </label>
             )}
-            <label className="field">
-              {kind === 'metrics' ? t('Từ ngày UTC') : t('Từ ngày Việt Nam')}
-              <input type="date" name="from" />
-            </label>
-            <label className="field">
-              {kind === 'metrics' ? t('Đến ngày UTC') : t('Đến ngày Việt Nam')}
-              <input type="date" name="to" />
-            </label>
-            <button className="btn primary">{t('Lọc bản ghi')}</button>
-            <button
-              className="btn"
-              type="button"
-              disabled={query.isFetching}
-              onClick={() => void query.refetch()}
-            >
-              {t('Tải lại')}
-            </button>
-          </form>
+            {/* The date range always sits on one row of its own. */}
+            <div className="filter-range wide">
+              <label className="field">
+                {kind === 'metrics' ? t('Từ ngày UTC') : t('Từ ngày Việt Nam')}
+                <input type="date" name="from" />
+              </label>
+              <label className="field">
+                {kind === 'metrics' ? t('Đến ngày UTC') : t('Đến ngày Việt Nam')}
+                <input type="date" name="to" />
+              </label>
+            </div>
+          </FilterPanel>
           {(filters.sessionId || filters.targetRecordId) && (
             <div className="row notice">
               <span>

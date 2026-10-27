@@ -30,6 +30,9 @@ export const PageHead = ({
     {actions && <div className="row page-head-actions">{actions}</div>}
   </header>
 );
+/** Page-level buttons placed inside the card they act on, aligned to its top-right. */
+export const CardActions = ({ children }: { children: ReactNode }) =>
+  children ? <div className="card-actions">{children}</div> : null;
 export const Badge = ({ children, tone = 'blue' }: { children: ReactNode; tone?: string }) => (
   <span className={'badge ' + tone}>{children}</span>
 );

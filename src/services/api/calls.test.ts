@@ -53,6 +53,16 @@ it('validates history membership, filters, dates and role before presenting data
   await expect(
     api.history(actor, 1, { viuUserId: '', dateFrom: '', dateTo: '' }),
   ).rejects.toMatchObject({ status: 403 });
+  // CenterAdmin sees organization calls they did not take part in; the VIU filter still applies.
+  get.mockResolvedValueOnce(page([{ ...call, initiatorId: viuId, receiverId: viuId }]));
+  const center = { ...actor, role: 'CenterAdmin' as const, orgId: viuId };
+  await expect(
+    api.history(center, 1, { viuUserId: '', dateFrom: '', dateTo: '' }),
+  ).resolves.toMatchObject({ totalCount: 1 });
+  get.mockResolvedValueOnce(page([call]));
+  await expect(
+    api.history(center, 1, { viuUserId: id, dateFrom: '', dateTo: '' }),
+  ).rejects.toMatchObject({ status: 403 });
 });
 it('uses exact write contracts with active linkage and rejects incompatible ICE responses', async () => {
   const link = {

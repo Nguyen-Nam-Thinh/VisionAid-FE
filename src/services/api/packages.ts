@@ -103,7 +103,7 @@ export function createPackagesApi(get = apiGet, write = apiWrite) {
   return {
     async list(actor: Actor, page: number, active: string, signal?: AbortSignal) {
       check(actor);
-      const query = new URLSearchParams({ page: String(page), pageSize: '20' });
+      const query = new URLSearchParams({ page: String(page), pageSize: '10' });
       if (actor.role === 'Admin' && ['true', 'false'].includes(active))
         query.set('isActive', active);
       return parse(pageSchema, await get('/api/licenses/packages?' + query, signal));

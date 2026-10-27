@@ -1,5 +1,5 @@
 import { t } from '../../i18n';
-import { Toast } from '../../components/UI';
+import { Toast, CardActions } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -34,8 +34,10 @@ function Servers({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Máy chủ kết nối cuộc gọi')}
-        description={t('Quản lý địa chỉ STUN và TURN dùng để thiết lập kết nối WebRTC.')}
-        actions={
+        description={t('Máy chủ STUN/TURN giúp cuộc gọi video kết nối được qua mọi mạng.')}
+      />
+      <section className="glass card stack">
+        <CardActions>
           <button
             className="btn primary"
             onClick={() => {
@@ -45,9 +47,7 @@ function Servers({ actor }: { actor: Person }) {
           >
             {t('Thêm máy chủ')}
           </button>
-        }
-      />
-      <section className="glass card stack">
+        </CardActions>
         <p>
           {t(
             'Số ưu tiên nhỏ được xếp trước. Thay đổi cấu hình không xác nhận máy chủ đang hoạt động; cần kiểm tra bằng cuộc gọi thực tế.',

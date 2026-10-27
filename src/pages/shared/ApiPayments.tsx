@@ -5,7 +5,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { OrganizationPool } from './ApiLicensePool';
 import { useSession } from '../../hooks/useService';
-import { Dialog, Confirm, PageHead, State } from '../../components/UI';
+import { Dialog, Confirm, PageHead, State, CardActions } from '../../components/UI';
 import {
   getMySubscription,
   isPersonalCaregiver,
@@ -174,24 +174,26 @@ function PaymentHistory({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Lịch sử thanh toán')}
-        description={t('Trạng thái do máy chủ xác nhận cho tài khoản của bạn.')}
-        actions={
-          <>
-            <button
-              className="btn small"
-              aria-label={t('Tải lại lịch sử')}
-              disabled={query.isFetching}
-              onClick={() => void query.refetch()}
-            >
-              <RefreshCw size={16} aria-hidden="true" /> {t('Tải lại')}
-            </button>
-            <Link className="btn" to="/packages">
-              {isOrganizationBuyer(actor) ? t('Chọn gói Business') : t('Chọn gói Personal')}
-            </Link>
-          </>
-        }
+        description={t('Các đơn thanh toán gói dịch vụ của bạn.')}
       />
       <section className="glass card stack">
+        <CardActions>
+          {
+            <>
+              <button
+                className="btn small"
+                aria-label={t('Tải lại lịch sử')}
+                disabled={query.isFetching}
+                onClick={() => void query.refetch()}
+              >
+                <RefreshCw size={16} aria-hidden="true" /> {t('Tải lại')}
+              </button>
+              <Link className="btn" to="/packages">
+                {isOrganizationBuyer(actor) ? t('Chọn gói Business') : t('Chọn gói Personal')}
+              </Link>
+            </>
+          }
+        </CardActions>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           <div className="table-scroll">
             <table>
@@ -413,7 +415,7 @@ function PaymentResult({
             )}
           </>
         )}
-        {success && isOrganizationBuyer(actor) && <OrganizationPool actor={actor} />}
+        {success && isOrganizationBuyer(actor) && <OrganizationPool actor={actor} embedded />}
         <Link to={isOrganizationBuyer(actor) ? '/center-admin/licenses' : '/license'}>
           {t('Xem license')}
         </Link>

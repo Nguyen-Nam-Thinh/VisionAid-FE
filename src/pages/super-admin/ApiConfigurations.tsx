@@ -342,7 +342,7 @@ function Configurations({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Cấu hình hệ thống')}
-        description={t('Tra cứu, điều chỉnh và khôi phục các thông số đã được duyệt cho Web.')}
+        description={t('Xem, điều chỉnh và khôi phục các thông số vận hành của hệ thống.')}
       />
       <section className="glass card stack">
         <form

@@ -42,7 +42,7 @@ export function createLicenseAssignmentsApi(get = apiGet, write = apiWrite) {
       authorize(actor);
       if (!Number.isInteger(page) || page < 1 || !['', 'true', 'false'].includes(active))
         throw new ServiceError(t('Bộ lọc license không hợp lệ.'), 400);
-      const query = new URLSearchParams({ page: String(page), pageSize: '20' });
+      const query = new URLSearchParams({ page: String(page), pageSize: '10' });
       if (active) query.set('isActive', active);
       const result = pageSchema.safeParse(await get(`/api/licenses/assignments?${query}`, signal));
       if (

@@ -246,7 +246,7 @@ export function Dashboard() {
                 className="btn"
                 to={base + (admin ? '/audit' : center ? '/reports' : '/alerts')}
               >
-                {admin ? t('Mở nhật ký kiểm toán') : t('Xem tất cả cảnh báo')}
+                {admin ? t('Mở nhật ký thao tác') : t('Xem tất cả cảnh báo')}
                 <ArrowUpRight size={16} />
               </Link>
               <div className="notice">

@@ -52,10 +52,10 @@ export function ApiLicense() {
   if (!user) return null;
   return (
     <>
-      <PageHead
-        title="License"
-        description={t('Trạng thái và thời hạn sử dụng của tài khoản.')}
-        actions={
+      <PageHead title="License" description={t('Trạng thái và thời hạn sử dụng của tài khoản.')} />
+      <section className="glass card stack license-card" aria-label={t('Thông tin license')}>
+        <div className="card-head">
+          <h2>{t('Trạng thái tài khoản')}</h2>
           <button
             className="btn small"
             aria-label={t('Tải lại thông tin license')}
@@ -73,20 +73,26 @@ export function ApiLicense() {
           >
             <RefreshCw size={16} aria-hidden="true" /> {t('Tải lại')}
           </button>
-        }
-      />
-      <section className="glass card stack license-card" aria-label={t('Thông tin license')}>
-        <h2>{t('Trạng thái tài khoản')}</h2>
+        </div>
         <p>{licenseSummary(user)}</p>
-        {canBrowsePackages(user) && (
-          <Link
-            className="btn small license-catalog"
-            to={user.role === 'Admin' ? '/admin/packages' : '/packages'}
-          >
-            {t('Xem danh mục gói')}
-          </Link>
-        )}
         {personal && <p>{t('Thời hạn hồ sơ: {p1}', { p1: dateLabel(user.licenseExpiresAt) })}</p>}
+        {(canBrowsePackages(user) || (user.role === 'CenterAdmin' && user.orgId)) && (
+          <div className="row">
+            {canBrowsePackages(user) && (
+              <Link
+                className="btn small license-catalog"
+                to={user.role === 'Admin' ? '/admin/packages' : '/packages'}
+              >
+                {t('Xem danh mục gói')}
+              </Link>
+            )}
+            {user.role === 'CenterAdmin' && user.orgId && (
+              <Link className="btn small" to="/center-admin/licenses">
+                {t('Xem kho license tổ chức')}
+              </Link>
+            )}
+          </div>
+        )}
       </section>
       {personal && (
         <section className="glass card stack license-card">
@@ -220,16 +226,10 @@ export function ApiLicense() {
         />
       )}
       <LicenseKeys key={user.id + user.orgId} actor={user} mode="activate" />
-      {user.role === 'CenterAdmin' && user.orgId ? (
-        <Link className="btn" to="/center-admin/licenses">
-          {t('Xem kho license tổ chức')}
-        </Link>
-      ) : (
-        !personal && (
-          <p className="notice">
-            {t('Kho license và thanh toán tổ chức do quản trị trung tâm phụ trách.')}
-          </p>
-        )
+      {!personal && !(user.role === 'CenterAdmin' && user.orgId) && (
+        <p className="notice">
+          {t('Kho license và thanh toán tổ chức do quản trị trung tâm phụ trách.')}
+        </p>
       )}
     </>
   );

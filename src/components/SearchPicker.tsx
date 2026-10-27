@@ -22,6 +22,7 @@ export function SearchPicker({
   disabled,
   invalid,
   describedBy,
+  wide,
   children,
 }: {
   id?: string;
@@ -35,6 +36,8 @@ export function SearchPicker({
   disabled?: boolean;
   invalid?: boolean;
   describedBy?: string;
+  /** Take a full row inside a two-column filter panel. */
+  wide?: boolean;
   /** Rendered under the control, e.g. a hint or field error. */
   children?: ReactNode;
 }) {
@@ -55,7 +58,8 @@ export function SearchPicker({
   const results = useQuery({
     queryKey: ['search-picker', ...queryKey, debounced],
     queryFn: ({ signal }) => search(debounced, signal),
-    enabled: open && !disabled,
+    // Suggestions appear only after typing; an empty box never lists records.
+    enabled: open && !disabled && !!debounced,
     retry: false,
     staleTime: 30000,
   });
@@ -75,7 +79,7 @@ export function SearchPicker({
     onChange('');
   };
   return (
-    <div className="field picker">
+    <div className={'field picker' + (wide ? ' wide' : '')}>
       <label htmlFor={inputId}>
         {label}
         {required ? ' *' : ''}
@@ -119,7 +123,11 @@ export function SearchPicker({
             } else if (e.key === 'Enter' && open) {
               e.preventDefault();
               if (options[active]) choose(options[active]);
-            } else if (e.key === 'Escape') setOpen(false);
+            } else if (e.key === 'Escape' && open && term.trim()) {
+              // Close only the suggestion list; a surrounding filter panel stays open.
+              e.preventDefault();
+              setOpen(false);
+            }
           }}
         />
         {shown && !disabled && (
@@ -133,7 +141,7 @@ export function SearchPicker({
           </button>
         )}
       </div>
-      {open && (
+      {open && term.trim() && (
         <ul id={listId} role="listbox" className="picker-list" aria-label={label}>
           {!settled || results.isPending ? (
             <li className="muted" role="presentation">

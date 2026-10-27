@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { organizationsApi } from '../../services/api/organizations';
 import { PageHead, State, Badge } from '../../components/UI';
+import { FilterPanel } from '../../components/FilterPanel';
 import { roles } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 
@@ -53,32 +54,36 @@ function Reports({ actor }: { actor: Person }) {
       />
       <section className="glass card stack">
         <h2>{t('Hoạt động của trung tâm')}</h2>
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const form = new FormData(e.currentTarget);
-            setDates({ from: String(form.get('from') || ''), to: String(form.get('to') || '') });
+        <FilterPanel
+          active={[dates.from, dates.to].filter(Boolean).length}
+          submitLabel={t('Xem báo cáo')}
+          onApply={(form) => {
+            const data = new FormData(form);
+            setDates({ from: String(data.get('from') || ''), to: String(data.get('to') || '') });
           }}
+          onReset={() => setDates({ from: '', to: '' })}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={summary.isFetching}
+              onClick={() => void summary.refetch()}
+            >
+              {t('Tải lại báo cáo')}
+            </button>
+          }
         >
-          <label className="field">
-            {t('Từ ngày UTC')}
-            <input type="date" name="from" />
-          </label>
-          <label className="field">
-            {t('Đến ngày UTC')}
-            <input type="date" name="to" />
-          </label>
-          <button className="btn primary">{t('Xem báo cáo')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={summary.isFetching}
-            onClick={() => void summary.refetch()}
-          >
-            {t('Tải lại báo cáo')}
-          </button>
-        </form>
+          <div className="filter-range wide">
+            <label className="field">
+              {t('Từ ngày UTC')}
+              <input type="date" name="from" />
+            </label>
+            <label className="field">
+              {t('Đến ngày UTC')}
+              <input type="date" name="to" />
+            </label>
+          </div>
+        </FilterPanel>
         <p className="notice">
           {t(
             'Máy chủ tính theo ngày UTC: một ngày bắt đầu lúc 07:00 giờ Việt Nam và kết thúc ngay trước 07:00 hôm sau. Để trống ngày để xem toàn bộ dữ liệu còn lưu.',
@@ -134,20 +139,34 @@ function Reports({ actor }: { actor: Person }) {
       <section className="glass card stack">
         <h2>{t('Thành viên hiện tại')}</h2>
         <p>{t('Danh sách thành viên có bộ lọc riêng, không phụ thuộc khoảng ngày báo cáo.')}</p>
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const form = new FormData(e.currentTarget);
+        <FilterPanel
+          active={Object.values(filters).filter(Boolean).length}
+          submitLabel={t('Lọc thành viên')}
+          onApply={(form) => {
+            const data = new FormData(form);
             setFilters({
-              search: String(form.get('search') || '').trim(),
-              role: String(form.get('role') || ''),
-              active: String(form.get('active') || ''),
+              search: String(data.get('search') || '').trim(),
+              role: String(data.get('role') || ''),
+              active: String(data.get('active') || ''),
             });
             setPage(1);
           }}
+          onReset={() => {
+            setFilters({ search: '', role: '', active: '' });
+            setPage(1);
+          }}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={members.isFetching}
+              onClick={() => void members.refetch()}
+            >
+              {t('Tải lại thành viên')}
+            </button>
+          }
         >
-          <label className="field">
+          <label className="field wide">
             {t('Tìm thành viên')}
             <input name="search" />
           </label>
@@ -170,16 +189,7 @@ function Reports({ actor }: { actor: Person }) {
               <option value="false">{t('Vô hiệu hóa')}</option>
             </select>
           </label>
-          <button className="btn primary">{t('Lọc thành viên')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={members.isFetching}
-            onClick={() => void members.refetch()}
-          >
-            {t('Tải lại thành viên')}
-          </button>
-        </form>
+        </FilterPanel>
         <State loading={members.isPending} error={members.error} retry={() => members.refetch()}>
           {members.data?.items.length ? (
             <div

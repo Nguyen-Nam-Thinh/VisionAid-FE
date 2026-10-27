@@ -11,6 +11,7 @@ import {
   type ActivityRecord,
   type ActivityPage,
 } from '../../services/api/activity';
+import { FilterPanel } from '../../components/FilterPanel';
 import { PageHead, State, Dialog } from '../../components/UI';
 import { formatTime } from '../../constants/labels';
 import type { Person } from '../../models/domain';
@@ -263,11 +264,11 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
           ))}
         </select>
       </label>
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const fields = new FormData(e.currentTarget);
+      <FilterPanel
+        active={[range.dateFrom, range.dateTo].filter(Boolean).length}
+        submitLabel={t('Lọc lịch sử')}
+        onApply={(form) => {
+          const fields = new FormData(form);
           try {
             setRange(
               activityDateRange(String(fields.get('from') || ''), String(fields.get('to') || '')),
@@ -279,25 +280,34 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
             setError((err as Error).message);
           }
         }}
+        onReset={() => {
+          setRange({ dateFrom: '', dateTo: '' });
+          setPage(1);
+          setDetail('');
+          setError('');
+        }}
+        tools={
+          <button
+            type="button"
+            className="btn"
+            disabled={query.isFetching}
+            onClick={() => void query.refetch()}
+          >
+            {t('Tải lại lịch sử')}
+          </button>
+        }
       >
-        <label className="field">
-          {t('Từ ngày')}
-          <input type="date" name="from" />
-        </label>
-        <label className="field">
-          {t('Đến ngày')}
-          <input type="date" name="to" />
-        </label>
-        <button className="btn">{t('Lọc lịch sử')}</button>
-        <button
-          type="button"
-          className="btn"
-          disabled={query.isFetching}
-          onClick={() => void query.refetch()}
-        >
-          {t('Tải lại lịch sử')}
-        </button>
-      </form>
+        <div className="filter-range wide">
+          <label className="field">
+            {t('Từ ngày')}
+            <input type="date" name="from" />
+          </label>
+          <label className="field">
+            {t('Đến ngày')}
+            <input type="date" name="to" />
+          </label>
+        </div>
+      </FilterPanel>
       <p>
         {t(
           'Ngày lọc và thời gian hiển thị theo giờ Việt Nam. Để trống ngày để xem toàn bộ thời gian còn lưu.',
@@ -390,29 +400,34 @@ function Activity({ actor }: { actor: Person }) {
         description={t('Xem các hoạt động đã được ghi nhận của người bạn chăm sóc.')}
       />
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSearch(String(new FormData(e.currentTarget).get('search') || '').trim());
+        <FilterPanel
+          active={search ? 1 : 0}
+          onApply={(form) => {
+            setSearch(String(new FormData(form).get('search') || '').trim());
             setPage(1);
             setSelected('');
           }}
+          onReset={() => {
+            setSearch('');
+            setPage(1);
+            setSelected('');
+          }}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={users.isFetching}
+              onClick={() => void users.refetch()}
+            >
+              {t('Tải lại người dùng')}
+            </button>
+          }
         >
-          <label className="field">
+          <label className="field wide">
             {t('Tìm người được chăm sóc')}
-            <input name="search" />
+            <input name="search" placeholder={t('Tên, email hoặc số điện thoại')} />
           </label>
-          <button className="btn">{t('Tìm kiếm')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={users.isFetching}
-            onClick={() => void users.refetch()}
-          >
-            {t('Tải lại người dùng')}
-          </button>
-        </form>
+        </FilterPanel>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           <label className="field">
             {t('Người được chăm sóc')}

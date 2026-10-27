@@ -6,7 +6,7 @@ Make caregiving operations calm, legible and quick with restrained frosted surfa
 ## Design tokens and foundations
 - `src/styles/theme/index.css` is the token source. Primary #1856FF; secondary #3A344E; text #141414; surface white; muted #526077.
 - Brand success #07CA6B, warning #E89558, danger #EA2143 are accents. Text uses darker success #12663A, warning #82400D, danger #B21532 on pale backgrounds.
-- Plus Jakarta Sans (locally bundled Vietnamese/Latin); JetBrains Mono for identifiers. Body 16 px, compact table 13.3 px, title 26–36 px. Do not use mono for paragraphs.
+- Be Vietnam Pro (locally bundled Vietnamese/Latin; replaced Plus Jakarta Sans, whose hook-above on ô/ơ read like a grave accent); JetBrains Mono for identifiers. Body 16 px, compact table 13.3 px, title 26–36 px. Do not use mono for paragraphs.
 - Spacing 4/8/12/16/20/24/32 px; cards 24 px desktop and 18 px narrow; radius 12 px controls / 22 px surfaces.
 - Glass alpha .82, blur 12 px, one main frosted layer. Tables/forms use opaque light fills; never stack blur over dense text.
 

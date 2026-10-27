@@ -102,7 +102,7 @@ function review(config: SystemConfig) {
 }
 function pageQuery(page: number) {
   if (!Number.isInteger(page) || page < 1) throw new ServiceError(t('Trang không hợp lệ.'), 400);
-  return new URLSearchParams({ page: String(page), pageSize: '20' });
+  return new URLSearchParams({ page: String(page), pageSize: '10' });
 }
 export function validateConfigValue(config: SystemConfig, value: string) {
   if (!value.trim()) throw new ServiceError(t('Giá trị không được để trống.'), 400);

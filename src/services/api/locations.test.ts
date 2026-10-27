@@ -64,7 +64,7 @@ it('converts dates to UTC, pages history and preserves null and zero telemetry',
   expect(range.dateFrom).toBe('2026-09-26T00:00:00.000Z');
   expect((await api.history(actor, id, 2, range)).items[0]).toEqual(item);
   const url = new URL(get.mock.calls[0][0], 'http://test');
-  expect(url.searchParams.get('pageSize')).toBe('20');
+  expect(url.searchParams.get('pageSize')).toBe('10');
   expect(url.searchParams.get('dateFrom')).toBe(range.dateFrom);
   await expect(api.history(actor, id, 0, range)).rejects.toMatchObject({ status: 400 });
   expect(() => historyRange(range.dateTo, range.dateFrom)).toThrow();
