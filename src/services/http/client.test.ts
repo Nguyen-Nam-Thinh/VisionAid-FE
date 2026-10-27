@@ -103,3 +103,24 @@ it('keeps the localized message of a known errorCode on 403', async () => {
     message: 'Bạn không có quyền thực hiện thao tác này.',
   });
 });
+it('402 shows whose license blocks the action and keeps the code', async () => {
+  const pay = (errorCode?: string) => async () =>
+    new Response(JSON.stringify({ title: 'Payment Required', status: 402, errorCode }), {
+      status: 402,
+    });
+  await expect(
+    request('/api/webrtc/sessions', {}, pay('VIU_LICENSE_EXPIRED')),
+  ).rejects.toMatchObject({
+    status: 402,
+    code: 'VIU_LICENSE_EXPIRED',
+    message: expect.stringContaining('người được chăm sóc đã hết hạn'),
+  });
+  await expect(request('/x', {}, pay('LICENSE_REQUIRED'))).rejects.toMatchObject({
+    code: 'LICENSE_REQUIRED',
+    message: expect.stringContaining('chưa có license'),
+  });
+  await expect(request('/x', {}, pay())).rejects.toMatchObject({
+    status: 402,
+    message: expect.stringContaining('Phiên đăng nhập vẫn được giữ'),
+  });
+});

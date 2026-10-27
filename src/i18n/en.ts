@@ -2292,6 +2292,58 @@ export const en = {
     'The file content does not match the selected image format.',
   'Ảnh quá nhỏ để nhận diện. Chọn ảnh có độ phân giải cao hơn.':
     'The photo is too small for recognition. Choose a higher-resolution photo.',
+  'Tài khoản của bạn chưa có license nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để chọn gói hoặc kích hoạt key.':
+    'Your account has no license, so new calls cannot be started. Alerts and SOS calls still work. Open License to choose a plan or activate a key.',
+  'License của bạn đã hết hạn quá 3 ngày nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để gia hạn.':
+    'Your license expired more than 3 days ago, so new calls cannot be started. Alerts and SOS calls still work. Open License to renew.',
+  'Người được chăm sóc chưa có license nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Kích hoạt gói để gọi.':
+    'The care recipient has no license, so a video call cannot be started. SOS calls from them still work. Activate a plan to call.',
+  'License của người được chăm sóc đã hết hạn quá 3 ngày nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.':
+    'The care recipient’s license expired more than 3 days ago, so a video call cannot be started. SOS calls from them still work. Renew to call.',
+  'Báo cáo doanh thu': 'Revenue report',
+  'Báo cáo theo ngày tối đa 366 ngày. Chọn khoảng ngắn hơn hoặc xem theo tháng.':
+    'Daily reports cover at most 366 days. Choose a shorter range or view by month.',
+  'Báo cáo theo tháng tối đa 5 năm.': 'Monthly reports cover at most 5 years.',
+  'Chỉ quản trị hệ thống được xem báo cáo doanh thu.':
+    'Only system admins can view the revenue report.',
+  'Doanh thu': 'Revenue',
+  'Doanh thu gộp': 'Gross revenue',
+  'Doanh thu ròng': 'Net revenue',
+  'Doanh thu theo ngày': 'Revenue by day',
+  'Doanh thu theo tháng': 'Revenue by month',
+  'Doanh thu toàn nền tảng từ các giao dịch PayOS đã thanh toán, theo kênh, loại giao dịch, gói và trung tâm.':
+    'Platform-wide revenue from paid PayOS transactions, by channel, transaction type, plan and center.',
+  'Dữ liệu báo cáo doanh thu từ máy chủ không hợp lệ.':
+    'The revenue report data from the server is invalid.',
+  'Gia đình (B2C)': 'Families (B2C)',
+  'Giao dịch': 'Transactions',
+  'Giao dịch chưa thu tiền': 'Unpaid transactions',
+  'Giao dịch đã thanh toán': 'Paid transactions',
+  'Hoàn tiền': 'Refund',
+  'Khách hàng trả tiền': 'Paying customers',
+  'Không có dữ liệu trong kỳ.': 'No data in this period.',
+  'Kỳ báo cáo: {from} → {to}': 'Report period: {from} → {to}',
+  'Loại giao dịch': 'Transaction type',
+  'Mua gói Business': 'Business plan purchase',
+  'Mua gói Personal': 'Personal plan purchase',
+  'Mua thêm license Business': 'Business license top-up',
+  'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.':
+    'The start date must be on or before the end date.',
+  'Ngày không hợp lệ.': 'Invalid date.',
+  'Ngày tính theo giờ Việt Nam. Để trống: theo tháng là 12 tháng gần nhất, theo ngày là 30 ngày gần nhất. Doanh thu tính vào ngày thanh toán; giao dịch đang chờ, thất bại hoặc đã hủy chỉ được đếm số lượng.':
+    'Dates use Vietnam time. Leave blank for the last 12 months (monthly) or the last 30 days (daily). Revenue counts on the paid date; pending, failed or cancelled transactions are only counted.',
+  'Theo gói': 'By plan',
+  'Theo kênh': 'By channel',
+  'Theo loại giao dịch': 'By transaction type',
+  Tháng: 'Month',
+  'Trung tâm (B2B)': 'Centers (B2B)',
+  'Trung tâm có doanh thu cao nhất': 'Top centers by revenue',
+  'Xem theo': 'Group by',
+  'trung bình {value}/đơn': 'average {value} per order',
+  '{caregivers} người chăm sóc · {organizations} trung tâm':
+    '{caregivers} caregivers · {organizations} centers',
+  '{pending} đang chờ · {failed} thất bại · {cancelled} đã hủy':
+    '{pending} pending · {failed} failed · {cancelled} cancelled',
   'Key không hợp lệ, đã được kích hoạt hoặc đã hết hạn.':
     'The key is invalid, already activated or expired.',
   'Key đã hết hạn.': 'The key has expired.',

@@ -7,7 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Maximize2, Mic, MicOff, Minus, Phone, PhoneIncoming, PhoneOff, Video } from 'lucide-react';
 import type { CallClient, CallView } from '../services/realtime/calls';
 import { Dialog } from './UI';
@@ -211,6 +211,7 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
             <p className="call-status" role="status">
               {call.message}
             </p>
+            {ended && call.license && <Link to="/license">{t('Xem trạng thái license')}</Link>}
           </div>
         </div>
         {!ended && (

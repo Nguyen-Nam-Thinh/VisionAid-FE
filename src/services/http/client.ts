@@ -61,6 +61,19 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   IMAGE_CONTENT_TYPE_MISMATCH: msg('Nội dung tệp không khớp định dạng ảnh đã chọn.'),
   IMAGE_TOO_SMALL: msg('Ảnh quá nhỏ để nhận diện. Chọn ảnh có độ phân giải cao hơn.'),
   // License, gói, thanh toán
+  // 402 license gate (middleware for the caller, InitiateCall for the VIU being called)
+  LICENSE_REQUIRED: msg(
+    'Tài khoản của bạn chưa có license nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để chọn gói hoặc kích hoạt key.',
+  ),
+  LICENSE_EXPIRED: msg(
+    'License của bạn đã hết hạn quá 3 ngày nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để gia hạn.',
+  ),
+  VIU_LICENSE_REQUIRED: msg(
+    'Người được chăm sóc chưa có license nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Kích hoạt gói để gọi.',
+  ),
+  VIU_LICENSE_EXPIRED: msg(
+    'License của người được chăm sóc đã hết hạn quá 3 ngày nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.',
+  ),
   LICENSE_KEY_INVALID: msg('Key không hợp lệ, đã được kích hoạt hoặc đã hết hạn.'),
   LICENSE_KEY_EXPIRED: msg('Key đã hết hạn.'),
   LICENSE_POOL_FULL: msg('Kho license đã hết suất. Mua thêm gói Business.'),
@@ -138,12 +151,18 @@ export async function request<T>(
       problem.errors && typeof problem.errors === 'object'
         ? (problem.errors as Record<string, unknown>)
         : {};
+    const code = typeof problem.errorCode === 'string' ? problem.errorCode : undefined;
+    // 402 keeps the session; a known license code says whose license blocks the action.
     if (response.status === 402)
       throw new ServiceError(
-        t(
-          'Máy chủ yêu cầu kiểm tra license cho thao tác này. Phiên đăng nhập vẫn được giữ. Mở mục License để xem trạng thái hoặc tải lại sau khi license được cập nhật.',
-        ),
+        code && errorCodeMessages[code]
+          ? errorCodeMessages[code]
+          : t(
+              'Máy chủ yêu cầu kiểm tra license cho thao tác này. Phiên đăng nhập vẫn được giữ. Mở mục License để xem trạng thái hoặc tải lại sau khi license được cập nhật.',
+            ),
         402,
+        {},
+        code,
       );
     let message =
       typeof problem.detail === 'string'
@@ -151,7 +170,6 @@ export async function request<T>(
         : typeof problem.title === 'string'
           ? problem.title
           : t('Yêu cầu thất bại. Mã lỗi: {status}.', { status: response.status });
-    const code = typeof problem.errorCode === 'string' ? problem.errorCode : undefined;
     // Known BE error codes get a localized message; unknown codes keep the BE detail.
     if (code && errorCodeMessages[code]) message = errorCodeMessages[code];
     // A 403 with a known errorCode explains what to do; others stay generic.
