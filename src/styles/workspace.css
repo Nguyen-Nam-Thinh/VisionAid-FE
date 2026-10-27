@@ -1,11 +1,38 @@
-@import '@fontsource/plus-jakarta-sans/vietnamese-400.css';
-@import '@fontsource/plus-jakarta-sans/vietnamese-600.css';
-@import '@fontsource/plus-jakarta-sans/vietnamese-700.css';
-@import '@fontsource/plus-jakarta-sans/latin-400.css';
-@import '@fontsource/plus-jakarta-sans/latin-600.css';
-@import '@fontsource/plus-jakarta-sans/latin-700.css';
+@import '@fontsource/be-vietnam-pro/vietnamese-400.css';
+@import '@fontsource/be-vietnam-pro/vietnamese-600.css';
+@import '@fontsource/be-vietnam-pro/vietnamese-700.css';
+@import '@fontsource/be-vietnam-pro/latin-400.css';
+@import '@fontsource/be-vietnam-pro/latin-600.css';
+@import '@fontsource/be-vietnam-pro/latin-700.css';
 
 /* One visual system for public pages, authentication and daily operations. */
+/* Reserve the scrollbar so pages do not shift sideways when one page scrolls and the next does not. */
+html { scrollbar-gutter: stable; }
+.notice.error > .btn { justify-self: start; }
+.license-key-action { justify-self: start; }
+.page-head > div > p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) { .page-head > div > p { white-space: normal; } }
+.card-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.card-head > h2 { margin: 0; }
+.filter-bar { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.filter-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.filter-anchor { position: static; }
+.filter-anchor > .btn { gap: 8px; }
+.filter-anchor > .btn.is-active { border-color: var(--primary, #08736f); color: var(--primary, #08736f); }
+.filter-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--primary, #08736f); color: #fff; font-size: .75rem; line-height: 20px; text-align: center; }
+.filter-popover { position: absolute; z-index: 30; top: calc(100% + 8px); left: 0; width: min(560px, 100%); display: grid; gap: 16px; padding: 20px; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px #15274822; }
+.filter-popover[hidden] { display: none; }
+.filter-popover h3 { margin: 0; font-size: 1rem; }
+.filter-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.filter-fields > .field, .filter-fields > .picker { min-width: 0; width: 100%; }
+.filter-fields > .field input, .filter-fields > .field select, .filter-fields .picker-control input { width: 100%; }
+.filter-fields > .wide { grid-column: 1 / -1; }
+.filter-range { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.filter-range > .field input { width: 100%; }
+.filter-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.filter-actions .btn { gap: 6px; }
+@media (max-width: 600px) { .filter-fields { grid-template-columns: 1fr; } }
 .table-search { position: relative; display: block; width: 260px; max-width: 100%; }
 .table-search > svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
 .table-search > .search { padding-left: 38px; }
@@ -24,7 +51,7 @@
   .dashboard-columns:has(.alert-preview) > section:last-child { order: -1; }
 }
 :root {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Be Vietnam Pro', sans-serif;
   --background: #f3f4f4;
   --surface: #fff;
   --glass: #fff;
@@ -387,10 +414,57 @@ tbody tr:hover {
 .overview-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 .overview-grid .card {
   gap: 16px;
+}
+/* Equal-height cards keep their content at the top instead of spreading rows apart. */
+.overview-grid .card,
+.profile-layout .card {
+  align-content: start;
+}
+/* Cards that would sit alone in a row take the full width instead of leaving an empty cell. */
+.overview-grid > .overview-wide,
+.overview-grid > .notice {
+  grid-column: 1 / -1;
+}
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.overview-stats > div {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.overview-stats dt {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.overview-stats dd {
+  margin: 4px 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.shortcut-grid .quick-link {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  border: 1px solid var(--border);
+  color: inherit;
+  text-decoration: none;
+}
+.shortcut-grid .quick-link .muted {
+  font-size: 0.8125rem;
 }
 .overview-grid p {
   font-size: 0.875rem;
@@ -409,7 +483,7 @@ tbody tr:hover {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
   margin-bottom: 24px;
 }
 .profile-layout .card > .btn { justify-self: start; }
@@ -464,7 +538,7 @@ tbody tr:hover {
 .overview-grid [role='group'] h3 {
   font-size: 0.875rem;
 }
-.overview-grid [role='group'] strong {
+.overview-grid [role='group'] p > strong {
   color: var(--text);
   font-size: 1.4rem;
 }
@@ -963,7 +1037,7 @@ tbody tr:hover {
 .gps-marker.selected { outline: 3px solid var(--primary); outline-offset: 2px; width: 28px; height: 28px; }
 .gps-marker:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 @media (max-width: 760px) { .gps-map { height: 300px; } }
-.gps-popup { display: grid; gap: 2px; font: 0.8125rem/1.45 'Plus Jakarta Sans', sans-serif; color: var(--text); }
+.gps-popup { display: grid; gap: 2px; font: 0.8125rem/1.45 'Be Vietnam Pro', sans-serif; color: var(--text); }
 .gps-popup p { margin: 0; color: var(--muted); }
 .gps-map .mapboxgl-popup-content { padding: 12px 36px 12px 14px; border-radius: 10px; box-shadow: var(--shadow-float); }
 .gps-map .mapboxgl-popup-close-button { top: 6px; right: 6px; width: 26px; height: 26px; min-height: 0; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; }

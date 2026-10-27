@@ -6,6 +6,7 @@ import { useSession } from '../../hooks/useService';
 import { useLimit } from '../../hooks/useLimit';
 import { caregivingApi } from '../../services/api/caregiving';
 import { placesApi, type Place, type PlaceKind } from '../../services/api/places';
+import { FilterPanel } from '../../components/FilterPanel';
 import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
 import { Form, type FieldSpec } from '../../components/Form';
 import type { Person, Fields } from '../../models/domain';
@@ -37,29 +38,34 @@ function Places({ actor }: { actor: Person }) {
         description={t('Lưu nơi thường đến và cấu hình vùng tròn cho người được chăm sóc.')}
       />
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSearch(String(new FormData(e.currentTarget).get('search') || '').trim());
+        <FilterPanel
+          active={search ? 1 : 0}
+          onApply={(form) => {
+            setSearch(String(new FormData(form).get('search') || '').trim());
             setPage(1);
             setSelected('');
           }}
+          onReset={() => {
+            setSearch('');
+            setPage(1);
+            setSelected('');
+          }}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={users.isFetching}
+              onClick={() => void users.refetch()}
+            >
+              {t('Tải lại người dùng')}
+            </button>
+          }
         >
-          <label className="field">
+          <label className="field wide">
             {t('Tìm người được chăm sóc')}
-            <input name="search" />
+            <input name="search" placeholder={t('Tên, email hoặc số điện thoại')} />
           </label>
-          <button className="btn primary">{t('Tìm kiếm')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={users.isFetching}
-            onClick={() => void users.refetch()}
-          >
-            {t('Tải lại người dùng')}
-          </button>
-        </form>
+        </FilterPanel>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           <label className="field">
             {t('Người được chăm sóc')}

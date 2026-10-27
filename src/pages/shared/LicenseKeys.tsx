@@ -62,7 +62,11 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
           )}
         </p>
       )}
-      <button className="btn primary" disabled={uncertain} onClick={() => setOpen(true)}>
+      <button
+        className="btn primary license-key-action"
+        disabled={uncertain}
+        onClick={() => setOpen(true)}
+      >
         {result
           ? t('Xem key vừa tạo')
           : distributing

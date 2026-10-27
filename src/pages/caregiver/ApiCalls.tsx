@@ -13,11 +13,14 @@ import {
 import { PageHead, State, Dialog } from '../../components/UI';
 import type { Person } from '../../models/domain';
 import { SearchPicker } from '../../components/SearchPicker';
-import { searchCareRecipients } from '../../services/api/pickers';
+import { searchAccounts, searchCareRecipients } from '../../services/api/pickers';
+import { FilterPanel } from '../../components/FilterPanel';
+import { caregivingApi } from '../../services/api/caregiving';
+import { accountsApi } from '../../services/api/accounts';
 const time = (value: string | null) => (value ? formatLocaleDateTime(value) : t('Chưa có'));
 export function ApiCalls() {
   const { data: actor } = useSession();
-  return actor?.role === 'Caregiver' ? (
+  return actor?.role === 'Caregiver' || actor?.role === 'CenterAdmin' ? (
     <History key={actor.id + actor.orgId} actor={actor} />
   ) : null;
 }
@@ -26,30 +29,61 @@ function History({ actor }: { actor: Person }) {
   const [filters, setFilters] = useState<CallFilters>({ viuUserId: '', dateFrom: '', dateTo: '' });
   const [selected, setSelected] = useState<CallHistoryItem | null>(null);
   const [viu, setViu] = useState('');
+  const center = actor.role === 'CenterAdmin';
   const result = useQuery({
     queryKey: ['api-calls', actor.id, actor.orgId, page, filters],
     queryFn: ({ signal }) => callsApi.history(actor, page, filters, signal),
     retry: false,
   });
+  // Calls only carry the VIU id; show a name when the person is in the first page of the scope.
+  const people = useQuery({
+    queryKey: ['call-people', actor.id, actor.orgId],
+    queryFn: async ({ signal }) =>
+      center
+        ? (
+            await accountsApi.list(
+              actor,
+              {
+                page: 1,
+                search: '',
+                role: 'VisuallyImpaired',
+                active: '',
+                deleted: '',
+                organizationId: '',
+              },
+              signal,
+            )
+          ).items
+        : (await caregivingApi.users(1, '', signal)).items,
+    retry: false,
+  });
+  const nameOf = (id: string | null) =>
+    id
+      ? (people.data?.find((person) => person.id === id)?.fullName ?? id)
+      : t('Không còn thông tin');
   return (
     <>
       <PageHead
         title={t('Lịch sử cuộc gọi')}
-        description={t(
-          'Các phiên gọi bạn đã tham gia. Thời gian hiển thị theo múi giờ trình duyệt.',
-        )}
+        description={
+          center
+            ? t('Các cuộc gọi của người khiếm thị thuộc trung tâm. Chỉ xem, không gọi từ đây.')
+            : t('Các cuộc gọi bạn đã thực hiện hoặc nhận.')
+        }
       />
-      <p className="notice">
-        {t(
-          'Để bắt đầu gọi, vào Người được chăm sóc và chọn Gọi hỗ trợ. Kết quả dưới đây do máy chủ ghi nhận.',
-        )}
-      </p>
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const data = new FormData(event.currentTarget);
+        {!center && (
+          <p className="notice">
+            {t(
+              'Để bắt đầu gọi, vào Người được chăm sóc và chọn Gọi hỗ trợ. Kết quả dưới đây do máy chủ ghi nhận.',
+            )}
+          </p>
+        )}
+        <FilterPanel
+          active={[filters.viuUserId, filters.dateFrom, filters.dateTo].filter(Boolean).length}
+          submitLabel={t('Lọc lịch sử')}
+          onApply={(form) => {
+            const data = new FormData(form);
             setFilters({
               viuUserId: viu,
               dateFrom: String(data.get('dateFrom') || ''),
@@ -58,36 +92,46 @@ function History({ actor }: { actor: Person }) {
             setPage(1);
             setSelected(null);
           }}
+          onReset={() => {
+            setViu('');
+            setFilters({ viuUserId: '', dateFrom: '', dateTo: '' });
+            setPage(1);
+            setSelected(null);
+          }}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={result.isFetching}
+              onClick={() => {
+                setSelected(null);
+                void result.refetch();
+              }}
+            >
+              {t('Tải lại')}
+            </button>
+          }
         >
           <SearchPicker
-            label={t('Người được chăm sóc')}
-            placeholder={t('Gõ tên hoặc email; để trống xem tất cả')}
+            wide
+            label={center ? t('Người khiếm thị') : t('Người được chăm sóc')}
+            placeholder={t('Gõ tên hoặc email')}
             value={viu}
             onChange={setViu}
-            search={searchCareRecipients()}
+            search={center ? searchAccounts(actor, 'VisuallyImpaired') : searchCareRecipients()}
             queryKey={['call-viu', actor.id, actor.orgId]}
           />
-          <label className="field">
-            {t('Từ thời điểm')}
-            <input name="dateFrom" type="datetime-local" />
-          </label>
-          <label className="field">
-            {t('Đến thời điểm')}
-            <input name="dateTo" type="datetime-local" />
-          </label>
-          <button className="btn primary">{t('Lọc lịch sử')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={result.isFetching}
-            onClick={() => {
-              setSelected(null);
-              void result.refetch();
-            }}
-          >
-            {t('Tải lại')}
-          </button>
-        </form>
+          <div className="filter-range wide">
+            <label className="field">
+              {t('Từ thời điểm')}
+              <input name="dateFrom" type="datetime-local" />
+            </label>
+            <label className="field">
+              {t('Đến thời điểm')}
+              <input name="dateTo" type="datetime-local" />
+            </label>
+          </div>
+        </FilterPanel>
         <State loading={result.isPending} error={result.error} retry={() => result.refetch()}>
           {!result.data?.items.length && <p>{t('Chưa có cuộc gọi phù hợp.')}</p>}
           <div className="table-scroll">
@@ -95,6 +139,7 @@ function History({ actor }: { actor: Person }) {
               <thead>
                 <tr>
                   <th>{t('Bắt đầu')}</th>
+                  <th>{center ? t('Người khiếm thị') : t('Người được chăm sóc')}</th>
                   <th>{t('Loại cuộc gọi')}</th>
                   <th>{t('Trạng thái')}</th>
                   <th>{t('Thời lượng')}</th>
@@ -105,6 +150,7 @@ function History({ actor }: { actor: Person }) {
                 {result.data?.items.map((call) => (
                   <tr key={call.sessionId}>
                     <td>{time(call.startedAt)}</td>
+                    <td>{nameOf(call.viuUserId)}</td>
                     <td>{callTriggers[call.triggerType]}</td>
                     <td>{callStatuses[call.status]}</td>
                     <td>
@@ -161,7 +207,7 @@ function History({ actor }: { actor: Person }) {
                   </div>
                   <div>
                     <dt>{t('Người được chăm sóc')}</dt>
-                    <dd>{selected.viuUserId || t('Không còn thông tin')}</dd>
+                    <dd>{nameOf(selected.viuUserId)}</dd>
                   </div>
                   <div>
                     <dt>{t('Trạng thái')}</dt>

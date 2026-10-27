@@ -1,4 +1,4 @@
-import { t } from '../../i18n';
+import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
 import { apiGet } from './adapter';
 import { ServiceError } from '../contracts';
@@ -101,6 +101,31 @@ export const auditActions = [
   'LicensePoolSuspended',
   'LicensePoolReactivated',
 ] as const;
+export type AuditAction = (typeof auditActions)[number];
+export const auditActionLabels: Record<AuditAction, string> = labelMap({
+  UserCreated: msg('Tạo tài khoản'),
+  UserDeactivated: msg('Vô hiệu hóa tài khoản'),
+  UserReactivated: msg('Kích hoạt lại tài khoản'),
+  RoleChanged: msg('Đổi vai trò'),
+  CaregiverLinked: msg('Tạo liên kết chăm sóc'),
+  CaregiverUnlinked: msg('Gỡ liên kết chăm sóc'),
+  FaceRegistryDeleted: msg('Xóa dữ liệu gương mặt'),
+  GpsDataAccessed: msg('Truy cập dữ liệu GPS'),
+  ConfigChanged: msg('Đổi cấu hình hệ thống'),
+  AccountForceLogout: msg('Buộc đăng xuất tài khoản'),
+  EmergencyContactModified: msg('Sửa liên hệ khẩn cấp'),
+  SystemGpsCleanup: msg('Hệ thống dọn dữ liệu GPS'),
+  SystemOcrCleanup: msg('Hệ thống dọn dữ liệu đọc chữ'),
+  SystemAlertCleanup: msg('Hệ thống dọn ảnh cảnh báo'),
+  SystemFaceImageCleanup: msg('Hệ thống dọn ảnh gương mặt'),
+  SystemTokenCleanup: msg('Hệ thống dọn phiên đăng nhập'),
+  OrganizationCreated: msg('Tạo tổ chức'),
+  OrganizationUpdated: msg('Cập nhật tổ chức'),
+  UserAssignedToOrg: msg('Thêm người dùng vào tổ chức'),
+  UserRemovedFromOrg: msg('Gỡ người dùng khỏi tổ chức'),
+  LicensePoolSuspended: msg('Đình chỉ kho license'),
+  LicensePoolReactivated: msg('Kích hoạt lại kho license'),
+});
 const kinds = {
   metrics: { path: '/api/ai-metrics', schema: metric },
   audit: { path: '/api/audit-logs', schema: audit },
@@ -153,7 +178,7 @@ export function createMonitoringApi(get = apiGet) {
           t('Khoảng ngày không hợp lệ. Kiểm tra ngày bắt đầu và kết thúc.'),
           400,
         );
-      const query = new URLSearchParams({ page: String(page), pageSize: '20' });
+      const query = new URLSearchParams({ page: String(page), pageSize: '10' });
       // Vietnam day bounds sent as UTC: the deployed BE returns 500 for a non-zero offset.
       const utc = (date: string, time: string) => new Date(`${date}T${time}+07:00`).toISOString();
       if (from) query.set('dateFrom', kind === 'metrics' ? from : utc(from, '00:00:00'));

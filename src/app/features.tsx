@@ -88,7 +88,7 @@ export interface Feature {
   component: ComponentType;
 }
 export const features: Feature[] = [
-  { role: 'Admin', path: 'audit', label: msg('Nhật ký kiểm toán'), component: Audit },
+  { role: 'Admin', path: 'audit', label: msg('Nhật ký thao tác'), component: Audit },
   { role: 'Admin', path: 'delivery', label: msg('Theo dõi thông báo'), component: Delivery },
   { role: 'Admin', path: 'metrics', label: msg('Hiệu năng AI'), component: Metrics },
   { role: 'Admin', path: 'rules', label: msg('Quy tắc thông báo'), component: Rules },
@@ -106,7 +106,7 @@ export const features: Feature[] = [
     label: msg('Tổ chức & trung tâm'),
     component: Organizations,
   },
-  { role: 'CenterAdmin', path: 'routing', label: msg('Định tuyến thông báo'), component: Routing },
+  { role: 'CenterAdmin', path: 'routing', label: msg('Quy tắc thông báo'), component: Routing },
   { role: 'CenterAdmin', path: 'reports', label: msg('Báo cáo hoạt động'), component: Reports },
   { role: 'CenterAdmin', path: 'map', label: msg('Bản đồ toàn trung tâm'), component: Fleet },
   {
@@ -120,7 +120,7 @@ export const features: Feature[] = [
   {
     role: 'CenterAdmin',
     path: 'organization',
-    label: msg('Hồ sơ tổ chức'),
+    label: msg('Hồ sơ trung tâm'),
     component: Organization,
   },
   { role: 'Caregiver', path: 'tts', label: msg('Giọng đọc hỗ trợ'), component: Tts },

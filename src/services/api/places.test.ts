@@ -66,7 +66,7 @@ for (const kind of ['saved-locations', 'geofences'] as const) {
     const list = await f.api.list(actor, viuId, kind, 2, 'false');
     expect(list.canManage).toBe(true);
     expect(f.get).toHaveBeenLastCalledWith(
-      `/api/${kind}?viuId=${viuId}&page=2&pageSize=20&isActive=false`,
+      `/api/${kind}?viuId=${viuId}&page=2&pageSize=10&isActive=false`,
       undefined,
     );
     await f.api.save(actor, viuId, kind, f.item);

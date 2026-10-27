@@ -96,7 +96,7 @@ export function createLocationsApi(get = apiGet) {
       if (!Number.isInteger(page) || page < 1)
         throw new ServiceError(t('Trang không hợp lệ.'), 400);
       const dates = historyRange(range.dateFrom, range.dateTo);
-      const query = new URLSearchParams({ viuId, page: String(page), pageSize: '20' });
+      const query = new URLSearchParams({ viuId, page: String(page), pageSize: '10' });
       if (dates.dateFrom) query.set('dateFrom', dates.dateFrom);
       if (dates.dateTo) query.set('dateTo', dates.dateTo);
       return parse(historySchema, await get('/api/locations/history?' + query, signal));
