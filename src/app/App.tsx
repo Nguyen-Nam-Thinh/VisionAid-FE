@@ -24,6 +24,7 @@ import { ApiReports } from '../pages/center-admin/ApiReports';
 import { ApiIceServers } from '../pages/super-admin/ApiIceServers';
 import { ApiMonitoring } from '../pages/super-admin/ApiMonitoring';
 import { ApiConfigurations } from '../pages/super-admin/ApiConfigurations';
+import { ApiRevenue } from '../pages/super-admin/ApiRevenue';
 import { ApiContacts } from '../pages/caregiver/ApiContacts';
 import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
@@ -67,6 +68,7 @@ import {
   Activity,
   Send,
   FileText,
+  BarChart3,
 } from 'lucide-react';
 import { useAuth, useSession } from '../hooks/useService';
 import { Brand, Confirm, State, Toast } from '../components/UI';
@@ -359,6 +361,16 @@ function Shell() {
             )}
             {runtime.mode === 'api' && user.role === 'Admin' && (
               <NavLink
+                title={t('Báo cáo doanh thu')}
+                to="/admin/revenue"
+                onClick={() => setOpen(false)}
+              >
+                <BarChart3 size={18} aria-hidden="true" />
+                <span>{t('Báo cáo doanh thu')}</span>
+              </NavLink>
+            )}
+            {runtime.mode === 'api' && user.role === 'Admin' && (
+              <NavLink
                 title={t('Nhật ký Hybrid')}
                 to="/admin/hybrid"
                 onClick={() => setOpen(false)}
@@ -615,6 +627,7 @@ export function App() {
                   <Route path="admin/packages" element={<ApiPackages admin />} />
                   <Route path="admin/ice-servers" element={<ApiIceServers />} />
                   <Route path="admin/hybrid" element={<ApiMonitoring kind="guidance" />} />
+                  <Route path="admin/revenue" element={<ApiRevenue />} />
                 </Route>
               )}
               {runtime.mode === 'api' && <Route path="license" element={<ApiLicense />} />}

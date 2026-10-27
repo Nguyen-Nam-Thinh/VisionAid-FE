@@ -5802,3 +5802,104 @@ test('BR-04/BR-33: primary caregiver adds a secondary by email; BE error codes s
   await expect(dialog).toHaveCount(0);
   expect(posts).toHaveLength(2);
 });
+test('FE-35: Super Admin revenue report with date and grouping filters', async ({ page }) => {
+  await stubApi(page, 'Admin');
+  const queries: URLSearchParams[] = [];
+  await page.route('http://localhost:5176/api/payments/revenue-report**', (route) => {
+    const q = new URL(route.request().url()).searchParams;
+    queries.push(q);
+    const groupBy = q.get('groupBy') ?? 'Month';
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          dateFrom: q.get('dateFrom') ?? '2025-11-01',
+          dateTo: q.get('dateTo') ?? '2026-10-27',
+          groupBy,
+          currency: 'VND',
+          summary: {
+            grossRevenue: 4599000,
+            refundedAmount: 99000,
+            netRevenue: 4500000,
+            paidTransactions: 2,
+            pendingTransactions: 1,
+            failedTransactions: 0,
+            cancelledTransactions: 2,
+            payingCaregivers: 1,
+            payingOrganizations: 1,
+            averageOrderValue: 2299500,
+          },
+          byChannel: [
+            { channel: 'B2C', revenue: 99000, transactions: 1 },
+            { channel: 'B2B', revenue: 4500000, transactions: 1 },
+          ],
+          byTransactionType: [
+            { transactionType: 'LicensePurchase', revenue: 4500000, transactions: 1 },
+            { transactionType: 'SubscriptionNew', revenue: 99000, transactions: 1 },
+          ],
+          byPackage: [
+            {
+              packageId: id,
+              packageName: 'Business 50',
+              packageType: 'Business',
+              revenue: 4500000,
+              transactions: 1,
+            },
+          ],
+          timeline: [
+            {
+              period: groupBy === 'Day' ? '2026-10-27' : '2026-10',
+              periodStart: '2026-10-01',
+              revenue: 4599000,
+              transactions: 2,
+            },
+          ],
+          topOrganizations: [
+            {
+              organizationId: id,
+              organizationName: 'Trung tâm Ánh Sáng',
+              revenue: 4500000,
+              transactions: 1,
+            },
+          ],
+        },
+      },
+    });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Báo cáo doanh thu' }).click();
+  await expect(page.getByRole('heading', { name: 'Báo cáo doanh thu' })).toBeVisible();
+  await expect(page.getByText('Doanh thu ròng')).toBeVisible();
+  await expect(page.getByText(/4\.500\.000/).first()).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Theo kênh' })).toContainText('Trung tâm (B2B)');
+  await expect(page.getByRole('region', { name: 'Theo loại giao dịch' })).toContainText(
+    'Mua gói Business',
+  );
+  await expect(page.getByRole('region', { name: 'Trung tâm có doanh thu cao nhất' })).toContainText(
+    'Trung tâm Ánh Sáng',
+  );
+  expect(queries[0].get('groupBy')).toBe('Month');
+  expect(queries[0].has('dateFrom')).toBe(false);
+  await page.getByLabel('Từ ngày').fill('2026-10-01');
+  await page.getByLabel('Đến ngày').fill('2026-10-27');
+  await page.getByLabel('Xem theo').selectOption('Day');
+  await page.getByRole('button', { name: 'Xem báo cáo' }).click();
+  await expect(page.getByRole('region', { name: 'Doanh thu theo ngày' })).toContainText(
+    '2026-10-27',
+  );
+  const last = queries[queries.length - 1];
+  expect([last.get('dateFrom'), last.get('dateTo'), last.get('groupBy')]).toEqual([
+    '2026-10-01',
+    '2026-10-27',
+    'Day',
+  ]);
+  await page.screenshot({ path: 'test-results/fe35-revenue-report.png', fullPage: true });
+});
+test('FE-35: revenue report route denies CenterAdmin', async ({ page }) => {
+  const calls = await stubApi(page, 'CenterAdmin', '01900000-0000-7000-8000-000000000002');
+  await login(page);
+  await expect(page.getByRole('link', { name: 'Báo cáo doanh thu' })).toHaveCount(0);
+  await page.goto('/admin/revenue');
+  await expect(page).toHaveURL(/forbidden$/);
+  expect(calls.some((path) => path.includes('revenue-report'))).toBe(false);
+});
