@@ -165,7 +165,7 @@ function scoped(schema: z.ZodType, raw: unknown, viuId: string, id?: string): Ac
 function queryParams(page: number, range: HistoryRange) {
   if (!Number.isInteger(page) || page < 1) throw new ServiceError(t('Trang không hợp lệ.'), 400);
   const dates = historyRange(range.dateFrom, range.dateTo);
-  const query = new URLSearchParams({ page: String(page), pageSize: '20' });
+  const query = new URLSearchParams({ page: String(page), pageSize: '10' });
   if (dates.dateFrom) query.set('dateFrom', dates.dateFrom);
   if (dates.dateTo) query.set('dateTo', dates.dateTo);
   return query;

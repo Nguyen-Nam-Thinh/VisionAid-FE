@@ -21,6 +21,7 @@ import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import { roles } from '../../constants/labels';
 import { PoolAutoRenew } from './PoolAutoRenew';
+import { FilterPanel } from '../../components/FilterPanel';
 import type { Person } from '../../models/domain';
 
 const fields: FieldSpec[] = [
@@ -86,7 +87,6 @@ function Organizations({ user }: { user: Person }) {
   const cache = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [draft, setDraft] = useState('');
   const [active, setActive] = useState('');
   const [deleted, setDeleted] = useState('false');
   const [selected, setSelected] = useState('');
@@ -117,13 +117,10 @@ function Organizations({ user }: { user: Person }) {
     <>
       <PageHead
         title={admin ? t('Tổ chức & trung tâm') : t('Hồ sơ trung tâm')}
-        description={t('Thông tin tổ chức và thành viên theo quyền tài khoản.')}
-        actions={
-          admin && (
-            <button className="btn primary" onClick={() => setCreate(true)}>
-              {t('Tạo tổ chức')}
-            </button>
-          )
+        description={
+          admin
+            ? t('Danh sách trung tâm, thành viên và kho license của từng trung tâm.')
+            : t('Thông tin liên hệ và thành viên của trung tâm.')
         }
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
@@ -145,33 +142,50 @@ function Organizations({ user }: { user: Person }) {
       )}
       {admin && (
         <section className="glass card stack">
-          <form
-            className="row"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSearch(draft.trim());
+          <FilterPanel
+            active={[search, active, deleted !== 'false'].filter(Boolean).length}
+            onApply={(form) => {
+              const data = new FormData(form);
+              setSearch(String(data.get('search') || '').trim());
+              setActive(String(data.get('active') || ''));
+              setDeleted(String(data.get('deleted') ?? 'false'));
               setPage(1);
               setSelected('');
             }}
+            onReset={() => {
+              setSearch('');
+              setActive('');
+              setDeleted('false');
+              setPage(1);
+              setSelected('');
+            }}
+            tools={
+              <button
+                className="btn"
+                type="button"
+                disabled={list.isFetching}
+                onClick={() => void refresh()}
+              >
+                {t('Tải lại')}
+              </button>
+            }
+            extra={
+              <button className="btn primary" onClick={() => setCreate(true)}>
+                {t('Tạo tổ chức')}
+              </button>
+            }
           >
-            <label className="field">
+            <label className="field wide">
               {t('Tìm tổ chức')}
               <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                name="search"
+                defaultValue={search}
                 placeholder={t('Tên, mã số thuế, email')}
               />
             </label>
             <label className="field">
               {t('Trạng thái')}
-              <select
-                value={active}
-                onChange={(e) => {
-                  setActive(e.target.value);
-                  setPage(1);
-                  setSelected('');
-                }}
-              >
+              <select name="active" defaultValue={active}>
                 <option value="">{t('Tất cả trạng thái')}</option>
                 <option value="true">{t('Đang hoạt động')}</option>
                 <option value="false">{t('Ngừng hoạt động')}</option>
@@ -179,31 +193,13 @@ function Organizations({ user }: { user: Person }) {
             </label>
             <label className="field">
               {t('Dữ liệu xóa')}
-              <select
-                value={deleted}
-                onChange={(e) => {
-                  setDeleted(e.target.value);
-                  setPage(1);
-                  setSelected('');
-                }}
-              >
+              <select name="deleted" defaultValue={deleted}>
                 <option value="false">{t('Chưa xóa')}</option>
                 <option value="true">{t('Đã xóa')}</option>
                 <option value="">{t('Tất cả')}</option>
               </select>
             </label>
-            <button className="btn" type="submit">
-              {t('Tìm kiếm')}
-            </button>
-            <button
-              className="btn"
-              type="button"
-              disabled={list.isFetching}
-              onClick={() => void refresh()}
-            >
-              {t('Tải lại')}
-            </button>
-          </form>
+          </FilterPanel>
           <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
             {list.data && (
               <>

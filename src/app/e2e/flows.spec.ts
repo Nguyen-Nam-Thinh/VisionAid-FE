@@ -152,7 +152,7 @@ test('admin configuration history rollback and no GPS access', async ({ page }) 
   await page.getByRole('button', { name: 'Khôi phục giá trị trước' }).click();
   await dialog(page).getByRole('button', { name: 'Xác nhận', exact: true }).click();
   await expect(page.getByRole('cell', { name: '22 → 15', exact: true })).toBeVisible();
-  await screen(page, '/admin/audit', 'Nhật ký kiểm toán');
+  await screen(page, '/admin/audit', 'Nhật ký thao tác');
   await expect(page.getByRole('cell', { name: 'Khôi phục cấu hình', exact: true })).toBeVisible();
   await page.goto('/caregiver/map');
   await expect(

@@ -69,7 +69,7 @@ WebRTC có CAREGIVER_INITIATED, VIU_VOICE_COMMAND, SOS_AUTO; signaling dự ki�
 | ASP.NET Core REST, SignalR, Mapbox, Firebase FCM | REST/SignalR có implementation theo PLAN.md; Mapbox/FCM chưa nghiệm thu, FCM chưa có runtime |
 | HTTP và state | Fetch transport; TanStack Query 5; store nhỏ cho selection/notice |
 | Form và giao diện | React Hook Form 7, Zod 4, Tailwind 4, CSS tokens, lucide-react; glassmorphism theo yêu cầu |
-| Typography | Plus Jakarta Sans / JetBrains Mono bundle local |
+| Typography | Be Vietnam Pro / JetBrains Mono bundle local |
 | Test và toolchain | Vitest, Playwright Edge headless, axe-core, ESLint, Prettier, npm/lockfile |
 
 Phiên bản chính xác theo package-lock.json. Các nhóm màn hình mục 6 đã có implementation mock, gồm QR bằng mã/ảnh, TTS và voice history theo WBS. `services/index.ts` chọn mock/api; API adapter báo 501 khi chưa có contract, không fallback mock. Model client không phải REST DTO.

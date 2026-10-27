@@ -1,6 +1,19 @@
 import { t, formatNumber } from '../../i18n';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import {
+  ArrowRight,
+  BarChart3,
+  Bell,
+  MapPin,
+  Package,
+  Send,
+  ShieldCheck,
+  Activity,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { State } from '../../components/UI';
 import { formatTime } from '../../constants/labels';
 import {
@@ -48,7 +61,7 @@ export function DashboardOverview({ actor }: { actor: Person }) {
       {isPersonalCaregiver(actor) && <Personal actor={actor} />}
       {isOrganizationBuyer(actor) && <Pool actor={actor} />}
       {actor.role === 'Caregiver' && actor.orgId && (
-        <section className="glass card stack">
+        <section className="glass card stack overview-wide">
           <h2>{t('Phạm vi chăm sóc')}</h2>
           <p>{licenseSummary(actor)}</p>
           <Link className="btn" to="/caregiver/users">
@@ -63,7 +76,112 @@ export function DashboardOverview({ actor }: { actor: Person }) {
           {t('Tài khoản chưa có tổ chức. Liên hệ quản trị viên để kiểm tra phân công.')}
         </p>
       )}
+      <Shortcuts actor={actor} />
     </div>
+  );
+}
+
+type Shortcut = { to: string; icon: LucideIcon; title: string; detail: string };
+// Role-specific entry points; the sidebar still lists every screen.
+function shortcuts(actor: Person): Shortcut[] {
+  const profile: Shortcut = {
+    to: '/profile',
+    icon: UserRound,
+    title: t('Hồ sơ của tôi'),
+    detail: t('Cập nhật thông tin liên hệ và mật khẩu.'),
+  };
+  const license: Shortcut = {
+    to: '/license',
+    icon: ShieldCheck,
+    title: t('Quyền sử dụng'),
+    detail: t('Xem trạng thái license của tài khoản.'),
+  };
+  if (actor.role === 'Admin')
+    return [
+      {
+        to: '/admin/revenue',
+        icon: BarChart3,
+        title: t('Báo cáo doanh thu'),
+        detail: t('Doanh thu PayOS theo kênh, gói và trung tâm.'),
+      },
+      {
+        to: '/admin/delivery',
+        icon: Send,
+        title: t('Theo dõi thông báo'),
+        detail: t('Trạng thái gửi và thông báo lỗi.'),
+      },
+      {
+        to: '/admin/metrics',
+        icon: Activity,
+        title: t('Hiệu năng AI'),
+        detail: t('Số liệu nhận diện và đọc chữ theo mô hình.'),
+      },
+      profile,
+    ];
+  if (actor.role === 'CenterAdmin')
+    return [
+      {
+        to: '/center-admin/users',
+        icon: Users,
+        title: t('Người dùng VIU'),
+        detail: t('Tài khoản người khiếm thị của trung tâm.'),
+      },
+      {
+        to: '/center-admin/licenses',
+        icon: Package,
+        title: t('Kho license'),
+        detail: t('Cấp, thu hồi và gia hạn license.'),
+      },
+      {
+        to: '/center-admin/map',
+        icon: MapPin,
+        title: t('Bản đồ toàn trung tâm'),
+        detail: t('Vị trí người khiếm thị được phép theo dõi.'),
+      },
+      profile,
+    ];
+  return [
+    {
+      to: '/caregiver/users',
+      icon: Users,
+      title: t('Người được chăm sóc'),
+      detail: t('Hồ sơ và liên kết chăm sóc.'),
+    },
+    {
+      to: '/caregiver/map',
+      icon: MapPin,
+      title: t('Bản đồ theo dõi'),
+      detail: t('Vị trí ghi nhận gần nhất.'),
+    },
+    actor.orgId
+      ? {
+          to: '/caregiver/alerts',
+          icon: Bell,
+          title: t('Cảnh báo khẩn cấp'),
+          detail: t('Tiếp nhận và xử lý cảnh báo.'),
+        }
+      : license,
+    profile,
+  ];
+}
+
+function Shortcuts({ actor }: { actor: Person }) {
+  return (
+    <section className="glass card stack overview-wide" aria-labelledby="overview-shortcuts">
+      <h2 id="overview-shortcuts">{t('Lối tắt')}</h2>
+      <div className="shortcut-grid">
+        {shortcuts(actor).map(({ to, icon: Icon, title, detail }) => (
+          <Link key={to} className="quick-link" to={to}>
+            <span className="row between">
+              <Icon size={20} aria-hidden="true" />
+              <ArrowRight size={16} aria-hidden="true" />
+            </span>
+            <strong>{title}</strong>
+            <span className="muted">{detail}</span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -286,11 +404,11 @@ function Delivery({ actor }: { actor: Person }) {
     queryFn: ({ signal }) => monitoringApi.status(actor, signal),
   });
   return (
-    <section className="glass card stack">
+    <section className="glass card stack overview-wide" aria-label={t('Gửi cảnh báo trong 24 giờ')}>
       <h2>{t('Gửi cảnh báo trong 24 giờ')}</h2>
       <State loading={query.isPending} error={query.error}>
         {query.data && (
-          <dl className="account-details">
+          <dl className="overview-stats">
             <div>
               <dt>{t('Đã gửi')}</dt>
               <dd>{query.data.last24Hours.totalSent}</dd>
@@ -309,11 +427,14 @@ function Delivery({ actor }: { actor: Person }) {
       <p>
         {t('Thống kê cảnh báo được máy chủ theo dõi. Đã gửi không xác nhận người nhận đã đọc.')}
       </p>
-      <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-        {t('Tải lại thống kê')}
-      </button>
-      <Link to="/admin/delivery">{t('Theo dõi thông báo')}</Link>
-      <Link to="/admin/metrics">{t('Hiệu năng AI')}</Link>
+      <div className="row">
+        <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+          {t('Tải lại thống kê')}
+        </button>
+        <Link className="btn" to="/admin/delivery">
+          {t('Xem chi tiết')}
+        </Link>
+      </div>
     </section>
   );
 }

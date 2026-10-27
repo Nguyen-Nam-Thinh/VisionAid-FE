@@ -9,6 +9,7 @@ import { locationsApi, historyRange, locationAge } from '../../services/api/loca
 import { ServiceError } from '../../services/contracts';
 import { Badge, PageHead, State } from '../../components/UI';
 import { GpsMap } from '../../components/GpsMap';
+import { FilterPanel } from '../../components/FilterPanel';
 import type { Person } from '../../models/domain';
 
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -24,7 +25,6 @@ export function ApiTracking() {
 }
 function Tracking({ actor }: { actor: Person }) {
   const [page, setPage] = useState(1);
-  const [draft, setDraft] = useState('');
   const [search, setSearch] = useState('');
   const users = useQuery({
     queryKey: ['api-tracking-users', actor.id, actor.orgId, page, search],
@@ -48,43 +48,42 @@ function Tracking({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title={
-          actor.role === 'CenterAdmin' ? t('Theo dõi GPS trung tâm') : t('Theo dõi vị trí GPS')
-        }
+        title={actor.role === 'CenterAdmin' ? t('Bản đồ toàn trung tâm') : t('Bản đồ theo dõi')}
         description={t('Vị trí ghi nhận và lịch sử di chuyển của người được phép theo dõi.')}
       />
-      <p className="notice">
-        {t(
-          'Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật; trạng thái kết nối hiển thị phía trên. Bản đồ Mapbox và bảng tọa độ cùng dùng vị trí mới nhất từ máy chủ.',
-        )}
-      </p>
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
+        <p className="notice">
+          {t(
+            'Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật; trạng thái kết nối hiển thị phía trên. Bản đồ Mapbox và bảng tọa độ cùng dùng vị trí mới nhất từ máy chủ.',
+          )}
+        </p>
+
+        <FilterPanel
+          active={search ? 1 : 0}
+          onApply={(form) => {
             setPage(1);
-            setSearch(draft.trim());
+            setSearch(String(new FormData(form).get('search') || '').trim());
           }}
+          onReset={() => {
+            setPage(1);
+            setSearch('');
+          }}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={users.isFetching}
+              onClick={() => void users.refetch()}
+            >
+              {t('Tải lại danh sách')}
+            </button>
+          }
         >
-          <label className="field">
+          <label className="field wide">
             {t('Tìm người được theo dõi')}
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder={t('Tên, email, điện thoại')}
-            />
+            <input name="search" placeholder={t('Tên, email, điện thoại')} />
           </label>
-          <button className="btn primary">{t('Tìm kiếm')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={users.isFetching}
-            onClick={() => void users.refetch()}
-          >
-            {t('Tải lại danh sách')}
-          </button>
-        </form>
+        </FilterPanel>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           {users.data && (
             <>
@@ -301,8 +300,6 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
   );
 }
 function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
   const [range, setRange] = useState({ dateFrom: '', dateTo: '' });
   const [page, setPage] = useState(1);
   const [error, setError] = useState('');
@@ -314,37 +311,46 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
   return (
     <div className="stack">
       <h3>{t('Lịch sử di chuyển')}</h3>
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
+      <FilterPanel
+        active={[range.dateFrom, range.dateTo].filter(Boolean).length}
+        submitLabel={t('Lọc lịch sử')}
+        onApply={(form) => {
+          const data = new FormData(form);
           try {
-            setRange(historyRange(from, to));
+            setRange(historyRange(String(data.get('from') || ''), String(data.get('to') || '')));
             setPage(1);
             setError('');
           } catch (err) {
             setError(err instanceof Error ? err.message : t('Thời gian không hợp lệ.'));
           }
         }}
+        onReset={() => {
+          setRange({ dateFrom: '', dateTo: '' });
+          setPage(1);
+          setError('');
+        }}
+        tools={
+          <button
+            type="button"
+            className="btn"
+            disabled={query.isFetching}
+            onClick={() => void query.refetch()}
+          >
+            {t('Tải lại lịch sử')}
+          </button>
+        }
       >
-        <label className="field">
-          {t('Từ thời gian')}
-          <input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
-        </label>
-        <label className="field">
-          {t('Đến thời gian')}
-          <input type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
-        </label>
-        <button className="btn primary">{t('Lọc lịch sử')}</button>
-        <button
-          type="button"
-          className="btn"
-          disabled={query.isFetching}
-          onClick={() => void query.refetch()}
-        >
-          {t('Tải lại lịch sử')}
-        </button>
-      </form>
+        <div className="filter-range wide">
+          <label className="field">
+            {t('Từ thời gian')}
+            <input type="datetime-local" name="from" />
+          </label>
+          <label className="field">
+            {t('Đến thời gian')}
+            <input type="datetime-local" name="to" />
+          </label>
+        </div>
+      </FilterPanel>
       {error && (
         <p className="notice error" role="alert">
           {error}

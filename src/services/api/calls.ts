@@ -117,11 +117,12 @@ export function createCallsApi(get = apiGet, write = apiWrite) {
       await post(`/api/webrtc/sessions/${validId(id)}/end`, { reason });
     },
     async history(actor: Person, page: number, filters: CallFilters, signal?: AbortSignal) {
-      if (actor.role !== 'Caregiver')
-        throw new ServiceError(t('Màn hình này dành cho người chăm sóc.'), 403);
+      // BE scopes CenterAdmin to calls of VIUs in their organization; Caregiver to own calls.
+      if (actor.role !== 'Caregiver' && actor.role !== 'CenterAdmin')
+        throw new ServiceError(t('Bạn không có quyền xem lịch sử cuộc gọi.'), 403);
       if (!Number.isInteger(page) || page < 1)
         throw new ServiceError(t('Trang không hợp lệ.'), 400);
-      const query = new URLSearchParams({ page: String(page), pageSize: '20' });
+      const query = new URLSearchParams({ page: String(page), pageSize: '10' });
       if (filters.viuUserId) {
         if (!z.string().uuid().safeParse(filters.viuUserId).success)
           throw new ServiceError(t('Mã người được chăm sóc phải là UUID.'), 400);
@@ -146,7 +147,9 @@ export function createCallsApi(get = apiGet, write = apiWrite) {
       if (
         result.data.items.some(
           (call) =>
-            (call.initiatorId !== actor.id && call.receiverId !== actor.id) ||
+            (actor.role === 'Caregiver' &&
+              call.initiatorId !== actor.id &&
+              call.receiverId !== actor.id) ||
             (filters.viuUserId && call.viuUserId !== filters.viuUserId),
         )
       )

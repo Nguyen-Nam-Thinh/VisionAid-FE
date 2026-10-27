@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { PageHead, State } from '../../components/UI';
+import { FilterPanel } from '../../components/FilterPanel';
 import {
   revenueApi,
   channelLabels,
@@ -32,48 +33,52 @@ function Revenue({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Báo cáo doanh thu')}
-        description={t(
-          'Doanh thu toàn nền tảng từ các giao dịch PayOS đã thanh toán, theo kênh, loại giao dịch, gói và trung tâm.',
-        )}
+        description={t('Doanh thu từ giao dịch PayOS đã thanh toán, theo kênh, gói và trung tâm.')}
       />
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const form = new FormData(e.currentTarget);
+        <FilterPanel
+          active={
+            [filters.dateFrom, filters.dateTo, filters.groupBy === 'Day'].filter(Boolean).length
+          }
+          submitLabel={t('Xem báo cáo')}
+          onApply={(form) => {
+            const data = new FormData(form);
             setFilters({
-              dateFrom: String(form.get('dateFrom') || ''),
-              dateTo: String(form.get('dateTo') || ''),
-              groupBy: form.get('groupBy') === 'Day' ? 'Day' : 'Month',
+              dateFrom: String(data.get('dateFrom') || ''),
+              dateTo: String(data.get('dateTo') || ''),
+              groupBy: data.get('groupBy') === 'Day' ? 'Day' : 'Month',
             });
           }}
+          onReset={() => setFilters({ dateFrom: '', dateTo: '', groupBy: 'Month' })}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={report.isFetching}
+              onClick={() => void report.refetch()}
+            >
+              {t('Tải lại báo cáo')}
+            </button>
+          }
         >
-          <label className="field">
-            {t('Từ ngày')}
-            <input type="date" name="dateFrom" defaultValue={filters.dateFrom} />
-          </label>
-          <label className="field">
-            {t('Đến ngày')}
-            <input type="date" name="dateTo" defaultValue={filters.dateTo} />
-          </label>
-          <label className="field">
+          <label className="field wide">
             {t('Xem theo')}
-            <select name="groupBy" defaultValue={filters.groupBy}>
+            <select name="groupBy" defaultValue="Month">
               <option value="Month">{t('Tháng')}</option>
               <option value="Day">{t('Ngày')}</option>
             </select>
           </label>
-          <button className="btn primary">{t('Xem báo cáo')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={report.isFetching}
-            onClick={() => void report.refetch()}
-          >
-            {t('Tải lại báo cáo')}
-          </button>
-        </form>
+          <div className="filter-range wide">
+            <label className="field">
+              {t('Từ ngày')}
+              <input type="date" name="dateFrom" />
+            </label>
+            <label className="field">
+              {t('Đến ngày')}
+              <input type="date" name="dateTo" />
+            </label>
+          </div>
+        </FilterPanel>
         <p className="notice">
           {t(
             'Ngày tính theo giờ Việt Nam. Để trống: theo tháng là 12 tháng gần nhất, theo ngày là 30 ngày gần nhất. Doanh thu tính vào ngày thanh toán; giao dịch đang chờ, thất bại hoặc đã hủy chỉ được đếm số lượng.',

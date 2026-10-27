@@ -73,7 +73,7 @@ it('strips existing credentials from list and forwards paging, active and cancel
   expect(JSON.stringify(result)).not.toContain('SECRET');
   expect(result.items[0]).not.toHaveProperty('credential');
   expect(get).toHaveBeenCalledWith(
-    '/api/webrtc/ice-servers?page=2&pageSize=20&isActive=false',
+    '/api/webrtc/ice-servers?page=2&pageSize=10&isActive=false',
     signal,
   );
   await expect(api.list(actor, { page: 0, active: '' })).rejects.toMatchObject({ status: 400 });

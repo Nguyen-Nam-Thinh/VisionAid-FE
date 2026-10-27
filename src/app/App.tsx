@@ -25,6 +25,7 @@ import { ApiIceServers } from '../pages/super-admin/ApiIceServers';
 import { ApiMonitoring } from '../pages/super-admin/ApiMonitoring';
 import { ApiConfigurations } from '../pages/super-admin/ApiConfigurations';
 import { ApiRevenue } from '../pages/super-admin/ApiRevenue';
+import { ApiLicensePools } from '../pages/super-admin/ApiLicensePools';
 import { ApiContacts } from '../pages/caregiver/ApiContacts';
 import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
@@ -329,16 +330,17 @@ function Shell() {
             <p>{t('Mỗi kết nối là một sự an tâm.')}</p>
           </div>
           <nav className="nav">
-            {runtime.mode === 'api' && user.role === 'Caregiver' && (
-              <NavLink
-                title={t('Lịch sử cuộc gọi')}
-                to="/caregiver/calls"
-                onClick={() => setOpen(false)}
-              >
-                <Phone size={18} aria-hidden="true" />
-                <span>{t('Lịch sử cuộc gọi')}</span>
-              </NavLink>
-            )}
+            {runtime.mode === 'api' &&
+              (user.role === 'Caregiver' || user.role === 'CenterAdmin') && (
+                <NavLink
+                  title={t('Lịch sử cuộc gọi')}
+                  to={user.role === 'Caregiver' ? '/caregiver/calls' : '/center-admin/calls'}
+                  onClick={() => setOpen(false)}
+                >
+                  <Phone size={18} aria-hidden="true" />
+                  <span>{t('Lịch sử cuộc gọi')}</span>
+                </NavLink>
+              )}
             {runtime.mode === 'api' && user.role === 'CenterAdmin' && user.orgId && (
               <>
                 <NavLink
@@ -358,6 +360,16 @@ function Shell() {
                   <span>{t('Thanh toán')}</span>
                 </NavLink>
               </>
+            )}
+            {runtime.mode === 'api' && user.role === 'Admin' && (
+              <NavLink
+                title={t('Kho license các trung tâm')}
+                to="/admin/license-pools"
+                onClick={() => setOpen(false)}
+              >
+                <ShieldCheck size={18} aria-hidden="true" />
+                <span>{t('Kho license các trung tâm')}</span>
+              </NavLink>
             )}
             {runtime.mode === 'api' && user.role === 'Admin' && (
               <NavLink
@@ -614,6 +626,7 @@ export function App() {
                     <Route path="caregiver/calls" element={<ApiCalls />} />
                   </Route>
                   <Route element={<Guard role="CenterAdmin" />}>
+                    <Route path="center-admin/calls" element={<ApiCalls />} />
                     <Route path="center-admin/payments" element={<ApiPayments />} />
                     <Route path="center-admin/licenses" element={<ApiLicensePool />} />
                   </Route>
@@ -628,6 +641,7 @@ export function App() {
                   <Route path="admin/ice-servers" element={<ApiIceServers />} />
                   <Route path="admin/hybrid" element={<ApiMonitoring kind="guidance" />} />
                   <Route path="admin/revenue" element={<ApiRevenue />} />
+                  <Route path="admin/license-pools" element={<ApiLicensePools />} />
                 </Route>
               )}
               {runtime.mode === 'api' && <Route path="license" element={<ApiLicense />} />}

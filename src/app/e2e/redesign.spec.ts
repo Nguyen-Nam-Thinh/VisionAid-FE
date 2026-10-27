@@ -222,7 +222,9 @@ test('desktop redesign: public pages and workspace at 1440px', async ({ page }) 
   const popup = page.getByRole('dialog');
   await expect(popup).toBeVisible();
   const box = await popup.boundingBox();
-  expect(Math.abs(box!.x + box!.width / 2 - 720)).toBeLessThan(2);
+  // The page keeps a stable scrollbar gutter, so the dialog centers on the content width.
+  const content = await page.evaluate(() => document.body.getBoundingClientRect().width);
+  expect(Math.abs(box!.x + box!.width / 2 - content / 2)).toBeLessThan(2);
   await page.screenshot({ path: 'test-results/redesign-dialog.png' });
   await page.keyboard.press('Escape');
   await page.setViewportSize({ width: 390, height: 844 });

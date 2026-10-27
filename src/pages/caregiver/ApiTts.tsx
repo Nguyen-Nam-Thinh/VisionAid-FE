@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { caregivingApi } from '../../services/api/caregiving';
 import { ttsApi, ttsDefaults } from '../../services/api/tts';
+import { FilterPanel } from '../../components/FilterPanel';
 import { PageHead, State, Dialog } from '../../components/UI';
 import { Form, type FieldSpec } from '../../components/Form';
 import type { Person, Fields } from '../../models/domain';
@@ -190,32 +191,39 @@ function Tts({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Giọng đọc hỗ trợ')}
-        description={t('Cấu hình giọng đọc được lưu trên máy chủ để ứng dụng Mobile sử dụng.')}
+        description={t(
+          'Chọn giọng, tốc độ và âm lượng đọc trên điện thoại của người được chăm sóc.',
+        )}
       />
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSearch(String(new FormData(e.currentTarget).get('search') || '').trim());
+        <FilterPanel
+          active={search ? 1 : 0}
+          onApply={(form) => {
+            setSearch(String(new FormData(form).get('search') || '').trim());
             setPage(1);
             setSelected('');
           }}
+          onReset={() => {
+            setSearch('');
+            setPage(1);
+            setSelected('');
+          }}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={users.isFetching}
+              onClick={() => void users.refetch()}
+            >
+              {t('Tải lại người dùng')}
+            </button>
+          }
         >
-          <label className="field">
+          <label className="field wide">
             {t('Tìm người được chăm sóc')}
-            <input name="search" />
+            <input name="search" placeholder={t('Tên, email hoặc số điện thoại')} />
           </label>
-          <button className="btn">{t('Tìm kiếm')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={users.isFetching}
-            onClick={() => void users.refetch()}
-          >
-            {t('Tải lại người dùng')}
-          </button>
-        </form>
+        </FilterPanel>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           <label className="field">
             {t('Người được chăm sóc')}

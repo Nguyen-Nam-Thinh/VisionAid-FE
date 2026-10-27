@@ -186,7 +186,7 @@ it('reads Hybrid metadata, preserves null timing and strips scene/TTS before cac
   expect(url.pathname).toBe('/api/navigation/guidance/logs');
   expect(Object.fromEntries(url.searchParams)).toEqual({
     page: '2',
-    pageSize: '20',
+    pageSize: '10',
     userId: id,
     sessionId: id,
     engineUsed: 'RuleBased',

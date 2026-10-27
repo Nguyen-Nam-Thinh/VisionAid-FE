@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { caregivingApi, type LinkedUser } from '../../services/api/caregiving';
 import { PageHead, State, Badge, Confirm, Dialog } from '../../components/UI';
+import { FilterPanel } from '../../components/FilterPanel';
 
 import { ApiCreateLinkedUser } from './ApiCreateLinkedUser';
 import { viuLicenseLabel } from '../../services/api/licenses';
@@ -39,34 +40,49 @@ export function ApiLinkedUsers() {
       <PageHead
         title={t('Người được chăm sóc')}
         description={t('Danh sách người dùng được liên kết với tài khoản của bạn.')}
-        actions={
-          user?.role === 'Caregiver' &&
-          !user.orgId && (
-            <ApiCreateLinkedUser
-              key={user.id}
-              caregiverId={user.id}
-              onLinked={() => {
-                setPage(1);
-                setInput('');
-                setSearch('');
-                refresh();
-              }}
-            />
-          )
-        }
       />
       <CallAvailability />
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
+        <FilterPanel
+          active={search ? 1 : 0}
+          onApply={() => {
             setPage(1);
             setSearch(input.trim());
             setSelected('');
           }}
+          onReset={() => {
+            setInput('');
+            setPage(1);
+            setSearch('');
+            setSelected('');
+          }}
+          tools={
+            <button
+              className="btn"
+              type="button"
+              disabled={query.isFetching}
+              onClick={() => void query.refetch()}
+            >
+              {t('Tải lại')}
+            </button>
+          }
+          extra={
+            user?.role === 'Caregiver' &&
+            !user.orgId && (
+              <ApiCreateLinkedUser
+                key={user.id}
+                caregiverId={user.id}
+                onLinked={() => {
+                  setPage(1);
+                  setInput('');
+                  setSearch('');
+                  refresh();
+                }}
+              />
+            )
+          }
         >
-          <label className="field">
+          <label className="field wide">
             {t('Tìm người được chăm sóc')}
             <input
               value={input}
@@ -74,18 +90,7 @@ export function ApiLinkedUsers() {
               placeholder={t('Tên, email hoặc số điện thoại')}
             />
           </label>
-          <button className="btn primary" type="submit">
-            {t('Tìm kiếm')}
-          </button>
-          <button
-            className="btn"
-            type="button"
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
-          >
-            {t('Tải lại')}
-          </button>
-        </form>
+        </FilterPanel>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           {query.data && (
             <>

@@ -203,7 +203,7 @@ export function createEmergenciesApi(
       if (!Number.isInteger(filters.page) || filters.page < 1)
         throw new ServiceError(t('Trang không hợp lệ.'), 400);
       const range = historyRange(filters.dateFrom, filters.dateTo);
-      const q = new URLSearchParams({ page: String(filters.page), pageSize: '20' });
+      const q = new URLSearchParams({ page: String(filters.page), pageSize: '10' });
       for (const [key, value] of Object.entries({
         viuId: filters.viuId,
         status: filters.status,

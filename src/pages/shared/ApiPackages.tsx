@@ -1,5 +1,5 @@
 import { t, msg } from '../../i18n';
-import { Toast } from '../../components/UI';
+import { Toast, CardActions } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -108,13 +108,27 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
         title={admin ? t('Quản lý gói license') : t('Danh mục gói')}
         description={
           admin
-            ? t('Tạo và cập nhật cấu hình gói trên máy chủ.')
+            ? t('Tạo gói, đặt giá và mở bán hoặc ngừng bán.')
             : personal
               ? t('Chọn gói Personal và tạo đơn thanh toán qua PayOS.')
               : t('Chọn gói Business và tạo đơn thanh toán qua PayOS.')
         }
-        actions={
-          admin && (
+      />
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
+      <section className="glass card stack">
+        {!admin && (
+          <p className="notice">
+            {actor.role === 'CenterAdmin'
+              ? t('Gói Business dành cho tổ chức.')
+              : t(
+                  'Gói Personal dành cho gia đình; tối đa {max} người được chăm sóc theo chính sách hiện hành.',
+                  { max: maxVius },
+                )}
+          </p>
+        )}
+
+        <CardActions>
+          {admin && (
             <button
               className="btn primary"
               onClick={() => {
@@ -124,21 +138,8 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
             >
               {t('Thêm gói')}
             </button>
-          )
-        }
-      />
-      {!admin && (
-        <p className="notice">
-          {actor.role === 'CenterAdmin'
-            ? t('Gói Business dành cho tổ chức.')
-            : t(
-                'Gói Personal dành cho gia đình; tối đa {max} người được chăm sóc theo chính sách hiện hành.',
-                { max: maxVius },
-              )}
-        </p>
-      )}
-      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
-      <section className="glass card stack">
+          )}
+        </CardActions>
         <div className="row">
           {admin && (
             <label className="field">

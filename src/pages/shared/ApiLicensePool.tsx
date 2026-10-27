@@ -14,7 +14,14 @@ import { LicenseAssignments } from './LicenseAssignments';
 import { LicenseKeys } from './LicenseKeys';
 import { PoolAutoRenew } from './PoolAutoRenew';
 
-export function OrganizationPool({ actor }: { actor: Person }) {
+export function OrganizationPool({
+  actor,
+  embedded = false,
+}: {
+  actor: Person;
+  /** Shown inside the payment result page, which already links to the payment history. */
+  embedded?: boolean;
+}) {
   const query = useQuery({
     queryKey: ['license-pool', actor.id, actor.orgId],
     queryFn: ({ signal }) => getOrganizationPool(actor, signal),
@@ -37,6 +44,11 @@ export function OrganizationPool({ actor }: { actor: Person }) {
         <Link className="btn small" to="/packages">
           {t('Chọn gói Business')}
         </Link>
+        {!embedded && (
+          <Link className="btn small" to="/center-admin/payments">
+            {t('Lịch sử thanh toán')}
+          </Link>
+        )}
       </div>
       {query.error instanceof ServiceError && query.error.status === 404 ? (
         <p className="notice">{t('Tổ chức chưa có kho license. Chọn gói Business để bắt đầu.')}</p>
@@ -95,14 +107,7 @@ export function ApiLicensePool() {
     <>
       <PageHead
         title={t('Kho license tổ chức')}
-        description={t('Số lượng và thời hạn do máy chủ xác nhận.')}
-        actions={
-          isOrganizationBuyer(actor) && (
-            <Link className="btn" to="/center-admin/payments">
-              {t('Lịch sử thanh toán')}
-            </Link>
-          )
-        }
+        description={t('Số license đã mua, đã cấp và thời hạn sử dụng của trung tâm.')}
       />
       <OrganizationPool key={'pool-' + actor.id + actor.orgId} actor={actor} />
       {isOrganizationBuyer(actor) && (

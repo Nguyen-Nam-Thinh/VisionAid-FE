@@ -88,7 +88,7 @@ export function createPlacesApi(get = apiGet, write = apiWrite) {
       if (!Number.isInteger(page) || page < 1 || !['', 'true', 'false'].includes(active))
         throw new ServiceError(t('Bộ lọc địa điểm không hợp lệ.'), 400);
       const canManage = await authorize(actor, viuId, false, signal);
-      const query = new URLSearchParams({ viuId, page: String(page), pageSize: '20' });
+      const query = new URLSearchParams({ viuId, page: String(page), pageSize: '10' });
       if (active) query.set('isActive', active);
       const result = z
         .object({

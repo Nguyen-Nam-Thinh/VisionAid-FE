@@ -1,5 +1,6 @@
 import { t, msg } from '../../i18n';
 import { Toast } from '../../components/UI';
+import { FilterPanel } from '../../components/FilterPanel';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -26,8 +27,6 @@ export function ApiLinks() {
   return actor ? <Links key={actor.id + actor.orgId} actor={actor} /> : null;
 }
 function Links({ actor }: { actor: Person }) {
-  const maxCaregivers = useLimit('caregiving.max_caregivers_per_viu');
-  const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const cache = useQueryClient();
   const [filters, setFilters] = useState<LinkFilters>({
     page: 1,
@@ -76,18 +75,8 @@ function Links({ actor }: { actor: Person }) {
         title={actor.role === 'Caregiver' ? t('Liên kết của tôi') : t('Phân công chăm sóc')}
         description={
           actor.role === 'Caregiver'
-            ? t(
-                'Liên kết của bạn, và liên kết của người chăm sóc phụ với người bạn chăm sóc chính. Người chăm sóc chính thêm người chăm sóc phụ bằng email tài khoản của họ.',
-              )
-            : t(
-                'Phân công tài khoản Caregiver và VIU đã có; mỗi VIU tối đa {maxCaregivers} người chăm sóc, mỗi Caregiver tối đa {maxVius} VIU đang liên kết.',
-                { maxCaregivers, maxVius },
-              )
-        }
-        actions={
-          <button className="btn primary" onClick={() => setCreate(true)}>
-            {actor.role === 'Caregiver' ? t('Thêm người chăm sóc phụ') : t('Tạo liên kết')}
-          </button>
+            ? t('Những người cùng chăm sóc và quyền của từng người.')
+            : t('Gán người chăm sóc cho người khiếm thị và chỉnh quyền của từng liên kết.')
         }
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
@@ -104,17 +93,50 @@ function Links({ actor }: { actor: Person }) {
         />
       )}
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            filter({ caregiverId: draftCg, viuId: draftViu });
+        <FilterPanel
+          active={
+            [
+              filters.caregiverId,
+              filters.viuId,
+              actor.role !== 'CenterAdmin' && filters.linkType,
+              filters.active !== 'true',
+            ].filter(Boolean).length
+          }
+          submitLabel={t('Lọc liên kết')}
+          onApply={(form) => {
+            const data = new FormData(form);
+            filter({
+              caregiverId: draftCg,
+              viuId: draftViu,
+              ...(actor.role !== 'CenterAdmin' && { linkType: String(data.get('linkType') || '') }),
+              active: String(data.get('active') ?? 'true'),
+            });
           }}
+          onReset={() => {
+            setDraftCg('');
+            setDraftViu('');
+            filter({ caregiverId: '', viuId: '', linkType: '', active: 'true' });
+          }}
+          tools={
+            <button
+              className="btn"
+              type="button"
+              disabled={list.isFetching}
+              onClick={() => void refresh()}
+            >
+              {t('Tải lại')}
+            </button>
+          }
+          extra={
+            <button className="btn primary" onClick={() => setCreate(true)}>
+              {actor.role === 'Caregiver' ? t('Thêm người chăm sóc phụ') : t('Tạo liên kết')}
+            </button>
+          }
         >
           {actor.role !== 'Caregiver' && (
             <SearchPicker
               label={t('Người chăm sóc')}
-              placeholder={t('Gõ tên hoặc email; để trống xem tất cả')}
+              placeholder={t('Gõ tên hoặc email')}
               value={draftCg}
               onChange={setDraftCg}
               search={searchAccounts(actor, 'Caregiver')}
@@ -123,7 +145,7 @@ function Links({ actor }: { actor: Person }) {
           )}
           <SearchPicker
             label={t('Người được chăm sóc')}
-            placeholder={t('Gõ tên hoặc email; để trống xem tất cả')}
+            placeholder={t('Gõ tên hoặc email')}
             value={draftViu}
             onChange={setDraftViu}
             search={
@@ -136,10 +158,7 @@ function Links({ actor }: { actor: Person }) {
           {actor.role !== 'CenterAdmin' && (
             <label className="field">
               {t('Loại liên kết')}
-              <select
-                value={filters.linkType}
-                onChange={(e) => filter({ linkType: e.target.value })}
-              >
+              <select name="linkType" defaultValue={filters.linkType}>
                 <option value="">{t('Tất cả loại')}</option>
                 <option value="Personal">{t('Cá nhân')}</option>
                 <option value="Organization">{t('Tổ chức')}</option>
@@ -148,22 +167,13 @@ function Links({ actor }: { actor: Person }) {
           )}
           <label className="field">
             {t('Trạng thái liên kết')}
-            <select value={filters.active} onChange={(e) => filter({ active: e.target.value })}>
+            <select name="active" defaultValue={filters.active}>
               <option value="true">{t('Đang liên kết')}</option>
               <option value="false">{t('Đã gỡ')}</option>
               <option value="">{t('Tất cả')}</option>
             </select>
           </label>
-          <button className="btn primary">{t('Lọc liên kết')}</button>
-          <button
-            className="btn"
-            type="button"
-            disabled={list.isFetching}
-            onClick={() => void refresh()}
-          >
-            {t('Tải lại')}
-          </button>
-        </form>
+        </FilterPanel>
         <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
           {list.data && (
             <>
@@ -284,6 +294,8 @@ function LinkEditor({
   saved: (link: CareLink) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  const maxCaregivers = useLimit('caregiving.max_caregivers_per_viu');
+  const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const picking = !link && actor.role === 'CenterAdmin';
   const staff = useOrgPeople(actor, 'Caregiver', picking);
   const vius = useOrgPeople(actor, 'VisuallyImpaired', picking);
@@ -377,7 +389,8 @@ function LinkEditor({
                 'Chỉ chọn được người bạn đang chăm sóc chính. Người được thêm là người chăm sóc phụ với các quyền bạn chọn bên dưới.',
               )
             : t(
-                'Hai tài khoản phải hoạt động. Liên kết tổ chức yêu cầu Caregiver và VIU cùng tổ chức.',
+                'Hai tài khoản phải đang hoạt động; liên kết tổ chức cần cùng một trung tâm. Mỗi người khiếm thị có tối đa {maxCaregivers} người chăm sóc, mỗi người chăm sóc theo dõi tối đa {maxVius} người.',
+                { maxCaregivers, maxVius },
               )}
       </p>
       {picking && (staff.isLoading || vius.isLoading) ? (

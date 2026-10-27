@@ -17,6 +17,7 @@ import { Link } from 'react-router-dom';
 import { viuLicenseLabel } from '../../services/api/licenses';
 import { useOwnOrgName } from '../../hooks/useOrgPeople';
 import { SearchPicker } from '../../components/SearchPicker';
+import { FilterPanel } from '../../components/FilterPanel';
 import { searchOrganizations } from '../../services/api/pickers';
 
 const profileFields: FieldSpec[] = [
@@ -60,7 +61,6 @@ function Accounts({
     deleted: 'false',
     organizationId: '',
   });
-  const [search, setSearch] = useState('');
   const [orgFilter, setOrgFilter] = useState('');
   const [selected, setSelected] = useState('');
   const [creating, setCreating] = useState(false);
@@ -105,12 +105,7 @@ function Accounts({
               ? t('Người dùng VIU')
               : t('Quản lý tài khoản')
         }
-        description={t('Quản lý hồ sơ và trạng thái tài khoản trong phạm vi được cấp quyền.')}
-        actions={
-          <button className="btn primary" onClick={() => setCreating(true)}>
-            {t('Tạo tài khoản')}
-          </button>
-        }
+        description={t('Hồ sơ và trạng thái tài khoản trong phạm vi của bạn.')}
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {creating && (
@@ -131,25 +126,64 @@ function Accounts({
         />
       )}
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            filter({ search: search.trim(), organizationId: orgFilter });
+        <FilterPanel
+          active={
+            [
+              filters.search,
+              !fixedRole && filters.role,
+              filters.organizationId,
+              filters.active,
+              filters.deleted !== 'false',
+            ].filter(Boolean).length
+          }
+          onApply={(form) => {
+            const data = new FormData(form);
+            filter({
+              search: String(data.get('search') || '').trim(),
+              ...(!fixedRole && { role: String(data.get('role') || '') }),
+              organizationId: orgFilter,
+              active: String(data.get('active') || ''),
+              deleted: String(data.get('deleted') ?? 'false'),
+            });
           }}
+          onReset={() => {
+            setOrgFilter('');
+            filter({
+              search: '',
+              ...(!fixedRole && { role: '' }),
+              organizationId: '',
+              active: '',
+              deleted: 'false',
+            });
+          }}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={list.isFetching}
+              onClick={() => void refresh()}
+            >
+              {t('Tải lại')}
+            </button>
+          }
+          extra={
+            <button className="btn primary" onClick={() => setCreating(true)}>
+              {t('Tạo tài khoản')}
+            </button>
+          }
         >
-          <label className="field">
+          <label className="field wide">
             {t('Tìm tài khoản')}
             <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              name="search"
+              defaultValue={filters.search}
               placeholder={t('Tên, email, điện thoại')}
             />
           </label>
           {!fixedRole && (
             <label className="field">
               {t('Vai trò')}
-              <select value={filters.role} onChange={(e) => filter({ role: e.target.value })}>
+              <select name="role" defaultValue={filters.role}>
                 <option value="">{t('Tất cả vai trò')}</option>
                 {Object.entries(roles).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -162,7 +196,7 @@ function Accounts({
           {actor.role === 'Admin' && (
             <SearchPicker
               label={t('Tổ chức')}
-              placeholder={t('Gõ tên tổ chức; để trống xem tất cả')}
+              placeholder={t('Gõ tên tổ chức')}
               value={orgFilter}
               onChange={setOrgFilter}
               search={searchOrganizations(actor)}
@@ -171,7 +205,7 @@ function Accounts({
           )}
           <label className="field">
             {t('Trạng thái')}
-            <select value={filters.active} onChange={(e) => filter({ active: e.target.value })}>
+            <select name="active" defaultValue={filters.active}>
               <option value="">{t('Tất cả trạng thái')}</option>
               <option value="true">{t('Hoạt động')}</option>
               <option value="false">{t('Vô hiệu hóa')}</option>
@@ -179,22 +213,13 @@ function Accounts({
           </label>
           <label className="field">
             {t('Dữ liệu xóa')}
-            <select value={filters.deleted} onChange={(e) => filter({ deleted: e.target.value })}>
+            <select name="deleted" defaultValue={filters.deleted}>
               <option value="false">{t('Chưa xóa')}</option>
               <option value="true">{t('Đã xóa')}</option>
               <option value="">{t('Tất cả')}</option>
             </select>
           </label>
-          <button className="btn">{t('Tìm kiếm')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={list.isFetching}
-            onClick={() => void refresh()}
-          >
-            {t('Tải lại')}
-          </button>
-        </form>
+        </FilterPanel>
         <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
           {list.data && (
             <>

@@ -15,6 +15,9 @@ import {
 import { historyRange } from '../../services/api/locations';
 import { caregivingApi } from '../../services/api/caregiving';
 import { PageHead, State, Dialog, Confirm } from '../../components/UI';
+import { FilterPanel } from '../../components/FilterPanel';
+import { SearchPicker } from '../../components/SearchPicker';
+import { searchCareRecipients } from '../../services/api/pickers';
 import { useNow } from '../../hooks/useNow';
 import { onSessionEnded } from '../../services/sessionLifecycle';
 import type { Person } from '../../models/domain';
@@ -40,6 +43,15 @@ function Alerts({ actor }: { actor: Person }) {
   const cache = useQueryClient();
   const [selected, setSelected] = useState('');
   const [error, setError] = useState('');
+  const [viu, setViu] = useState('');
+  // Alerts only carry the VIU id; show the care recipient's name when it is in the first page.
+  const recipients = useQuery({
+    queryKey: ['alert-recipients', actor.id, actor.orgId],
+    queryFn: ({ signal }) => caregivingApi.users(1, '', signal),
+    retry: false,
+  });
+  const nameOf = (id: string) =>
+    recipients.data?.items.find((person) => person.id === id)?.fullName ?? id;
   const query = useQuery({
     queryKey: ['api-alerts', actor.id, actor.orgId, filters],
     queryFn: ({ signal }) => emergenciesApi.list(actor, filters, signal),
@@ -51,35 +63,54 @@ function Alerts({ actor }: { actor: Person }) {
       <PageHead
         title={t('Trung tâm cảnh báo')}
         description={t(
-          'Cảnh báo trong phạm vi liên kết được phép xem. Cập nhật qua SignalR và tải lại dự phòng mỗi 30 giây.',
+          'Cảnh báo của người bạn được phép theo dõi, tự cập nhật theo thời gian thực.',
         )}
       />
       <EscalationBanner actor={actor} open={setSelected} />
       <section className="glass card stack">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const data = new FormData(e.currentTarget);
+        <FilterPanel
+          active={
+            [filters.viuId, filters.status, filters.dateFrom, filters.dateTo].filter(Boolean).length
+          }
+          submitLabel={t('Lọc cảnh báo')}
+          onApply={(form) => {
+            const data = new FormData(form);
             try {
               const range = historyRange(String(data.get('from')), String(data.get('to')));
-              setFilters({
-                ...range,
-                viuId: String(data.get('viuId')).trim(),
-                status: String(data.get('status')),
-                page: 1,
-              });
+              setFilters({ ...range, viuId: viu, status: String(data.get('status')), page: 1 });
               setSelected('');
               setError('');
             } catch (err) {
               setError((err as Error).message);
             }
           }}
+          onReset={() => {
+            setViu('');
+            setFilters({ viuId: '', status: '', dateFrom: '', dateTo: '', page: 1 });
+            setSelected('');
+            setError('');
+          }}
+          tools={
+            <button
+              type="button"
+              className="btn"
+              disabled={query.isFetching}
+              onClick={() =>
+                void cache.invalidateQueries({ queryKey: ['api-alerts', actor.id, actor.orgId] })
+              }
+            >
+              {t('Tải lại cảnh báo')}
+            </button>
+          }
         >
-          <label className="field">
-            {t('Mã VIU (để trống xem tất cả)')}
-            <input name="viuId" />
-          </label>
+          <SearchPicker
+            label={t('Người được chăm sóc')}
+            placeholder={t('Gõ tên hoặc email')}
+            value={viu}
+            onChange={setViu}
+            search={searchCareRecipients()}
+            queryKey={['alert-viu', actor.id, actor.orgId]}
+          />
           <label className="field">
             {t('Trạng thái cảnh báo')}
             <select name="status">
@@ -91,28 +122,19 @@ function Alerts({ actor }: { actor: Person }) {
               ))}
             </select>
           </label>
-          <label className="field">
-            {t('Từ thời gian')}
-            <input name="from" type="datetime-local" />
-          </label>
-          <label className="field">
-            {t('Đến thời gian')}
-            <input name="to" type="datetime-local" />
-          </label>
-          <button className="btn primary">{t('Lọc cảnh báo')}</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={query.isFetching}
-            onClick={() =>
-              void cache.invalidateQueries({ queryKey: ['api-alerts', actor.id, actor.orgId] })
-            }
-          >
-            {t('Tải lại cảnh báo')}
-          </button>
-        </form>
+          <div className="filter-range wide">
+            <label className="field">
+              {t('Từ thời gian')}
+              <input name="from" type="datetime-local" />
+            </label>
+            <label className="field">
+              {t('Đến thời gian')}
+              <input name="to" type="datetime-local" />
+            </label>
+          </div>
+        </FilterPanel>
         <small>
-          {t('Thời gian theo {timeZone}. API trả mã VIU, chưa có tên người dùng trong cảnh báo.', {
+          {t('Thời gian theo {timeZone}.', {
             timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           })}
         </small>
@@ -134,7 +156,7 @@ function Alerts({ actor }: { actor: Person }) {
                 <table className="alerts-table">
                   <thead>
                     <tr>
-                      <th>VIU</th>
+                      <th>{t('Người được chăm sóc')}</th>
                       <th>{t('Phát hiện')}</th>
                       <th>{t('Trạng thái')}</th>
                       <th>{t('Thời gian')}</th>
@@ -144,7 +166,7 @@ function Alerts({ actor }: { actor: Person }) {
                   <tbody>
                     {query.data.items.map((event) => (
                       <tr key={event.id}>
-                        <td>{event.visuallyImpairedUserId}</td>
+                        <td>{nameOf(event.visuallyImpairedUserId)}</td>
                         <td>{methods[event.detectionMethod] || event.detectionMethod}</td>
                         <td>
                           <strong>{alertLabels[event.currentStatus]}</strong>

@@ -108,7 +108,7 @@ it('validates assignment pagination/status and disallows non-center access befor
   expect(get).not.toHaveBeenCalled();
   expect(await api.list(actor, 2, 'true')).toEqual(page);
   expect(get).toHaveBeenCalledWith(
-    '/api/licenses/assignments?page=2&pageSize=20&isActive=true',
+    '/api/licenses/assignments?page=2&pageSize=10&isActive=true',
     undefined,
   );
   await expect(api.list(actor, 1, 'true')).rejects.toMatchObject({ status: 502 });

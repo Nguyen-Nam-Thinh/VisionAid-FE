@@ -108,7 +108,7 @@ export function createIceServersApi(get = apiGet, write = apiWrite) {
       !['', 'true', 'false'].includes(filter.active)
     )
       throw new ServiceError(t('Bộ lọc máy chủ không hợp lệ.'), 400);
-    const query = new URLSearchParams({ page: String(filter.page), pageSize: '20' });
+    const query = new URLSearchParams({ page: String(filter.page), pageSize: '10' });
     if (filter.active) query.set('isActive', filter.active);
     return parse(pageSchema, await get(path + '?' + query, signal));
   }

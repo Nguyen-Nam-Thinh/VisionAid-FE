@@ -6,7 +6,8 @@ import { useSession } from '../../hooks/useService';
 import { searchOrganizations } from '../../services/api/pickers';
 import { useOwnOrgName } from '../../hooks/useOrgPeople';
 import { Form, type FieldSpec } from '../../components/Form';
-import { Confirm, Dialog, PageHead, State } from '../../components/UI';
+import { CardActions, Confirm, Dialog, PageHead, State } from '../../components/UI';
+import { FilterPanel } from '../../components/FilterPanel';
 import { roles } from '../../constants/labels';
 import type { Person, Fields } from '../../models/domain';
 import {
@@ -109,74 +110,103 @@ function Notifications({ actor }: { actor: Person }) {
             ? t('Thiết lập theo loại và kênh cho tài khoản của bạn.')
             : t('Quy tắc toàn hệ thống và quy tắc riêng của trung tâm.')
         }
-        actions={
-          <button
-            className="btn primary"
-            disabled={query.isPending || query.isError}
-            onClick={() => {
-              setSelected(null);
-              setEditor(personal ? { isEnabled: true } : { isMandatory: false, isActive: true });
-            }}
-          >
-            {personal ? t('Thiết lập tùy chọn') : t('Thêm quy tắc')}
-          </button>
-        }
       />
-      <p className="notice">
-        {personal
-          ? t(
-              'Tùy chọn chỉ áp dụng khi quy tắc không bắt buộc. Thông báo bắt buộc vẫn được gửi dù bạn chọn tắt. Máy chủ chưa cung cấp danh sách quy tắc bắt buộc cho tài khoản này.',
-            )
-          : t(
-              'Quy tắc riêng được máy chủ xử lý theo phạm vi trung tâm. Center Admin chỉ xem quy tắc toàn hệ thống, không được sửa hoặc xóa.',
-            )}
-      </p>
-      {personal && (
-        <p className="muted">
-          {t(
-            'Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và chọn Bật thông báo trình duyệt.',
-          )}
-        </p>
-      )}
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
-      {!personal && (
-        <div className="row">
-          {(
-            [
-              ['notificationType', t('Lọc loại thông báo'), notificationTypes],
-              ['channel', t('Lọc kênh'), channels],
-              ['targetRole', t('Lọc vai trò'), targetRoles],
-              [
-                'isActive',
-                t('Lọc trạng thái'),
-                { true: t('Đang áp dụng'), false: t('Ngừng áp dụng') },
-              ],
-            ] as const
-          ).map(([key, label, labels]) => (
-            <label className="field" key={key}>
-              {label}
-              <select
-                value={filters[key]}
-                onChange={(e) => {
-                  setFilters({ ...filters, [key]: e.target.value });
-                  setPage(1);
-                  setEditor(null);
+      <section className="glass card stack">
+        <p className="notice">
+          {personal
+            ? t(
+                'Tùy chọn chỉ áp dụng khi quy tắc không bắt buộc. Thông báo bắt buộc vẫn được gửi dù bạn chọn tắt. Máy chủ chưa cung cấp danh sách quy tắc bắt buộc cho tài khoản này.',
+              )
+            : t(
+                'Quy tắc riêng được máy chủ xử lý theo phạm vi trung tâm. Center Admin chỉ xem quy tắc toàn hệ thống, không được sửa hoặc xóa.',
+              )}
+        </p>
+        {personal && (
+          <p className="muted">
+            {t(
+              'Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và chọn Bật thông báo trình duyệt.',
+            )}
+          </p>
+        )}
+
+        {personal && (
+          <CardActions>
+            <button
+              className="btn primary"
+              disabled={query.isPending || query.isError}
+              onClick={() => {
+                setSelected(null);
+                setEditor(personal ? { isEnabled: true } : { isMandatory: false, isActive: true });
+              }}
+            >
+              {personal ? t('Thiết lập tùy chọn') : t('Thêm quy tắc')}
+            </button>
+          </CardActions>
+        )}
+        {!personal && (
+          <FilterPanel
+            extra={
+              <button
+                className="btn primary"
+                disabled={query.isPending || query.isError}
+                onClick={() => {
                   setSelected(null);
+                  setEditor(
+                    personal ? { isEnabled: true } : { isMandatory: false, isActive: true },
+                  );
                 }}
               >
-                <option value="">{t('Tất cả')}</option>
-                {options(labels).map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
-        </div>
-      )}
-      <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
-        <section className="glass card stack">
+                {personal ? t('Thiết lập tùy chọn') : t('Thêm quy tắc')}
+              </button>
+            }
+            active={Object.values(filters).filter(Boolean).length}
+            onApply={(form) => {
+              const data = new FormData(form);
+              setFilters({
+                notificationType: String(data.get('notificationType') || ''),
+                channel: String(data.get('channel') || ''),
+                targetRole: String(data.get('targetRole') || ''),
+                isActive: String(data.get('isActive') || ''),
+              });
+              setPage(1);
+              setEditor(null);
+              setSelected(null);
+            }}
+            onReset={() => {
+              setFilters({ notificationType: '', channel: '', targetRole: '', isActive: '' });
+              setPage(1);
+              setEditor(null);
+              setSelected(null);
+            }}
+          >
+            {(
+              [
+                ['notificationType', t('Loại thông báo'), notificationTypes],
+                ['channel', t('Kênh'), channels],
+                ['targetRole', t('Vai trò'), targetRoles],
+                [
+                  'isActive',
+                  t('Trạng thái'),
+                  { true: t('Đang áp dụng'), false: t('Ngừng áp dụng') },
+                ],
+              ] as const
+            ).map(([key, label, labels]) => (
+              <label className="field" key={key}>
+                {label}
+                <select name={key} defaultValue={filters[key]}>
+                  <option value="">{t('Tất cả')}</option>
+                  {options(labels).map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </FilterPanel>
+        )}
+        <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           {personal ? (
             <>
               {!prefs.data?.length && (
@@ -315,8 +345,8 @@ function Notifications({ actor }: { actor: Person }) {
               )}
             </>
           )}
-        </section>
-      </State>
+        </State>
+      </section>
       {editor && !query.isError && (
         <Dialog
           title={personal ? t('Lưu tùy chọn') : selected ? t('Sửa quy tắc') : t('Thêm quy tắc')}

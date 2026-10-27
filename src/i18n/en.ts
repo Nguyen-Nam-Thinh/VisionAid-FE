@@ -33,7 +33,7 @@ export const en = {
   'Về tổng quan': 'Back to overview',
   'Quay lại trang trước': 'Go back',
   'Về trang chủ': 'Back to home',
-  'Nhật ký kiểm toán': 'Audit log',
+  'Nhật ký thao tác': 'Audit log',
   'Theo dõi thông báo': 'Notification delivery',
   'Hiệu năng AI': 'AI performance',
   'Quy tắc thông báo': 'Notification rules',
@@ -47,7 +47,6 @@ export const en = {
   'Phân công chăm sóc': 'Care assignments',
   'Người dùng VIU': 'VIU users',
   'Nhân viên chăm sóc': 'Care staff',
-  'Hồ sơ tổ chức': 'Organization profile',
   'Giọng đọc hỗ trợ': 'Voice assistant',
   'Tùy chọn thông báo': 'Notification preferences',
   'Nhật ký hoạt động': 'Activity log',
@@ -483,8 +482,6 @@ export const en = {
   'Chọn người được chăm sóc': 'Choose a care recipient',
   '{totalCount} người · Trang {page}/{p4}': '{totalCount} people · Page {page}/{p4}',
   'Chưa có người được chăm sóc phù hợp.': 'No matching care recipients.',
-  'Các phiên gọi bạn đã tham gia. Thời gian hiển thị theo múi giờ trình duyệt.':
-    "Call sessions you joined. Times are shown in the browser's time zone.",
   'Để bắt đầu gọi, vào Người được chăm sóc và chọn Gọi hỗ trợ. Kết quả dưới đây do máy chủ ghi nhận.':
     'To start a call, go to Care recipients and choose Support call. The results below are recorded by the server.',
   'Từ thời điểm': 'From',
@@ -502,8 +499,6 @@ export const en = {
   'Lý do': 'Reason',
   'Trạng thái chấp nhận do máy chủ ghi nhận không chứng minh âm thanh hoặc hình ảnh đã kết nối.':
     'The accepted status recorded by the server does not prove audio or video was connected.',
-  'Quản lý danh bạ cho người được chăm sóc có liên kết hoạt động. Lưu liên hệ không thực hiện cuộc gọi.':
-    'Manage contacts for care recipients with an active link. Saving a contact does not place a call.',
   'Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.':
     'Choose a care recipient above to view the list and add information for the right person.',
   'Danh bạ của {name}': 'Contacts of {name}',
@@ -732,8 +727,6 @@ export const en = {
     'Configuration saved on the server. Check it on Mobile.',
   'Chưa xác nhận được kết quả lưu. Đóng popup và tải lại cấu hình trước khi gửi lại.':
     'The save result was not confirmed. Close the popup and reload the configuration before resubmitting.',
-  'Cấu hình giọng đọc được lưu trên máy chủ để ứng dụng Mobile sử dụng.':
-    'The voice configuration is saved on the server for the Mobile app to use.',
   'Chọn người được chăm sóc ở trên để xem và chỉnh cấu hình giọng đọc.':
     'Choose a care recipient above to view and edit the voice configuration.',
   'Tối đa 5 liên hệ. Số ưu tiên nhỏ hơn được ưu tiên trước; không được trùng.':
@@ -970,8 +963,6 @@ export const en = {
   'URL ảnh đại diện': 'Avatar URL',
   'Ít nhất 8 ký tự, có chữ hoa/thường, số và ký tự đặc biệt.':
     'At least 8 characters with upper/lowercase letters, a number and a special character.',
-  'Quản lý hồ sơ và trạng thái tài khoản trong phạm vi được cấp quyền.':
-    'Manage account profiles and status within your granted scope.',
   'Đã tạo tài khoản. Kiểm tra thông tin license và phân công chăm sóc cho người dùng.':
     'Account created. Check the license information and care assignment for the user.',
   'Tìm tài khoản': 'Find account',
@@ -1024,15 +1015,11 @@ export const en = {
   'Thủ công': 'Manual',
   'Giọng nói': 'Voice',
   'Cử chỉ': 'Gesture',
-  'Cảnh báo trong phạm vi liên kết được phép xem. Cập nhật qua SignalR và tải lại dự phòng mỗi 30 giây.':
-    'Alerts within the links you may view. Updated via SignalR with a fallback reload every 30 seconds.',
-  'Mã VIU (để trống xem tất cả)': 'VIU ID (leave empty to see all)',
   'Từ thời gian': 'From time',
   'Đến thời gian': 'To time',
   'Lọc cảnh báo': 'Filter alerts',
   'Tải lại cảnh báo': 'Reload alerts',
-  'Thời gian theo {timeZone}. API trả mã VIU, chưa có tên người dùng trong cảnh báo.':
-    "Times in {timeZone}. The API returns the VIU ID; alerts do not include the user's name yet.",
+  'Thời gian theo {timeZone}.': 'Times in {timeZone}.',
   'Không có cảnh báo phù hợp.': 'No matching alerts.',
   'Danh sách cảnh báo': 'Alert list',
   'Phát hiện': 'Detected',
@@ -1103,11 +1090,7 @@ export const en = {
   'Không có thời hạn từ máy chủ': 'No expiry from the server',
   'Nhân viên chăm sóc không sử dụng license trong kho. Việc cấp license cho người được chăm sóc do máy chủ kiểm tra.':
     'Care staff do not use licenses from the pool. Assigning licenses to care recipients is checked by the server.',
-  'Số lượng và thời hạn do máy chủ xác nhận.':
-    'Quantities and expiry dates are confirmed by the server.',
   'Lịch sử thanh toán': 'Payment history',
-  'Phân công tài khoản Caregiver và VIU đã có; mỗi VIU tối đa {maxCaregivers} người chăm sóc, mỗi Caregiver tối đa {maxVius} VIU đang liên kết.':
-    'Assign existing Caregiver and VIU accounts; each VIU can have at most {maxCaregivers} caregivers and each Caregiver at most {maxVius} linked VIUs.',
   'Tạo liên kết': 'Create link',
   'Đã tạo liên kết. Trạng thái chính/phụ do máy chủ quyết định.':
     'Link created. Primary/secondary status is decided by the server.',
@@ -1148,8 +1131,6 @@ export const en = {
     'This care recipient belongs to a center; their links are managed by the center admin.',
   'Tài khoản thuộc trung tâm không mua gói cá nhân; license do trung tâm cấp.':
     'Center accounts cannot buy a personal plan; the license is provided by the center.',
-  'Hai tài khoản phải hoạt động. Liên kết tổ chức yêu cầu Caregiver và VIU cùng tổ chức.':
-    'Both accounts must be active. Organization links require the Caregiver and VIU to be in the same organization.',
   'Đang tải danh sách nhân viên và người được chăm sóc…': 'Loading staff and care recipients…',
   'Lưu quyền liên kết': 'Save link permissions',
   'Chi tiết liên kết': 'Link details',
@@ -1187,10 +1168,6 @@ export const en = {
     'Center rules are processed by the server within the center scope. Center Admins can only view system-wide rules, not edit or delete them.',
   'Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và chọn Bật thông báo trình duyệt.':
     'Saving the Push preference does not enable notifications in this browser. To receive push, go to Profile and choose Enable browser notifications.',
-  'Lọc loại thông báo': 'Filter notification type',
-  'Lọc kênh': 'Filter channel',
-  'Lọc vai trò': 'Filter role',
-  'Lọc trạng thái': 'Filter status',
   'Ngừng áp dụng': 'Not applied',
   'Chưa lưu tùy chọn nào. Máy chủ áp dụng quy tắc mặc định.':
     'No preferences saved yet. The server applies the default rules.',
@@ -1217,8 +1194,6 @@ export const en = {
   'Tên tổ chức': 'Organization name',
   'Để trống, hoặc nhập số di động, số bàn 02x hay tổng đài 1800/1900.':
     'Leave empty, or enter a mobile number, a 02x landline or a 1800/1900 number.',
-  'Thông tin tổ chức và thành viên theo quyền tài khoản.':
-    'Organization and member information according to your account permissions.',
   'Tạo tổ chức': 'Create organization',
   'Đã tạo tổ chức. Tiếp theo, tạo tài khoản Quản trị trung tâm tại Quản lý tài khoản.':
     'Organization created. Next, create a Center Admin account in Account management.',
@@ -1273,8 +1248,6 @@ export const en = {
     'This account does not need a personal plan. Licenses are managed by the organization.',
   'Quản lý gói license': 'License plan management',
   'Danh mục gói': 'Plan catalog',
-  'Tạo và cập nhật cấu hình gói trên máy chủ.':
-    'Create and update plan configurations on the server.',
   'Chọn gói Personal và tạo đơn thanh toán qua PayOS.':
     'Choose a Personal plan and create a PayOS payment order.',
   'Chọn gói Business và tạo đơn thanh toán qua PayOS.':
@@ -1334,8 +1307,6 @@ export const en = {
     'The request may have created a transaction on the server. Check the history before creating another.',
   'Luồng thanh toán này dành cho Caregiver cá nhân hoặc quản trị trung tâm có tổ chức.':
     'This payment flow is for personal Caregivers or center administrators with an organization.',
-  'Trạng thái do máy chủ xác nhận cho tài khoản của bạn.':
-    'Status confirmed by the server for your account.',
   'Chọn gói Personal': 'Choose a Personal plan',
   'Giao dịch của tôi': 'My transactions',
   'Mã đơn': 'Order code',
@@ -1375,21 +1346,10 @@ export const en = {
   'Xin chào{p0}.': 'Hello{p0}.',
   'Một nơi để kết nối, chăm sóc và cùng nhau an tâm hơn.':
     'One place to connect, care and feel more at ease together.',
-  'Đã đăng nhập bằng tài khoản BE': 'Signed in with a BE account',
-  'Tài khoản cá nhân': 'Personal account',
-  'Kiểm tra phiên': 'Check session',
-  'Phiên được giữ trong tab hiện tại khi tải lại trang. Chưa hỗ trợ ghi nhớ đăng nhập dài hạn.':
-    'The session is kept in the current tab when the page reloads. Long-term remember-me sign-in is not supported yet.',
-  'Dành cho bạn': 'For you',
-  'Cập nhật thông tin liên hệ và quản lý mật khẩu.':
-    'Update contact details and manage your password.',
   'Quyền sử dụng': 'Usage rights',
-  'Xem trạng thái license dành cho tài khoản của bạn.': 'View the license status for your account.',
   'Chức năng chưa sẵn sàng': 'Feature not ready yet',
   'Màn hình này chưa được kết nối với máy chủ.': 'This screen is not connected to the server yet.',
   'Về thông tin phiên': 'Back to session information',
-  'Theo dõi GPS trung tâm': 'Center GPS tracking',
-  'Theo dõi vị trí GPS': 'GPS location tracking',
   'Vị trí ghi nhận và lịch sử di chuyển của người được phép theo dõi.':
     'Recorded locations and movement history of the people you may track.',
   'Tìm người được theo dõi': 'Find a tracked person',
@@ -1466,7 +1426,7 @@ export const en = {
   'Nhật ký gần đây': 'Recent log',
   'Cần bạn quan tâm': 'Needs your attention',
   'Chưa có cảnh báo đang mở.': 'No open alerts.',
-  'Mở nhật ký kiểm toán': 'Open audit log',
+  'Mở nhật ký thao tác': 'Open audit log',
   'Xem tất cả cảnh báo': 'View all alerts',
   'Số liệu demo chưa phản ánh sức khỏe máy chủ thật.':
     'Demo figures do not reflect real server health.',
@@ -1670,8 +1630,6 @@ export const en = {
   'Chi tiết cấu hình': 'Configuration details',
   'Đã lưu cấu hình trên máy chủ. Thiết bị áp dụng khi đồng bộ lại.':
     'Configuration saved on the server. Devices apply it when they sync again.',
-  'Tra cứu, điều chỉnh và khôi phục các thông số đã được duyệt cho Web.':
-    'Look up, adjust and roll back the parameters approved for the Web.',
   'Tìm cấu hình': 'Find configuration',
   'Nhóm cấu hình': 'Configuration group',
   'Ví dụ: AI, WEBRTC': 'For example: AI, WEBRTC',
@@ -1683,8 +1641,6 @@ export const en = {
   'Chỉ quản trị viên hệ thống được quản lý máy chủ kết nối.':
     'Only system administrators can manage connection servers.',
   'Máy chủ kết nối cuộc gọi': 'Call connection servers',
-  'Quản lý địa chỉ STUN và TURN dùng để thiết lập kết nối WebRTC.':
-    'Manage the STUN and TURN addresses used to set up WebRTC connections.',
   'Thêm máy chủ': 'Add server',
   'Số ưu tiên nhỏ được xếp trước. Thay đổi cấu hình không xác nhận máy chủ đang hoạt động; cần kiểm tra bằng cuộc gọi thực tế.':
     'Lower priority numbers come first. Changing the configuration does not confirm the server is working; test with a real call.',
@@ -1758,12 +1714,6 @@ export const en = {
   'Hệ thống hoặc chưa ghi nhận': 'System or not recorded',
   'Chỉ quản trị viên hệ thống được xem dữ liệu này.':
     'Only system administrators can view this data.',
-  'Số liệu theo mô hình và ngày UTC. Confidence và tỷ lệ xử lý thành công không phải độ chính xác AI.':
-    'Metrics by model and UTC date. Confidence and processing success rate are not AI accuracy.',
-  'Theo dõi quyết định và thời gian xử lý do máy chủ ghi nhận. Đây là lịch sử, không phải hướng dẫn di chuyển trực tiếp.':
-    'Follow the decisions and processing times recorded by the server. This is a history, not live navigation guidance.',
-  'Tra cứu thao tác quản trị. Nhật ký chỉ đọc, không sửa hoặc xóa.':
-    'Look up administrative actions. The log is read-only and cannot be edited or deleted.',
   'Thống kê gửi cảnh báo và tra cứu thông báo thất bại.':
     'Alert delivery statistics and failed notification lookup.',
   'Thông báo thất bại': 'Failed notifications',
@@ -1774,7 +1724,6 @@ export const en = {
   'Không fallback': 'Without fallback',
   'Tên mô hình': 'Model name',
   'Tên chính xác từ máy chủ': 'Exact name from the server',
-  'Tất cả hành động': 'All actions',
   'Tất cả kênh': 'All channels',
   'Từ ngày Việt Nam': 'From date (Vietnam)',
   'Đến ngày Việt Nam': 'To date (Vietnam)',
@@ -1949,7 +1898,9 @@ export const en = {
     'Invalid call connection information. Check the history before calling again.',
   'Chỉ người chăm sóc được thực hiện cuộc gọi.': 'Only caregivers can make calls.',
   'Bạn không còn liên kết chăm sóc hoạt động.': 'You no longer have an active care link.',
-  'Màn hình này dành cho người chăm sóc.': 'This screen is for caregivers.',
+  'Bạn không có quyền xem lịch sử cuộc gọi.': 'You do not have permission to view call history.',
+  'Các cuộc gọi của người khiếm thị thuộc trung tâm. Chỉ xem, không gọi từ đây.':
+    'Calls of visually impaired users in your center. View only; calls are not made from here.',
   'Mã người được chăm sóc phải là UUID.': 'The care recipient ID must be a UUID.',
   'Thời gian bắt đầu phải trước thời gian kết thúc.': 'The start time must be before the end time.',
   'Lịch sử cuộc gọi từ máy chủ không hợp lệ.': 'Call history from the server is invalid.',
@@ -2311,8 +2262,6 @@ export const en = {
   'Doanh thu ròng': 'Net revenue',
   'Doanh thu theo ngày': 'Revenue by day',
   'Doanh thu theo tháng': 'Revenue by month',
-  'Doanh thu toàn nền tảng từ các giao dịch PayOS đã thanh toán, theo kênh, loại giao dịch, gói và trung tâm.':
-    'Platform-wide revenue from paid PayOS transactions, by channel, transaction type, plan and center.',
   'Dữ liệu báo cáo doanh thu từ máy chủ không hợp lệ.':
     'The revenue report data from the server is invalid.',
   'Gia đình (B2C)': 'Families (B2C)',
@@ -2344,6 +2293,72 @@ export const en = {
     '{caregivers} caregivers · {organizations} centers',
   '{pending} đang chờ · {failed} thất bại · {cancelled} đã hủy':
     '{pending} pending · {failed} failed · {cancelled} cancelled',
+  'Cấp, thu hồi và gia hạn license.': 'Assign, revoke and renew licenses.',
+  'Cập nhật thông tin liên hệ và mật khẩu.': 'Update contact details and password.',
+  'Doanh thu PayOS theo kênh, gói và trung tâm.': 'PayOS revenue by channel, plan and center.',
+  'Hồ sơ và liên kết chăm sóc.': 'Profiles and care links.',
+  'Lối tắt': 'Shortcuts',
+  'Số liệu nhận diện và đọc chữ theo mô hình.': 'Recognition and text-reading figures by model.',
+  'Tiếp nhận và xử lý cảnh báo.': 'Acknowledge and handle alerts.',
+  'Trạng thái gửi và thông báo lỗi.': 'Delivery status and failed notifications.',
+  'Tài khoản người khiếm thị của trung tâm.': 'The center’s visually impaired user accounts.',
+  'Vị trí ghi nhận gần nhất.': 'Latest recorded locations.',
+  'Vị trí người khiếm thị được phép theo dõi.': 'Locations of users you may monitor.',
+  'Xem trạng thái license của tài khoản.': 'View your account’s license status.',
+  'Buộc đăng xuất tài khoản': 'Account forced logout',
+  'Bộ lọc': 'Filters',
+  'Cập nhật tổ chức': 'Organization updated',
+  'Gỡ người dùng khỏi tổ chức': 'User removed from organization',
+  'Hệ thống dọn dữ liệu GPS': 'System GPS cleanup',
+  'Hệ thống dọn dữ liệu đọc chữ': 'System OCR cleanup',
+  'Hệ thống dọn phiên đăng nhập': 'System token cleanup',
+  'Hệ thống dọn ảnh cảnh báo': 'System alert image cleanup',
+  'Hệ thống dọn ảnh gương mặt': 'System face image cleanup',
+  'Kích hoạt lại tài khoản': 'Account reactivated',
+  'Thêm người dùng vào tổ chức': 'User added to organization',
+  'Truy cập dữ liệu GPS': 'GPS data accessed',
+  'Tạo liên kết chăm sóc': 'Care link created',
+  'Xóa dữ liệu gương mặt': 'Face data deleted',
+  'Xóa điều kiện': 'Clear filters',
+  '{count} điều kiện': '{count} filters',
+  'Đình chỉ kho license': 'License pool suspended',
+  'Đổi cấu hình hệ thống': 'System configuration changed',
+  'Đổi vai trò': 'Role changed',
+  'Cảnh báo của người bạn được phép theo dõi, tự cập nhật theo thời gian thực.':
+    'Alerts for people you may monitor, updated in real time.',
+  'Danh bạ khẩn cấp của người được chăm sóc. Lưu liên hệ không thực hiện cuộc gọi.':
+    'Emergency contacts of the care recipient. Saving a contact does not place a call.',
+  'Doanh thu từ giao dịch PayOS đã thanh toán, theo kênh, gói và trung tâm.':
+    'Revenue from paid PayOS transactions by channel, plan and center.',
+  'Hồ sơ và trạng thái tài khoản trong phạm vi của bạn.':
+    'Account profiles and status within your scope.',
+  'Ai đã thao tác gì và khi nào trên hệ thống. Nhật ký chỉ đọc.':
+    'Who did what and when on the system. The log is read-only.',
+  'Chọn giọng, tốc độ và âm lượng đọc trên điện thoại của người được chăm sóc.':
+    "Choose the voice, speed and volume used on the care recipient's phone.",
+  'Các chỉ dẫn di chuyển AI đã đưa ra và thời gian xử lý.':
+    'Navigation guidance the AI gave and how long it took.',
+  'Các cuộc gọi bạn đã thực hiện hoặc nhận.': 'Calls you made or received.',
+  'Các đơn thanh toán gói dịch vụ của bạn.': 'Your plan payment orders.',
+  'Danh sách trung tâm, thành viên và kho license của từng trung tâm.':
+    "Centers, their members and each center's license pool.",
+  'Gán người chăm sóc cho người khiếm thị và chỉnh quyền của từng liên kết.':
+    "Assign caregivers to visually impaired users and set each link's permissions.",
+  'Hai tài khoản phải đang hoạt động; liên kết tổ chức cần cùng một trung tâm. Mỗi người khiếm thị có tối đa {maxCaregivers} người chăm sóc, mỗi người chăm sóc theo dõi tối đa {maxVius} người.':
+    'Both accounts must be active; an organization link needs the same center. Each visually impaired user has at most {maxCaregivers} caregivers, and each caregiver follows at most {maxVius} people.',
+  'Máy chủ STUN/TURN giúp cuộc gọi video kết nối được qua mọi mạng.':
+    'STUN/TURN servers help video calls connect across networks.',
+  'Những người cùng chăm sóc và quyền của từng người.':
+    "People who share the care and each one's permissions.",
+  'Số license đã mua, đã cấp và thời hạn sử dụng của trung tâm.':
+    "Licenses bought, assigned and the center's validity period.",
+  'Số lần xử lý, thời gian và độ tin cậy của từng mô hình AI theo ngày.':
+    'Daily processing count, time and confidence for each AI model.',
+  'Thông tin liên hệ và thành viên của trung tâm.': "The center's contact details and members.",
+  'Tạo gói, đặt giá và mở bán hoặc ngừng bán.':
+    'Create plans, set prices and start or stop selling them.',
+  'Xem, điều chỉnh và khôi phục các thông số vận hành của hệ thống.':
+    "View, adjust and restore the system's operating settings.",
   'Key không hợp lệ, đã được kích hoạt hoặc đã hết hạn.':
     'The key is invalid, already activated or expired.',
   'Key đã hết hạn.': 'The key has expired.',
@@ -2496,8 +2511,6 @@ export const en = {
   'Chỉ được xem liên kết của bạn hoặc của người bạn chăm sóc chính.':
     'You can only view your own links or those of people you are primary caregiver for.',
   'Hủy liên kết của tôi': 'Cancel my link',
-  'Liên kết của bạn, và liên kết của người chăm sóc phụ với người bạn chăm sóc chính. Người chăm sóc chính thêm người chăm sóc phụ bằng email tài khoản của họ.':
-    'Your links, plus secondary caregivers’ links for people you are primary caregiver for. The primary caregiver adds a secondary caregiver by their account email.',
   'Xác nhận đã gọi hỗ trợ': 'Confirm help was called',
   'Chỉ người chăm sóc cá nhân được hủy gói của mình.':
     'Only personal caregivers can cancel their own plan.',
@@ -2612,8 +2625,9 @@ export const en = {
   'Kho license không còn tạm ngưng. Tải lại để xem trạng thái mới.':
     'The license pool is no longer suspended. Reload to see the current status.',
   'Gõ tên hoặc email để tìm': 'Type a name or email to search',
-  'Gõ tên hoặc email; để trống xem tất cả': 'Type a name or email; leave empty to see all',
-  'Gõ tên tổ chức; để trống xem tất cả': 'Type an organization name; leave empty to see all',
+  'Gõ tên hoặc email': 'Type a name or email',
+  'Gõ tên tổ chức': 'Type an organization name',
+  'Gõ tên hành động': 'Type an action name',
   'Bỏ chọn {name}': 'Clear {name}',
   'Đang tìm…': 'Searching…',
   'Không tải được kết quả. Thử gõ lại.': 'Could not load results. Try typing again.',
@@ -2632,4 +2646,33 @@ export const en = {
     'Could not load the organization list; search by name or email.',
   'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo hai tài khoản và tải lại trước khi gửi lại.':
     'The result is not confirmed or the link already exists. Close the form, filter by both accounts and reload before sending again.',
+  // FE-35: license pools of all centers.
+  'Kho license các trung tâm': 'Center license pools',
+  'Số license đã dùng, còn trống và hạn dùng của từng trung tâm.':
+    'Used and free licenses and the expiry date of each center.',
+  'Chỉ quản trị hệ thống được xem kho license các trung tâm.':
+    'Only system administrators can view the license pools of all centers.',
+  'Dữ liệu kho license từ máy chủ không hợp lệ.': 'The license pool data from the server is invalid.',
+  'Từ khóa tìm kiếm tối đa 200 ký tự.': 'The search term can be at most 200 characters.',
+  'Số ngày sắp hết hạn phải từ 0 đến 365.': 'Days until expiry must be from 0 to 365.',
+  'Tên trung tâm': 'Center name',
+  'Gõ tên trung tâm': 'Type a center name',
+  'Hết hạn trong (ngày)': 'Expires within (days)',
+  'Kho đang hoạt động': 'Active pools',
+  '{active}/{total} kho': '{active}/{total} pools',
+  'License đã dùng': 'Licenses in use',
+  '{used}/{total} ({percent}%)': '{used}/{total} ({percent}%)',
+  'Cần chú ý': 'Needs attention',
+  '{soon} sắp hết hạn · {suspended} tạm ngưng · {expired} hết hạn':
+    '{soon} expiring soon · {suspended} suspended · {expired} expired',
+  '{count} trung tâm đang hoạt động chưa mua kho license.':
+    '{count} active centers have not bought a license pool.',
+  'Không có kho license phù hợp.': 'No matching license pools.',
+  'Danh sách kho license': 'License pool list',
+  'Đã dùng / tổng': 'Used / total',
+  'Còn trống': 'Free',
+  'Trung tâm ngưng hoạt động': 'Center inactive',
+  'Không hết hạn': 'No expiry',
+  'còn {days} ngày': '{days} days left',
+  '{totalCount} kho · Trang {page}/{p4}': '{totalCount} pools · Page {page}/{p4}',
 } satisfies Record<string, EnMessage>;

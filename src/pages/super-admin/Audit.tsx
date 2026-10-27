@@ -20,7 +20,7 @@ export function Audit() {
   return (
     <>
       <PageHead
-        title={t('Nhật ký kiểm toán')}
+        title={t('Nhật ký thao tác')}
         description={t(
           'Theo dõi thao tác quản trị. Chỉ đọc; không xóa hoặc sửa bản ghi audit trên giao diện.',
         )}
