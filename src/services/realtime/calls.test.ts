@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { createCallClient } from './calls';
+import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 import type { CallSession, createCallsApi } from '../api/calls';
 
@@ -301,7 +302,7 @@ it('does not terminate another device session when accepting fails or another ta
 it('polls authoritative status and closes when access is revoked', async () => {
   const f = fixture();
   await f.client.start(viuId, 'VIU');
-  f.api.authorize.mockRejectedValueOnce(Error('revoked'));
+  f.api.authorize.mockRejectedValueOnce(new ServiceError('revoked', 403));
   await vi.advanceTimersByTimeAsync(10000);
   expect(f.track.stop).toHaveBeenCalled();
   expect(f.client.snapshot().phase).toBe('ended');
@@ -370,5 +371,43 @@ it('keeps active media when another incoming arrives and recovers it after dismi
   await settle();
   expect(f.client.snapshot().sessionId).toBe(viuId);
   expect(f.client.snapshot().phase).toBe('incoming');
+  f.stop();
+});
+
+it('keeps an SOS call when the caregiver license is restricted (402) or the poll fails transiently', async () => {
+  const f = fixture();
+  f.api.authorize.mockRejectedValue(new ServiceError('license', 402));
+  f.emit('WebRtcIncomingCall', {
+    callerName: 'VIU',
+    triggerType: 'SosAuto',
+    receiverRole: 'video_viewer_audio_sender',
+  });
+  await settle();
+  // Answering does not depend on the license-gated link lookup.
+  await f.client.accept();
+  await settle();
+  expect(f.api.authorize).not.toHaveBeenCalled();
+  expect(f.api.accept).toHaveBeenCalledWith(sessionId);
+  f.api.history.mockResolvedValue({ items: [{ ...f.call, status: 'Connected' }] });
+  await vi.advanceTimersByTimeAsync(10000);
+  f.api.history.mockRejectedValueOnce(new ServiceError('offline', 503));
+  await vi.advanceTimersByTimeAsync(10000);
+  expect(f.api.end).not.toHaveBeenCalled();
+  expect(f.track.stop).not.toHaveBeenCalled();
+  expect(f.client.snapshot().phase).not.toBe('ended');
+  f.stop();
+});
+it('a 402 when starting a call flags the license so the panel can link to it', async () => {
+  const f = fixture();
+  f.api.initiate.mockRejectedValueOnce(
+    new ServiceError('VIU license expired', 402, {}, 'VIU_LICENSE_EXPIRED'),
+  );
+  await f.client.start(viuId, 'VIU');
+  await settle();
+  expect(f.client.snapshot()).toMatchObject({ phase: 'ended', license: true });
+  f.api.initiate.mockRejectedValueOnce(new ServiceError('offline', 503));
+  await f.client.start(viuId, 'VIU');
+  await settle();
+  expect(f.client.snapshot().license).toBe(false);
   f.stop();
 });

@@ -4,6 +4,7 @@ import type { HubConnection } from '@microsoft/signalr';
 import type { Person } from '../../models/domain';
 import type { CallSession, createCallsApi } from '../api/calls';
 import type { RealtimeState } from './signalr';
+import { ServiceError } from '../contracts';
 
 const id = z.string().uuid();
 const events = {
@@ -38,6 +39,8 @@ export type CallView = {
   muted: boolean;
   remote: MediaStream | null;
   pending: boolean;
+  /** The last start/answer failed with 402: show the way to the License page. */
+  license: boolean;
 };
 type Api = ReturnType<typeof createCallsApi>;
 type CallHub = Pick<HubConnection, 'on' | 'off'> & {
@@ -85,6 +88,7 @@ export function createCallClient({
     muted: false,
     remote: null,
     pending: false,
+    license: false,
   };
   const listeners = new Set<() => void>();
   const update = (patch: Partial<CallView>) => {
@@ -233,8 +237,12 @@ export function createCallClient({
           message:
             view.phase === 'connected' ? t('Âm thanh và hình ảnh đã kết nối.') : view.message,
         });
-    } catch {
-      if (current(epoch))
+    } catch (error) {
+      // Only a revoked link (403) or a vanished session (404) ends the call. A 402 from an expired
+      // license must never cut an SOS call (BE lets accept/end/history through), and a network
+      // blip is retried on the next poll; losing SignalR is handled by network().
+      const status = error instanceof ServiceError ? error.status : 0;
+      if (current(epoch) && (status === 403 || status === 404))
         await end(
           t('Không thể xác minh quyền hoặc trạng thái cuộc gọi.'),
           'permission_or_network_lost',
@@ -402,10 +410,13 @@ export function createCallClient({
       viuId,
       name,
       message: t('Đang xin quyền micro…'),
+      license: false,
       ...(incoming ? {} : { sessionId: '' }),
     });
     try {
-      await api.authorize(actor, viuId);
+      // Incoming calls skip the link lookup: GET /api/caregiver-links is license-gated (402) while
+      // answering is not, and BE accept already checks that this caregiver is the receiver.
+      if (!incoming) await api.authorize(actor, viuId);
       if (!current(epoch) || !(await acquire(epoch))) return;
       update({ message: t('Đang tạo kết nối…') });
       requested = true;
@@ -436,6 +447,7 @@ export function createCallClient({
             : error instanceof Error
               ? error.message
               : t('Không thể bắt đầu cuộc gọi.');
+        if (error instanceof ServiceError && error.status === 402) update({ license: true });
         if (incoming && !confirmed) {
           // A rejected accept may belong to another device; never end its media session.
           cleanup();
