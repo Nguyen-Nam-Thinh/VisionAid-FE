@@ -38,6 +38,23 @@ const historySchema = z.object({
   hasPreviousPage: z.boolean(),
   hasNextPage: z.boolean(),
 });
+export const boundaryEventTypes = ['Entered', 'Exited', 'Arrived'] as const;
+export type BoundaryEventType = (typeof boundaryEventTypes)[number];
+const boundaryItem = z.object({
+  id: z.string().uuid(),
+  visuallyImpairedUserId: z.string().uuid(),
+  eventType: z.enum(boundaryEventTypes),
+  geofenceId: z.string().uuid().nullable(),
+  geofenceName: z.string().nullable(),
+  savedLocationId: z.string().uuid().nullable(),
+  savedLocationName: z.string().nullable(),
+  ...point,
+  alertSent: z.boolean(),
+  occurredAt: timestamp,
+});
+const boundarySchema = historySchema.extend({ items: z.array(boundaryItem) });
+export type BoundaryEvent = z.infer<typeof boundaryItem>;
+export type BoundaryFilters = HistoryRange & { eventType: BoundaryEventType | ''; page: number };
 export type LiveLocation = z.infer<typeof liveSchema>;
 export type HistoryRange = { dateFrom: string; dateTo: string };
 type Actor = Pick<Person, 'role' | 'orgId'>;
@@ -100,6 +117,31 @@ export function createLocationsApi(get = apiGet) {
       if (dates.dateFrom) query.set('dateFrom', dates.dateFrom);
       if (dates.dateTo) query.set('dateTo', dates.dateTo);
       return parse(historySchema, await get('/api/locations/history?' + query, signal));
+    },
+    /** FE-18: geofence entries/exits and saved-place arrivals of one VIU, newest first. */
+    async boundaryEvents(
+      actor: Actor,
+      viuId: string,
+      filters: BoundaryFilters,
+      signal?: AbortSignal,
+    ) {
+      authorize(actor, viuId);
+      if (!Number.isInteger(filters.page) || filters.page < 1)
+        throw new ServiceError(t('Trang không hợp lệ.'), 400);
+      if (filters.eventType && !boundaryEventTypes.includes(filters.eventType))
+        throw new ServiceError(t('Loại sự kiện không hợp lệ.'), 400);
+      const dates = historyRange(filters.dateFrom, filters.dateTo);
+      const query = new URLSearchParams({ viuId, page: String(filters.page), pageSize: '10' });
+      if (filters.eventType) query.set('eventType', filters.eventType);
+      if (dates.dateFrom) query.set('dateFrom', dates.dateFrom);
+      if (dates.dateTo) query.set('dateTo', dates.dateTo);
+      const data = parse(
+        boundarySchema,
+        await get('/api/locations/boundary-events?' + query, signal),
+      );
+      if (data.items.some((item) => item.visuallyImpairedUserId !== viuId))
+        throw new ServiceError(t('Sự kiện không thuộc VIU được chọn.'), 403);
+      return data;
     },
   };
 }

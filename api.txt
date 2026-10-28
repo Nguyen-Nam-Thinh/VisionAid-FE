@@ -529,6 +529,16 @@ Kiểm thử tự động dùng fixture, chưa có xác nhận nghiệm thu BE t
   Body/schema: Không khai báo request body
   Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/LocationController.cs
 
+051b. GET /api/locations/boundary-events
+  Trạng thái: DA_NOI | Đợt: FE-18 (BE 68dbc6a)
+  Màn/luồng: /caregiver/alerts, mục Cảnh báo vùng an toàn (chọn VIU trước, chỉ đọc)
+  File FE: src/services/api/locations.ts -> boundaryEvents; src/pages/shared/ApiAlerts.tsx
+  Dùng để: Lịch sử Entered/Exited (geofence) và Arrived (saved location), mới nhất trước. SignalR GeofenceBreach làm mới query 'api-boundary-events'. CenterAdmin được BE cho phép nhưng Web chưa mở màn riêng.
+  Quyền controller: Roles = "Caregiver,CenterAdmin"; handler: Caregiver có link hoặc CenterAdmin cùng org
+  Query: viuId (hoặc viuUserId), eventType (Entered|Exited|Arrived), dateFrom, dateTo, page, pageSize (1-100, Web dùng 10)
+  Body/schema: Không khai báo request body; response PagedResult<BoundaryEventResponse>, geofenceName/savedLocationName null khi đã xóa
+  Nguồn BE: src/Modules/VisionAid.Modules.Location/Presentation/LocationController.cs
+
 052. POST /api/navigation/sessions
   Trạng thái: MOBILE | Đợt: 12
   Màn/luồng: Mobile của VIU; không có caller Web
