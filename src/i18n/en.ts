@@ -2652,7 +2652,8 @@ export const en = {
     'Used and free licenses and the expiry date of each center.',
   'Chỉ quản trị hệ thống được xem kho license các trung tâm.':
     'Only system administrators can view the license pools of all centers.',
-  'Dữ liệu kho license từ máy chủ không hợp lệ.': 'The license pool data from the server is invalid.',
+  'Dữ liệu kho license từ máy chủ không hợp lệ.':
+    'The license pool data from the server is invalid.',
   'Từ khóa tìm kiếm tối đa 200 ký tự.': 'The search term can be at most 200 characters.',
   'Số ngày sắp hết hạn phải từ 0 đến 365.': 'Days until expiry must be from 0 to 365.',
   'Tên trung tâm': 'Center name',
@@ -2675,4 +2676,23 @@ export const en = {
   'Không hết hạn': 'No expiry',
   'còn {days} ngày': '{days} days left',
   '{totalCount} kho · Trang {page}/{p4}': '{totalCount} pools · Page {page}/{p4}',
+  'Đi vào vùng an toàn': 'Entered safe zone',
+  'Ra khỏi vùng an toàn': 'Left safe zone',
+  'Đến địa điểm đã lưu': 'Arrived at saved place',
+  'Cảnh báo vùng an toàn': 'Safe zone alerts',
+  'Lịch sử ra/vào vùng an toàn và đến địa điểm đã lưu do máy chủ ghi nhận. Chọn một người được chăm sóc để xem.':
+    'Safe zone entries/exits and saved place arrivals recorded by the server. Choose a care recipient to view them.',
+  'Xem sự kiện vùng': 'Show zone events',
+  'Chọn người được chăm sóc trước.': 'Choose a care recipient first.',
+  'Chưa chọn người được chăm sóc.': 'No care recipient selected.',
+  'Không có sự kiện vùng an toàn phù hợp.': 'No matching safe zone events.',
+  'Danh sách sự kiện vùng an toàn': 'Safe zone event list',
+  'Vùng / địa điểm': 'Zone / place',
+  'Đã gửi cảnh báo': 'Alert sent',
+  'Vị trí': 'Location',
+  'Vùng hoặc địa điểm đã bị xóa': 'Zone or place was deleted',
+  'Không gửi': 'Not sent',
+  '{totalCount} sự kiện · Trang {page}/{p4}': '{totalCount} events · Page {page}/{p4}',
+  'Loại sự kiện không hợp lệ.': 'Invalid event type.',
+  'Sự kiện không thuộc VIU được chọn.': 'Event does not belong to the selected VIU.',
 } satisfies Record<string, EnMessage>;

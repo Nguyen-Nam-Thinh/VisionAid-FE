@@ -1870,7 +1870,10 @@ async function stubPeopleSearch(page: Page, people: Record<string, string>) {
 async function openFilters(page: Page, index = 0) {
   // The name grows to "Bộ lọc N điều kiện" once filters are applied. Pages with two panels
   // (report dates + members, map people + movement history) pass the panel index.
-  await page.getByRole('button', { name: /^Bộ lọc/ }).nth(index).click();
+  await page
+    .getByRole('button', { name: /^Bộ lọc/ })
+    .nth(index)
+    .click();
 }
 async function pick(scope: Page | Locator, label: string, term: string, option: RegExp) {
   await scope.getByRole('combobox', { name: label, exact: true }).fill(term);
@@ -6071,4 +6074,72 @@ test('Center Admin reads organization call history with VIU and date filters', a
   expect(last.get('viuUserId')).toBe(viuId);
   expect(last.get('dateFrom')).toMatch(/^2026-10-26T17:00:00/);
   await page.screenshot({ path: 'test-results/center-admin-calls.png', fullPage: true });
+});
+test('FE-18: caregiver views geofence alerts of a chosen VIU with type and page filters', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const viu = '01900000-0000-7000-8000-000000000061';
+  await stubPeopleSearch(page, { VisuallyImpaired: viu });
+  await page.route('http://localhost:5176/api/emergency-events?*', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([]) } }),
+  );
+  const reads: URL[] = [];
+  await page.route('http://localhost:5176/api/locations/boundary-events?*', (route) => {
+    const url = new URL(route.request().url());
+    reads.push(url);
+    const event = (n: number, eventType: string, geofenceName: string | null) => ({
+      id: '01900000-0000-7000-8000-00000000007' + n,
+      visuallyImpairedUserId: viu,
+      eventType,
+      geofenceId: geofenceName ? '01900000-0000-7000-8000-000000000081' : null,
+      geofenceName,
+      savedLocationId: null,
+      savedLocationName: null,
+      latitude: 10.762622,
+      longitude: 106.660172,
+      alertSent: eventType === 'Exited',
+      occurredAt: '2026-10-28T02:00:0' + n + 'Z',
+    });
+    const items =
+      url.searchParams.get('eventType') === 'Exited'
+        ? [event(1, 'Exited', 'Nhà')]
+        : [event(1, 'Exited', 'Nhà'), event(2, 'Entered', null)];
+    return route.fulfill({
+      json: {
+        success: true,
+        data: {
+          items,
+          page: 1,
+          pageSize: 10,
+          totalCount: items.length,
+          totalPages: 1,
+          hasPreviousPage: false,
+          hasNextPage: false,
+        },
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/caregiver/alerts');
+  const section = page.getByRole('region', { name: 'Cảnh báo vùng an toàn' });
+  await expect(section.getByText('Chưa chọn người được chăm sóc.')).toBeVisible();
+  expect(reads).toHaveLength(0);
+  await openFilters(page, 1);
+  await pick(section, 'Người được chăm sóc', 'VIU', /VIU mẫu/);
+  await section.getByRole('button', { name: 'Xem sự kiện vùng' }).click();
+  const table = section.getByRole('region', { name: 'Danh sách sự kiện vùng an toàn' });
+  await expect(table.getByRole('row')).toHaveCount(3);
+  await expect(table).toContainText('Ra khỏi vùng an toàn');
+  await expect(table).toContainText('Nhà');
+  await expect(table).toContainText('Vùng hoặc địa điểm đã bị xóa');
+  await expect(table).toContainText('10.76262, 106.66017');
+  expect(reads[0].searchParams.get('viuId')).toBe(viu);
+  expect(reads[0].searchParams.has('eventType')).toBe(false);
+  await page.screenshot({ path: 'test-results/fe18-geofence-alerts.png', fullPage: true });
+  await openFilters(page, 1);
+  await section.getByLabel('Loại sự kiện').selectOption('Exited');
+  await section.getByRole('button', { name: 'Xem sự kiện vùng' }).click();
+  await expect(table.getByRole('row')).toHaveCount(2);
+  expect(reads.at(-1)!.searchParams.get('eventType')).toBe('Exited');
 });

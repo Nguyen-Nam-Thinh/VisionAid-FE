@@ -12,7 +12,12 @@ import {
   type AlertFilters,
   type Escalation,
 } from '../../services/api/emergencies';
-import { historyRange } from '../../services/api/locations';
+import {
+  historyRange,
+  locationsApi,
+  boundaryEventTypes,
+  type BoundaryFilters,
+} from '../../services/api/locations';
 import { caregivingApi } from '../../services/api/caregiving';
 import { PageHead, State, Dialog, Confirm } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
@@ -27,6 +32,11 @@ const methods: Record<string, string> = labelMap({
   Manual: msg('Thủ công'),
   VoiceCommand: msg('Giọng nói'),
   Gesture: msg('Cử chỉ'),
+});
+const boundaryLabels: Record<string, string> = labelMap({
+  Entered: msg('Đi vào vùng an toàn'),
+  Exited: msg('Ra khỏi vùng an toàn'),
+  Arrived: msg('Đến địa điểm đã lưu'),
 });
 export function ApiAlerts() {
   const { data: actor } = useSession();
@@ -212,7 +222,176 @@ function Alerts({ actor }: { actor: Person }) {
       {selected && !query.isError && (
         <AlertDetail key={selected} actor={actor} id={selected} onClose={() => setSelected('')} />
       )}
+      <BoundaryAlerts actor={actor} />
     </>
+  );
+}
+// FE-18 / WF-05: geofence entries/exits and saved-place arrivals are read-only history of one
+// VIU (the API needs viuId). SignalR GeofenceBreach refreshes the 'api-boundary-events' query.
+function BoundaryAlerts({ actor }: { actor: Person }) {
+  const [viu, setViu] = useState('');
+  const [viuId, setViuId] = useState('');
+  const [filters, setFilters] = useState<BoundaryFilters>({
+    eventType: '',
+    dateFrom: '',
+    dateTo: '',
+    page: 1,
+  });
+  const [error, setError] = useState('');
+  const query = useQuery({
+    queryKey: ['api-boundary-events', actor.id, actor.orgId, viuId, filters],
+    queryFn: ({ signal }) => locationsApi.boundaryEvents(actor, viuId, filters, signal),
+    enabled: Boolean(viuId),
+    refetchInterval: 30000,
+    retry: false,
+  });
+  return (
+    <section className="glass card stack" aria-labelledby="boundary-alerts-title">
+      <h2 id="boundary-alerts-title">{t('Cảnh báo vùng an toàn')}</h2>
+      <p>
+        {t(
+          'Lịch sử ra/vào vùng an toàn và đến địa điểm đã lưu do máy chủ ghi nhận. Chọn một người được chăm sóc để xem.',
+        )}
+      </p>
+      <FilterPanel
+        active={[viuId, filters.eventType, filters.dateFrom, filters.dateTo].filter(Boolean).length}
+        submitLabel={t('Xem sự kiện vùng')}
+        onApply={(form) => {
+          const data = new FormData(form);
+          if (!viu) {
+            setError(t('Chọn người được chăm sóc trước.'));
+            return;
+          }
+          try {
+            const range = historyRange(String(data.get('from')), String(data.get('to')));
+            const type = String(data.get('eventType'));
+            setFilters({
+              ...range,
+              eventType: boundaryEventTypes.find((v) => v === type) ?? '',
+              page: 1,
+            });
+            setViuId(viu);
+            setError('');
+          } catch (err) {
+            setError((err as Error).message);
+          }
+        }}
+        onReset={() => {
+          setViu('');
+          setViuId('');
+          setFilters({ eventType: '', dateFrom: '', dateTo: '', page: 1 });
+          setError('');
+        }}
+      >
+        <SearchPicker
+          label={t('Người được chăm sóc')}
+          placeholder={t('Gõ tên hoặc email')}
+          value={viu}
+          onChange={setViu}
+          search={searchCareRecipients()}
+          queryKey={['boundary-viu', actor.id, actor.orgId]}
+        />
+        <label className="field">
+          {t('Loại sự kiện')}
+          <select name="eventType">
+            <option value="">{t('Tất cả')}</option>
+            {boundaryEventTypes.map((v) => (
+              <option key={v} value={v}>
+                {boundaryLabels[v]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="filter-range wide">
+          <label className="field">
+            {t('Từ thời gian')}
+            <input name="from" type="datetime-local" />
+          </label>
+          <label className="field">
+            {t('Đến thời gian')}
+            <input name="to" type="datetime-local" />
+          </label>
+        </div>
+      </FilterPanel>
+      {error && (
+        <p role="alert" className="notice error">
+          {error}
+        </p>
+      )}
+      {!viuId ? (
+        <p>{t('Chưa chọn người được chăm sóc.')}</p>
+      ) : (
+        <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
+          {query.data && (
+            <>
+              {!query.data.items.length && <p>{t('Không có sự kiện vùng an toàn phù hợp.')}</p>}
+              {query.data.items.length > 0 && (
+                <div
+                  className="table-scroll"
+                  tabIndex={0}
+                  role="region"
+                  aria-label={t('Danh sách sự kiện vùng an toàn')}
+                >
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{t('Sự kiện')}</th>
+                        <th>{t('Vùng / địa điểm')}</th>
+                        <th>{t('Đã gửi cảnh báo')}</th>
+                        <th>{t('Vị trí')}</th>
+                        <th>{t('Thời gian')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {query.data.items.map((event) => (
+                        <tr key={event.id}>
+                          <td>
+                            <strong>{boundaryLabels[event.eventType]}</strong>
+                          </td>
+                          <td>
+                            {event.geofenceName ??
+                              event.savedLocationName ??
+                              t('Vùng hoặc địa điểm đã bị xóa')}
+                          </td>
+                          <td>{event.alertSent ? t('Đã gửi') : t('Không gửi')}</td>
+                          <td>
+                            {event.latitude.toFixed(5)}, {event.longitude.toFixed(5)}
+                          </td>
+                          <td>{time(event.occurredAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="row pagination">
+                <span>
+                  {t('{totalCount} sự kiện · Trang {page}/{p4}', {
+                    totalCount: query.data.totalCount,
+                    page: query.data.page,
+                    p4: Math.max(1, query.data.totalPages),
+                  })}
+                </span>
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasPreviousPage}
+                  onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+                >
+                  {t('Trang trước')}
+                </button>
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasNextPage}
+                  onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+                >
+                  {t('Trang sau')}
+                </button>
+              </div>
+            </>
+          )}
+        </State>
+      )}
+    </section>
   );
 }
 // BR-29 / UC-132: alerts still Sent after 5 minutes. SignalR EscalationSuggestion (every minute)
