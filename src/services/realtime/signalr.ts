@@ -73,6 +73,7 @@ export function refreshRealtimeQueries(cache: QueryClient, scope: Scope) {
           'api-alerts',
           'api-alert-detail',
           'api-alert-permission',
+          'api-boundary-events',
         ].includes(String(q.queryKey[0])) &&
         q.queryKey[1] === scope.id &&
         q.queryKey[2] === scope.orgId,

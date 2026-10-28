@@ -75,3 +75,61 @@ it('marks old recorded GPS stale even if server update is recent', () => {
   expect(locationAge(live.cachedAt, Date.parse(live.cachedAt))).toContain('Ghi nhận');
   expect(locationAge(live.updatedAt, Date.parse(live.cachedAt))).toContain('kiểm tra');
 });
+it('pages boundary events with type and UTC dates and rejects events of another VIU', async () => {
+  const event = {
+    id: other,
+    visuallyImpairedUserId: id,
+    eventType: 'Exited',
+    geofenceId: other,
+    geofenceName: 'Nhà',
+    savedLocationId: null,
+    savedLocationName: null,
+    latitude: 0,
+    longitude: 0,
+    alertSent: true,
+    occurredAt: live.cachedAt,
+  };
+  const page = {
+    items: [event],
+    page: 1,
+    pageSize: 10,
+    totalCount: 1,
+    totalPages: 1,
+    hasPreviousPage: false,
+    hasNextPage: false,
+  };
+  const get = vi.fn<NonNullable<Parameters<typeof createLocationsApi>[0]>>(async () => page);
+  const api = createLocationsApi(get);
+  const range = historyRange('2026-09-26T07:00:00+07:00', '');
+  expect(
+    (await api.boundaryEvents(actor, id, { ...range, eventType: 'Exited', page: 1 })).items[0],
+  ).toEqual(event);
+  const url = new URL(get.mock.calls[0][0], 'http://test');
+  expect(url.pathname).toBe('/api/locations/boundary-events');
+  expect(url.searchParams.get('viuId')).toBe(id);
+  expect(url.searchParams.get('eventType')).toBe('Exited');
+  expect(url.searchParams.get('dateFrom')).toBe('2026-09-26T00:00:00.000Z');
+  expect(url.searchParams.has('dateTo')).toBe(false);
+  get.mockResolvedValue({ ...page, items: [{ ...event, visuallyImpairedUserId: other }] });
+  await expect(
+    api.boundaryEvents(actor, id, { ...range, eventType: '', page: 1 }),
+  ).rejects.toMatchObject({
+    status: 403,
+  });
+  get.mockResolvedValue({ ...page, items: [{ ...event, eventType: 'Breached' }] });
+  await expect(
+    api.boundaryEvents(actor, id, { ...range, eventType: '', page: 1 }),
+  ).rejects.toMatchObject({
+    status: 502,
+  });
+  get.mockClear();
+  await expect(
+    api.boundaryEvents({ role: 'Admin', orgId: '' }, id, { ...range, eventType: '', page: 1 }),
+  ).rejects.toMatchObject({ status: 403 });
+  await expect(
+    api.boundaryEvents(actor, id, { ...range, eventType: '', page: 0 }),
+  ).rejects.toMatchObject({
+    status: 400,
+  });
+  expect(get).not.toHaveBeenCalled();
+});
