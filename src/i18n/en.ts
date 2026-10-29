@@ -2654,4 +2654,10 @@ export const en = {
   'Mã ngôn ngữ, ví dụ vi-VN hoặc en-US. Giọng đọc khả dụng phụ thuộc thiết bị.':
     'Language code, for example vi-VN or en-US. Available voices depend on the device.',
   'Để trống nếu không dùng ngôn ngữ phụ.': 'Leave empty if no secondary language is used.',
+  'Xuất CSV': 'Export CSV',
+  'Đang xuất…': 'Exporting…',
+  'Không có lịch sử phù hợp để xuất.': 'There is no matching history to export.',
+  'Đã xuất {count} bản ghi.': 'Exported {count} records.',
+  'Đã xuất {count} bản ghi mới nhất trong tổng số {total}.':
+    'Exported the latest {count} of {total} records.',
 } satisfies Record<string, EnMessage>;

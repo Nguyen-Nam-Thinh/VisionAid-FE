@@ -147,6 +147,13 @@ const pageSchema = z.object({
   hasPreviousPage: z.boolean(),
 });
 export type ActivityPage = Omit<z.infer<typeof pageSchema>, 'items'> & { items: ActivityRecord[] };
+// History endpoints accept pageSize up to 100; the cap keeps an export to at most 50 requests.
+const exportPageSize = 100;
+export const maxExportRows = 5000;
+/** Columns of a CSV export: every field except internal ids, in the order the API defines them. */
+export function exportColumns(kind: ActivityKind) {
+  return Object.keys(activityKinds[kind].schema.shape).filter((key) => !/^id$|Id$/.test(key));
+}
 function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
   const parsed = schema.safeParse(raw);
   if (!parsed.success) throw new ServiceError(t('Dữ liệu lịch sử từ máy chủ không hợp lệ.'), 502);
@@ -162,10 +169,10 @@ function scoped(schema: z.ZodType, raw: unknown, viuId: string, id?: string): Ac
     throw new ServiceError(t('Lịch sử không thuộc người hoặc bản ghi được chọn.'), 403);
   return data;
 }
-function queryParams(page: number, range: HistoryRange) {
+function queryParams(page: number, range: HistoryRange, pageSize = 10) {
   if (!Number.isInteger(page) || page < 1) throw new ServiceError(t('Trang không hợp lệ.'), 400);
   const dates = historyRange(range.dateFrom, range.dateTo);
-  const query = new URLSearchParams({ page: String(page), pageSize: '10' });
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
   if (dates.dateFrom) query.set('dateFrom', dates.dateFrom);
   if (dates.dateTo) query.set('dateTo', dates.dateTo);
   return query;
@@ -208,6 +215,23 @@ export function createActivityApi(get = apiGet) {
       id,
     );
   }
+  async function fetchPage(
+    viuId: string,
+    kind: ActivityKind,
+    page: number,
+    range: HistoryRange,
+    pageSize: number,
+    signal?: AbortSignal,
+  ): Promise<ActivityPage> {
+    const query = queryParams(page, range, pageSize);
+    query.set(kind === 'recognition' ? 'viuId' : 'userId', viuId);
+    const data = parse(pageSchema, await get(`${activityKinds[kind].path}?${query}`, signal));
+    if (data.page !== page) throw new ServiceError(t('Máy chủ trả về sai trang lịch sử.'), 502);
+    return {
+      ...data,
+      items: data.items.map((item) => scoped(activityKinds[kind].schema, item, viuId)),
+    };
+  }
   return {
     async list(
       actor: Person,
@@ -217,14 +241,32 @@ export function createActivityApi(get = apiGet) {
       range: HistoryRange,
       signal?: AbortSignal,
     ): Promise<ActivityPage> {
-      const query = queryParams(page, range);
+      queryParams(page, range);
       await authorize(actor, viuId, signal);
-      query.set(kind === 'recognition' ? 'viuId' : 'userId', viuId);
-      const data = parse(pageSchema, await get(`${activityKinds[kind].path}?${query}`, signal));
-      if (data.page !== page) throw new ServiceError(t('Máy chủ trả về sai trang lịch sử.'), 502);
+      return fetchPage(viuId, kind, page, range, 10, signal);
+    },
+    /** UC-74: every record matching the filter, newest first as the server returns them. */
+    async exportAll(
+      actor: Person,
+      viuId: string,
+      kind: ActivityKind,
+      range: HistoryRange,
+      signal?: AbortSignal,
+    ): Promise<{ items: ActivityRecord[]; totalCount: number; truncated: boolean }> {
+      queryParams(1, range);
+      await authorize(actor, viuId, signal);
+      const items: ActivityRecord[] = [];
+      let totalCount = 0;
+      for (let page = 1; items.length < maxExportRows; page++) {
+        const data = await fetchPage(viuId, kind, page, range, exportPageSize, signal);
+        totalCount = data.totalCount;
+        items.push(...data.items);
+        if (!data.hasNextPage || !data.items.length) break;
+      }
       return {
-        ...data,
-        items: data.items.map((item) => scoped(activityKinds[kind].schema, item, viuId)),
+        items: items.slice(0, maxExportRows),
+        totalCount,
+        truncated: totalCount > maxExportRows,
       };
     },
     detail,

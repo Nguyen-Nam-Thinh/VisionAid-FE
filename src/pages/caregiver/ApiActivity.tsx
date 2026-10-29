@@ -1,4 +1,4 @@
-import { RefreshCw } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import { t, msg, labelMap, tText, getLocale } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -8,12 +8,15 @@ import {
   activityApi,
   activityKinds,
   activityDateRange,
+  exportColumns,
+  maxExportRows,
   type ActivityKind,
   type ActivityRecord,
   type ActivityPage,
 } from '../../services/api/activity';
 import { FilterPanel } from '../../components/FilterPanel';
-import { PageHead, State, Dialog } from '../../components/UI';
+import { PageHead, State, Dialog, Toast } from '../../components/UI';
+import { toCsv, downloadCsv } from '../../services/csv';
 import { formatTime } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 import { uiStore, useUI } from '../../stores/ui';
@@ -233,6 +236,43 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
   const [range, setRange] = useState({ dateFrom: '', dateTo: '' });
   const [error, setError] = useState('');
   const [detail, setDetail] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [notice, setNotice] = useState('');
+  // UC-74: export everything matching the current type and dates, with the labels shown on screen.
+  const exportCsv = async () => {
+    setExporting(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await activityApi.exportAll(actor, viuId, kind, range);
+      if (!result.items.length) {
+        setNotice(t('Không có lịch sử phù hợp để xuất.'));
+        return;
+      }
+      const columns = exportColumns(kind);
+      const cell = (key: string, value: ActivityRecord[string]) =>
+        value === null || value === undefined || value === '' ? '' : display(key, value);
+      downloadCsv(
+        `visionaid-${kind}-${new Date().toISOString().slice(0, 10)}.csv`,
+        toCsv([
+          columns.map((key) => labels[key] || key),
+          ...result.items.map((item) => columns.map((key) => cell(key, item[key]))),
+        ]),
+      );
+      setNotice(
+        result.truncated
+          ? t('Đã xuất {count} bản ghi mới nhất trong tổng số {total}.', {
+              count: maxExportRows,
+              total: result.totalCount,
+            })
+          : t('Đã xuất {count} bản ghi.', { count: result.items.length }),
+      );
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  };
   const query = useQuery({
     queryKey: ['api-activity', actor.id, actor.orgId, viuId, kind, range, page],
     queryFn: ({ signal }) => activityApi.list(actor, viuId, kind, page, range, signal),
@@ -283,15 +323,26 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
           setError('');
         }}
         tools={
-          <button
-            type="button"
-            className="btn"
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
-          >
-            <RefreshCw size={16} aria-hidden="true" />
-            {t('Tải lại lịch sử')}
-          </button>
+          <>
+            <button
+              type="button"
+              className="btn"
+              disabled={query.isFetching}
+              onClick={() => void query.refetch()}
+            >
+              <RefreshCw size={16} aria-hidden="true" />
+              {t('Tải lại lịch sử')}
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={exporting || !query.data?.totalCount}
+              onClick={() => void exportCsv()}
+            >
+              <Download size={16} aria-hidden="true" />
+              {exporting ? t('Đang xuất…') : t('Xuất CSV')}
+            </button>
+          </>
         }
       >
         <div className="filter-range wide">
@@ -315,6 +366,7 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
           {error}
         </p>
       )}
+      {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {query.data?.items.length ? (
           <div className="table-scroll">
