@@ -1,4 +1,5 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 for (const [role, org] of [
   ['Caregiver', null],
   ['Caregiver', '01900000-0000-7000-8000-000000000002'],
@@ -6145,4 +6146,104 @@ test('FE-18: caregiver views geofence alerts of a chosen VIU with type and page 
   await section.getByRole('button', { name: 'Xem sự kiện vùng' }).click();
   await expect(table.getByRole('row')).toHaveCount(2);
   expect(reads.at(-1)!.searchParams.get('eventType')).toBe('Exited');
+});
+test('UC-74: export the filtered activity history as a CSV download', async ({ page }) => {
+  await stubApi(page);
+  const viuId = '01900000-0000-7000-8000-000000000093';
+  const ocr = (n: number, rawText: string) => ({
+    id: '01900000-0000-7000-8000-00000000010' + n,
+    userId: viuId,
+    latitude: null,
+    longitude: null,
+    requestedAt: '2026-10-11T0' + n + ':00:00Z',
+    triggerMethod: 'Manual',
+    ocrEngine: 'VietOCR',
+    processingTimeMs: 120,
+    resultStatus: 'Success',
+    errorMessage: null,
+    ttsAnnounced: true,
+    requestType: 'Text',
+    rawText,
+    processedText: null,
+    confidenceScore: 0.9,
+    languageDetected: 'vi',
+  });
+  const items = [ocr(1, 'Hóa đơn, "điện" tháng 10'), ocr(2, '=HYPERLINK("http://x")')];
+  const sizes: string[] = [];
+  await page.route('**/api/users?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: viuId,
+            fullName: 'VIU xuất lịch sử',
+            email: 'export@example.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId: null,
+            isActive: true,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route('**/api/caregiver-links?**', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id,
+            caregiverId: id,
+            visuallyImpairedUserId: viuId,
+            viuFullName: 'VIU xuất lịch sử',
+            isPrimary: true,
+            linkType: 'Personal',
+            canReceiveAlerts: true,
+            canManageRegistry: false,
+            canManageLocations: false,
+            linkedAt: '',
+            unlinkedAt: null,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route(/\/api\/(navigation\/sessions|ocr\/requests)\?/, (route) => {
+    const url = new URL(route.request().url());
+    sizes.push(url.searchParams.get('pageSize') ?? '');
+    const data = url.pathname.startsWith('/api/ocr') ? items : [];
+    return route.fulfill({
+      json: {
+        success: true,
+        data: { ...organizationPage(data), page: Number(url.searchParams.get('page') || 1) },
+      },
+    });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Nhật ký hoạt động', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
+    .selectOption(viuId);
+  const exportButton = page.getByRole('button', { name: 'Xuất CSV', exact: true });
+  await expect(exportButton).toBeDisabled();
+  await page.getByRole('combobox', { name: 'Loại hoạt động', exact: true }).selectOption('ocr');
+  await expect(exportButton).toBeEnabled();
+  const download = page.waitForEvent('download');
+  await exportButton.click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/^visionaid-ocr-\d{4}-\d{2}-\d{2}\.csv$/);
+  const csv = readFileSync(await file.path(), 'utf8');
+  expect(csv.startsWith('﻿')).toBe(true);
+  const lines = csv.slice(1).split('\r\n');
+  expect(lines).toHaveLength(3);
+  expect(lines[0].split(',')).toContain('Văn bản gốc');
+  expect(lines[0]).not.toMatch(/\bid\b|userId/);
+  expect(csv).toContain('"Hóa đơn, ""điện"" tháng 10"');
+  expect(csv).toContain(`"'=HYPERLINK(""http://x"")"`);
+  expect(csv).toContain('90.0%');
+  expect(csv).not.toContain(viuId);
+  expect(sizes).toContain('100');
+  await expect(page.getByText('Đã xuất 2 bản ghi.')).toBeVisible();
 });
