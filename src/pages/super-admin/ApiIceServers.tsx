@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t } from '../../i18n';
 import { Toast, CardActions } from '../../components/UI';
 import { useState } from 'react';
@@ -66,6 +67,7 @@ function Servers({ actor }: { actor: Person }) {
             </select>
           </label>
           <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+            <RefreshCw size={16} aria-hidden="true" />
             {t('Tải lại')}
           </button>
         </div>

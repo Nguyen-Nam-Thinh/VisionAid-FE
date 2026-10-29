@@ -57,8 +57,6 @@ export const en = {
   'Cảnh báo khẩn cấp': 'Emergency alerts',
   'Bản đồ theo dõi': 'Tracking map',
   'Người được chăm sóc': 'Care recipients',
-  'Sẵn sàng gọi hỗ trợ. Micro chỉ bật khi bạn bắt đầu hoặc nhận cuộc gọi.':
-    'Ready for support calls. The microphone turns on only when you start or answer a call.',
   'Chưa kết nối dịch vụ cuộc gọi. Nếu chờ lâu, kiểm tra mạng rồi tải lại trang.':
     'Not connected to the call service. If this takes long, check your network and reload the page.',
   'Gọi hỗ trợ': 'Support call',
@@ -465,9 +463,6 @@ export const en = {
   'Chưa có phát hiện được lưu trong phiên này.': 'No detections saved in this session.',
   'Thời gian hiển thị theo giờ Việt Nam.': 'Times are shown in Vietnam time.',
   'Lịch sử của {name}': 'History of {name}',
-  'Dữ liệu do Mobile gửi lên, trong thời hạn lưu trữ của máy chủ. Không có bản ghi không có nghĩa là người dùng không hoạt động.':
-    "Data sent by Mobile, within the server's retention period. No records does not mean the user was inactive.",
-  'Lọc lịch sử': 'Filter history',
   'Tải lại lịch sử': 'Reload history',
   'Ngày lọc và thời gian hiển thị theo giờ Việt Nam. Để trống ngày để xem toàn bộ thời gian còn lưu.':
     'Filter dates and displayed times use Vietnam time. Leave dates empty to see all retained history.',
@@ -482,8 +477,6 @@ export const en = {
   'Chọn người được chăm sóc': 'Choose a care recipient',
   '{totalCount} người · Trang {page}/{p4}': '{totalCount} people · Page {page}/{p4}',
   'Chưa có người được chăm sóc phù hợp.': 'No matching care recipients.',
-  'Để bắt đầu gọi, vào Người được chăm sóc và chọn Gọi hỗ trợ. Kết quả dưới đây do máy chủ ghi nhận.':
-    'To start a call, go to Care recipients and choose Support call. The results below are recorded by the server.',
   'Từ thời điểm': 'From',
   'Đến thời điểm': 'To',
   'Tải lại': 'Reload',
@@ -603,9 +596,6 @@ export const en = {
   'Địa điểm của {name}': 'Places of {name}',
   'Loại địa điểm': 'Place type',
   'Địa điểm đã lưu': 'Saved places',
-  'Nhập tọa độ chính xác để xác định vị trí. Cảnh báo vào, ra và lời nhắc đến nơi phụ thuộc GPS trên điện thoại và hệ thống xử lý.':
-    "Enter exact coordinates to set the location. Enter/exit alerts and arrival reminders depend on the phone's GPS and the processing system.",
-  'Tải lại địa điểm': 'Reload places',
   'Thêm vùng an toàn': 'Add safe zone',
   'Thêm địa điểm': 'Add place',
   'Bạn có quyền xem. Cần quyền quản lý vị trí để thêm, sửa hoặc xóa.':
@@ -644,8 +634,6 @@ export const en = {
   Tắt: 'Off',
   'Quản lý người thân và ảnh dùng cho nhận diện của người được chăm sóc.':
     'Manage family members and the photos used to recognize them for the care recipient.',
-  'Tối đa {max} người. Cần ít nhất {min} ảnh để kích hoạt mỗi người. Trạng thái nhận từ máy chủ; khả năng nhận diện còn phụ thuộc chất lượng ảnh và hệ thống AI.':
-    'At most {max} people. Each person needs at least {min} photos to be activated. Status comes from the server; recognition still depends on photo quality and the AI system.',
   'Tìm người thân': 'Find a family member',
   'Tải lại danh bạ': 'Reload registry',
   'Thêm người thân': 'Add family member',
@@ -707,13 +695,8 @@ export const en = {
   'Âm lượng': 'Volume',
   'Từ 0 đến 100%. Mức 0 sẽ tắt âm thanh giọng đọc.': 'From 0 to 100%. Level 0 mutes the voice.',
   'Ngôn ngữ chính': 'Primary language',
-  'Mã ngôn ngữ, ví dụ vi-VN hoặc en-US. Giọng đọc khả dụng phụ thuộc thiết bị.':
-    'Language code, for example vi-VN or en-US. Available voices depend on the device.',
   'Ngôn ngữ phụ': 'Secondary language',
-  'Để trống nếu không dùng ngôn ngữ phụ.': 'Leave empty if no secondary language is used.',
   'Giọng đọc của {name}': 'Voice of {name}',
-  'Mobile cần tải lại cấu hình để áp dụng. Lưu thành công không xác nhận thiết bị đã đổi giọng đọc.':
-    'Mobile must reload its configuration to apply it. A successful save does not confirm the device has changed its voice.',
   'Không dùng': 'Not used',
   ' lần': '×',
   'Chưa có cấu hình giọng đọc. Bạn có thể tạo cấu hình cho người được chọn.':
@@ -804,8 +787,6 @@ export const en = {
   'Đến ngày UTC': 'To UTC date',
   'Xem báo cáo': 'View report',
   'Tải lại báo cáo': 'Reload report',
-  'Máy chủ tính theo ngày UTC: một ngày bắt đầu lúc 07:00 giờ Việt Nam và kết thúc ngay trước 07:00 hôm sau. Để trống ngày để xem toàn bộ dữ liệu còn lưu.':
-    'The server counts by UTC date: a day starts at 07:00 Vietnam time and ends just before 07:00 the next day. Leave dates empty to see all retained data.',
   'Kỳ báo cáo UTC:': 'UTC reporting period:',
   'Không giới hạn đầu kỳ': 'No start limit',
   'Không giới hạn cuối kỳ': 'No end limit',
@@ -818,8 +799,6 @@ export const en = {
   'Số liệu do máy chủ tổng hợp cho các thành viên khiếm thị hiện thuộc trung tâm, chưa bị xóa. Các nhóm có thể trùng sự kiện nên không cộng thành một tổng chung.':
     'Figures aggregated by the server for visually impaired members currently in the center and not deleted. Groups may overlap, so they are not added into one total.',
   'Thành viên hiện tại': 'Current members',
-  'Danh sách thành viên có bộ lọc riêng, không phụ thuộc khoảng ngày báo cáo.':
-    'The member list has its own filters, independent of the report date range.',
   'Tìm thành viên': 'Find a member',
   'Lọc thành viên': 'Filter members',
   'Tải lại thành viên': 'Reload members',
@@ -1070,11 +1049,7 @@ export const en = {
   'Hết hạn kỳ sử dụng': 'Period expires',
   'Trial và Personal hỗ trợ tối đa {max} người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.':
     'Trial and Personal support up to {max} care recipients. Access to each person still follows the link.',
-  'Bạn có thể mua hoặc gia hạn gói Personal từ danh mục gói, hoặc kích hoạt key trung tâm cấp. Nếu license đã được cập nhật qua kênh khác, hãy tải lại thông tin tại đây.':
-    'You can buy or renew a Personal plan from the catalog, or activate a key issued by a center. If the license was updated through another channel, reload the information here.',
   'Xem kho license tổ chức': 'View the organization license pool',
-  'Kho license và thanh toán tổ chức do quản trị trung tâm phụ trách.':
-    "The organization's license pool and payments are handled by the center administrator.",
   'Chỉ quản trị trung tâm có tổ chức được xem kho license.':
     'Only center administrators with an organization can view the license pool.',
   'Kho license tổ chức': 'Organization license pool',
@@ -1162,10 +1137,6 @@ export const en = {
     "System-wide rules and the center's own rules.",
   'Thiết lập tùy chọn': 'Set a preference',
   'Thêm quy tắc': 'Add rule',
-  'Tùy chọn chỉ áp dụng khi quy tắc không bắt buộc. Thông báo bắt buộc vẫn được gửi dù bạn chọn tắt. Máy chủ chưa cung cấp danh sách quy tắc bắt buộc cho tài khoản này.':
-    'Preferences apply only when the rule is not mandatory. Mandatory notifications are still sent even if you turn them off. The server does not yet provide the list of mandatory rules for this account.',
-  'Quy tắc riêng được máy chủ xử lý theo phạm vi trung tâm. Center Admin chỉ xem quy tắc toàn hệ thống, không được sửa hoặc xóa.':
-    'Center rules are processed by the server within the center scope. Center Admins can only view system-wide rules, not edit or delete them.',
   'Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và chọn Bật thông báo trình duyệt.':
     'Saving the Push preference does not enable notifications in this browser. To receive push, go to Profile and choose Enable browser notifications.',
   'Ngừng áp dụng': 'Not applied',
@@ -1181,8 +1152,6 @@ export const en = {
   'Theo tùy chọn': 'By preference',
   'Lưu tùy chọn': 'Save preference',
   'Sửa quy tắc': 'Edit rule',
-  'Nếu có lỗi hoặc mất kết nối khi lưu, hãy đóng và tải lại để kiểm tra trước khi gửi lại.':
-    'If there is an error or the connection drops while saving, close and reload to check before resubmitting.',
   'Bật nhận khi không bắt buộc': 'Receive when not mandatory',
   'Vai trò nhận': 'Recipient role',
   'Tôi xác nhận thay đổi quy tắc gửi thông báo': 'I confirm changing the notification rule',
@@ -1253,9 +1222,6 @@ export const en = {
   'Chọn gói Business và tạo đơn thanh toán qua PayOS.':
     'Choose a Business plan and create a PayOS payment order.',
   'Thêm gói': 'Add plan',
-  'Gói Business dành cho tổ chức.': 'Business plans are for organizations.',
-  'Gói Personal dành cho gia đình; tối đa {max} người được chăm sóc theo chính sách hiện hành.':
-    'Personal plans are for families; at most {max} care recipients under the current policy.',
   'Đang mở': 'Open',
   'Ngừng mở': 'Closed',
   'Tải lại danh mục': 'Reload catalog',
@@ -1433,8 +1399,7 @@ export const en = {
   'Luôn kiểm tra thời gian ghi nhận. Vị trí cũ không phản ánh vị trí trực tiếp.':
     'Always check the recorded time. A stale location does not reflect the live location.',
   'Chưa có dữ liệu thời hạn': 'No expiry data yet',
-  'Theo dõi cảnh báo trong phạm vi chăm sóc của bạn. Mỗi nhóm cập nhật riêng, tự tải lại sau 30 giây.':
-    'Follow alerts within your care scope. Each group updates separately and reloads after 30 seconds.',
+  'Theo dõi cảnh báo trong phạm vi chăm sóc của bạn.': 'Track alerts within your care scope.',
   'Mở trung tâm cảnh báo': 'Open alert center',
   'Xem báo cáo trung tâm': 'View center reports',
   'Phạm vi chăm sóc': 'Care scope',
@@ -1454,7 +1419,6 @@ export const en = {
   'Đã cấp': 'Assigned',
   'Còn lại theo máy chủ': 'Remaining according to the server',
   'Quản lý kho license': 'Manage license pool',
-  'Tải lại ': 'Reload ',
   'cảnh báo · cập nhật {p3}': 'alerts · updated {p3}',
   'Thanh toán gần đây': 'Recent payments',
   'Giao dịch đang chờ trong 10 giao dịch gần nhất. Đây không phải tổng số giao dịch đang chờ của toàn bộ lịch sử.':
@@ -1468,8 +1432,6 @@ export const en = {
   'Gửi cảnh báo trong 24 giờ': 'Alerts sent in 24 hours',
   'Đã gửi': 'Sent',
   'Đang chờ gửi': 'Pending delivery',
-  'Thống kê cảnh báo được máy chủ theo dõi. Đã gửi không xác nhận người nhận đã đọc.':
-    'Alert statistics tracked by the server. Sent does not confirm the recipient has read it.',
   'Tải lại thống kê': 'Reload statistics',
   'Danh sách cấp license': 'License assignment list',
   'License đã cấp': 'Assigned licenses',
@@ -1605,8 +1567,6 @@ export const en = {
   'Khôi phục về giá trị trước lần thay đổi lúc {p1}:':
     'Restore the value from before the change at {p1}:',
   '. Một bản ghi lịch sử mới sẽ được tạo.': '. A new history record will be created.',
-  'Thay đổi có thể ảnh hưởng toàn hệ thống. Lưu trên máy chủ không xác nhận thiết bị đã áp dụng.':
-    'Changes may affect the whole system. Saving on the server does not confirm devices have applied it.',
   'Chưa xác nhận được kết quả ghi. Đóng popup và tải lại cấu hình cùng lịch sử trước khi gửi lại.':
     'The write result was not confirmed. Close the popup and reload the configuration and history before resubmitting.',
   'Giá trị mới': 'New value',
@@ -2279,8 +2239,6 @@ export const en = {
   'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.':
     'The start date must be on or before the end date.',
   'Ngày không hợp lệ.': 'Invalid date.',
-  'Ngày tính theo giờ Việt Nam. Để trống: theo tháng là 12 tháng gần nhất, theo ngày là 30 ngày gần nhất. Doanh thu tính vào ngày thanh toán; giao dịch đang chờ, thất bại hoặc đã hủy chỉ được đếm số lượng.':
-    'Dates use Vietnam time. Leave blank for the last 12 months (monthly) or the last 30 days (daily). Revenue counts on the paid date; pending, failed or cancelled transactions are only counted.',
   'Theo gói': 'By plan',
   'Theo kênh': 'By channel',
   'Theo loại giao dịch': 'By transaction type',
@@ -2495,8 +2453,6 @@ export const en = {
     'Could not load the Mapbox map ({p1}). Coordinates are still in the table below.',
   'Trình duyệt không hỗ trợ WebGL nên không hiển thị được bản đồ.':
     'This browser does not support WebGL, so the map cannot be shown.',
-  'Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật; trạng thái kết nối hiển thị phía trên. Bản đồ Mapbox và bảng tọa độ cùng dùng vị trí mới nhất từ máy chủ.':
-    'Locations reload every 30 seconds while the tab is active. SignalR reloads data on updates; the connection status is shown above. The Mapbox map and the coordinate table both use the latest position from the server.',
   'lỗi mạng': 'network error',
   '{name} · {state}': '{name} · {state}',
   'Đang tải bản đồ…': 'Loading map…',
@@ -2680,8 +2636,6 @@ export const en = {
   'Ra khỏi vùng an toàn': 'Left safe zone',
   'Đến địa điểm đã lưu': 'Arrived at saved place',
   'Cảnh báo vùng an toàn': 'Safe zone alerts',
-  'Lịch sử ra/vào vùng an toàn và đến địa điểm đã lưu do máy chủ ghi nhận. Chọn một người được chăm sóc để xem.':
-    'Safe zone entries/exits and saved place arrivals recorded by the server. Choose a care recipient to view them.',
   'Xem sự kiện vùng': 'Show zone events',
   'Chọn người được chăm sóc trước.': 'Choose a care recipient first.',
   'Chưa chọn người được chăm sóc.': 'No care recipient selected.',
@@ -2695,4 +2649,9 @@ export const en = {
   '{totalCount} sự kiện · Trang {page}/{p4}': '{totalCount} events · Page {page}/{p4}',
   'Loại sự kiện không hợp lệ.': 'Invalid event type.',
   'Sự kiện không thuộc VIU được chọn.': 'Event does not belong to the selected VIU.',
+  'Lọc lịch sử': 'Filter history',
+  'Tải lại địa điểm': 'Reload places',
+  'Mã ngôn ngữ, ví dụ vi-VN hoặc en-US. Giọng đọc khả dụng phụ thuộc thiết bị.':
+    'Language code, for example vi-VN or en-US. Available voices depend on the device.',
+  'Để trống nếu không dùng ngôn ngữ phụ.': 'Leave empty if no secondary language is used.',
 } satisfies Record<string, EnMessage>;

@@ -201,11 +201,6 @@ export function ApiLicense() {
               { max: maxVius },
             )}
           </p>
-          <p className="notice">
-            {t(
-              'Bạn có thể mua hoặc gia hạn gói Personal từ danh mục gói, hoặc kích hoạt key trung tâm cấp. Nếu license đã được cập nhật qua kênh khác, hãy tải lại thông tin tại đây.',
-            )}
-          </p>
         </section>
       )}
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
@@ -226,11 +221,6 @@ export function ApiLicense() {
         />
       )}
       <LicenseKeys key={user.id + user.orgId} actor={user} mode="activate" />
-      {!personal && !(user.role === 'CenterAdmin' && user.orgId) && (
-        <p className="notice">
-          {t('Kho license và thanh toán tổ chức do quản trị trung tâm phụ trách.')}
-        </p>
-      )}
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, msg, labelMap, tText, getLocale } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -242,11 +243,6 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
   return (
     <section className="glass card stack">
       <h2>{t('Lịch sử của {name}', { name })}</h2>
-      <p>
-        {t(
-          'Dữ liệu do Mobile gửi lên, trong thời hạn lưu trữ của máy chủ. Không có bản ghi không có nghĩa là người dùng không hoạt động.',
-        )}
-      </p>
       <label className="field">
         {t('Loại hoạt động')}
         <select
@@ -293,6 +289,7 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
             disabled={query.isFetching}
             onClick={() => void query.refetch()}
           >
+            <RefreshCw size={16} aria-hidden="true" />
             {t('Tải lại lịch sử')}
           </button>
         }
@@ -419,6 +416,7 @@ function Activity({ actor }: { actor: Person }) {
               disabled={users.isFetching}
               onClick={() => void users.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại người dùng')}
             </button>
           }

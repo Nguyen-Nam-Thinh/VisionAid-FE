@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, msg, formatLocaleDateTime } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -163,6 +164,7 @@ function Accounts({
               disabled={list.isFetching}
               onClick={() => void refresh()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại')}
             </button>
           }

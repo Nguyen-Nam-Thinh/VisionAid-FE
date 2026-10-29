@@ -1,7 +1,15 @@
 import { t, msg, tText } from '../../i18n';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
-import { Compass, CreditCard, RotateCw, ShieldAlert, TriangleAlert, UserX } from 'lucide-react';
+import {
+  Compass,
+  CreditCard,
+  RefreshCw,
+  RotateCw,
+  ShieldAlert,
+  TriangleAlert,
+  UserX,
+} from 'lucide-react';
 
 export type StatusKind = 'not-found' | 'forbidden' | 'error' | 'unsupported' | 'license';
 
@@ -131,6 +139,7 @@ export function ReloadAction() {
   return (
     <button className="btn primary" onClick={() => window.location.reload()}>
       <RotateCw size={18} aria-hidden="true" />
+      <RefreshCw size={16} aria-hidden="true" />
       {t('Tải lại trang')}
     </button>
   );

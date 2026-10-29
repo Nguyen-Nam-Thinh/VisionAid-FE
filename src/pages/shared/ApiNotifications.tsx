@@ -113,15 +113,6 @@ function Notifications({ actor }: { actor: Person }) {
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <section className="glass card stack">
-        <p className="notice">
-          {personal
-            ? t(
-                'Tùy chọn chỉ áp dụng khi quy tắc không bắt buộc. Thông báo bắt buộc vẫn được gửi dù bạn chọn tắt. Máy chủ chưa cung cấp danh sách quy tắc bắt buộc cho tài khoản này.',
-              )
-            : t(
-                'Quy tắc riêng được máy chủ xử lý theo phạm vi trung tâm. Center Admin chỉ xem quy tắc toàn hệ thống, không được sửa hoặc xóa.',
-              )}
-        </p>
         {personal && (
           <p className="muted">
             {t(
@@ -352,11 +343,6 @@ function Notifications({ actor }: { actor: Person }) {
           title={personal ? t('Lưu tùy chọn') : selected ? t('Sửa quy tắc') : t('Thêm quy tắc')}
           onClose={close}
         >
-          <p className="notice">
-            {t(
-              'Nếu có lỗi hoặc mất kết nối khi lưu, hãy đóng và tải lại để kiểm tra trước khi gửi lại.',
-            )}
-          </p>
           {selected && (
             <p>
               {notificationTypes[selected.notificationType]} · {channels[selected.channel]} ·{' '}

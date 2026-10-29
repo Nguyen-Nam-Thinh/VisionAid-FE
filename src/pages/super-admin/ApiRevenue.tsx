@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, formatMoney, formatNumber } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -57,6 +58,7 @@ function Revenue({ actor }: { actor: Person }) {
               disabled={report.isFetching}
               onClick={() => void report.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại báo cáo')}
             </button>
           }
@@ -79,11 +81,6 @@ function Revenue({ actor }: { actor: Person }) {
             </label>
           </div>
         </FilterPanel>
-        <p className="notice">
-          {t(
-            'Ngày tính theo giờ Việt Nam. Để trống: theo tháng là 12 tháng gần nhất, theo ngày là 30 ngày gần nhất. Doanh thu tính vào ngày thanh toán; giao dịch đang chờ, thất bại hoặc đã hủy chỉ được đếm số lượng.',
-          )}
-        </p>
         <State loading={report.isPending} error={report.error} retry={() => report.refetch()}>
           {report.data && <ReportView data={report.data} />}
         </State>

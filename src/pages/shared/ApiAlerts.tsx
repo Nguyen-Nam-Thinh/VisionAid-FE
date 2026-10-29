@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, msg, labelMap, formatLocaleDateTime } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -109,6 +110,7 @@ function Alerts({ actor }: { actor: Person }) {
                 void cache.invalidateQueries({ queryKey: ['api-alerts', actor.id, actor.orgId] })
               }
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại cảnh báo')}
             </button>
           }
@@ -248,11 +250,6 @@ function BoundaryAlerts({ actor }: { actor: Person }) {
   return (
     <section className="glass card stack" aria-labelledby="boundary-alerts-title">
       <h2 id="boundary-alerts-title">{t('Cảnh báo vùng an toàn')}</h2>
-      <p>
-        {t(
-          'Lịch sử ra/vào vùng an toàn và đến địa điểm đã lưu do máy chủ ghi nhận. Chọn một người được chăm sóc để xem.',
-        )}
-      </p>
       <FilterPanel
         active={[viuId, filters.eventType, filters.dateFrom, filters.dateTo].filter(Boolean).length}
         submitLabel={t('Xem sự kiện vùng')}

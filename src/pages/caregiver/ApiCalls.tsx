@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -72,13 +73,6 @@ function History({ actor }: { actor: Person }) {
         }
       />
       <section className="glass card stack">
-        {!center && (
-          <p className="notice">
-            {t(
-              'Để bắt đầu gọi, vào Người được chăm sóc và chọn Gọi hỗ trợ. Kết quả dưới đây do máy chủ ghi nhận.',
-            )}
-          </p>
-        )}
         <FilterPanel
           active={[filters.viuUserId, filters.dateFrom, filters.dateTo].filter(Boolean).length}
           submitLabel={t('Lọc lịch sử')}
@@ -108,6 +102,7 @@ function History({ actor }: { actor: Person }) {
                 void result.refetch();
               }}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại')}
             </button>
           }

@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, msg } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
@@ -124,6 +125,7 @@ function Links({ actor }: { actor: Person }) {
               disabled={list.isFetching}
               onClick={() => void refresh()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại')}
             </button>
           }

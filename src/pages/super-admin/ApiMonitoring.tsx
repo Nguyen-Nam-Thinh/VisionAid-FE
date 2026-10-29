@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, msg, labelMap, tText } from '../../i18n';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -178,6 +179,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                 disabled={query.isFetching}
                 onClick={() => void query.refetch()}
               >
+                <RefreshCw size={16} aria-hidden="true" />
                 {t('Tải lại')}
               </button>
             }
@@ -477,6 +479,7 @@ function DeliveryStatus({ actor }: { actor: Person }) {
       <div className="row between">
         <h2>{t('Tổng quan gửi cảnh báo')}</h2>
         <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+          <RefreshCw size={16} aria-hidden="true" />
           {t('Tải lại thống kê')}
         </button>
       </div>
