@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t } from '../../i18n';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -102,11 +103,6 @@ function Change({
             {t('. Một bản ghi lịch sử mới sẽ được tạo.')}
           </p>
         )}
-        <p className="notice">
-          {t(
-            'Thay đổi có thể ảnh hưởng toàn hệ thống. Lưu trên máy chủ không xác nhận thiết bị đã áp dụng.',
-          )}
-        </p>
         {uncertain ? (
           <p className="notice error" role="alert">
             {t(
@@ -373,6 +369,7 @@ function Configurations({ actor }: { actor: Person }) {
             disabled={query.isFetching}
             onClick={() => void query.refetch()}
           >
+            <RefreshCw size={16} aria-hidden="true" />
             {t('Tải lại cấu hình')}
           </button>
         </form>

@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -39,6 +40,7 @@ export function OrganizationPool({
           disabled={query.isFetching}
           onClick={() => void query.refetch()}
         >
+          <RefreshCw size={16} aria-hidden="true" />
           {t('Tải lại kho license')}
         </button>
         <Link className="btn small" to="/packages">

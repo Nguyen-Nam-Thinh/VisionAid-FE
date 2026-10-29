@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, msg } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -166,6 +167,7 @@ function Organizations({ user }: { user: Person }) {
                 disabled={list.isFetching}
                 onClick={() => void refresh()}
               >
+                <RefreshCw size={16} aria-hidden="true" />
                 {t('Tải lại')}
               </button>
             }
@@ -589,6 +591,7 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
       <div className="row between">
         <h3 id={'pool-' + org.id}>{t('Kho license')}</h3>
         <button className="btn small" disabled={pool.isFetching} onClick={() => void reload()}>
+          <RefreshCw size={16} aria-hidden="true" />
           {t('Tải lại kho license')}
         </button>
       </div>

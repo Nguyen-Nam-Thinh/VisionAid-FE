@@ -1,6 +1,6 @@
 import { t } from '../i18n';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Search, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ServiceError } from '../services/contracts';
 import { useSession } from '../hooks/useService';
@@ -117,6 +117,7 @@ export function State({
         {error instanceof ServiceError && error.status === 402 && <LicenseActions />}
         {retry && (
           <button className="btn" onClick={retry}>
+            <RefreshCw size={16} aria-hidden="true" />
             {t('Thử lại')}
           </button>
         )}

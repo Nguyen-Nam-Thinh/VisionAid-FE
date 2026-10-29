@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -63,6 +64,7 @@ export function ApiLinkedUsers() {
               disabled={query.isFetching}
               onClick={() => void query.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại')}
             </button>
           }

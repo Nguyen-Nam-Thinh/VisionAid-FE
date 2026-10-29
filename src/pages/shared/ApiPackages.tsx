@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, msg } from '../../i18n';
 import { Toast, CardActions } from '../../components/UI';
 import { useState } from 'react';
@@ -116,17 +117,6 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <section className="glass card stack">
-        {!admin && (
-          <p className="notice">
-            {actor.role === 'CenterAdmin'
-              ? t('Gói Business dành cho tổ chức.')
-              : t(
-                  'Gói Personal dành cho gia đình; tối đa {max} người được chăm sóc theo chính sách hiện hành.',
-                  { max: maxVius },
-                )}
-          </p>
-        )}
-
         <CardActions>
           {admin && (
             <button
@@ -158,6 +148,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
             </label>
           )}
           <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+            <RefreshCw size={16} aria-hidden="true" />
             {t('Tải lại danh mục')}
           </button>
         </div>

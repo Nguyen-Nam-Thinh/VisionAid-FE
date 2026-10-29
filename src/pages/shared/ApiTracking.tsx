@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useMemo, useState } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -52,12 +53,6 @@ function Tracking({ actor }: { actor: Person }) {
         description={t('Vị trí ghi nhận và lịch sử di chuyển của người được phép theo dõi.')}
       />
       <section className="glass card stack">
-        <p className="notice">
-          {t(
-            'Tự tải lại vị trí mỗi 30 giây khi tab hoạt động. SignalR tải lại dữ liệu khi có cập nhật; trạng thái kết nối hiển thị phía trên. Bản đồ Mapbox và bảng tọa độ cùng dùng vị trí mới nhất từ máy chủ.',
-          )}
-        </p>
-
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {
@@ -75,6 +70,7 @@ function Tracking({ actor }: { actor: Person }) {
               disabled={users.isFetching}
               onClick={() => void users.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại danh sách')}
             </button>
           }
@@ -180,6 +176,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
           void cache.invalidateQueries({ queryKey: ['api-location-live', actor.id, actor.orgId] })
         }
       >
+        <RefreshCw size={16} aria-hidden="true" />
         {t('Tải lại vị trí')}
       </button>
       <div className="table-scroll" tabIndex={0} role="region" aria-label={t('Dữ liệu vị trí')}>
@@ -233,22 +230,25 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
                     )}
                   </td>
                   <td>
-                    <button
-                      className="btn"
-                      onClick={() => setSelected(person.id)}
-                      aria-label={t('Xem GPS của ') + person.fullName}
-                    >
-                      {t('Vị trí & lịch sử')}
-                    </button>
-                    {q.isError && (
+                    <div className="row">
                       <button
                         className="btn"
-                        disabled={q.isFetching}
-                        onClick={() => void q.refetch()}
+                        onClick={() => setSelected(person.id)}
+                        aria-label={t('Xem GPS của ') + person.fullName}
                       >
-                        {t('Thử lại vị trí')}
+                        {t('Vị trí & lịch sử')}
                       </button>
-                    )}
+                      {q.isError && (
+                        <button
+                          className="btn"
+                          disabled={q.isFetching}
+                          onClick={() => void q.refetch()}
+                        >
+                          <RefreshCw size={16} aria-hidden="true" />
+                          {t('Thử lại vị trí')}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -336,6 +336,7 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
             disabled={query.isFetching}
             onClick={() => void query.refetch()}
           >
+            <RefreshCw size={16} aria-hidden="true" />
             {t('Tải lại lịch sử')}
           </button>
         }
