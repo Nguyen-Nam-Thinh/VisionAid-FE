@@ -1,5 +1,12 @@
 import { expect, it, vi } from 'vitest';
-import { activityDateRange, activityKinds, createActivityApi, type ActivityKind } from './activity';
+import {
+  activityDateRange,
+  activityKinds,
+  createActivityApi,
+  exportColumns,
+  maxExportRows,
+  type ActivityKind,
+} from './activity';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 const id = '01900000-0000-7000-8000-000000000001';
@@ -204,4 +211,53 @@ it('rejects invalid/reversed dates and pages; empty date range remains unfiltere
     f.api.list(actor, viuId, 'navigation', 0, { dateFrom: '', dateTo: '' }),
   ).rejects.toMatchObject({ status: 400 });
   expect(f.get).not.toHaveBeenCalled();
+});
+
+it('UC-74 export walks every page with pageSize 100, keeps scope checks and caps the row count', async () => {
+  const f = fixture('ocr');
+  const pageOf = (page: number, total: number) => ({
+    items: Array.from({ length: Math.min(100, total - (page - 1) * 100) }, () => f.row),
+    page,
+    pageSize: 100,
+    totalCount: total,
+    totalPages: Math.ceil(total / 100),
+    hasNextPage: page * 100 < total,
+    hasPreviousPage: page > 1,
+  });
+  let total = 250;
+  f.get.mockImplementation(async (path) => {
+    if (path.startsWith('/api/caregiver-links?')) return paged([f.link]);
+    return pageOf(Number(new URL(path, 'https://example.test').searchParams.get('page')), total);
+  });
+  const range = activityDateRange('2026-10-11', '');
+  const result = await f.api.exportAll(actor, viuId, 'ocr', range);
+  expect(result).toMatchObject({ totalCount: 250, truncated: false });
+  expect(result.items).toHaveLength(250);
+  const lists = f.get.mock.calls
+    .map(([path]) => new URL(path, 'https://example.test'))
+    .filter((url) => url.pathname === activityKinds.ocr.path);
+  expect(lists.map((url) => url.searchParams.get('page'))).toEqual(['1', '2', '3']);
+  expect(lists.every((url) => url.searchParams.get('pageSize') === '100')).toBe(true);
+  expect(lists[0].searchParams.get('userId')).toBe(viuId);
+  expect(lists[0].searchParams.get('dateFrom')).toBe('2026-10-10T17:00:00.000Z');
+
+  total = maxExportRows + 300;
+  const capped = await f.api.exportAll(actor, viuId, 'ocr', range);
+  expect(capped.items).toHaveLength(maxExportRows);
+  expect(capped).toMatchObject({ truncated: true, totalCount: maxExportRows + 300 });
+
+  f.get.mockImplementation(async (path) => {
+    if (path.startsWith('/api/caregiver-links?')) return paged([f.link]);
+    return { ...pageOf(1, 1), items: [{ ...f.row, userId: id }] };
+  });
+  await expect(f.api.exportAll(actor, viuId, 'ocr', range)).rejects.toMatchObject({ status: 403 });
+  await expect(
+    f.api.exportAll({ ...actor, role: 'Admin' }, viuId, 'ocr', range),
+  ).rejects.toMatchObject({ status: 403 });
+});
+it('UC-74 export columns leave out internal ids', () => {
+  expect(exportColumns('qr')).not.toContain('id');
+  expect(exportColumns('qr')).not.toContain('ocrRequestId');
+  expect(exportColumns('recognition')).not.toContain('matchedPersonId');
+  expect(exportColumns('recognition')).toContain('matchedPersonName');
 });
