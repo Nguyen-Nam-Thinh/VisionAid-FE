@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, formatLocaleDateTime, formatNumber } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -57,6 +58,7 @@ function Pools({ actor }: { actor: Person }) {
               disabled={query.isFetching}
               onClick={() => void query.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại')}
             </button>
           }

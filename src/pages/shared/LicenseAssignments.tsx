@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -64,6 +65,7 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
           {t('Cấp license')}
         </button>
         <button className="btn" disabled={query.isFetching} onClick={() => void refresh()}>
+          <RefreshCw size={16} aria-hidden="true" />
           {t('Tải lại danh sách')}
         </button>
         <Link className="btn" to="/packages">

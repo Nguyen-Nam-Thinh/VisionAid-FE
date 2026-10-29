@@ -1,15 +1,16 @@
 import { t, formatNumber } from '../../i18n';
-import { useQuery } from '@tanstack/react-query';
+import { useIsFetching, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
+  Activity,
   ArrowRight,
   BarChart3,
   Bell,
   MapPin,
   Package,
+  RefreshCw,
   Send,
   ShieldCheck,
-  Activity,
   UserRound,
   Users,
   type LucideIcon,
@@ -39,12 +40,11 @@ export function DashboardOverview({ actor }: { actor: Person }) {
     <div className="overview-grid">
       {(actor.role === 'Caregiver' || isOrganizationBuyer(actor)) && (
         <section className="glass card stack overview-alerts" aria-label={t('Cảnh báo đang mở')}>
-          <h2>{t('Cảnh báo đang mở')}</h2>
-          <p>
-            {t(
-              'Theo dõi cảnh báo trong phạm vi chăm sóc của bạn. Mỗi nhóm cập nhật riêng, tự tải lại sau 30 giây.',
-            )}
-          </p>
+          <div className="row between">
+            <h2>{t('Cảnh báo đang mở')}</h2>
+            <ReloadAlertCounts actor={actor} />
+          </div>
+          <p>{t('Theo dõi cảnh báo trong phạm vi chăm sóc của bạn.')}</p>
           <div className="overview-alert-counts">
             {(['Sent', 'Acknowledged', 'Escalated'] as const).map((status) => (
               <AlertCount key={status} actor={actor} status={status} />
@@ -233,6 +233,7 @@ function Personal({ actor }: { actor: Person }) {
         )}
       </p>
       <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+        <RefreshCw size={16} aria-hidden="true" />
         {t('Tải lại license')}
       </button>
       <Link to="/license">{t('Xem quyền sử dụng')}</Link>
@@ -284,10 +285,28 @@ function Pool({ actor }: { actor: Person }) {
         </State>
       )}
       <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+        <RefreshCw size={16} aria-hidden="true" />
         {t('Tải lại kho license')}
       </button>
       <Link to="/center-admin/licenses">{t('Quản lý kho license')}</Link>
     </section>
+  );
+}
+
+// One reload for the three counts (Sent, Acknowledged, Escalated); each count still has its own query.
+function ReloadAlertCounts({ actor }: { actor: Person }) {
+  const cache = useQueryClient();
+  const queryKey = ['api-alerts', actor.id, actor.orgId, 'dashboard-count'];
+  const fetching = useIsFetching({ queryKey }) > 0;
+  return (
+    <button
+      className="btn small"
+      disabled={fetching}
+      onClick={() => void cache.refetchQueries({ queryKey })}
+    >
+      <RefreshCw size={16} aria-hidden="true" />
+      {t('Tải lại cảnh báo')}
+    </button>
   );
 }
 
@@ -313,17 +332,7 @@ function AlertCount({
   });
   return (
     <div className="stack" role="group" aria-label={alertLabels[status]}>
-      <div className="row between">
-        <h3>{alertLabels[status]}</h3>
-        <button
-          className="btn small"
-          aria-label={t('Tải lại ') + alertLabels[status].toLowerCase()}
-          disabled={query.isFetching}
-          onClick={() => void query.refetch()}
-        >
-          {t('Tải lại')}
-        </button>
-      </div>
+      <h3>{alertLabels[status]}</h3>
       <State loading={query.isPending} error={query.error}>
         {query.data !== undefined && (
           <p>
@@ -390,6 +399,7 @@ function PendingPayments({ actor }: { actor: Person }) {
         )}
       </State>
       <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+        <RefreshCw size={16} aria-hidden="true" />
         {t('Tải lại thanh toán')}
       </button>
       <Link to={paymentHistoryPath(actor)}>{t('Mở lịch sử thanh toán')}</Link>
@@ -424,11 +434,9 @@ function Delivery({ actor }: { actor: Person }) {
           </dl>
         )}
       </State>
-      <p>
-        {t('Thống kê cảnh báo được máy chủ theo dõi. Đã gửi không xác nhận người nhận đã đọc.')}
-      </p>
       <div className="row">
         <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+          <RefreshCw size={16} aria-hidden="true" />
           {t('Tải lại thống kê')}
         </button>
         <Link className="btn" to="/admin/delivery">

@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -57,6 +58,7 @@ function Places({ actor }: { actor: Person }) {
               disabled={users.isFetching}
               onClick={() => void users.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại người dùng')}
             </button>
           }
@@ -151,11 +153,6 @@ function PlaceList({ actor, viuId, name }: { actor: Person; viuId: string; name:
           {t('Vùng an toàn')}
         </button>
       </div>
-      <p className="notice">
-        {t(
-          'Nhập tọa độ chính xác để xác định vị trí. Cảnh báo vào, ra và lời nhắc đến nơi phụ thuộc GPS trên điện thoại và hệ thống xử lý.',
-        )}
-      </p>
       <PlaceTable key={kind} actor={actor} viuId={viuId} kind={kind} />
     </section>
   );
@@ -199,6 +196,7 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
           </select>
         </label>
         <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+          <RefreshCw size={16} aria-hidden="true" />
           {t('Tải lại địa điểm')}
         </button>
         <button

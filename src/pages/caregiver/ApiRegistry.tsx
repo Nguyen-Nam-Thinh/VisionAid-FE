@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useEffect, useState } from 'react';
@@ -65,6 +66,7 @@ function Registry({ actor }: { actor: Person }) {
               disabled={users.isFetching}
               onClick={() => void users.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại người dùng')}
             </button>
           }
@@ -142,7 +144,6 @@ function Registry({ actor }: { actor: Person }) {
 type Scope = { actor: Person; viuId: string };
 function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
   const maxPersons = useLimit('face_registry.max_persons_per_registry');
-  const minPhotos = useLimit('face_registry.min_photos_to_activate');
   const cache = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
   const [photos, setPhotos] = useState<string | null>(null);
@@ -168,12 +169,6 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
   return (
     <section className="glass card stack">
       <h2>{t('Danh bạ của {name}', { name })}</h2>
-      <p className="notice">
-        {t(
-          'Tối đa {max} người. Cần ít nhất {min} ảnh để kích hoạt mỗi người. Trạng thái nhận từ máy chủ; khả năng nhận diện còn phụ thuộc chất lượng ảnh và hệ thống AI.',
-          { max: maxPersons, min: minPhotos },
-        )}
-      </p>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <div className="row">
         <label className="field">
@@ -189,6 +184,7 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
           </select>
         </label>
         <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+          <RefreshCw size={16} aria-hidden="true" />
           {t('Tải lại danh bạ')}
         </button>
         <button
@@ -518,6 +514,7 @@ function RegistryPhotos({
                 disabled={pending || detail.isFetching}
                 onClick={() => void reload()}
               >
+                <RefreshCw size={16} aria-hidden="true" />
                 {t('Tải lại ảnh')}
               </button>
               {!person.images.length && (

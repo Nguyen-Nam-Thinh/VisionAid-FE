@@ -19,11 +19,10 @@ export function CallAvailability() {
 }
 function ConnectionNotice({ client }: { client: CallClient }) {
   const call = useSyncExternalStore(client.subscribe, client.snapshot);
+  if (call.network === 'connected') return null;
   return (
     <p className="notice" role="status">
-      {call.network === 'connected'
-        ? t('Sẵn sàng gọi hỗ trợ. Micro chỉ bật khi bạn bắt đầu hoặc nhận cuộc gọi.')
-        : t('Chưa kết nối dịch vụ cuộc gọi. Nếu chờ lâu, kiểm tra mạng rồi tải lại trang.')}
+      {t('Chưa kết nối dịch vụ cuộc gọi. Nếu chờ lâu, kiểm tra mạng rồi tải lại trang.')}
     </p>
   );
 }

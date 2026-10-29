@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -61,6 +62,7 @@ function Contacts({ actor }: { actor: Person }) {
               disabled={users.isFetching}
               onClick={() => void users.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại người dùng')}
             </button>
           }
@@ -175,6 +177,7 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
             {t('Thêm liên hệ')}
           </button>
           <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+            <RefreshCw size={16} aria-hidden="true" />
             {t('Tải lại liên hệ')}
           </button>
         </div>

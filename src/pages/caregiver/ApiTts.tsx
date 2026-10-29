@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -93,11 +94,6 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
   return (
     <section className="glass card stack">
       <h2>{t('Giọng đọc của {name}', { name })}</h2>
-      <p className="notice">
-        {t(
-          'Mobile cần tải lại cấu hình để áp dụng. Lưu thành công không xác nhận thiết bị đã đổi giọng đọc.',
-        )}
-      </p>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {data ? (
@@ -118,6 +114,7 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
         )}
         <div className="row">
           <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+            <RefreshCw size={16} aria-hidden="true" />
             {t('Tải lại cấu hình')}
           </button>
           <button
@@ -215,6 +212,7 @@ function Tts({ actor }: { actor: Person }) {
               disabled={users.isFetching}
               onClick={() => void users.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại người dùng')}
             </button>
           }

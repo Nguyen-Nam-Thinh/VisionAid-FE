@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { t } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -69,6 +70,7 @@ function Reports({ actor }: { actor: Person }) {
               disabled={summary.isFetching}
               onClick={() => void summary.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại báo cáo')}
             </button>
           }
@@ -84,11 +86,6 @@ function Reports({ actor }: { actor: Person }) {
             </label>
           </div>
         </FilterPanel>
-        <p className="notice">
-          {t(
-            'Máy chủ tính theo ngày UTC: một ngày bắt đầu lúc 07:00 giờ Việt Nam và kết thúc ngay trước 07:00 hôm sau. Để trống ngày để xem toàn bộ dữ liệu còn lưu.',
-          )}
-        </p>
         <State loading={summary.isPending} error={summary.error} retry={() => summary.refetch()}>
           {summary.data && (
             <>
@@ -138,7 +135,6 @@ function Reports({ actor }: { actor: Person }) {
       </section>
       <section className="glass card stack">
         <h2>{t('Thành viên hiện tại')}</h2>
-        <p>{t('Danh sách thành viên có bộ lọc riêng, không phụ thuộc khoảng ngày báo cáo.')}</p>
         <FilterPanel
           active={Object.values(filters).filter(Boolean).length}
           submitLabel={t('Lọc thành viên')}
@@ -162,6 +158,7 @@ function Reports({ actor }: { actor: Person }) {
               disabled={members.isFetching}
               onClick={() => void members.refetch()}
             >
+              <RefreshCw size={16} aria-hidden="true" />
               {t('Tải lại thành viên')}
             </button>
           }

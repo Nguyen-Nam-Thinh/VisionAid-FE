@@ -107,7 +107,10 @@ for (const [role, org] of [
           );
       }
       failed = true;
-      await page.getByRole('button', { name: 'Tải lại đã gửi', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Cảnh báo đang mở' })
+        .getByRole('button', { name: 'Tải lại cảnh báo', exact: true })
+        .click();
       await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).toContainText(
         'Máy chủ đang gặp sự cố',
       );
