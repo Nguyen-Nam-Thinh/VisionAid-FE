@@ -38,7 +38,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
   if (user && action !== 'reset') return <Navigate to={returnTo} replace />;
   const titles: Record<string, string> = {
     login: t('Chào mừng trở lại.'),
-    register: t('Bắt đầu đồng hành.'),
+    register: t('Tạo tài khoản'),
     recover: t('Khôi phục mật khẩu'),
     reset: t('Đặt mật khẩu mới'),
   };
@@ -98,17 +98,10 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
           <strong style={{ fontSize: 24 }}>VisionAid.</strong>
         </div>
         <div className="stack">
-          <span className="eyebrow" style={{ color: 'var(--on-primary)' }}>
-            {t('Một kết nối. Nhiều an tâm.')}
-          </span>
-          <h1>
-            {t('Luôn gần bên,')}
-            <br />
-            {t('dù ở nơi đâu.')}
-          </h1>
+          <h1>{t('Chăm sóc người thân khiếm thị từ xa.')}</h1>
           <p>
             {t(
-              'Kết nối người chăm sóc và người thân trong một không gian an toàn, rõ ràng và dễ sử dụng.',
+              'Xem vị trí được chia sẻ, nhận cảnh báo khẩn cấp và quản lý thông tin hỗ trợ ở một nơi.',
             )}
           </p>
           <div className="auth-mark">
@@ -117,7 +110,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
         </div>
         <div className="row">
           <ShieldCheck size={20} />
-          <span>{t('Đồng hành cùng sự tự lập mỗi ngày')}</span>
+          <span>{t('Dữ liệu chỉ hiển thị theo quyền được cấp')}</span>
         </div>
       </aside>
       <main className="auth-form">
@@ -145,7 +138,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
           <p className="muted">
             {action === 'register'
               ? t('Tạo tài khoản người chăm sóc gia đình.')
-              : t('Không gian chăm sóc dành cho bạn.')}
+              : t('Dùng email bạn đã đăng ký.')}
           </p>
           {auth.mode === 'mock' && (
             <div className="notice">

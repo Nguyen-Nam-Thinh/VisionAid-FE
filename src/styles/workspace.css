@@ -46,7 +46,6 @@ html { scrollbar-gutter: stable; }
 .urgent-summary { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: #fff0f1; color: #a22931; border-radius: 10px; font-size: .875rem; }
 .urgent-summary > span { flex: 1; }
 .urgent-summary:hover { background: #ffe5e7; text-decoration: none; }
-:root .landing-section .eyebrow, :root .landing-cta .eyebrow, :root .landing-index { display: none; }
 @media (max-width: 760px) {
   .dashboard-columns:has(.alert-preview) > section:last-child { order: -1; }
 }
@@ -79,9 +78,6 @@ html { scrollbar-gutter: stable; }
   line-height: 1.6;
   scrollbar-color: #a3b5bf transparent;
   scrollbar-width: thin;
-}
-body::before {
-  content: none;
 }
 ::selection {
   background: #bce8de;
@@ -601,7 +597,6 @@ tbody tr:hover {
 }
 .dialog::backdrop {
   background: rgb(15 35 49 / 48%);
-  backdrop-filter: blur(2px);
 }
 .dialog-header {
   padding: 20px 24px;
@@ -767,15 +762,9 @@ tbody tr:hover {
   line-height: 1.15;
   letter-spacing: -0.04em;
 }
-:root .landing-kicker {
-  display: none;
-}
 :root .landing-visual {
   background: #eef6f5;
   border-radius: 24px;
-}
-:root .landing-orbit {
-  display: none;
 }
 :root .landing-phone {
   transform: none;
@@ -787,18 +776,8 @@ tbody tr:hover {
   box-shadow: none;
   border-radius: 12px;
 }
-:root .landing-values {
-  border-radius: 0;
-  background: #f4f8f9;
-}
 :root .landing-section {
   padding-top: 80px;
-}
-:root .landing-feature,
-:root .landing-feature:nth-child(n) {
-  border-radius: 12px;
-  box-shadow: none;
-  transform: none;
 }
 :root .landing-how {
   border-radius: 16px;
@@ -808,9 +787,6 @@ tbody tr:hover {
   border-radius: 16px;
   background: #153e49;
   box-shadow: none;
-}
-:root .landing-feature h3 {
-  line-height: 1.4;
 }
 @media (max-width: 1100px) {
   .shell {

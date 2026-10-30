@@ -48,7 +48,7 @@ test('caregiver CRUD, validation, alert history and map reconnect', async ({ pag
   ).toBeVisible();
   await screen(page, '/caregiver/map', 'Bản đồ theo dõi');
   await page.getByRole('button', { name: 'Mô phỏng vị trí cũ', exact: true }).click();
-  await expect(page.getByText('Vị trí cũ — không phải trực tiếp')).toBeVisible();
+  await expect(page.getByText('Vị trí cũ, không phải trực tiếp')).toBeVisible();
   await page.getByRole('button', { name: 'Kết nối lại', exact: true }).click();
   await expect(page.getByText('Đang kết nối lại…', { exact: true })).toBeVisible();
   await expect(page.getByText('Realtime mô phỏng', { exact: true })).toBeVisible();

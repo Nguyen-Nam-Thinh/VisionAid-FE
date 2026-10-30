@@ -419,7 +419,11 @@ function RegistryPhotos({
   const person = detail.data?.person;
   return (
     <Dialog
-      title={t('Ảnh người thân') + (person ? ` — ${person.displayName}` : '')}
+      title={
+        person
+          ? t('Ảnh của {displayName}', { displayName: person.displayName })
+          : t('Ảnh người thân')
+      }
       onClose={() => {
         if (!pending) onClose();
       }}
@@ -532,7 +536,7 @@ function RegistryPhotos({
                       viuId={viuId}
                       id={id}
                       photoId={photo.id}
-                      name={t('{displayName} — ảnh {p1}', {
+                      name={t('{displayName}, ảnh {p1}', {
                         displayName: person.displayName,
                         p1: index + 1,
                       })}

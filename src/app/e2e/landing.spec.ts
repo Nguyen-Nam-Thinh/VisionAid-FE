@@ -3,8 +3,10 @@ import AxeBuilder from '@axe-core/playwright';
 
 test('public home, signup, login and protected dashboard stay separate', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Thêm tự tin.');
-  await page.getByRole('link', { name: 'Bắt đầu đồng hành' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Biết người thân đang ở đâu.',
+  );
+  await page.getByRole('link', { name: 'Tạo tài khoản người chăm sóc' }).click();
   await expect(page).toHaveURL(/\/auth\/register$/);
   await page.getByRole('link', { name: 'Về trang chủ' }).click();
   await expect(page).toHaveURL(/\/$/);
@@ -14,7 +16,9 @@ test('public home, signup, login and protected dashboard stay separate', async (
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.locator('.dashboard-stats')).toBeVisible();
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Thêm tự tin.');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Biết người thân đang ở đâu.',
+  );
   await page.getByRole('banner').getByRole('link', { name: 'Đăng nhập' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
@@ -54,6 +58,6 @@ test('landing is accessible and fits desktop, tablet and narrow screens', async 
     .getByRole('link', { name: 'Cách hoạt động' })
     .click();
   await expect(page).toHaveURL(/#how-it-works$/);
-  await expect(page.getByRole('heading', { name: 'Cùng nhau, từng bước một.' })).toBeInViewport();
+  await expect(page.getByRole('heading', { name: 'Bắt đầu trong ba bước.' })).toBeInViewport();
   expect(errors).toEqual([]);
 });

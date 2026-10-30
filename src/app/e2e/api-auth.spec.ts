@@ -3308,7 +3308,7 @@ test('FE-17: Mapbox map shows live positions, stale state and selects a person',
   await page.screenshot({ path: 'test-results/fe17-map-desktop.png', fullPage: true });
   await oldMarker.click();
   await expect(
-    page.getByRole('heading', { name: 'Người dữ liệu cũ — vị trí & lịch sử' }),
+    page.getByRole('heading', { name: 'Người dữ liệu cũ: vị trí và lịch sử' }),
   ).toBeVisible();
   await expect(oldMarker).toHaveClass(/selected/);
   // Popup content is plain text from the live API (address and recorded time).
@@ -3757,7 +3757,7 @@ test('BR-29: Sent alert past 5 minutes shows the 115 banner and opens the alert 
   await login(page);
   await page.goto('/caregiver/alerts');
   const banner = page.getByRole('region', { name: 'Gợi ý chuyển cấp lên 115' });
-  await expect(banner).toContainText('Chưa có ai tiếp nhận sau 7 phút — cân nhắc gọi 115.');
+  await expect(banner).toContainText('Chưa có ai tiếp nhận sau 7 phút. Cân nhắc gọi 115.');
   // The banner names the VIU instead of showing the raw UUID.
   await expect(banner).toContainText('Nguyễn Văn An · gửi lúc');
   await expect(banner).not.toContainText(viu);

@@ -258,7 +258,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
       </div>
       {person && current && (
         <section className="stack" aria-label={t('GPS của ') + person.fullName}>
-          <h2>{t('{fullName} — vị trí & lịch sử', { fullName: person.fullName })}</h2>
+          <h2>{t('{fullName}: vị trí và lịch sử', { fullName: person.fullName })}</h2>
           {current.error instanceof ServiceError && current.error.status === 404 ? (
             <p>{t('Chưa có vị trí khả dụng. Lịch sử bên dưới có thể vẫn còn dữ liệu.')}</p>
           ) : (
