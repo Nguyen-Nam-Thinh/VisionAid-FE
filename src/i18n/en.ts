@@ -13,7 +13,6 @@ export const en = {
   'Liên kết của tôi': 'My links',
   'Cần gói dịch vụ': 'Requires a service plan',
   '(cần gói dịch vụ)': '(requires a service plan)',
-  'Mỗi kết nối là một sự an tâm.': 'Every connection brings peace of mind.',
   'Lịch sử cuộc gọi': 'Call history',
   'Thanh toán': 'Payments',
   'Nhật ký Hybrid': 'Hybrid logs',
@@ -263,7 +262,7 @@ export const en = {
   'Kết nối lại': 'Reconnect',
   'Mô phỏng vị trí cũ': 'Simulate stale location',
   'Lần ghi nhận: {p1} · UTC+7': 'Recorded at: {p1} · UTC+7',
-  'Vị trí cũ — không phải trực tiếp': 'Stale location — not live',
+  'Vị trí cũ, không phải trực tiếp': 'Stale location, not live',
   'Cập nhật gần đây · dữ liệu mô phỏng': 'Recently updated · simulated data',
   'Danh sách vị trí': 'Location list',
   'Tọa độ (vĩ độ, kinh độ)': 'Coordinates (latitude, longitude)',
@@ -316,7 +315,6 @@ export const en = {
   'Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.':
     'Password changed. Please sign in again with your new password.',
   'Chào mừng trở lại.': 'Welcome back.',
-  'Bắt đầu đồng hành.': 'Start your care journey.',
   'Khôi phục mật khẩu': 'Recover password',
   'Đặt mật khẩu mới': 'Set a new password',
   'Địa chỉ email': 'Email address',
@@ -325,18 +323,12 @@ export const en = {
   'Nhập lại mật khẩu mới': 'Confirm new password',
   'Mật khẩu': 'Password',
   'Nhập lại mật khẩu': 'Confirm password',
-  'Một kết nối. Nhiều an tâm.': 'One connection. Lots of peace of mind.',
-  'Luôn gần bên,': 'Always close,',
-  'dù ở nơi đâu.': 'wherever you are.',
-  'Kết nối người chăm sóc và người thân trong một không gian an toàn, rõ ràng và dễ sử dụng.':
-    'Connecting caregivers and loved ones in a safe, clear and easy-to-use space.',
-  'Đồng hành cùng sự tự lập mỗi ngày': 'Supporting independence every day',
   '← Về trang chủ': '← Back to home',
   'Đang kiểm tra phiên đã lưu…': 'Checking saved session…',
   'Không khôi phục được phiên. Bạn có thể đăng nhập lại. {message}':
     'Could not restore the session. You can sign in again. {message}',
   'Tạo tài khoản người chăm sóc gia đình.': 'Create a family caregiver account.',
-  'Không gian chăm sóc dành cho bạn.': 'A care workspace made for you.',
+  'Dùng email bạn đã đăng ký.': 'Use the email you registered with.',
   'Bản demo · Dữ liệu giả lưu trên trình duyệt. Mật khẩu mẫu:':
     'Demo · Fake data stored in the browser. Sample password:',
   '. Không nhập dữ liệu hoặc mật khẩu thật.': '. Do not enter real data or passwords.',
@@ -618,7 +610,7 @@ export const en = {
   'Xóa địa điểm': 'Delete place',
   'Xóa {name}? {p1}': 'Delete {name}? {p1}',
   'Đã xóa theo dữ liệu máy chủ.': 'Deleted according to server data.',
-  'Bán kính — mét': 'Radius — meters',
+  'Bán kính (mét)': 'Radius (meters)',
   'Từ 50 đến 50.000 mét.': 'From 50 to 50,000 meters.',
   'Từ 10 đến 5.000 mét.': 'From 10 to 5,000 meters.',
   'Cảnh báo khi ra ngoài': 'Alert on exit',
@@ -655,6 +647,7 @@ export const en = {
   'Chưa xác nhận được kết quả lưu. Tải lại danh bạ trước khi gửi lại để tránh tạo trùng.':
     'The save result was not confirmed. Reload the registry before resubmitting to avoid duplicates.',
   'Ảnh người thân': 'Family member photos',
+  'Ảnh của {displayName}': 'Photos of {displayName}',
   '{imageCount} ảnh ·': '{imageCount} photos ·',
   '. Xóa ảnh khiến số lượng dưới {min} sẽ ngừng kích hoạt người này.':
     '. Deleting photos so that fewer than {min} remain will deactivate this person.',
@@ -674,7 +667,7 @@ export const en = {
   'Chưa có ảnh. Thêm ít nhất {min} ảnh để kích hoạt.':
     'No photos yet. Add at least {min} photos to activate.',
   'Ảnh {p0}': 'Photo {p0}',
-  '{displayName} — ảnh {p1}': '{displayName} — photo {p1}',
+  '{displayName}, ảnh {p1}': '{displayName}, photo {p1}',
   'Ảnh chính': 'Primary photo',
   'Đặt ảnh chính': 'Set as primary',
   'Đã đổi ảnh chính.': 'Primary photo changed.',
@@ -721,8 +714,6 @@ export const en = {
   'Bắt buộc khi liên hệ qua Zalo. Để trống nếu chỉ dùng điện thoại.':
     'Required when contacting via Zalo. Leave empty if only phone is used.',
   'Ưu tiên {p1}': 'Priority {p1}',
-  'Mỗi kết nối là một sự an tâm. Quản lý tối đa 3 liên kết đang hoạt động.':
-    'Every connection brings peace of mind. Manage up to 3 active links.',
   'Nhập mã liên kết': 'Enter link code',
   'Đang liên kết': 'Linked',
   'Đã ngừng hoạt động': 'Deactivated',
@@ -826,51 +817,23 @@ export const en = {
   '{p0} phút': '{p0} min',
   'Chưa phản hồi': 'No response yet',
   'Người dùng của trung tâm': 'Center users',
-  'Một kết nối, bớt những lo âu.': 'One connection, fewer worries.',
   'Theo dõi vị trí được chia sẻ, lưu địa điểm quen thuộc và nhận biết khi người thân ra khỏi vùng an toàn.':
     'Follow shared locations, save familiar places and know when a loved one leaves a safe zone.',
-  'VỊ TRÍ & VÙNG AN TOÀN': 'LOCATION & SAFE ZONES',
-  'Có mặt khi người thân cần.': 'There when loved ones need you.',
   'Tiếp nhận cảnh báo khẩn cấp, phối hợp hỗ trợ và theo dõi lịch sử xử lý trong một không gian chung.':
     'Receive emergency alerts, coordinate support and follow the handling history in one shared space.',
-  'CẢNH BÁO & HỖ TRỢ': 'ALERTS & SUPPORT',
-  'Thế giới dễ tiếp cận hơn.': 'A more accessible world.',
   'Ứng dụng di động được thiết kế để hỗ trợ nhận biết vật thể, đọc văn bản và nhận diện gương mặt quen thuộc. Khả năng hoạt động còn phụ thuộc thiết bị và điều kiện sử dụng.':
     'The mobile app is designed to help recognize objects, read text and identify familiar faces. How well it works still depends on the device and conditions of use.',
-  'HỖ TRỢ TRÊN DI ĐỘNG': 'MOBILE ASSISTANCE',
   'Điều hướng trang chủ': 'Home page navigation',
   'Tính năng': 'Features',
   'Cách hoạt động': 'How it works',
   'Gói & mô hình': 'Plans & models',
   'Đóng menu': 'Close menu',
   'Mở menu': 'Open menu',
-  'CÔNG NGHỆ VÌ SỰ TỰ LẬP': 'TECHNOLOGY FOR INDEPENDENCE',
-  'Thêm tự tin.': 'More confidence.',
-  'Thêm kết nối.': 'More connection.',
-  'Thêm an tâm.': 'More peace of mind.',
-  'Đồng hành cùng người khiếm thị trong cuộc sống mỗi ngày. VisionAid kết nối người thân và người chăm sóc, để mỗi bước đi luôn có sự sẻ chia.':
-    'Supporting visually impaired people in everyday life. VisionAid connects family and caregivers, so every step is shared.',
-  'Bắt đầu đồng hành': 'Start your care journey',
-  'Khám phá VisionAid': 'Discover VisionAid',
   'Dành cho gia đình và các trung tâm chăm sóc': 'For families and care centers',
   'Minh họa kết nối giữa ứng dụng di động và người chăm sóc, với vị trí và thông báo hỗ trợ.':
     'Illustration of the connection between the mobile app and caregivers, with location and support notifications.',
-  'Một ngày mới,': 'A new day,',
-  'nhiều tự tin hơn.': 'more confidence.',
-  'Lắng nghe. Khám phá.': 'Listen. Explore.',
   'Hỗ trợ bằng giọng nói': 'Voice assistance',
-  'Kết nối với người thân': 'Connected with loved ones',
-  'Gần bên, dù ở nơi đâu': 'Close by, wherever you are',
-  'Sẵn sàng sẻ chia': 'Ready to share',
-  'Cùng nhau chăm sóc': 'Caring together',
   'Minh họa trải nghiệm VisionAid': 'Illustration of the VisionAid experience',
-  'Hỗ trợ sự tự lập': 'Supporting independence',
-  'Kết nối người chăm sóc': 'Connecting caregivers',
-  'Chia sẻ theo quyền truy cập': 'Sharing by access permission',
-  'ĐỒNG HÀNH MỖI NGÀY': 'ALONGSIDE YOU EVERY DAY',
-  'Sự quan tâm, được kết nối.': 'Care, connected.',
-  'Từ những hành trình quen thuộc đến những lúc cần hỗ trợ, cùng xây dựng một cuộc sống chủ động hơn.':
-    'From familiar journeys to moments that need support, together building a more active life.',
   'VisionAid đang trong giai đoạn kiểm thử liên thông. Hybrid AI, cuộc gọi và thông báo cần được xác minh cùng ứng dụng di động trước khi sử dụng thực tế; trang này không cam kết mọi tính năng đã sẵn sàng trên mọi thiết bị.':
     'VisionAid is in integration testing. Hybrid AI, calls and notifications must be verified with the mobile app before real-world use; this page does not promise every feature is ready on every device.',
   'Nhận biết trên thiết bị. Kết nối khi cần.': 'Recognition on the device. Connection when needed.',
@@ -885,9 +848,6 @@ export const en = {
   'Trao đổi với người chăm sóc': 'Talking with caregivers',
   'Luồng gọi âm thanh/video giúp hai bên phối hợp khi được cấp quyền và thiết bị hỗ trợ. Cần cho phép micro hoặc camera khi bắt đầu; đây không phải dịch vụ cứu hộ.':
     'Audio/video calls help both sides coordinate when permission is granted and the device supports it. The microphone or camera must be allowed when starting; this is not a rescue service.',
-  'BẮT ĐẦU TỪ MỘT KẾT NỐI': 'IT STARTS WITH ONE CONNECTION',
-  'Cùng nhau,': 'Together,',
-  'từng bước một.': 'one step at a time.',
   'Ứng dụng di động dành cho người khiếm thị. Không gian Web dành cho những người đồng hành.':
     'The mobile app is for visually impaired people. The Web workspace is for those who support them.',
   'Vào không gian chăm sóc': 'Enter the care workspace',
@@ -900,8 +860,6 @@ export const en = {
   'Đồng hành mỗi ngày': 'Support every day',
   'Theo dõi thông tin được chia sẻ, quản lý địa điểm và phối hợp khi có cảnh báo.':
     'Follow shared information, manage places and coordinate when alerts happen.',
-  'MỖI VAI TRÒ, MỘT SỰ ĐỒNG HÀNH': 'EVERY ROLE, A WAY TO SUPPORT',
-  'Chọn cách đồng hành phù hợp.': 'Choose the right way to support.',
   'Gia đình sử dụng Personal; trung tâm sử dụng Business. Đăng nhập để xem gói, giá và quyền lợi hiện được cung cấp cho tài khoản của bạn.':
     'Families use Personal; centers use Business. Sign in to see the plans, prices and benefits currently offered to your account.',
   'Personal · Gia đình': 'Personal · Family',
@@ -926,13 +884,7 @@ export const en = {
   'Chuẩn bị pin, quyền truy cập cần thiết và danh bạ khẩn cấp; tính năng dùng máy chủ hoặc gọi cần kết nối phù hợp.':
     'Prepare the battery, required permissions and emergency contacts; server features and calls need a suitable connection.',
   'Kiểm tra thiết bị và liên hệ hỗ trợ.': 'Check the device and contact support.',
-  'VISIONAID · CÙNG BẠN TIẾN BƯỚC': 'VISIONAID · MOVING FORWARD WITH YOU',
-  'Sự an tâm bắt đầu': 'Peace of mind starts',
-  'từ một kết nối.': 'with one connection.',
-  'Tạo tài khoản người chăm sóc và khám phá không gian dành cho bạn.':
-    'Create a caregiver account and explore the space made for you.',
-  'VisionAid — Trang chủ': 'VisionAid — Home',
-  'Đồng hành cùng sự tự lập mỗi ngày.': 'Supporting independence every day.',
+  'VisionAid · Trang chủ': 'VisionAid · Home',
   'VisionAid · Dự án FA26SE013': 'VisionAid · Project FA26SE013',
   'Bản trải nghiệm sử dụng dữ liệu mô phỏng.': 'Experience build using simulated data.',
   'Bản thử nghiệm · Các tính năng liên thông đang được kiểm thử.':
@@ -1338,7 +1290,7 @@ export const en = {
   'Xem GPS của ': 'View GPS of ',
   'Thử lại vị trí': 'Retry location',
   'GPS của ': 'GPS of ',
-  '{fullName} — vị trí & lịch sử': '{fullName} — location & history',
+  '{fullName}: vị trí và lịch sử': '{fullName}: location and history',
   'Chưa có vị trí khả dụng. Lịch sử bên dưới có thể vẫn còn dữ liệu.':
     'No location available yet. The history below may still have data.',
   'Địa chỉ:': 'Address:',
@@ -1548,8 +1500,8 @@ export const en = {
   'Trang này dành cho vai trò khác. Nếu bạn cần truy cập, hãy liên hệ quản trị trung tâm hoặc quản trị hệ thống.':
     'This page is for another role. If you need access, contact your center administrator or the system administrator.',
   'Màn hình này gặp sự cố': 'This screen ran into a problem',
-  'Một lỗi bất ngờ khiến màn hình không hiển thị được. Thao tác đang gửi có thể chưa hoàn tất — hãy tải lại và kiểm tra trước khi làm lại.':
-    'An unexpected error prevented the screen from displaying. An action being sent may not have completed — reload and check before trying again.',
+  'Một lỗi bất ngờ khiến màn hình không hiển thị được. Thao tác đang gửi có thể chưa hoàn tất. Hãy tải lại và kiểm tra trước khi làm lại.':
+    'An unexpected error prevented the screen from displaying. An action being sent may not have completed. Reload and check before trying again.',
   'Cần gói dịch vụ để dùng chức năng này': 'A service plan is required for this feature',
   'Tài khoản của bạn chưa có gói Personal. Đăng ký gói qua PayOS hoặc kích hoạt key do trung tâm cấp để mở chức năng này.':
     'Your account does not have a Personal plan yet. Subscribe via PayOS or activate a key issued by a center to unlock this feature.',
@@ -1987,10 +1939,10 @@ export const en = {
     'The server returned a license pool that does not belong to your organization.',
   'Tài khoản không dùng subscription cá nhân.': 'The account does not use a personal subscription.',
   'Dữ liệu subscription không hợp lệ. Hãy tải lại.': 'Invalid subscription data. Please reload.',
-  'Nhân viên thuộc tổ chức — không yêu cầu license cá nhân. Quyền dữ liệu vẫn theo phân công.':
-    'Organization staff — no personal license required. Data access still follows the assignment.',
-  'Tài khoản quản trị — không yêu cầu license cá nhân.':
-    'Administrator account — no personal license required.',
+  'Nhân viên thuộc tổ chức nên không yêu cầu license cá nhân. Quyền dữ liệu vẫn theo phân công.':
+    'Organization staff need no personal license. Data access still follows the assignment.',
+  'Tài khoản quản trị không yêu cầu license cá nhân.':
+    'Administrator accounts need no personal license.',
   'Đang dùng thử{p0}.': 'On trial{p0}.',
   'License đang hoạt động theo trạng thái máy chủ.':
     'The license is active according to the server status.',
@@ -2517,8 +2469,8 @@ export const en = {
   'Gợi ý chuyển cấp lên 115': 'Suggested escalation to 115',
   '{count} cảnh báo chưa có ai tiếp nhận sau hơn 5 phút.':
     '{count} alert(s) not acknowledged by anyone after more than 5 minutes.',
-  'Chưa có ai tiếp nhận sau {minutes} phút — cân nhắc gọi 115.':
-    'Nobody has acknowledged after {minutes} minutes — consider calling 115.',
+  'Chưa có ai tiếp nhận sau {minutes} phút. Cân nhắc gọi 115.':
+    'Nobody has acknowledged after {minutes} minutes. Consider calling 115.',
   '{viu} · gửi lúc {time}': '{viu} · sent at {time}',
   'Một người được chăm sóc': 'A care recipient',
   'Xem và chuyển cấp': 'Review and escalate',
@@ -2660,4 +2612,35 @@ export const en = {
   'Đã xuất {count} bản ghi.': 'Exported {count} records.',
   'Đã xuất {count} bản ghi mới nhất trong tổng số {total}.':
     'Exported the latest {count} of {total} records.',
+  'Vị trí và vùng an toàn': 'Location and safe zones',
+  'Ứng dụng của người khiếm thị': 'The app for people with visual impairments',
+  'Biết người thân đang ở đâu.': 'Know where your family member is.',
+  'Nhận cảnh báo khi họ cần.': 'Get an alert when they need you.',
+  'Người khiếm thị dùng ứng dụng VisionAid trên điện thoại để tránh vật cản, đọc chữ và gọi trợ giúp. Người chăm sóc dùng trang Web này để xem vị trí, nhận cảnh báo và quản lý thông tin hỗ trợ.':
+    'People with visual impairments use the VisionAid phone app to avoid obstacles, read text and call for help. Caregivers use this website to see their location, receive alerts and manage support information.',
+  'Xem cách hoạt động': 'See how it works',
+  'Phía trước có bậc thềm,': 'Step ahead,',
+  'cách khoảng 2 mét.': 'about 2 meters away.',
+  'Đang dẫn đường': 'Guiding',
+  'Đã đến nơi': 'Arrived',
+  'Nhà văn hóa phường': 'Community center',
+  'Cảnh báo đã được tiếp nhận': 'Alert acknowledged',
+  'bởi người chăm sóc chính': 'by the primary caregiver',
+  'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',
+  'Mọi thao tác đều theo quyền mà người khiếm thị hoặc trung tâm đã cấp cho bạn.':
+    'Everything follows the permissions the person you care for or the center has given you.',
+  'Bắt đầu trong ba bước.': 'Get started in three steps.',
+  'Dành cho gia đình và trung tâm.': 'For families and care centers.',
+  'Liên kết người thân đầu tiên.': 'Link your first family member.',
+  'Sau khi đăng ký, bạn liên kết với người khiếm thị và chọn quyền chăm sóc.':
+    'After signing up, you link with the person you care for and choose care permissions.',
+  'Trang Web dành cho người chăm sóc người khiếm thị.':
+    'The web app for caregivers of people with visual impairments.',
+  'Chăm sóc người thân khiếm thị từ xa.':
+    'Look after a family member with visual impairment, from anywhere.',
+  'Xem vị trí được chia sẻ, nhận cảnh báo khẩn cấp và quản lý thông tin hỗ trợ ở một nơi.':
+    'See shared location, receive emergency alerts and manage support information in one place.',
+  'Dữ liệu chỉ hiển thị theo quyền được cấp':
+    'Data is shown only within the permissions you were given',
+  'Quản lý tối đa 3 liên kết đang hoạt động.': 'Manage up to 3 active links.',
 } satisfies Record<string, EnMessage>;

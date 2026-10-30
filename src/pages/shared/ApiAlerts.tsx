@@ -439,7 +439,7 @@ function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) =
           <li key={event.id} className="row between">
             <span>
               <strong>
-                {t('Chưa có ai tiếp nhận sau {minutes} phút — cân nhắc gọi 115.', { minutes })}
+                {t('Chưa có ai tiếp nhận sau {minutes} phút. Cân nhắc gọi 115.', { minutes })}
               </strong>{' '}
               {t('{viu} · gửi lúc {time}', {
                 viu: names.data?.[event.visuallyImpairedUserId] ?? t('Một người được chăm sóc'),

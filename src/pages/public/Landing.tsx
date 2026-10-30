@@ -2,47 +2,29 @@ import { t, msg } from '../../i18n';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import {
-  ArrowRight,
-  BellRing,
-  HeartHandshake,
-  MapPin,
-  ScanText,
-  ShieldCheck,
-  Smartphone,
-  Users,
-  Volume2,
-  Menu,
-  X,
-} from 'lucide-react';
+import { ArrowRight, MapPin, ShieldCheck, Volume2, Menu, X } from 'lucide-react';
 import { Brand } from '../../components/UI';
 import { runtime } from '../../configs/runtime';
 import './landing.css';
 
 const capabilities = [
   {
-    icon: MapPin,
-    title: msg('Một kết nối, bớt những lo âu.'),
+    title: msg('Vị trí và vùng an toàn'),
     text: msg(
       'Theo dõi vị trí được chia sẻ, lưu địa điểm quen thuộc và nhận biết khi người thân ra khỏi vùng an toàn.',
     ),
-    label: msg('VỊ TRÍ & VÙNG AN TOÀN'),
   },
   {
-    icon: BellRing,
-    title: msg('Có mặt khi người thân cần.'),
+    title: msg('Cảnh báo khẩn cấp'),
     text: msg(
       'Tiếp nhận cảnh báo khẩn cấp, phối hợp hỗ trợ và theo dõi lịch sử xử lý trong một không gian chung.',
     ),
-    label: msg('CẢNH BÁO & HỖ TRỢ'),
   },
   {
-    icon: ScanText,
-    title: msg('Thế giới dễ tiếp cận hơn.'),
+    title: msg('Ứng dụng của người khiếm thị'),
     text: msg(
       'Ứng dụng di động được thiết kế để hỗ trợ nhận biết vật thể, đọc văn bản và nhận diện gương mặt quen thuộc. Khả năng hoạt động còn phụ thuộc thiết bị và điều kiện sử dụng.',
     ),
-    label: msg('HỖ TRỢ TRÊN DI ĐỘNG'),
   },
 ];
 
@@ -86,33 +68,24 @@ export function Landing() {
       <main id="landing-main" tabIndex={-1}>
         <section className="landing-hero landing-wrap" aria-labelledby="landing-title">
           <div className="landing-intro">
-            <span className="landing-kicker">
-              <span /> {t('CÔNG NGHỆ VÌ SỰ TỰ LẬP')}
-            </span>
             <h1 id="landing-title">
-              {t('Thêm tự tin.')}
-              <br />
-              {t('Thêm kết nối.')}
-              <br />
-              <span>{t('Thêm an tâm.')}</span>
+              <span>{t('Biết người thân đang ở đâu.')}</span>
+              <span>{t('Nhận cảnh báo khi họ cần.')}</span>
             </h1>
             <p>
               {t(
-                'Đồng hành cùng người khiếm thị trong cuộc sống mỗi ngày. VisionAid kết nối người thân và người chăm sóc, để mỗi bước đi luôn có sự sẻ chia.',
+                'Người khiếm thị dùng ứng dụng VisionAid trên điện thoại để tránh vật cản, đọc chữ và gọi trợ giúp. Người chăm sóc dùng trang Web này để xem vị trí, nhận cảnh báo và quản lý thông tin hỗ trợ.',
               )}
             </p>
             <div className="row landing-actions">
               <Link className="btn primary" to="/auth/register">
-                {t('Bắt đầu đồng hành')} <ArrowRight size={18} aria-hidden="true" />
+                {t('Tạo tài khoản người chăm sóc')} <ArrowRight size={18} aria-hidden="true" />
               </Link>
               <a className="landing-text-link" href="#how-it-works">
-                {t('Khám phá VisionAid')} <span aria-hidden="true">↗</span>
+                {t('Xem cách hoạt động')}
               </a>
             </div>
-            <div className="landing-assurance">
-              <HeartHandshake size={21} aria-hidden="true" />
-              <span>{t('Dành cho gia đình và các trung tâm chăm sóc')}</span>
-            </div>
+            <p className="landing-assurance">{t('Dành cho gia đình và các trung tâm chăm sóc')}</p>
           </div>
           <div
             className="landing-visual"
@@ -121,8 +94,6 @@ export function Landing() {
               'Minh họa kết nối giữa ứng dụng di động và người chăm sóc, với vị trí và thông báo hỗ trợ.',
             )}
           >
-            <div className="landing-orbit orbit-outer" />
-            <div className="landing-orbit orbit-inner" />
             <div className="landing-phone">
               <div className="phone-speaker" />
               <div className="row between">
@@ -130,9 +101,9 @@ export function Landing() {
                 <ShieldCheck size={18} />
               </div>
               <p className="phone-greeting">
-                {t('Một ngày mới,')}
+                {t('Phía trước có bậc thềm,')}
                 <br />
-                <strong>{t('nhiều tự tin hơn.')}</strong>
+                <strong>{t('cách khoảng 2 mét.')}</strong>
               </p>
               <div className="landing-map">
                 <svg viewBox="0 0 260 200" aria-hidden="true">
@@ -167,74 +138,44 @@ export function Landing() {
               <div className="phone-voice">
                 <Volume2 size={21} />
                 <div>
-                  <strong>{t('Lắng nghe. Khám phá.')}</strong>
+                  <strong>{t('Đang dẫn đường')}</strong>
                   <small>{t('Hỗ trợ bằng giọng nói')}</small>
                 </div>
               </div>
               <div className="phone-home" />
             </div>
-            <div className="landing-float float-location glass">
-              <span className="icon-tile">
-                <MapPin size={23} />
-              </span>
-              <div>
-                <strong>{t('Kết nối với người thân')}</strong>
-                <small>{t('Gần bên, dù ở nơi đâu')}</small>
-              </div>
+            <div className="landing-float float-location">
+              <strong>{t('Đã đến nơi')}</strong>
+              <small>{t('Nhà văn hóa phường')}</small>
             </div>
-            <div className="landing-float float-support glass">
-              <span className="icon-tile">
-                <HeartHandshake size={23} />
-              </span>
-              <div>
-                <strong>{t('Sẵn sàng sẻ chia')}</strong>
-                <small>{t('Cùng nhau chăm sóc')}</small>
-              </div>
+            <div className="landing-float float-support">
+              <strong>{t('Cảnh báo đã được tiếp nhận')}</strong>
+              <small>{t('bởi người chăm sóc chính')}</small>
             </div>
             <span className="visual-caption">{t('Minh họa trải nghiệm VisionAid')}</span>
           </div>
         </section>
-
-        <div className="landing-values landing-wrap">
-          <span>
-            <Smartphone size={19} aria-hidden="true" /> {t('Hỗ trợ sự tự lập')}
-          </span>
-          <span>
-            <Users size={19} aria-hidden="true" /> {t('Kết nối người chăm sóc')}
-          </span>
-          <span>
-            <ShieldCheck size={19} aria-hidden="true" /> {t('Chia sẻ theo quyền truy cập')}
-          </span>
-        </div>
 
         <section
           className="landing-section landing-wrap"
           id="features"
           aria-labelledby="features-title"
         >
-          <div className="landing-section-head">
-            <p className="eyebrow">{t('ĐỒNG HÀNH MỖI NGÀY')}</p>
-            <h2 id="features-title">{t('Sự quan tâm, được kết nối.')}</h2>
-            <p>
-              {t(
-                'Từ những hành trình quen thuộc đến những lúc cần hỗ trợ, cùng xây dựng một cuộc sống chủ động hơn.',
-              )}
-            </p>
-          </div>
-          <div className="landing-feature-grid">
-            {capabilities.map(({ icon: Icon, title, text, label }, i) => (
-              <article key={label} className="glass landing-feature">
-                <div className="row between">
-                  <span className="icon-tile">
-                    <Icon size={25} aria-hidden="true" />
-                  </span>
-                  <span className="landing-index">0{i + 1}</span>
+          <div className="landing-features">
+            <div className="landing-section-head">
+              <h2 id="features-title">{t('Người chăm sóc làm gì trên Web.')}</h2>
+              <p>
+                {t('Mọi thao tác đều theo quyền mà người khiếm thị hoặc trung tâm đã cấp cho bạn.')}
+              </p>
+            </div>
+            <dl className="landing-feature-list">
+              {capabilities.map(({ title, text }) => (
+                <div key={title}>
+                  <dt>{t(title)}</dt>
+                  <dd>{t(text)}</dd>
                 </div>
-                <p className="eyebrow">{t(label)}</p>
-                <h3>{t(title)}</h3>
-                <p>{t(text)}</p>
-              </article>
-            ))}
+              ))}
+            </dl>
           </div>
           <p className="notice">
             {t(
@@ -283,12 +224,7 @@ export function Landing() {
         >
           <div className="landing-how glass">
             <div>
-              <p className="eyebrow">{t('BẮT ĐẦU TỪ MỘT KẾT NỐI')}</p>
-              <h2 id="steps-title">
-                {t('Cùng nhau,')}
-                <br />
-                {t('từng bước một.')}
-              </h2>
+              <h2 id="steps-title">{t('Bắt đầu trong ba bước.')}</h2>
               <p>
                 {t(
                   'Ứng dụng di động dành cho người khiếm thị. Không gian Web dành cho những người đồng hành.',
@@ -333,8 +269,7 @@ export function Landing() {
           aria-labelledby="audience-title"
         >
           <div className="landing-section-head">
-            <p className="eyebrow">{t('MỖI VAI TRÒ, MỘT SỰ ĐỒNG HÀNH')}</p>
-            <h2 id="audience-title">{t('Chọn cách đồng hành phù hợp.')}</h2>
+            <h2 id="audience-title">{t('Dành cho gia đình và trung tâm.')}</h2>
             <p>
               {t(
                 'Gia đình sử dụng Personal; trung tâm sử dụng Business. Đăng nhập để xem gói, giá và quyền lợi hiện được cung cấp cho tài khoản của bạn.',
@@ -343,7 +278,6 @@ export function Landing() {
           </div>
           <div className="landing-audiences">
             <article>
-              <HeartHandshake size={30} aria-hidden="true" />
               <h3>{t('Personal · Gia đình')}</h3>
               <p>
                 {t(
@@ -352,7 +286,6 @@ export function Landing() {
               </p>
             </article>
             <article>
-              <Users size={30} aria-hidden="true" />
               <h3>{t('Business · Trung tâm')}</h3>
               <p>
                 {t(
@@ -361,7 +294,6 @@ export function Landing() {
               </p>
             </article>
             <article>
-              <Smartphone size={30} aria-hidden="true" />
               <h3>{t('Standalone · Trung tâm đồng hành')}</h3>
               <p>
                 {t(
@@ -410,13 +342,8 @@ export function Landing() {
 
         <section className="landing-wrap landing-cta" aria-labelledby="cta-title">
           <div>
-            <p className="eyebrow">{t('VISIONAID · CÙNG BẠN TIẾN BƯỚC')}</p>
-            <h2 id="cta-title">
-              {t('Sự an tâm bắt đầu')}
-              <br />
-              {t('từ một kết nối.')}
-            </h2>
-            <p>{t('Tạo tài khoản người chăm sóc và khám phá không gian dành cho bạn.')}</p>
+            <h2 id="cta-title">{t('Liên kết người thân đầu tiên.')}</h2>
+            <p>{t('Sau khi đăng ký, bạn liên kết với người khiếm thị và chọn quyền chăm sóc.')}</p>
           </div>
           <Link className="btn" to="/auth/register">
             {t('Tạo tài khoản')} <ArrowRight size={18} aria-hidden="true" />
@@ -425,17 +352,17 @@ export function Landing() {
       </main>
       <footer className="landing-footer landing-wrap">
         <div>
-          <Link to="/" aria-label={t('VisionAid — Trang chủ')}>
+          <Link to="/" aria-label={t('VisionAid · Trang chủ')}>
             <img
               className="brand-full"
               src="/branding/visionaid-logo.png"
-              alt="VisionAid — AI solutions for visually impaired"
+              alt="VisionAid: AI solutions for visually impaired"
               width={200}
               height={200}
               loading="lazy"
             />
           </Link>
-          <p>{t('Đồng hành cùng sự tự lập mỗi ngày.')}</p>
+          <p>{t('Trang Web dành cho người chăm sóc người khiếm thị.')}</p>
         </div>
         <p>
           {t('VisionAid · Dự án FA26SE013')}

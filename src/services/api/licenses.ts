@@ -270,7 +270,7 @@ export const licensedCaregiverPaths = [
 export const GRACE_DAYS = 3;
 /**
  * Mirrors the BE rule for a personal Caregiver: None/unknown, or Expired past the 3-day grace,
- * blocks licensed screens. UI hint only — the BE still answers 402 if this view is stale.
+ * blocks licensed screens. UI hint only; the BE still answers 402 if this view is stale.
  */
 export function personalLicenseBlock(user: Person, now = Date.now()): 'none' | 'expired' | null {
   if (!isPersonalCaregiver(user)) return null;
@@ -288,9 +288,9 @@ export function licenseSummary(user: Person, now = Date.now()) {
   if (!isPersonalCaregiver(user))
     return user.role === 'Caregiver'
       ? t(
-          'Nhân viên thuộc tổ chức — không yêu cầu license cá nhân. Quyền dữ liệu vẫn theo phân công.',
+          'Nhân viên thuộc tổ chức nên không yêu cầu license cá nhân. Quyền dữ liệu vẫn theo phân công.',
         )
-      : t('Tài khoản quản trị — không yêu cầu license cá nhân.');
+      : t('Tài khoản quản trị không yêu cầu license cá nhân.');
   const expiry = user.licenseExpiresAt ? Date.parse(user.licenseExpiresAt) : NaN;
   const days = Number.isFinite(expiry) ? Math.max(0, Math.ceil((expiry - now) / 86400000)) : null;
   switch (user.licenseStatus) {

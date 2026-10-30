@@ -90,7 +90,7 @@ function Change({
           <div>
             <dt>{t('Giới hạn')}</dt>
             <dd>
-              {config.minValue ?? t('Không có')} — {config.maxValue ?? t('Không có')}
+              {config.minValue ?? t('Không có')} – {config.maxValue ?? t('Không có')}
             </dd>
           </div>
         </dl>
@@ -206,7 +206,7 @@ function ConfigPanel({
         <div>
           <dt>{t('Giới hạn')}</dt>
           <dd>
-            {config.minValue ?? t('Không có')} — {config.maxValue ?? t('Không có')}
+            {config.minValue ?? t('Không có')} – {config.maxValue ?? t('Không có')}
           </dd>
         </div>
         <div>

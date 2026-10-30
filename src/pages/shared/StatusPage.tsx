@@ -37,7 +37,7 @@ const content: Record<
     icon: TriangleAlert,
     title: msg('Màn hình này gặp sự cố'),
     description: msg(
-      'Một lỗi bất ngờ khiến màn hình không hiển thị được. Thao tác đang gửi có thể chưa hoàn tất — hãy tải lại và kiểm tra trước khi làm lại.',
+      'Một lỗi bất ngờ khiến màn hình không hiển thị được. Thao tác đang gửi có thể chưa hoàn tất. Hãy tải lại và kiểm tra trước khi làm lại.',
     ),
   },
   license: {

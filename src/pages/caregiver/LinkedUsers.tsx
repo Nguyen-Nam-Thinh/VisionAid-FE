@@ -21,7 +21,7 @@ export function LinkedUsers() {
     <>
       <PageHead
         title={t('Người được chăm sóc')}
-        description={t('Mỗi kết nối là một sự an tâm. Quản lý tối đa 3 liên kết đang hoạt động.')}
+        description={t('Quản lý tối đa 3 liên kết đang hoạt động.')}
         actions={
           !user.orgId && (
             <>
