@@ -8,8 +8,8 @@ const auth = createApiAuth(
   runtime.apiBaseUrl,
   typeof sessionStorage === 'undefined' ? undefined : sessionStorage,
   fetch,
-  () => {
-    sessionEnded();
+  (expired) => {
+    sessionEnded(expired);
     void disablePush().catch(() => {});
   },
 );

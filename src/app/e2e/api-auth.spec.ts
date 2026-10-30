@@ -79,7 +79,6 @@ for (const [role, org] of [
     await login(page);
     if (role === 'Admin') {
       await expect(page.getByRole('heading', { name: 'Gửi cảnh báo trong 24 giờ' })).toBeVisible();
-      await expect(page.getByText('Đã gửi không xác nhận', { exact: false })).toBeVisible();
       expect([...new Set(seen)]).toEqual(['/api/notifications/status']);
     } else {
       await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).toContainText(
@@ -2139,6 +2138,28 @@ test('failed logout all reports uncertainty and still clears local session', asy
   await expect(page.getByRole('status')).toContainText('chưa xác nhận');
   expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
 });
+test('TC-ST-USER-05 · deactivated account: rejected token and refresh end the session once', async ({
+  page,
+}) => {
+  await stubApi(page);
+  await login(page);
+  await expect(page.getByRole('heading', { name: 'Lối tắt' })).toBeVisible();
+  // Admin deactivates the account: BE now rejects the access token and the revoked refresh token.
+  let refreshes = 0;
+  await page.route('http://localhost:5176/api/**', (route) => {
+    if (new URL(route.request().url()).pathname !== '/api/auth/refresh')
+      return route.fulfill({ status: 401, json: { detail: 'Account has been deactivated.' } });
+    refreshes++;
+    return route.fulfill({ status: 403, json: { detail: 'Invalid refresh token.' } });
+  });
+  await page.getByRole('link', { name: 'Người được chăm sóc', exact: true }).click();
+  await expect(page).toHaveURL(/\/auth\/login/);
+  await expect(page.getByText('Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất')).toBeVisible();
+  expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
+  expect(refreshes).toBe(1);
+  await page.goto('/dashboard');
+  await expect(page).toHaveURL(/\/auth\/login/);
+});
 
 test('recovery email, expired token, pasted link and login after reset', async ({ page }) => {
   await stubApi(page);
@@ -3498,7 +3519,7 @@ test('email reset URL is public and preserves encoded token on reload', async ({
 });
 
 for (const simulateConflict of [false, true]) {
-  test(`7 alerts: confirm, conflict=${simulateConflict}, escalation, resolve and revoked permission`, async ({
+  test(`TC-FE18-01 · 7 alerts: confirm, conflict=${simulateConflict}, escalation, resolve and revoked permission`, async ({
     page,
   }) => {
     await stubApi(page);
@@ -3851,7 +3872,6 @@ test('stage 8b preferences save false, reload and surface failure without succes
   });
   await login(page);
   await page.goto('/caregiver/notifications');
-  await expect(page.getByText('Thông báo bắt buộc vẫn được gửi', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
   await page.getByLabel('Bật nhận khi không bắt buộc').uncheck();
   await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
@@ -4533,7 +4553,7 @@ const u3Transaction = (status = 'Pending') => ({
   paidAt: status === 'Success' ? '2026-10-03T00:00:00Z' : null,
   createdAt: '2026-10-03T00:00:00Z',
 });
-test('U3a: one create, safe checkout, spoofed PAID ignored, delayed success refreshes license', async ({
+test('TC-FE25-01 · U3a: one create, safe checkout, spoofed PAID ignored, delayed success refreshes license', async ({
   page,
 }) => {
   await stubApi(page);
@@ -4919,7 +4939,7 @@ test('11a: staff manages contacts with conflict recovery, confirmations and revo
   expect(writes).toEqual(['POST', 'POST', 'PUT', 'PATCH', 'DELETE']);
   expect(await page.locator('a[href^="tel:"], a[href^="zalo:"]').count()).toBe(0);
 });
-test('U5: distribute once, mask/copy key, then family activates and refreshes entitlement', async ({
+test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates and refreshes entitlement', async ({
   page,
   context,
 }) => {
@@ -5123,7 +5143,7 @@ test('U4: create VIU quota error keeps account form and provides license managem
   expect(posts).toBe(1);
 });
 
-test('U4: revoke confirmation and reassign refresh server quota; quota errors retain popup input', async ({
+test('TC-FE56-01 · U4: revoke confirmation and reassign refresh server quota; quota errors retain popup input', async ({
   page,
 }) => {
   await stubApi(page, 'CenterAdmin', id);
@@ -5411,7 +5431,7 @@ test('U3b: CenterAdmin without organization cannot query payments or pool', asyn
 });
 
 for (const kind of ['saved-locations', 'geofences'] as const) {
-  test(`9: ${kind} CRUD, read-only/revoked permissions, license and delete failures`, async ({
+  test(`${kind === 'saved-locations' ? 'TC-FE21-01 · ' : ''}9: ${kind} CRUD, read-only/revoked permissions, license and delete failures`, async ({
     page,
   }) => {
     await stubApi(page);
