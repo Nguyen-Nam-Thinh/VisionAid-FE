@@ -386,7 +386,7 @@ function PlaceEditor({
     { key: 'longitude', label: t('Kinh độ'), type: 'number', required: true, min: -180, max: 180 },
     {
       key: zone ? 'radiusMeters' : 'arrivalRadiusMeters',
-      label: t('Bán kính — mét'),
+      label: t('Bán kính (mét)'),
       type: 'number',
       required: true,
       min: zone ? 50 : 10,

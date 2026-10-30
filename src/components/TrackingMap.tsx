@@ -98,7 +98,7 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
               </div>
               <Badge tone={isStale(current, now) ? 'amber' : 'green'}>
                 {isStale(current, now)
-                  ? t('Vị trí cũ — không phải trực tiếp')
+                  ? t('Vị trí cũ, không phải trực tiếp')
                   : t('Cập nhật gần đây · dữ liệu mô phỏng')}
               </Badge>
             </section>

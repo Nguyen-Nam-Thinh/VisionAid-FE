@@ -326,10 +326,6 @@ function Shell() {
           </nav>
         </div>
         <div className="sidebar-foot stack">
-          <div className="notice">
-            <ShieldCheck size={20} />
-            <p>{t('Mỗi kết nối là một sự an tâm.')}</p>
-          </div>
           <nav className="nav">
             {runtime.mode === 'api' &&
               (user.role === 'Caregiver' || user.role === 'CenterAdmin') && (

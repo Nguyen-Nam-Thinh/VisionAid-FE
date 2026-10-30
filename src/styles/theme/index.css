@@ -1,15 +1,11 @@
-@import '@fontsource-variable/fraunces/wght.css';
-
-@import '@fontsource-variable/nunito/wght.css';
-
 @import '@fontsource/jetbrains-mono/latin-400.css';
 @import 'tailwindcss';
 @theme {
   --color-brand: var(--primary);
-  --font-sans: 'Nunito Variable', sans-serif;
+  --font-sans: 'Be Vietnam Pro', sans-serif;
 }
 :root {
-  font-family: 'Nunito Variable', sans-serif;
+  font-family: 'Be Vietnam Pro', sans-serif;
   color: var(--text);
   background: var(--background);
   --background: #fdfcf8;
@@ -113,7 +109,6 @@ small,
   border: 1px solid rgba(255, 255, 255, 0.95);
   box-shadow: var(--shadow);
   border-radius: 24px;
-  backdrop-filter: blur(12px);
 }
 .card {
   padding: 28px;
@@ -350,7 +345,6 @@ tbody tr:hover {
   display: flex;
   flex-direction: column;
   gap: 28px;
-  backdrop-filter: blur(12px);
 }
 .brand {
   display: flex;
@@ -382,8 +376,7 @@ tbody tr:hover {
 }
 .nav a.active {
   color: #fff;
-  background: linear-gradient(125deg, var(--primary), var(--primary));
-  box-shadow: 0 6px 16px #1856ff26;
+  background: var(--primary);
 }
 .sidebar-foot {
   margin-top: auto;
@@ -474,9 +467,6 @@ tbody tr:hover {
   width: calc(100% - 32px);
   max-height: 90dvh;
   overflow-y: auto;
-}
-.dialog::backdrop {
-  backdrop-filter: blur(4px);
 }
 .dialog-header {
   position: sticky;
@@ -773,7 +763,7 @@ tbody tr:hover {
 .stat-card:hover {
   text-decoration: none;
   border-color: var(--border);
-  box-shadow: 0 6px 22px #1856ff12;
+  box-shadow: 0 6px 22px rgb(23 45 59 / 7%);
 }
 .stat-card > .muted {
   font-size: 0.7rem;
@@ -912,7 +902,7 @@ tbody tr:hover {
   box-shadow: inset 0 2px 5px #15274818;
 }
 .btn.primary {
-  box-shadow: 0 4px 12px #1856ff20;
+  box-shadow: 0 4px 12px rgb(23 45 59 / 12%);
 }
 .nav svg {
   flex-shrink: 0;
@@ -1019,7 +1009,7 @@ tbody tr:hover {
   color: var(--primary);
   background: #ffffffa8;
   border: 1px solid #fff;
-  box-shadow: 0 10px 30px #1856ff12;
+  box-shadow: 0 10px 30px rgb(23 45 59 / 7%);
 }
 .overview-grid {
   display: grid;
@@ -1044,7 +1034,7 @@ tbody tr:hover {
   text-decoration: none;
   background: white;
   border-color: var(--border);
-  box-shadow: 0 8px 24px #1856ff0d;
+  box-shadow: 0 8px 24px rgb(23 45 59 / 5%);
 }
 .quick-link p {
   color: var(--muted);
@@ -1109,21 +1099,9 @@ tbody tr:hover {
   }
 }
 
-/* Organic / Natural: typography, tactile surfaces and stable controls. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 10;
-  opacity: 0.035;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23000' filter='url(%23grain)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
-}
 h1,
 h2,
 h3 {
-  font-family: 'Fraunces Variable', Georgia, serif;
   font-weight: 650;
   text-wrap: balance;
   letter-spacing: -0.02em;
@@ -1254,7 +1232,7 @@ td .row {
   text-decoration: none;
 }
 .auth-story {
-  background: radial-gradient(ellipse at 90% 0%, #7f906b, transparent 65%), var(--primary-hover);
+  background: var(--primary-hover);
   border-radius: 48px 48px 110px 48px;
   box-shadow: var(--shadow);
 }
