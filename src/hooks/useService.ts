@@ -1,9 +1,11 @@
 import { t } from '../i18n';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { service } from '../services';
 import { ServiceError } from '../services/contracts';
 import type { Command, Person } from '../models/domain';
 import { uiStore } from '../stores/ui';
+import { onSessionEnded } from '../services/sessionLifecycle';
 export const useSession = () =>
   useQuery({
     queryKey: ['session'],
@@ -43,14 +45,33 @@ export function useCommand() {
     },
   });
 }
+async function replaceSession(client: QueryClient, user: Person | null) {
+  await client.cancelQueries();
+  client.setQueryData(['session'], user);
+  client.removeQueries({ predicate: (q) => q.queryKey[0] !== 'session' });
+  uiStore.clear();
+}
+/** Signs the tab out as soon as the server rejects its tokens, e.g. after an Admin deactivates the account. */
+export function useSessionExpiry() {
+  const client = useQueryClient();
+  useEffect(
+    () =>
+      onSessionEnded((expired) => {
+        if (!expired || !client.getQueryData(['session'])) return;
+        // The event fires inside a running request; let it settle before clearing the cache.
+        queueMicrotask(async () => {
+          await replaceSession(client, null);
+          uiStore.set({
+            notice: t('Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất. Vui lòng đăng nhập lại.'),
+          });
+        });
+      }),
+    [client],
+  );
+}
 export function useAuth() {
   const client = useQueryClient();
-  const setSession = async (user: Person | null) => {
-    await client.cancelQueries();
-    client.setQueryData(['session'], user);
-    client.removeQueries({ predicate: (q) => q.queryKey[0] !== 'session' });
-    uiStore.clear();
-  };
+  const setSession = (user: Person | null) => replaceSession(client, user);
   return {
     mode: service.mode,
     login: async (email: string, password: string) => {

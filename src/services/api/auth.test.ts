@@ -160,6 +160,31 @@ it('treats a revoked refresh token (403) as an ended session, not a permission e
   });
   expect(await auth.session()).toBeNull();
 });
+it('TC-ST-USER-05 · flags a server-rejected session as expired but a logout as not', async () => {
+  const storage = memory();
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  const ended: boolean[] = [];
+  const auth = createApiAuth(
+    'http://example.test',
+    storage,
+    async (url) =>
+      String(url).endsWith('/refresh')
+        ? Response.json({ detail: 'Invalid refresh token.' }, { status: 403 })
+        : Response.json({ detail: 'Account has been deactivated.' }, { status: 401 }),
+    (expired) => ended.push(expired),
+  );
+  await expect(auth.get('/api/users/me')).rejects.toMatchObject({ status: 401 });
+  expect(ended).toEqual([true]);
+  storage.setItem(authSessionKey, JSON.stringify(pair()));
+  const fresh = createApiAuth(
+    'http://example.test',
+    storage,
+    async () => ok(null),
+    (expired) => ended.push(expired),
+  );
+  await fresh.logout();
+  expect(ended).toEqual([true, false]);
+});
 it('reports a wrong current password instead of a permission error', async () => {
   const storage = memory();
   storage.setItem(authSessionKey, JSON.stringify(pair()));
