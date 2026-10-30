@@ -31,7 +31,7 @@ export function createApiAuth(
   baseUrl: string,
   storage?: AuthStorage,
   transport: typeof fetch = fetch,
-  onSessionEnd: () => void = () => {},
+  onSessionEnd: (expired: boolean) => void = () => {},
 ) {
   let tokens: Tokens | null = null;
   let deviceId = '';
@@ -47,8 +47,9 @@ export function createApiAuth(
   }
   if (!deviceId) deviceId = crypto.randomUUID();
 
-  function clear() {
-    onSessionEnd();
+  // expired: the server rejected the tokens (deactivated account, revoked refresh), not a user logout.
+  function clear(expired = false) {
+    onSessionEnd(expired);
     generation++;
     tokens = null;
     try {
@@ -154,7 +155,7 @@ export function createApiAuth(
         save(result);
       } catch (error) {
         // A lost refresh response may already have rotated the token. Never replay it.
-        if (generation === epoch) clear();
+        if (generation === epoch) clear(true);
         // BE answers a revoked/expired refresh token with 403; this is an ended session, not missing permission.
         if (error instanceof ServiceError && (error.status === 401 || error.status === 403))
           throw new ServiceError(
@@ -208,7 +209,8 @@ export function createApiAuth(
       try {
         return await send();
       } catch (retryError) {
-        if (retryError instanceof ServiceError && [401, 403].includes(retryError.status)) clear();
+        if (retryError instanceof ServiceError && [401, 403].includes(retryError.status))
+          clear(true);
         throw retryError;
       }
     }
@@ -441,7 +443,7 @@ export function createApiAuth(
             error instanceof ServiceError &&
             [401, 403].includes(error.status)
           )
-            clear();
+            clear(true);
           throw error;
         } finally {
           sessionFlight = null;

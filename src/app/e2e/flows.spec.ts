@@ -54,7 +54,9 @@ test('caregiver CRUD, validation, alert history and map reconnect', async ({ pag
   await expect(page.getByText('Realtime mô phỏng', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
-test('face upload activation, primary image and delete confirmation', async ({ page }) => {
+test('TC-FE20-01 · face upload activation, primary image and delete confirmation', async ({
+  page,
+}) => {
   await login(page);
   await screen(page, '/caregiver/registry', 'Gương mặt thân quen');
   await page.getByRole('button', { name: 'Quản lý ảnh', exact: true }).click();

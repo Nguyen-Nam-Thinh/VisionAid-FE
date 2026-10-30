@@ -71,7 +71,7 @@ import {
   FileText,
   BarChart3,
 } from 'lucide-react';
-import { useAuth, useSession } from '../hooks/useService';
+import { useAuth, useSession, useSessionExpiry } from '../hooks/useService';
 import { Brand, Confirm, State, Toast } from '../components/UI';
 import { AuthPage } from '../pages/auth/AuthPage';
 import { Profile } from '../pages/shared/Profile';
@@ -222,6 +222,7 @@ function Shell() {
   const [reset, setReset] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { notice } = useUI();
+  useSessionExpiry();
   if (!user) return null;
   const block = runtime.mode === 'api' ? personalLicenseBlock(user) : null;
   const locked = (path: string) =>
