@@ -86,6 +86,25 @@ it('refreshes only matching account and organization caches', async () => {
   expect(cache.getQueryState(['api-alerts', id, 'other-org'])?.isInvalidated).toBe(false);
   cache.clear();
 });
+it('F-25: refreshes the organization fleet at most once every 2 seconds', async () => {
+  vi.useFakeTimers();
+  const cache = new QueryClient();
+  const key = ['api-location-fleet', id, 'org'];
+  cache.setQueryData(key, []);
+  const invalidated = () => cache.getQueryState(key)?.isInvalidated;
+  // 50 VIUs sending GPS: a burst of refreshes becomes one fleet request.
+  for (let i = 0; i < 50; i++) void refreshRealtimeQueries(cache, { id, orgId: 'org' });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(invalidated()).toBe(true);
+  cache.setQueryData(key, []);
+  void refreshRealtimeQueries(cache, { id, orgId: 'org' });
+  await vi.advanceTimersByTimeAsync(1999);
+  expect(invalidated()).toBe(false);
+  await vi.advanceTimersByTimeAsync(1);
+  expect(invalidated()).toBe(true);
+  cache.clear();
+  vi.useRealTimers();
+});
 it('coalesces bursts, resyncs on reconnect and drops callbacks after cleanup', async () => {
   vi.useFakeTimers();
   const data = vi.fn();

@@ -25,6 +25,8 @@ export type MapPoint = {
   lat: number;
   lng: number;
   stale: boolean;
+  /** Fleet map: the VIU has an alert that is Sent, Acknowledged or Escalated. */
+  alert?: boolean;
   /** Plain-text lines for the marker popup (address, recorded time). */
   details?: string[];
 };

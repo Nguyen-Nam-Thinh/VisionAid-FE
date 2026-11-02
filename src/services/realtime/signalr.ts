@@ -62,7 +62,31 @@ export function createEventFilter() {
     return true;
   };
 }
+// F-25: one fleet request covers the whole organization, but 50 VIUs sending GPS would still
+// refetch it ~4 times a second through the 250 ms debounce and hit the 200 requests/minute limit.
+export const FLEET_REFRESH_MS = 2000;
+const fleetRefresh = new WeakMap<
+  QueryClient,
+  { last: number; timer?: ReturnType<typeof setTimeout> }
+>();
+function refreshFleet(cache: QueryClient, scope: Scope) {
+  const state = fleetRefresh.get(cache) ?? { last: -Infinity };
+  fleetRefresh.set(cache, state);
+  if (state.timer) return;
+  state.timer = setTimeout(
+    () => {
+      state.timer = undefined;
+      state.last = Date.now();
+      void cache.invalidateQueries(
+        { queryKey: ['api-location-fleet', scope.id, scope.orgId] },
+        { cancelRefetch: false },
+      );
+    },
+    Math.max(0, state.last + FLEET_REFRESH_MS - Date.now()),
+  );
+}
 export function refreshRealtimeQueries(cache: QueryClient, scope: Scope) {
+  refreshFleet(cache, scope);
   return cache.invalidateQueries(
     {
       predicate: (q) =>
