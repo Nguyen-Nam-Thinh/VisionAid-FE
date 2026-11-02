@@ -6,6 +6,8 @@ import { ServiceError } from '../services/contracts';
 import type { Command, Person } from '../models/domain';
 import { uiStore } from '../stores/ui';
 import { onSessionEnded } from '../services/sessionLifecycle';
+const sessionEndedNotice = () =>
+  t('Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất. Vui lòng đăng nhập lại.');
 export const useSession = () =>
   useQuery({
     queryKey: ['session'],
@@ -13,7 +15,11 @@ export const useSession = () =>
       try {
         return await service.session();
       } catch (error) {
-        if (error instanceof ServiceError && [401, 403].includes(error.status)) return null;
+        if (error instanceof ServiceError && [401, 403].includes(error.status)) {
+          // A stored session the BE now rejects (e.g. account or organization deactivated).
+          uiStore.set({ notice: sessionEndedNotice() });
+          return null;
+        }
         throw error;
       }
     },
@@ -61,9 +67,7 @@ export function useSessionExpiry() {
         // The event fires inside a running request; let it settle before clearing the cache.
         queueMicrotask(async () => {
           await replaceSession(client, null);
-          uiStore.set({
-            notice: t('Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất. Vui lòng đăng nhập lại.'),
-          });
+          uiStore.set({ notice: sessionEndedNotice() });
         });
       }),
     [client],

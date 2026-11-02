@@ -7,7 +7,6 @@ import type { Person } from '../../models/domain';
 // Only keys reviewed against BE DbSeeder may expose values, including their history.
 const reviewedKeys = new Set([
   'ai.yolo.confidence_threshold',
-  'ai.yolo.max_detections_per_frame',
   'ai.facenet.similarity_threshold',
   'caregiving.max_caregivers_per_viu',
   'caregiving.max_vius_per_caregiver',
