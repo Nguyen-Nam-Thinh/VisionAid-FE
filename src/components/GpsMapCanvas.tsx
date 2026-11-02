@@ -104,12 +104,16 @@ export default function GpsMapCanvas({
       const el = document.createElement('button');
       el.type = 'button';
       el.className =
-        'gps-marker' + (p.stale ? ' stale' : '') + (p.id === selected ? ' selected' : '');
+        'gps-marker' +
+        (p.stale ? ' stale' : '') +
+        (p.alert ? ' alert' : '') +
+        (p.id === selected ? ' selected' : '');
       // textContent/aria only: names come from the API and must never be parsed as HTML.
       el.setAttribute(
         'aria-label',
         t('{name} · {state}', {
-          name: p.label,
+          // Colour is not the only cue for an open alert.
+          name: p.alert ? t('{name} · Đang có cảnh báo', { name: p.label }) : p.label,
           state: p.stale ? t('Dữ liệu cũ hơn 2 phút') : t('Ghi nhận trong 2 phút gần đây'),
         }),
       );

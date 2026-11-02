@@ -1010,6 +1010,7 @@ tbody tr:hover {
 .gps-map-loading { min-height: 120px; display: grid; place-items: center; color: var(--muted); }
 .gps-marker { width: 22px; height: 22px; border-radius: 50%; border: 3px solid #fff; background: var(--success); box-shadow: 0 2px 8px rgb(23 45 59 / 35%); cursor: pointer; padding: 0; }
 .gps-marker.stale { background: var(--warning-text); }
+.gps-marker.alert { background: var(--danger); }
 .gps-marker.selected { outline: 3px solid var(--primary); outline-offset: 2px; width: 28px; height: 28px; }
 .gps-marker:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 @media (max-width: 760px) { .gps-map { height: 300px; } }
