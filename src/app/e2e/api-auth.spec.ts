@@ -2262,6 +2262,35 @@ test('TC-ST-USER-05 · deactivated account: rejected token and refresh end the s
   await expect(page).toHaveURL(/\/auth\/login/);
 });
 
+for (const role of ['CenterAdmin', 'Caregiver'] as const) {
+  test(`DC-01 · ${role} of a deleted or deactivated organization is signed out on the next 401`, async ({
+    page,
+  }) => {
+    const orgId = '01900000-0000-7000-8000-000000000093';
+    await stubApi(page, role, orgId);
+    await login(page);
+    await expect(page.getByRole('heading', { name: 'Lối tắt' })).toBeVisible();
+    // Super Admin deletes or deactivates the organization: BE revokes the members' sessions at once.
+    let refreshes = 0;
+    await page.route('http://localhost:5176/api/**', (route) => {
+      if (new URL(route.request().url()).pathname !== '/api/auth/refresh')
+        return route.fulfill({ status: 401, json: { detail: 'Organization is inactive.' } });
+      refreshes++;
+      return route.fulfill({ status: 401, json: { detail: 'Invalid refresh token.' } });
+    });
+    await page.reload();
+    await expect(page).toHaveURL(/\/auth\/login/);
+    await expect(page.getByText('Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Lối tắt' })).toHaveCount(0);
+    expect(
+      await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1')),
+    ).toBeNull();
+    expect(refreshes).toBeLessThanOrEqual(1);
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/auth\/login/);
+  });
+}
+
 test('recovery email, expired token, pasted link and login after reset', async ({ page }) => {
   await stubApi(page);
   let emails = 0;
@@ -3619,6 +3648,95 @@ test('email reset URL is public and preserves encoded token on reload', async ({
   expect(resets).toBe(1);
 });
 
+test('ST-02: an alert closed by the system shows Hệ thống and offers no further action', async ({
+  page,
+}) => {
+  await stubApi(page);
+  const viu = '01900000-0000-7000-8000-000000000002';
+  const event = {
+    id,
+    visuallyImpairedUserId: viu,
+    viuFullName: 'VIU test',
+    detectionMethod: 'Manual',
+    currentStatus: 'Resolved',
+    latitude: null,
+    longitude: null,
+    notes: null,
+    snapshotPath: null,
+    detectedAt: '2026-10-01T00:00:00Z',
+    gracePeriodEndsAt: null,
+    sentAt: '2026-10-01T00:00:00Z',
+    acknowledgedAt: null,
+    acknowledgedBy: null,
+    escalatedAt: null,
+    resolvedAt: '2026-10-01T02:00:00Z',
+    // Closed by a BE job: nobody resolved it.
+    resolvedBy: null,
+    dismissedAt: null,
+  };
+  await page.route('http://localhost:5176/api/caregiver-links?*', (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id,
+            caregiverId: id,
+            visuallyImpairedUserId: viu,
+            viuFullName: 'VIU test',
+            linkType: 'Personal',
+            isPrimary: true,
+            canReceiveAlerts: true,
+            canManageLocations: false,
+            canManageRegistry: false,
+            linkedAt: '2026-10-01',
+            unlinkedAt: null,
+          },
+        ]),
+      },
+    }),
+  );
+  await page.route('http://localhost:5176/api/emergency-events**', (route) => {
+    const url = new URL(route.request().url());
+    expect(route.request().method()).toBe('GET');
+    return route.fulfill({
+      json: {
+        success: true,
+        data:
+          url.pathname === '/api/emergency-events'
+            ? { ...organizationPage([event]), pageSize: 20 }
+            : {
+                ...event,
+                statusHistory: [
+                  {
+                    id: '01900000-0000-7000-8000-000000000031',
+                    fromStatus: 'Sent',
+                    toStatus: 'Resolved',
+                    changedBy: null,
+                    changedAt: '2026-10-01T02:00:00Z',
+                    reason: 'Auto-resolved',
+                  },
+                ],
+              },
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/caregiver/alerts');
+  await page.getByRole('button', { name: 'Xem chi tiết' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('Đã gửi → Đã giải quyết')).toBeVisible();
+  await expect(dialog.getByText(/· Hệ thống$/)).toBeVisible();
+  await expect(dialog.getByText('Auto-resolved')).toBeVisible();
+  await expect(dialog.getByRole('alert')).toHaveCount(0);
+  for (const name of [
+    'Tiếp nhận cảnh báo',
+    'Chuyển cấp hỗ trợ',
+    'Xác nhận đã gọi hỗ trợ',
+    'Đánh dấu đã giải quyết',
+  ])
+    await expect(dialog.getByRole('button', { name, exact: true })).toHaveCount(0);
+});
 for (const simulateConflict of [false, true]) {
   test(`TC-FE18-01 · 7 alerts: confirm, conflict=${simulateConflict}, escalation, resolve and revoked permission`, async ({
     page,
