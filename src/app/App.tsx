@@ -80,7 +80,12 @@ import { uiStore, useUI } from '../stores/ui';
 import { ErrorBoundary } from './ErrorBoundary';
 import { StatusPage } from '../pages/shared/StatusPage';
 import { LicenseGate } from '../pages/shared/LicenseGate';
-import { licensedCaregiverPaths, personalLicenseBlock } from '../services/api/licenses';
+import {
+  licenseGraceDays,
+  licensedCaregiverPaths,
+  personalLicenseBlock,
+} from '../services/api/licenses';
+import { useLicenseWarning } from '../hooks/useLicenseWarning';
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 });
@@ -223,8 +228,10 @@ function Shell() {
   const [signingOut, setSigningOut] = useState(false);
   const { notice } = useUI();
   useSessionExpiry();
+  const warning = useLicenseWarning();
   if (!user) return null;
-  const block = runtime.mode === 'api' ? personalLicenseBlock(user) : null;
+  const block = runtime.mode === 'api' ? personalLicenseBlock(user, warning) : null;
+  const graceDays = runtime.mode === 'api' ? licenseGraceDays(user, warning) : null;
   const locked = (path: string) =>
     !!block && (licensedCaregiverPaths as readonly string[]).includes(path);
   const content = (
@@ -514,6 +521,17 @@ function Shell() {
           </div>
         )}
         <main id="main" tabIndex={-1} className="main">
+          {graceDays !== null && (
+            <p className="notice" role="status">
+              {t(
+                'License đã hết hạn. Máy chủ báo còn {days} ngày gia hạn trước khi các chức năng bị khóa.',
+                {
+                  days: graceDays,
+                },
+              )}{' '}
+              <Link to="/packages">{t('Gia hạn gói Personal')}</Link>
+            </p>
+          )}
           <Suspense
             fallback={
               <div className="glass empty" role="status">

@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { State } from '../../components/UI';
+import { useLicenseWarning } from '../../hooks/useLicenseWarning';
 import { formatTime } from '../../constants/labels';
 import {
   getMySubscription,
@@ -186,6 +187,7 @@ function Shortcuts({ actor }: { actor: Person }) {
 }
 
 function Personal({ actor }: { actor: Person }) {
+  const warning = useLicenseWarning();
   const query = useQuery({
     ...refresh,
     queryKey: ['dashboard-subscription', actor.id, actor.orgId],
@@ -194,7 +196,7 @@ function Personal({ actor }: { actor: Person }) {
   return (
     <section className="glass card stack" aria-label={t('License cá nhân')}>
       <h2>{t('License cá nhân')}</h2>
-      <p>{licenseSummary(actor)}</p>
+      <p>{licenseSummary(actor, undefined, warning)}</p>
       {query.error instanceof ServiceError && query.error.status === 404 ? (
         <p>{t('Máy chủ chưa tìm thấy subscription cá nhân.')}</p>
       ) : (

@@ -6,6 +6,7 @@ import {
   getAdminOrganizationPool,
   getMySubscription,
   getOrganizationPool,
+  licenseGraceDays,
   licenseSummary,
   personalLicenseBlock,
   renewPool,
@@ -63,21 +64,17 @@ it('distinguishes missing status, expiry boundaries and organization exemption w
       now,
     ),
   ).toContain('Còn 1 ngày');
-  expect(
-    licenseSummary(
-      { ...actor, licenseStatus: 'Expired', licenseExpiresAt: '2026-09-30T00:00:00Z' },
-      now,
-    ),
-  ).toContain('gia hạn 3 ngày');
-  expect(
-    licenseSummary(
-      { ...actor, licenseStatus: 'Expired', licenseExpiresAt: '2026-09-29T23:59:59Z' },
-      now,
-    ),
-  ).toContain('có thể bị giới hạn');
-  expect(
-    licenseSummary({ ...actor, licenseStatus: 'Expired', licenseExpiresAt: null }, now),
-  ).not.toContain('gia hạn 3 ngày');
+  // Grace comes only from the server (X-License-Warning / 402), never from a fixed day count.
+  const expiredUser = {
+    ...actor,
+    licenseStatus: 'Expired',
+    licenseExpiresAt: '2026-09-30T00:00:00Z',
+  };
+  expect(licenseSummary(expiredUser, now)).toContain('có thể bị giới hạn');
+  expect(licenseSummary(expiredUser, now, { kind: 'grace', daysLeft: 5 })).toContain(
+    'còn 5 ngày gia hạn',
+  );
+  expect(licenseSummary(expiredUser, now, { kind: 'expired' })).toContain('quá thời gian gia hạn');
   expect(licenseSummary({ ...actor, orgId: actor.id, licenseStatus: 'None' }, now)).toContain(
     'Nhân viên thuộc tổ chức',
   );
@@ -109,23 +106,29 @@ it('reads subscription only for a personal caregiver and rejects malformed data'
 });
 
 it('blocks licensed screens only for personal caregivers without license or past grace', () => {
-  const day = 86400000;
-  expect(personalLicenseBlock(actor, now)).toBeNull(); // field absent: unknown, do not guess
-  expect(personalLicenseBlock({ ...actor, licenseStatus: null }, now)).toBe('none');
-  expect(personalLicenseBlock({ ...actor, licenseStatus: 'None' }, now)).toBe('none');
-  expect(personalLicenseBlock({ ...actor, licenseStatus: 'Trial' }, now)).toBeNull();
-  expect(personalLicenseBlock({ ...actor, licenseStatus: 'Active' }, now)).toBeNull();
-  const expired = (daysAgo: number) => ({
+  expect(personalLicenseBlock(actor)).toBeNull(); // field absent: unknown, do not guess
+  expect(personalLicenseBlock({ ...actor, licenseStatus: null })).toBe('none');
+  expect(personalLicenseBlock({ ...actor, licenseStatus: 'None' })).toBe('none');
+  expect(personalLicenseBlock({ ...actor, licenseStatus: 'Trial' })).toBeNull();
+  expect(personalLicenseBlock({ ...actor, licenseStatus: 'Active' })).toBeNull();
+  // Expired: the Web waits for the BE verdict instead of counting grace days itself.
+  const expired = {
     ...actor,
     licenseStatus: 'Expired',
-    licenseExpiresAt: new Date(now - daysAgo * day).toISOString(),
-  });
-  expect(personalLicenseBlock(expired(2), now)).toBeNull(); // grace period
-  expect(personalLicenseBlock(expired(4), now)).toBe('expired');
-  expect(personalLicenseBlock({ ...actor, licenseStatus: null, orgId: actor.id }, now)).toBeNull();
+    licenseExpiresAt: new Date(now - 30 * 86400000).toISOString(),
+  };
+  expect(personalLicenseBlock(expired)).toBeNull();
+  expect(personalLicenseBlock(expired, { kind: 'grace', daysLeft: 1 })).toBeNull();
+  expect(personalLicenseBlock(expired, { kind: 'expired' })).toBe('expired');
   expect(
-    personalLicenseBlock({ ...actor, role: 'CenterAdmin', licenseStatus: null }, now),
+    personalLicenseBlock({ ...actor, licenseStatus: 'Active' }, { kind: 'expired' }),
   ).toBeNull();
+  expect(licenseGraceDays(expired, { kind: 'grace', daysLeft: 2 })).toBe(2);
+  expect(
+    licenseGraceDays({ ...actor, licenseStatus: 'Active' }, { kind: 'grace', daysLeft: 2 }),
+  ).toBeNull();
+  expect(personalLicenseBlock({ ...actor, licenseStatus: null, orgId: actor.id })).toBeNull();
+  expect(personalLicenseBlock({ ...actor, role: 'CenterAdmin', licenseStatus: null })).toBeNull();
 });
 it('UC-130: only Admin suspends with an encoded reason or reactivates a valid pool', async () => {
   const admin = { ...actor, role: 'Admin' as const };

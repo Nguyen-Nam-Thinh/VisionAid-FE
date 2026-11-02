@@ -23,7 +23,6 @@ const reviewedKeys = new Set([
   'retention.fcm_token_inactive_days',
   'retention.face_log_days',
   'tts.cooldown_seconds',
-  'trial_days_default',
   'license_validation_cache_ttl_seconds',
   'license_grace_period_days',
   'hybrid_navigation_enabled',
@@ -34,7 +33,6 @@ const reviewedKeys = new Set([
   'webrtc_max_duration_minutes',
   'webrtc_ring_timeout_seconds',
   'payos_enabled',
-  'payos_environment',
   'ocr_confidence_threshold',
 ]);
 const uuid = z.string().uuid();
@@ -140,7 +138,6 @@ export function validateConfigValue(config: SystemConfig, value: string) {
     }
   }
   const choices: Record<string, string[]> = {
-    payos_environment: ['sandbox', 'production'],
     hybrid_navigation_engine: ['JEV', 'GROQ', 'RULE_BASED'],
   };
   if (choices[config.configKey] && !choices[config.configKey].includes(value))

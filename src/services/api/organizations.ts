@@ -40,6 +40,18 @@ const summary = summaryDates.extend({
   ocrRequestCount: z.number().int().nonnegative(),
   faceRecognitionCount: z.number().int().nonnegative(),
 });
+// UC-173: alert status changes made by the organization's caregivers (not by Center Admins).
+const caregiverActivity = z.object({
+  changedAt: z.iso.datetime({ offset: true }),
+  caregiverId: z.string().uuid(),
+  caregiverName: z.string(),
+  emergencyEventId: z.string().uuid(),
+  viuId: z.string().uuid(),
+  viuName: z.string(),
+  fromStatus: z.string(),
+  toStatus: z.string(),
+  reason: z.string().nullable(),
+});
 const paged = <T extends z.ZodType>(item: T) =>
   z.object({
     items: z.array(item),
@@ -51,6 +63,13 @@ const paged = <T extends z.ZodType>(item: T) =>
     hasNextPage: z.boolean(),
   });
 export type Organization = z.infer<typeof organization>;
+export type CaregiverActivity = z.infer<typeof caregiverActivity>;
+export type CaregiverActivityFilter = {
+  page: number;
+  caregiverId: string;
+  dateFrom: string;
+  dateTo: string;
+};
 type Scope = Pick<Person, 'role' | 'orgId'>;
 export type OrganizationInput = {
   name: string;
@@ -187,6 +206,36 @@ export function createOrganizationsApi(get = apiGet, write = apiWrite) {
         paged(member),
         await get('/api/organizations/' + id + '/members?' + query, signal),
       );
+    },
+    async caregiverActivity(
+      scope: Scope,
+      id: string,
+      filter: CaregiverActivityFilter,
+      signal?: AbortSignal,
+    ) {
+      scopeCheck(scope, id);
+      const { page, caregiverId, dateFrom, dateTo } = filter;
+      if (!Number.isInteger(page) || page < 1)
+        throw new ServiceError(t('Trang không hợp lệ.'), 400);
+      if (caregiverId && !z.string().uuid().safeParse(caregiverId).success)
+        throw new ServiceError(t('Người chăm sóc đã chọn không hợp lệ.'), 400);
+      const dates = summaryDates.safeParse({ dateFrom: dateFrom || null, dateTo: dateTo || null });
+      if (!dates.success || (dateFrom && dateTo && dateFrom > dateTo))
+        throw new ServiceError(
+          t('Kiểm tra ngày lọc; ngày kết thúc phải sau hoặc bằng ngày bắt đầu.'),
+          400,
+        );
+      const query = new URLSearchParams({ page: String(page), pageSize: '20' });
+      if (caregiverId) query.set('caregiverId', caregiverId);
+      if (dateFrom) query.set('dateFrom', dateFrom);
+      if (dateTo) query.set('dateTo', dateTo);
+      const result = parse(
+        paged(caregiverActivity),
+        await get(`/api/organizations/${id}/caregiver-activity?${query}`, signal),
+      );
+      if (caregiverId && result.items.some((item) => item.caregiverId !== caregiverId))
+        throw new ServiceError(t('Nhật ký trả về không khớp người chăm sóc đã chọn.'), 502);
+      return result;
     },
     async create(scope: Scope, values: OrganizationInput) {
       scopeCheck(scope, undefined, true);

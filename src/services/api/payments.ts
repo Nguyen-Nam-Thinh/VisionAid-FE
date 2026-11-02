@@ -115,6 +115,8 @@ export function canCheckout(item: LicensePackage, actor?: Person) {
     item.priceMonthly <= 2147483647
   );
 }
+/** BE 422 errorCode when Super Admin turns payos_enabled off; no order is created. */
+export const PAYMENT_DISABLED = 'PAYMENT_DISABLED';
 export function createPaymentsApi(get = apiGet, write = apiWrite) {
   const packages = createPackagesApi(get, write);
   async function list(actor: Person, page: number, signal?: AbortSignal, pageSize = 10) {
