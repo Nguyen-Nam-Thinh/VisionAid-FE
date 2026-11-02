@@ -1,5 +1,6 @@
 import { t, msg, labelMap } from '../../i18n';
 import { ServiceError } from '../contracts';
+import { noteLicenseHeader, setLicenseWarning } from '../licenseWarning';
 /** Client-side codes for failures that never reached a BE ProblemDetails body. */
 export const PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE';
 export const REQUEST_TIMEOUT = 'REQUEST_TIMEOUT';
@@ -66,13 +67,13 @@ export const errorCodeMessages: Record<string, string> = labelMap({
     'Tài khoản của bạn chưa có license nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để chọn gói hoặc kích hoạt key.',
   ),
   LICENSE_EXPIRED: msg(
-    'License của bạn đã hết hạn quá 3 ngày nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để gia hạn.',
+    'License của bạn đã hết hạn và quá thời gian gia hạn nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để gia hạn.',
   ),
   VIU_LICENSE_REQUIRED: msg(
     'Người được chăm sóc chưa có license nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Kích hoạt gói để gọi.',
   ),
   VIU_LICENSE_EXPIRED: msg(
-    'License của người được chăm sóc đã hết hạn quá 3 ngày nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.',
+    'License của người được chăm sóc đã hết hạn và quá thời gian gia hạn nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.',
   ),
   LICENSE_KEY_INVALID: msg('Key không hợp lệ, đã được kích hoạt hoặc đã hết hạn.'),
   LICENSE_KEY_EXPIRED: msg('Key đã hết hạn.'),
@@ -108,6 +109,9 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   PACKAGE_INVALID_PRICE: msg('Giá gói không hợp lệ.'),
   LICENSE_PACKAGE_CODE_EXISTS: msg('Mã gói đã tồn tại.'),
   PAYMENT_NOT_CANCELLABLE: msg('Giao dịch này không thể hủy nữa.'),
+  PAYMENT_DISABLED: msg(
+    'Thanh toán trực tuyến đang tạm ngưng. Chưa có giao dịch nào được tạo. Vui lòng thử lại sau hoặc liên hệ quản trị hệ thống.',
+  ),
   // Cảnh báo, cuộc gọi, cấu hình, thông báo
   INVALID_EVENT_STATUS_TRANSITION: msg(
     'Cảnh báo đã đổi trạng thái. Tải lại để xem trạng thái mới.',
@@ -128,6 +132,7 @@ export async function request<T>(
   responseType: 'json' | 'blob' = 'json',
 ): Promise<T | undefined> {
   const response = await transport(url, init);
+  noteLicenseHeader(response.headers?.get?.('X-License-Warning') ?? null);
   if (response.status === 204) return undefined;
   if (response.ok && responseType === 'blob') return (await response.blob()) as T;
   // 413 may come from the BE (JSON) or the reverse proxy (HTML); the body adds nothing useful.
@@ -153,7 +158,9 @@ export async function request<T>(
         : {};
     const code = typeof problem.errorCode === 'string' ? problem.errorCode : undefined;
     // 402 keeps the session; a known license code says whose license blocks the action.
-    if (response.status === 402)
+    if (response.status === 402) {
+      // Only the caller's own license; VIU_LICENSE_* codes are about the person being called.
+      if (code === 'LICENSE_EXPIRED') setLicenseWarning({ kind: 'expired' });
       throw new ServiceError(
         code && errorCodeMessages[code]
           ? errorCodeMessages[code]
@@ -164,6 +171,7 @@ export async function request<T>(
         {},
         code,
       );
+    }
     let message =
       typeof problem.detail === 'string'
         ? problem.detail

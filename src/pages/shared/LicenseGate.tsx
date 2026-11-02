@@ -2,6 +2,7 @@ import { t } from '../../i18n';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useSession } from '../../hooks/useService';
+import { useLicenseWarning } from '../../hooks/useLicenseWarning';
 import { personalLicenseBlock } from '../../services/api/licenses';
 import { StatusPage } from './StatusPage';
 
@@ -11,7 +12,8 @@ import { StatusPage } from './StatusPage';
  */
 export function LicenseGate({ children, licensed }: { children: ReactNode; licensed: boolean }) {
   const { data: user } = useSession();
-  const block = licensed && user ? personalLicenseBlock(user) : null;
+  const warning = useLicenseWarning();
+  const block = licensed && user ? personalLicenseBlock(user, warning) : null;
   if (!block) return <>{children}</>;
   return (
     <StatusPage
@@ -19,7 +21,7 @@ export function LicenseGate({ children, licensed }: { children: ReactNode; licen
       description={
         block === 'expired'
           ? t(
-              'Gói Personal của bạn đã hết hạn quá 3 ngày gia hạn. Gia hạn qua PayOS hoặc kích hoạt key do trung tâm cấp để dùng lại chức năng này.',
+              'Gói Personal của bạn đã hết hạn và quá thời gian gia hạn. Gia hạn qua PayOS hoặc kích hoạt key do trung tâm cấp để dùng lại chức năng này.',
             )
           : undefined
       }

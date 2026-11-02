@@ -22,6 +22,7 @@ import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import { roles } from '../../constants/labels';
 import { PoolAutoRenew } from './PoolAutoRenew';
+import { CaregiverActivityLog } from './CaregiverActivityLog';
 import { FilterPanel } from '../../components/FilterPanel';
 import type { Person } from '../../models/domain';
 
@@ -268,6 +269,13 @@ function Organizations({ user }: { user: Person }) {
                 />
               )}
             </State>
+            {detail.data && (
+              <CaregiverActivityLog
+                key={detail.data.id}
+                actor={user}
+                organizationId={detail.data.id}
+              />
+            )}
           </Dialog>
         ) : (
           <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>

@@ -576,11 +576,11 @@ test('13a: config edit, rollback old value, unknown key hidden and ambiguous wri
   const historyId = '01900000-0000-7000-8000-000000000094';
   let config = {
     id,
-    configKey: 'trial_days_default',
+    configKey: 'license_grace_period_days',
     configValue: '7',
     valueType: 'Integer',
     category: 'BusinessRules',
-    description: 'Số ngày dùng thử',
+    description: 'Số ngày gia hạn license',
     minValue: '1',
     maxValue: '30',
     isPublic: false,
@@ -637,7 +637,7 @@ test('13a: config edit, rollback old value, unknown key hidden and ambiguous wri
   ).toBeDisabled();
   await page
     .getByRole('row')
-    .filter({ hasText: 'trial_days_default' })
+    .filter({ hasText: 'license_grace_period_days' })
     .getByRole('button', { name: 'Chi tiết' })
     .click();
   const detail = page.getByRole('dialog', { name: 'Chi tiết cấu hình', exact: true });
@@ -679,6 +679,9 @@ test('12b: organization report totals, UTC days, member pagination and scope err
 }) => {
   const orgId = '01900000-0000-7000-8000-000000000093';
   await stubApi(page, 'CenterAdmin', orgId);
+  await page.route(`**/api/organizations/${orgId}/caregiver-activity?**`, (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([]) } }),
+  );
   let wrongOrg = false;
   let failure = 0;
   const requests: URL[] = [];
@@ -790,6 +793,104 @@ test('12b: organization report totals, UTC days, member pagination and scope err
   failure = 403;
   await page.getByRole('button', { name: 'Tải lại báo cáo', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Bạn không có quyền thực hiện thao tác này.');
+});
+test('TC-FE59-02 · Center Admin reads caregiver alert handling with caregiver and UTC day filters', async ({
+  page,
+}) => {
+  const orgId = '01900000-0000-7000-8000-000000000093';
+  const caregiverId = '01900000-0000-7000-8000-000000000071';
+  await stubApi(page, 'CenterAdmin', orgId);
+  const requests: URL[] = [];
+  let failure = 0;
+  await page.route(`**/api/organizations/${orgId}/activity-summary?**`, (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        data: {
+          organizationId: orgId,
+          dateFrom: null,
+          dateTo: null,
+          emergencyEventCount: 1,
+          geofenceBreachCount: 0,
+          ocrRequestCount: 0,
+          faceRecognitionCount: 0,
+        },
+      },
+    }),
+  );
+  await page.route(`**/api/organizations/${orgId}/members?**`, (route) => {
+    const url = new URL(route.request().url());
+    const caregivers = url.searchParams.get('role') === 'Caregiver';
+    return route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: caregivers ? caregiverId : id,
+            fullName: caregivers ? 'Nhân viên Lan' : 'Thành viên',
+            email: caregivers ? 'lan@example.test' : 'member@example.test',
+            phoneNumber: null,
+            role: caregivers ? 'Caregiver' : 'VisuallyImpaired',
+            isActive: true,
+            lastLoginAt: null,
+            createdAt: '2026-10-11T00:00:00Z',
+          },
+        ]),
+      },
+    });
+  });
+  await page.route(`**/api/organizations/${orgId}/caregiver-activity?**`, (route) => {
+    const url = new URL(route.request().url());
+    requests.push(url);
+    if (failure)
+      return route.fulfill({ status: failure, json: { status: failure, detail: 'Forbidden' } });
+    return route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            changedAt: '2026-10-20T03:15:00Z',
+            caregiverId,
+            caregiverName: 'Nhân viên Lan',
+            emergencyEventId: '01900000-0000-7000-8000-000000000081',
+            viuId: '01900000-0000-7000-8000-000000000082',
+            viuName: 'Bác Tư',
+            fromStatus: 'Sent',
+            toStatus: 'Acknowledged',
+            reason: null,
+          },
+        ]),
+      },
+    });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Báo cáo hoạt động', exact: true }).click();
+  const section = page.getByRole('region', { name: 'Bảng hoạt động xử lý cảnh báo' });
+  await expect(section.getByRole('cell', { name: 'Nhân viên Lan' })).toBeVisible();
+  await expect(section.getByRole('cell', { name: 'Bác Tư' })).toBeVisible();
+  await expect(section.getByRole('cell', { name: 'Đã gửi → Đã tiếp nhận' })).toBeVisible();
+  expect(requests[0].searchParams.get('page')).toBe('1');
+  expect(requests[0].searchParams.get('pageSize')).toBe('20');
+  // The caregiver is picked by name from /members?role=Caregiver; no id is typed.
+  await openFilters(page, 2);
+  await pick(page, 'Người chăm sóc', 'Lan', /Nhân viên Lan/);
+  await page.getByLabel('Thao tác từ ngày (UTC)').fill('2026-10-01');
+  await page.getByLabel('Thao tác đến ngày (UTC)').fill('2026-10-31');
+  await page.getByRole('button', { name: 'Lọc hoạt động', exact: true }).click();
+  await expect(page.getByText('Đang lọc theo: Nhân viên Lan')).toBeVisible();
+  await expect
+    .poll(() =>
+      requests.some(
+        (url) =>
+          url.searchParams.get('caregiverId') === caregiverId &&
+          url.searchParams.get('dateFrom') === '2026-10-01' &&
+          url.searchParams.get('dateTo') === '2026-10-31',
+      ),
+    )
+    .toBe(true);
+  failure = 403;
+  await page.getByRole('button', { name: 'Tải lại hoạt động', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('không có quyền');
 });
 test('12a: scoped activity history, dates, pagination, all details and revoked access', async ({
   page,
@@ -4325,6 +4426,8 @@ test('U1: missing license, expired grace and failed subscription never display f
           licenseExpiresAt: new Date(Date.now() - 86400000).toISOString(),
         },
       },
+      // Grace days come from the BE header, not from a fixed count on the Web.
+      headers: { 'X-License-Warning': 'expiring-in-2d' },
     }),
   );
   await page.route('**/api/licenses/subscription', (route) =>
@@ -4332,8 +4435,9 @@ test('U1: missing license, expired grace and failed subscription never display f
   );
   await page.goto('/license');
   await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
-    'gia hạn 3 ngày',
+    'còn 2 ngày gia hạn',
   );
+  await expect(page.getByText(/Máy chủ báo còn 2 ngày gia hạn trước khi/)).toBeVisible();
   await expect(
     page.getByText('Máy chủ chưa tìm thấy thông tin gói sử dụng cho tài khoản này.'),
   ).toBeVisible();
@@ -4707,6 +4811,34 @@ test('U3a: login resumes order; another accounts order and URL status confer no 
   await expect(page.getByRole('button', { name: 'Hủy đơn thanh toán', exact: true })).toHaveCount(
     0,
   );
+});
+test('FE-2: PAYMENT_DISABLED says payment is paused and does not suggest a created order', async ({
+  page,
+}) => {
+  await stubApi(page);
+  let writes = 0;
+  await page.route('http://localhost:5176/api/licenses/packages**', (route) =>
+    route.fulfill({ json: { success: true, data: organizationPage([u2Package()]) } }),
+  );
+  await page.route('http://localhost:5176/api/payments/create-link', (route) => {
+    writes++;
+    return route.fulfill({
+      status: 422,
+      json: {
+        status: 422,
+        detail: 'Online payment is currently disabled by the administrator.',
+        errorCode: 'PAYMENT_DISABLED',
+      },
+    });
+  });
+  await login(page);
+  await page.goto('/packages');
+  await page.getByRole('button', { name: 'Chọn gói Personal test' }).click();
+  await page.getByRole('button', { name: 'Tạo đơn thanh toán', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Thanh toán trực tuyến đang tạm ngưng');
+  await expect(page.getByText('Yêu cầu có thể đã tạo giao dịch')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toHaveCount(0);
+  expect(writes).toBe(1);
 });
 test('U3a: uncertain create is not retried and unsafe checkout is not opened', async ({ page }) => {
   await stubApi(page);
@@ -5609,6 +5741,7 @@ test('license gate: unpaid caregiver is sent to plans, paid caregiver opens lice
     licenseExpiresAt: null,
   };
   const linkedCalls: string[] = [];
+  let pastGrace = false;
   await page.route('**/api/users/me', (route) =>
     route.fulfill({
       json: {
@@ -5629,6 +5762,15 @@ test('license gate: unpaid caregiver is sent to plans, paid caregiver opens lice
     linkedCalls.push(route.request().url());
     return route.fulfill({ json: { success: true, data: organizationPage([]) } });
   });
+  // The grace length is server config: only the BE's 402 says the grace period is over.
+  await page.route('**/api/users?*', (route) =>
+    pastGrace
+      ? route.fulfill({
+          status: 402,
+          json: { status: 402, detail: 'Expired', errorCode: 'LICENSE_EXPIRED' },
+        })
+      : route.fallback(),
+  );
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
 
@@ -5649,13 +5791,16 @@ test('license gate: unpaid caregiver is sent to plans, paid caregiver opens lice
   expect(linkedCalls).toHaveLength(0);
   await page.screenshot({ path: 'test-results/license-gate-unpaid.png' });
 
-  // Expired past grace: renewal wording.
+  // Expired past grace (BE answers 402 LICENSE_EXPIRED): renewal wording.
   license = {
     licenseStatus: 'Expired',
     licenseExpiresAt: new Date(Date.now() - 5 * 86400000).toISOString(),
   };
+  pastGrace = true;
   await page.reload();
   await expect(page.getByRole('link', { name: 'Gia hạn gói Personal' })).toBeVisible();
+  await expect(page.getByText(/quá thời gian gia hạn/)).toBeVisible();
+  pastGrace = false;
 
   // Paid: the same screen loads normally.
   license = {

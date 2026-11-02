@@ -70,7 +70,7 @@ const editorFields: FieldSpec[] = [
     label: 'Feature flags (JSON)',
     type: 'textarea',
     hint: msg(
-      'Ví dụ {"ocr": true}. Chỉ lưu cờ true/false, không nhập khóa bí mật. Cờ không tự triển khai tính năng mới.',
+      'Ví dụ {"ocr": true}. Chỉ lưu cờ true/false, không nhập khóa bí mật. Cờ không tự triển khai tính năng mới; cờ fleet_map hiện chưa áp dụng, bản đồ đội vẫn mở cho quản trị trung tâm.',
     ),
   },
 ];

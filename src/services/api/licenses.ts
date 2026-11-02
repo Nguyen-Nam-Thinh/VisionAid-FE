@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
+import type { LicenseWarning } from '../licenseWarning';
 
 const date = z.iso.datetime({ offset: true });
 export const subscription = z.object({
@@ -267,24 +268,30 @@ export const licensedCaregiverPaths = [
   'tts',
   'notifications',
 ] as const;
-export const GRACE_DAYS = 3;
 /**
- * Mirrors the BE rule for a personal Caregiver: None/unknown, or Expired past the 3-day grace,
- * blocks licensed screens. UI hint only; the BE still answers 402 if this view is stale.
+ * Licensed screens are blocked for a personal Caregiver with no license, or with an Expired one
+ * once the BE has answered 402 LICENSE_EXPIRED. The grace length is a server config
+ * (license_grace_period_days), so the Web does not count days itself. UI hint only.
  */
-export function personalLicenseBlock(user: Person, now = Date.now()): 'none' | 'expired' | null {
+export function personalLicenseBlock(
+  user: Person,
+  warning: LicenseWarning = null,
+): 'none' | 'expired' | null {
   if (!isPersonalCaregiver(user)) return null;
   // Field absent (older BE / profile not loaded): do not guess; null or 'None' means no license.
   if (user.licenseStatus === undefined) return null;
   if (user.licenseStatus === 'Active' || user.licenseStatus === 'Trial') return null;
-  if (user.licenseStatus === 'Expired') {
-    const expiry = user.licenseExpiresAt ? Date.parse(user.licenseExpiresAt) : NaN;
-    return Number.isFinite(expiry) && now - expiry <= GRACE_DAYS * 86400000 ? null : 'expired';
-  }
+  if (user.licenseStatus === 'Expired') return warning?.kind === 'expired' ? 'expired' : null;
   return 'none';
 }
+/** Grace days the BE reported for this user, only while the profile still says Expired. */
+export function licenseGraceDays(user: Person, warning: LicenseWarning) {
+  return isPersonalCaregiver(user) && user.licenseStatus === 'Expired' && warning?.kind === 'grace'
+    ? warning.daysLeft
+    : null;
+}
 // Display only: the backend controls access, including grace and safety exceptions.
-export function licenseSummary(user: Person, now = Date.now()) {
+export function licenseSummary(user: Person, now = Date.now(), warning: LicenseWarning = null) {
   if (!isPersonalCaregiver(user))
     return user.role === 'Caregiver'
       ? t(
@@ -301,11 +308,16 @@ export function licenseSummary(user: Person, now = Date.now()) {
     case 'Active':
       return t('License đang hoạt động theo trạng thái máy chủ.');
     case 'Expired':
-      return Number.isFinite(expiry) && now >= expiry && now - expiry <= 3 * 86400000
-        ? t(
-            'License đã hết hạn, đang trong khoảng gia hạn 3 ngày theo thời hạn hồ sơ. Quyền sử dụng do máy chủ xác nhận.',
-          )
-        : t('License đã hết hạn. Một số chức năng có thể bị giới hạn; kiểm tra thông tin gia hạn.');
+      if (warning?.kind === 'grace')
+        return t(
+          'License đã hết hạn, máy chủ báo còn {days} ngày gia hạn. Gia hạn trước khi các chức năng bị khóa.',
+          { days: warning.daysLeft },
+        );
+      if (warning?.kind === 'expired')
+        return t('License đã hết hạn và quá thời gian gia hạn. Gia hạn để dùng lại các chức năng.');
+      return t(
+        'License đã hết hạn. Một số chức năng có thể bị giới hạn; kiểm tra thông tin gia hạn.',
+      );
     case 'None':
       return t('Chưa có license cá nhân. Kiểm tra subscription hoặc thông tin kích hoạt.');
     default:

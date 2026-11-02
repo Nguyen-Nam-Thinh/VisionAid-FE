@@ -80,9 +80,9 @@ const columns = {
   audit: ['performedAt', 'actorName', 'actionType', 'targetTable'],
   delivery: ['createdAt', 'channel', 'notificationType', 'status'],
 };
+// UC-117: BE logs delivery for FCM and Email only; SignalR has no delivery rows to filter or count.
 const channelLabels: Record<string, string> = {
   Fcm: 'Push FCM',
-  SignalR: 'SignalR',
   Email: 'Email',
 };
 const decisions = new Map([

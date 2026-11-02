@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useSession } from '../../hooks/useService';
 import { useLimit } from '../../hooks/useLimit';
+import { useLicenseWarning } from '../../hooks/useLicenseWarning';
 import { Confirm, PageHead, State, Toast } from '../../components/UI';
 import {
   autoRenewBlock,
@@ -26,6 +27,7 @@ const dateLabel = (date?: string | null) =>
 export function ApiLicense() {
   const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const session = useSession();
+  const warning = useLicenseWarning();
   const cache = useQueryClient();
   const user = session.data;
   const personal = !!user && isPersonalCaregiver(user);
@@ -74,7 +76,7 @@ export function ApiLicense() {
             <RefreshCw size={16} aria-hidden="true" /> {t('Tải lại')}
           </button>
         </div>
-        <p>{licenseSummary(user)}</p>
+        <p>{licenseSummary(user, undefined, warning)}</p>
         {personal && <p>{t('Thời hạn hồ sơ: {p1}', { p1: dateLabel(user.licenseExpiresAt) })}</p>}
         {(canBrowsePackages(user) || (user.role === 'CenterAdmin' && user.orgId)) && (
           <div className="row">
