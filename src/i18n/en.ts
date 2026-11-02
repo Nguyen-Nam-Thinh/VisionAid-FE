@@ -2665,4 +2665,18 @@ export const en = {
   'Người chăm sóc đã chọn không hợp lệ.': 'The selected caregiver is not valid.',
   'Nhật ký trả về không khớp người chăm sóc đã chọn.':
     'The returned log does not match the selected caregiver.',
+  'Chỉ quản trị trung tâm được xem bản đồ toàn trung tâm.':
+    'Only center admins can view the organization map.',
+  'An toàn': 'Safe',
+  'Đang có cảnh báo chưa xử lý xong': 'Has an alert that is not closed yet',
+  'Vị trí gần nhất của mọi người khiếm thị đang hoạt động trong trung tâm.':
+    'Latest position of every active visually impaired user in the center.',
+  'Lọc theo tình trạng cảnh báo': 'Filter by alert status',
+  '{total} người khiếm thị · {alerts} đang có cảnh báo · Đang hiện {shown}':
+    '{total} visually impaired users · {alerts} with an open alert · Showing {shown}',
+  'Thời gian hiển thị theo {timezone}.': 'Times are shown in {timezone}.',
+  'Không có người khiếm thị phù hợp bộ lọc.': 'No visually impaired user matches this filter.',
+  'Đang có cảnh báo': 'Open alert',
+  'Chưa có vị trí': 'No position yet',
+  '{name} · Đang có cảnh báo': '{name} · Open alert',
 } satisfies Record<string, EnMessage>;

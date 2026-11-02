@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { createLocationsApi, historyRange, locationAge } from './locations';
+import { createLocationsApi, filterFleet, historyRange, locationAge } from './locations';
 const id = '01900000-0000-7000-8000-000000000001';
 const other = '01900000-0000-7000-8000-000000000002';
 const actor = { role: 'Caregiver' as const, orgId: '' };
@@ -132,4 +132,43 @@ it('pages boundary events with type and UTC dates and rejects events of another 
     status: 400,
   });
   expect(get).not.toHaveBeenCalled();
+});
+
+const center = { role: 'CenterAdmin' as const, orgId: '01900000-0000-7000-8000-000000000009' };
+const member = (n: number, hasOpenAlert: boolean, located = true) => ({
+  viuId: `01900000-0000-7000-8000-00000000010${n}`,
+  fullName: `VIU ${n}`,
+  latitude: located ? 10.77 : null,
+  longitude: located ? 106.7 : null,
+  formattedAddress: located ? 'Q1' : null,
+  cachedAt: located ? '2026-10-01T00:00:00Z' : null,
+  hasOpenAlert,
+});
+it('F-25: fleet is one CenterAdmin request without organizationId and keeps VIUs without GPS', async () => {
+  const get = vi.fn().mockResolvedValue([member(1, true), member(2, false, false)]);
+  const api = createLocationsApi(get);
+  await expect(api.fleet({ role: 'Caregiver', orgId: center.orgId })).rejects.toMatchObject({
+    status: 403,
+  });
+  await expect(api.fleet({ role: 'CenterAdmin', orgId: '' })).rejects.toMatchObject({
+    status: 403,
+  });
+  expect(get).not.toHaveBeenCalled();
+  const items = await api.fleet(center);
+  expect(get).toHaveBeenCalledWith('/api/locations/fleet', undefined);
+  expect(items.map((i) => i.latitude)).toEqual([10.77, null]);
+  get.mockResolvedValueOnce([{ ...member(3, false), longitude: null }]);
+  await expect(api.fleet(center)).rejects.toMatchObject({ status: 502 });
+  get.mockResolvedValueOnce([member(4, false), member(4, true)]);
+  await expect(api.fleet(center)).rejects.toMatchObject({ status: 502 });
+});
+it('TC-FE53-04 · filters markers by Safe or Alert; an old position is not a filter state', () => {
+  const items = [
+    member(1, true),
+    member(2, false),
+    { ...member(3, false), cachedAt: '2020-01-01T00:00:00Z' },
+  ];
+  expect(filterFleet(items, 'all')).toHaveLength(3);
+  expect(filterFleet(items, 'alert').map((i) => i.fullName)).toEqual(['VIU 1']);
+  expect(filterFleet(items, 'safe').map((i) => i.fullName)).toEqual(['VIU 2', 'VIU 3']);
 });

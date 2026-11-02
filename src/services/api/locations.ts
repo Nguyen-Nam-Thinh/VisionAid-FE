@@ -53,6 +53,30 @@ const boundaryItem = z.object({
   occurredAt: timestamp,
 });
 const boundarySchema = historySchema.extend({ items: z.array(boundaryItem) });
+// F-25 / UC-163A: every active VIU of the Center Admin's organization in one request.
+// The location fields are null together until the VIU has sent a first GPS point.
+const fleetItem = z
+  .object({
+    viuId: z.string().uuid(),
+    fullName: z.string(),
+    latitude: point.latitude.nullable(),
+    longitude: point.longitude.nullable(),
+    formattedAddress: z.string().nullable(),
+    cachedAt: timestamp.nullable(),
+    hasOpenAlert: z.boolean(),
+  })
+  .refine((item) => (item.latitude === null) === (item.longitude === null));
+const fleetSchema = z
+  .array(fleetItem)
+  .refine((items) => new Set(items.map((item) => item.viuId)).size === items.length);
+export type FleetMember = z.infer<typeof fleetItem>;
+export type FleetFilter = 'all' | 'safe' | 'alert';
+/** Safe/Alert follow hasOpenAlert only; an old position is a badge, not a filter state. */
+export const filterFleet = <T extends Pick<FleetMember, 'hasOpenAlert'>>(
+  items: T[],
+  filter: FleetFilter,
+) =>
+  filter === 'all' ? items : items.filter((item) => item.hasOpenAlert === (filter === 'alert'));
 export type BoundaryEvent = z.infer<typeof boundaryItem>;
 export type BoundaryFilters = HistoryRange & { eventType: BoundaryEventType | ''; page: number };
 export type LiveLocation = z.infer<typeof liveSchema>;
@@ -92,6 +116,12 @@ export function locationAge(cachedAt: string, now: number) {
 }
 export function createLocationsApi(get = apiGet) {
   return {
+    /** The organization comes from the token; the Web never sends an organizationId. */
+    async fleet(actor: Actor, signal?: AbortSignal) {
+      if (actor.role !== 'CenterAdmin' || !actor.orgId)
+        throw new ServiceError(t('Chỉ quản trị trung tâm được xem bản đồ toàn trung tâm.'), 403);
+      return parse(fleetSchema, await get('/api/locations/fleet', signal));
+    },
     async live(actor: Actor, viuId: string, signal?: AbortSignal) {
       authorize(actor, viuId);
       const data = parse(

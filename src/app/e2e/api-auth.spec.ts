@@ -3511,7 +3511,114 @@ test('FE-17: Mapbox failure keeps the coordinate table usable', async ({ page })
   await expect(page.getByText('Chưa có vị trí khả dụng', { exact: true })).toBeVisible();
 });
 
-for (const role of ['Caregiver', 'CenterAdmin']) {
+test('TC-FE53-01..04 · Center Admin fleet: every VIU from one request, Safe/Alert filter, old position is a badge', async ({
+  page,
+}) => {
+  const org = '01900000-0000-7000-8000-000000000009';
+  await stubApi(page, 'CenterAdmin', org);
+  await page.route(mapboxStyles, (route) => route.fulfill({ json: offlineStyle }));
+  const ids = ['61', '62', '63'].map((n) => `01900000-0000-7000-8000-0000000000${n}`);
+  const fresh = new Date(Date.now() - 30000).toISOString();
+  const fleetCalls: URL[] = [];
+  const perViuCalls: string[] = [];
+  let status = 200;
+  await page.route('http://localhost:5176/api/locations/live?*', (route) => {
+    perViuCalls.push(route.request().url());
+    return route.fulfill({ status: 404, json: { detail: 'Not used by the fleet map' } });
+  });
+  await page.route('http://localhost:5176/api/locations/fleet**', (route) => {
+    fleetCalls.push(new URL(route.request().url()));
+    if (status !== 200) return route.fulfill({ status, json: { status, detail: 'Forbidden' } });
+    return route.fulfill({
+      json: {
+        success: true,
+        data: [
+          {
+            viuId: ids[0],
+            fullName: 'Bác An',
+            latitude: 10.7769,
+            longitude: 106.7009,
+            formattedAddress: 'Quận 1',
+            cachedAt: fresh,
+            hasOpenAlert: true,
+          },
+          {
+            viuId: ids[1],
+            fullName: 'Cô Bình',
+            latitude: 10.78,
+            longitude: 106.69,
+            formattedAddress: 'Quận 3',
+            cachedAt: '2026-09-01T00:00:00Z',
+            hasOpenAlert: false,
+          },
+          {
+            viuId: ids[2],
+            fullName: 'Chú Cường',
+            latitude: null,
+            longitude: null,
+            formattedAddress: null,
+            cachedAt: null,
+            hasOpenAlert: false,
+          },
+        ],
+      },
+    });
+  });
+  const historyCalls: URL[] = [];
+  await page.route('http://localhost:5176/api/locations/history?*', (route) => {
+    historyCalls.push(new URL(route.request().url()));
+    return route.fulfill({ json: { success: true, data: organizationPage([]) } });
+  });
+  await login(page);
+  await page.goto('/center-admin/map');
+  // TC-FE53-01: every VIU of the organization on one map, including one without GPS.
+  await expect(
+    page.getByText('3 người khiếm thị · 1 đang có cảnh báo · Đang hiện 3', { exact: true }),
+  ).toBeVisible();
+  for (const name of ['Bác An', 'Cô Bình', 'Chú Cường'])
+    await expect(page.getByRole('cell', { name: new RegExp('^' + name) })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Chưa có vị trí', exact: true })).toBeVisible();
+  await expect(page.locator('.gps-marker')).toHaveCount(2);
+  await expect(page.locator('.gps-marker.alert')).toHaveCount(1);
+  // An old position is shown as a badge only.
+  const old = page.getByRole('row').filter({ hasText: 'Cô Bình' });
+  await expect(old.getByText('Dữ liệu cũ hơn 2 phút')).toBeVisible();
+  await expect(old.getByText('An toàn', { exact: true })).toBeVisible();
+  // One request, organization taken from the token, no per-VIU live calls.
+  // (a realtime resync may repeat it, but it is never split per VIU).
+  expect(fleetCalls.length).toBeGreaterThan(0);
+  expect(fleetCalls.every((url) => url.search === '')).toBe(true);
+  expect(perViuCalls).toEqual([]);
+  // TC-FE53-04: filter by Safe or Alert.
+  const filters = page.getByRole('group', { name: 'Lọc theo tình trạng cảnh báo' });
+  await filters.getByRole('button', { name: 'Cảnh báo', exact: true }).click();
+  await expect(filters.getByRole('button', { name: 'Cảnh báo', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('cell', { name: /^Bác An/ })).toBeVisible();
+  await expect(page.getByRole('cell', { name: /^Cô Bình/ })).toHaveCount(0);
+  await expect(page.locator('.gps-marker')).toHaveCount(1);
+  await filters.getByRole('button', { name: 'An toàn', exact: true }).click();
+  await expect(page.getByRole('cell', { name: /^Bác An/ })).toHaveCount(0);
+  await expect(page.getByRole('cell', { name: /^Cô Bình/ })).toBeVisible();
+  await expect(page.getByRole('cell', { name: /^Chú Cường/ })).toBeVisible();
+  await page.screenshot({ path: 'test-results/fe53-fleet-safe.png' });
+  await filters.getByRole('button', { name: 'Tất cả', exact: true }).click();
+  // A VIU without GPS still opens its history.
+  await page.getByRole('button', { name: 'Xem GPS của Chú Cường', exact: true }).click();
+  await expect(page.getByText('Chưa có vị trí khả dụng. Lịch sử bên dưới')).toBeVisible();
+  await expect.poll(() => historyCalls.at(-1)?.searchParams.get('viuId')).toBe(ids[2]);
+  // Revoked: the error is shown and the history is closed.
+  status = 403;
+  await page.getByRole('button', { name: 'Tải lại vị trí', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('không có quyền');
+  await expect(page.getByRole('heading', { name: 'Lịch sử di chuyển', exact: true })).toHaveCount(
+    0,
+  );
+});
+
+for (const role of ['Caregiver']) {
   test(`API ${role}: GPS history, missing live data and revoked access`, async ({ page }) => {
     const org = '01900000-0000-7000-8000-000000000009';
     const viu = '01900000-0000-7000-8000-000000000002';
