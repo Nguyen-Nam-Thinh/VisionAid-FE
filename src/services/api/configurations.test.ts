@@ -5,7 +5,7 @@ const other = '01900000-0000-7000-8000-000000000002';
 const actor = { role: 'Admin' as const };
 const config: SystemConfig = {
   id,
-  configKey: 'trial_days_default',
+  configKey: 'license_grace_period_days',
   configValue: '7',
   valueType: 'Integer',
   category: 'BusinessRules',
@@ -100,7 +100,10 @@ it('validates integer, decimal bounds, boolean, JSON and enum strings without co
     validateConfigValue({ ...config, valueType: 'Json' }, '{"enabled":true}'),
   ).not.toThrow();
   expect(() =>
-    validateConfigValue({ ...config, valueType: 'String', configKey: 'payos_environment' }, 'prod'),
+    validateConfigValue(
+      { ...config, valueType: 'String', configKey: 'hybrid_navigation_engine' },
+      'OTHER',
+    ),
   ).toThrow();
 });
 it('save sends exact string and reason, rechecks snapshot and validates returned identity', async () => {

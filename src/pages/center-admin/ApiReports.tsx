@@ -6,6 +6,7 @@ import { useSession } from '../../hooks/useService';
 import { organizationsApi } from '../../services/api/organizations';
 import { PageHead, State, Badge } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
+import { CaregiverActivityLog } from '../shared/CaregiverActivityLog';
 import { roles } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 
@@ -252,6 +253,7 @@ function Reports({ actor }: { actor: Person }) {
           )}
         </State>
       </section>
+      <CaregiverActivityLog actor={actor} organizationId={actor.orgId} />
     </>
   );
 }

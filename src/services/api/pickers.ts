@@ -24,6 +24,14 @@ export const searchAccounts =
       ).items,
     );
 
+/** Admin: any organization; CenterAdmin: their own. Members of one role, by name/email. */
+export const searchOrganizationMembers =
+  (actor: Scope, organizationId: string, role: 'Caregiver' | 'VisuallyImpaired') =>
+  async (term: string, signal?: AbortSignal) =>
+    options(
+      (await organizationsApi.members(actor, organizationId, 1, term, role, '', signal)).items,
+    );
+
 /** Admin only. */
 export const searchOrganizations =
   (actor: Scope) =>

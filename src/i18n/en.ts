@@ -1163,8 +1163,8 @@ export const en = {
   'Số license bao gồm': 'Included licenses',
   'Số ngày dùng thử': 'Trial days',
   'Thời hạn gói (ngày)': 'Plan duration (days)',
-  'Ví dụ {"ocr": true}. Chỉ lưu cờ true/false, không nhập khóa bí mật. Cờ không tự triển khai tính năng mới.':
-    'For example {"ocr": true}. Only true/false flags; do not enter secret keys. Flags do not deploy new features by themselves.',
+  'Ví dụ {"ocr": true}. Chỉ lưu cờ true/false, không nhập khóa bí mật. Cờ không tự triển khai tính năng mới; cờ fleet_map hiện chưa áp dụng, bản đồ đội vẫn mở cho quản trị trung tâm.':
+    'For example {"ocr": true}. Only true/false flags; do not enter secret keys. Flags do not deploy new features by themselves; the fleet_map flag is not applied yet, and the fleet map stays open to center admins.',
   'Tài khoản này không cần chọn gói cá nhân. License do tổ chức quản lý.':
     'This account does not need a personal plan. Licenses are managed by the organization.',
   'Quản lý gói license': 'License plan management',
@@ -1418,8 +1418,8 @@ export const en = {
     'Revoke the license of {fullName}? They will lose usage rights under the organization license. The account and care assignment are kept.',
   'Đã thu hồi license. Số lượng trong kho được tải lại từ máy chủ.':
     'License revoked. Pool quantities are reloaded from the server.',
-  'Gói Personal của bạn đã hết hạn quá 3 ngày gia hạn. Gia hạn qua PayOS hoặc kích hoạt key do trung tâm cấp để dùng lại chức năng này.':
-    'Your Personal plan expired more than 3 grace days ago. Renew via PayOS or activate a key issued by a center to use this feature again.',
+  'Gói Personal của bạn đã hết hạn và quá thời gian gia hạn. Gia hạn qua PayOS hoặc kích hoạt key do trung tâm cấp để dùng lại chức năng này.':
+    'Your Personal plan has expired and its grace period is over. Renew via PayOS or activate a key issued by a center to use this feature again.',
   'Gia hạn gói Personal': 'Renew Personal plan',
   'Kích hoạt bằng key': 'Activate with a key',
   'Khi chưa có gói, bạn vẫn nhận và xử lý': 'Without a plan you can still receive and handle',
@@ -1946,8 +1946,10 @@ export const en = {
   'Đang dùng thử{p0}.': 'On trial{p0}.',
   'License đang hoạt động theo trạng thái máy chủ.':
     'The license is active according to the server status.',
-  'License đã hết hạn, đang trong khoảng gia hạn 3 ngày theo thời hạn hồ sơ. Quyền sử dụng do máy chủ xác nhận.':
-    'The license has expired and is in the 3-day grace period according to the profile expiry. Usage rights are confirmed by the server.',
+  'License đã hết hạn, máy chủ báo còn {days} ngày gia hạn. Gia hạn trước khi các chức năng bị khóa.':
+    'The license has expired; the server reports {days} grace days left. Renew before features are locked.',
+  'License đã hết hạn và quá thời gian gia hạn. Gia hạn để dùng lại các chức năng.':
+    'The license has expired and its grace period is over. Renew to use these features again.',
   'License đã hết hạn. Một số chức năng có thể bị giới hạn; kiểm tra thông tin gia hạn.':
     'The license has expired. Some features may be limited; check the renewal information.',
   'Chưa có license cá nhân. Kiểm tra subscription hoặc thông tin kích hoạt.':
@@ -2157,12 +2159,12 @@ export const en = {
     'The photo is too small for recognition. Choose a higher-resolution photo.',
   'Tài khoản của bạn chưa có license nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để chọn gói hoặc kích hoạt key.':
     'Your account has no license, so new calls cannot be started. Alerts and SOS calls still work. Open License to choose a plan or activate a key.',
-  'License của bạn đã hết hạn quá 3 ngày nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để gia hạn.':
-    'Your license expired more than 3 days ago, so new calls cannot be started. Alerts and SOS calls still work. Open License to renew.',
+  'License của bạn đã hết hạn và quá thời gian gia hạn nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để gia hạn.':
+    'Your license has expired and its grace period is over, so new calls cannot be started. Alerts and SOS calls still work. Open License to renew.',
   'Người được chăm sóc chưa có license nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Kích hoạt gói để gọi.':
     'The care recipient has no license, so a video call cannot be started. SOS calls from them still work. Activate a plan to call.',
-  'License của người được chăm sóc đã hết hạn quá 3 ngày nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.':
-    'The care recipient’s license expired more than 3 days ago, so a video call cannot be started. SOS calls from them still work. Renew to call.',
+  'License của người được chăm sóc đã hết hạn và quá thời gian gia hạn nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.':
+    'The care recipient’s license has expired and its grace period is over, so a video call cannot be started. SOS calls from them still work. Renew to call.',
   'Báo cáo doanh thu': 'Revenue report',
   'Báo cáo theo ngày tối đa 366 ngày. Chọn khoảng ngắn hơn hoặc xem theo tháng.':
     'Daily reports cover at most 366 days. Choose a shorter range or view by month.',
@@ -2643,4 +2645,24 @@ export const en = {
   'Dữ liệu chỉ hiển thị theo quyền được cấp':
     'Data is shown only within the permissions you were given',
   'Quản lý tối đa 3 liên kết đang hoạt động.': 'Manage up to 3 active links.',
+  'License đã hết hạn. Máy chủ báo còn {days} ngày gia hạn trước khi các chức năng bị khóa.':
+    'Your license has expired. The server reports {days} grace days left before features are locked.',
+  'Thanh toán trực tuyến đang tạm ngưng. Chưa có giao dịch nào được tạo. Vui lòng thử lại sau hoặc liên hệ quản trị hệ thống.':
+    'Online payment is paused. No transaction was created. Please try again later or contact the system administrator.',
+  'Hoạt động xử lý cảnh báo của người chăm sóc': 'Caregiver alert handling',
+  'Các lần người chăm sóc của trung tâm đổi trạng thái cảnh báo. Thao tác của quản trị trung tâm không nằm trong danh sách này.':
+    'Alert status changes made by the center’s caregivers. Center admin actions are not included.',
+  'Tải lại hoạt động': 'Reload activity',
+  'Thao tác từ ngày (UTC)': 'Actions from (UTC)',
+  'Thao tác đến ngày (UTC)': 'Actions to (UTC)',
+  'Đang lọc theo: {name}': 'Filtered by: {name}',
+  'Bảng hoạt động xử lý cảnh báo': 'Alert handling table',
+  'Thời điểm': 'Time',
+  'Đổi trạng thái': 'Status change',
+  '{from} → {to}': '{from} → {to}',
+  'Chưa có hoạt động phù hợp.': 'No matching activity.',
+  '{totalCount} hoạt động · Trang {page}/{pages}': '{totalCount} actions · Page {page}/{pages}',
+  'Người chăm sóc đã chọn không hợp lệ.': 'The selected caregiver is not valid.',
+  'Nhật ký trả về không khớp người chăm sóc đã chọn.':
+    'The returned log does not match the selected caregiver.',
 } satisfies Record<string, EnMessage>;

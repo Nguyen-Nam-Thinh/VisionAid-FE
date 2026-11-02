@@ -23,6 +23,8 @@ import {
   type PaymentLink,
 } from '../../services/api/payments';
 import type { Person } from '../../models/domain';
+import { ServiceError } from '../../services/contracts';
+import { PAYMENT_DISABLED } from '../../services/api/payments';
 
 export function PackageCheckout({
   actor,
@@ -39,6 +41,8 @@ export function PackageCheckout({
   const [failure, setFailure] = useState<Error | null>(null);
   const [link, setLink] = useState<PaymentLink | null>(null);
   const cache = useQueryClient();
+  // Rejected before any order exists: Super Admin turned payos_enabled off.
+  const paymentDisabled = failure instanceof ServiceError && failure.code === PAYMENT_DISABLED;
   return (
     <Dialog
       title={
@@ -132,7 +136,7 @@ export function PackageCheckout({
             </Link>
           </>
         )}
-        {failure && (
+        {failure && !paymentDisabled && (
           <p>
             {t('Yêu cầu có thể đã tạo giao dịch trên máy chủ. Kiểm tra lịch sử trước khi tạo lại.')}
           </p>

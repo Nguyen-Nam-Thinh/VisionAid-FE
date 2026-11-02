@@ -206,7 +206,7 @@ export function createMonitoringApi(get = apiGet) {
         if (
           (key === 'targetTable' && value.length > 100) ||
           (key === 'actionType' && !auditActions.some((action) => action === value)) ||
-          (key === 'channel' && !['Fcm', 'SignalR', 'Email'].includes(value)) ||
+          (key === 'channel' && !['Fcm', 'Email'].includes(value)) ||
           (key === 'engineUsed' && !guidanceEngines.some((engine) => engine === value)) ||
           (key === 'isOfflineFallback' && !['true', 'false'].includes(value))
         )
