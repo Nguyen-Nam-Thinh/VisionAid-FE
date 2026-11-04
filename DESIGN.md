@@ -101,12 +101,12 @@ Button/input pill, textarea 16px, card/dialog 24–32px. Blob và góc bất đ�
 - Card nền surface; state loading/empty/error giữ text rõ ràng.
 - Navigation active vừa có nền khác vừa dùng aria-current của NavLink.
 - Dialog căn giữa viewport bằng showModal, scroll nội dung dài, Escape và trả focus khi đóng.
-- Chuyển động nhẹ chỉ cho hover/press. prefers-reduced-motion tắt animation/transition.
+- Chuyển động nhẹ cho hover/press và vào/ra của dialog, menu tài khoản, bộ lọc, switch. prefers-reduced-motion tắt animation/transition.
 - Không thêm testimonial, giá hay số liệu giả để trang trông đầy hơn.
 
 ## Do's and Don'ts
 
-- Dùng token chung và CSS hiện có; không thêm UI framework hoặc animation library.
+- Dùng token chung và CSS hiện có. Thành phần tương tác (Dialog/Confirm, cuộc gọi đến, menu tài khoản, Toggle, tooltip menu thu gọn) dùng primitive Radix của animate-ui; sidebar dùng `Highlight` trượt nền hover, số thống kê dashboard dùng `CountingNumber` (`@animate-ui/react`, `motion`, `radix-ui`); bộ lọc dùng `motion` trực tiếp. Nút, input, bảng giữ CSS riêng; không thêm UI framework khác.
 - Giữ tương phản và focus quan trọng hơn màu/hiệu ứng trang trí trong prompt.
 - Kiểm tra desktop, tablet, mobile 375px, modal và keyboard.
 - Không xem test mock như nghiệm thu API thật.

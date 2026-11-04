@@ -1380,7 +1380,7 @@ test('U6a: outgoing call negotiates native local media, mutes, ends and refreshe
   const originalVideo = await page.locator('video').elementHandle();
   await expect(page.locator('#main')).toHaveAttribute('inert', '');
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('link', { name: 'Hồ sơ của tôi', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Hồ sơ của tôi' }).click();
   await expect(page.locator('.call-workspace')).toHaveClass(/is-minimized/);
   await expect(page.locator('#main')).not.toHaveAttribute('inert', '');
   await page.goBack();
@@ -1390,7 +1390,7 @@ test('U6a: outgoing call negotiates native local media, mutes, ends and refreshe
   await expect(page.locator('.call-workspace')).toHaveClass(/is-minimized/);
   expect(f.writes.some((path) => path.endsWith('/end'))).toBe(false);
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('link', { name: 'Hồ sơ của tôi', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Hồ sơ của tôi' }).click();
   await expect(page).toHaveURL(/profile$/);
   expect(
     await originalVideo!.evaluate(
@@ -1424,13 +1424,20 @@ test('U6a: outgoing call negotiates native local media, mutes, ends and refreshe
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(historyDialog).toBeVisible();
+    // The open modal locks page scroll, so check the dialog itself fits the viewport.
     await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+      .poll(async () => {
+        const box = await historyDialog.boundingBox();
+        return !!box && box.x >= 0 && box.x + box.width <= width;
+      })
       .toBe(true);
     await page.screenshot({ path: `test-results/redesign-call-detail-${width}.png` });
   }
   await page.keyboard.press('Escape');
   await expect(historyDialog).toHaveCount(0);
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true);
 });
 
 test('U6a: incoming SOS stays silent, Escape does not reject and explicit rejection closes it', async ({
@@ -1560,7 +1567,7 @@ test('8c: opt-in push registers the login device, survives reload and revokes on
     page.getByText('Đã đăng ký nhận push cho phiên này.', { exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await expect(page).toHaveURL(/auth\/login/);
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem('visionaid.push.owner.v1')))
@@ -1713,6 +1720,8 @@ test('11b: TTS create/update, percent mapping, cleared language, revoked link an
   await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
   await expect(dialog).toHaveCount(0);
   expect(bodies.at(-1)).toMatchObject({ volumeLevel: 0.8, secondaryLanguage: '' });
+  // At phone width the saved-toast sits over the edit button; close it as a user would.
+  await page.getByRole('button', { name: 'Đóng thông báo', exact: true }).click();
   await page.getByRole('button', { name: 'Chỉnh sửa giọng đọc', exact: true }).click();
   revoked = true;
   await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
@@ -2078,7 +2087,7 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
       ),
     ).toBe(true);
     await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-    await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
     await expect(page).toHaveURL(/\/auth\/login$/);
     expect(
       await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1')),
@@ -2103,7 +2112,7 @@ test('API login errors do not fall back to demo and failed logout still clears t
   await expect(page.getByRole('heading', { name: 'Lối tắt' })).toBeVisible();
   await page.route('**/api/auth/logout', (route) => route.abort('failed'));
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
   await expect(page.getByRole('status')).toContainText('chưa xác nhận');
   expect(await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1'))).toBeNull();
@@ -4161,7 +4170,7 @@ test('8a SignalR: receives event, refreshes REST and stops after logout', async 
   expect(reads).toBe(after);
   closed = false;
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await expect(page).toHaveURL(/auth\/login$/);
   await expect.poll(() => closed).toBe(true);
 });
@@ -4339,6 +4348,13 @@ test('layout: filter control baseline and centered organization popup on desktop
     await page.getByRole('button', { name: 'Xem tổ chức ' + organizationFixture.name }).click();
     const dialog = page.getByRole('dialog', { name: 'Chi tiết tổ chức', exact: true });
     await expect(dialog).toBeVisible();
+    // Wait for the entrance animation (tilt and scale) to settle before measuring.
+    await expect
+      .poll(async () => {
+        const settled = await dialog.boundingBox();
+        return Math.abs(settled!.y + settled!.height / 2 - 500);
+      })
+      .toBeLessThan(2);
     const box = await dialog.boundingBox();
     // The page keeps a stable scrollbar gutter, so center against the content width.
     const content = await page.evaluate(() => document.body.getBoundingClientRect().width);
@@ -4420,7 +4436,7 @@ test('U1: trial, 402 keeps session, subscription recovery and refreshed status',
   );
   await expect(page.getByText('Personal', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
   await expect(page.getByText('Personal', { exact: true })).toHaveCount(0);
 });
@@ -4673,7 +4689,7 @@ test('U1: missing license, expired grace and failed subscription never display f
   await expect(page.getByRole('alert')).toContainText('Máy chủ đang gặp sự cố');
   await expect(page.getByText('Đang hoạt động', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('link', { name: 'Hồ sơ của tôi' }).click();
+  await page.getByRole('menuitem', { name: 'Hồ sơ của tôi' }).click();
   await expect(page).toHaveURL(/\/profile$/);
 });
 
@@ -5356,7 +5372,7 @@ test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates an
   await expect(page.getByLabel('Key vừa tạo')).toHaveValue('••••-••••-••••-••••');
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await page.unrouteAll();
   await stubApi(page);
   let activated = false;

@@ -2,7 +2,7 @@ import { t } from '../../i18n';
 import { useState } from 'react';
 import { z } from 'zod';
 import { Form } from '../../components/Form';
-import { Confirm, Dialog } from '../../components/UI';
+import { Confirm, Dialog, Disclosure } from '../../components/UI';
 import { caregivingApi } from '../../services/api/caregiving';
 import { ServiceError } from '../../services/contracts';
 
@@ -171,8 +171,7 @@ export function ApiCreateLinkedUser({
               </p>
             )}
             {(!pending || pending === 'unknown') && (
-              <details>
-                <summary>{t('Tiếp tục bằng mã VIU đã có')}</summary>
+              <Disclosure summary={t('Tiếp tục bằng mã VIU đã có')}>
                 <Form
                   submit={t('Dùng mã VIU này')}
                   fields={[{ key: 'id', label: t('Mã VIU đã xác minh'), required: true }]}
@@ -183,7 +182,7 @@ export function ApiCreateLinkedUser({
                     save(id);
                   }}
                 />
-              </details>
+              </Disclosure>
             )}
           </div>
         </Dialog>

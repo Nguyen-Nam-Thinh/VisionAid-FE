@@ -35,7 +35,9 @@ test('sidebar collapses to icons and preserves navigation', async ({ page }) => 
   await page.getByRole('button', { name: 'Thu gọn sidebar' }).click();
   await expect(page.locator('.sidebar')).toHaveCSS('width', '76px');
   const people = page.getByRole('link', { name: 'Người được chăm sóc', exact: true });
-  await expect(people).toHaveAttribute('title', 'Người được chăm sóc');
+  // Icon-only links are named by an animated tooltip on hover instead of a native title.
+  await people.hover();
+  await expect(page.locator('.nav-tooltip')).toHaveText('Người được chăm sóc');
   await people.click();
   await expect(page).toHaveURL(/caregiver\/users/);
   await expect(people).toHaveAttribute('aria-current', 'page');
@@ -61,10 +63,12 @@ test('account dropdown: keyboard, dismiss, profile and logout', async ({ page })
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await trigger.focus();
+    // ARIA menu pattern: Enter opens on the first item, arrows move, Escape returns to the button.
     await page.keyboard.press('Enter');
     await expect(popup).toBeVisible();
-    await page.keyboard.press('Tab');
-    await expect(popup.getByRole('link')).toBeFocused();
+    await expect(popup.getByRole('menuitem', { name: 'Hồ sơ của tôi' })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(popup.getByRole('menuitem', { name: 'Đăng xuất' })).toBeFocused();
     await page.screenshot({ path: `test-results/account-menu-${width}.png` });
     await page.keyboard.press('Escape');
     await expect(popup).toBeHidden();
@@ -74,11 +78,11 @@ test('account dropdown: keyboard, dismiss, profile and logout', async ({ page })
     await expect(popup).toBeHidden();
   }
   await trigger.click();
-  await popup.getByRole('link').click();
+  await popup.getByRole('menuitem', { name: 'Hồ sơ của tôi' }).click();
   await expect(page).toHaveURL(/profile/);
   await expect(popup).toBeHidden();
   await trigger.click();
-  await popup.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await popup.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await expect(page).toHaveURL(/auth\/login/);
 });
 
@@ -294,4 +298,32 @@ test('status pages: standalone 404, in-shell 404, 403 and a crashed screen recov
   await expect(page.getByRole('heading', { name: 'Không tìm thấy trang' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.screenshot({ path: 'test-results/status-404-mobile.png' });
+});
+
+test('the topbar names the page the sidebar marks as current', async ({ page }) => {
+  for (const [email, links] of [
+    ['admin@demo.vn', ['Quản lý tài khoản', 'Cấu hình hệ thống']],
+    ['center@demo.vn', ['Nhân viên chăm sóc', 'Báo cáo hoạt động']],
+    ['caregiver@demo.vn', ['Cảnh báo khẩn cấp', 'Liên hệ khẩn cấp']],
+  ] as const) {
+    await page.goto('/auth/login');
+    await page.getByLabel('Chọn tài khoản demo').selectOption(email);
+    await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+    await expect(page).toHaveURL(/dashboard/);
+    const crumb = page.getByRole('navigation', { name: 'Vị trí hiện tại' });
+    await expect(crumb).toHaveText('VisionAid / Tổng quan');
+    for (const name of links) {
+      await page
+        .getByRole('navigation', { name: 'Điều hướng chính' })
+        .getByRole('link', { name })
+        .click();
+      await expect(crumb).toHaveText(`VisionAid / ${name}`);
+      // Exactly one sidebar item is current, and it is the one the topbar names.
+      await expect(page.locator('.sidebar a[aria-current="page"]')).toHaveCount(1);
+      await expect(page.locator('.sidebar a[aria-current="page"]')).toHaveText(name);
+    }
+    await page.getByRole('button', { name: 'Menu tài khoản' }).click();
+    await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
+    await expect(page).toHaveURL(/auth\/login/);
+  }
 });

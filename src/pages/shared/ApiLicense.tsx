@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { useSession } from '../../hooks/useService';
 import { useLimit } from '../../hooks/useLimit';
 import { useLicenseWarning } from '../../hooks/useLicenseWarning';
-import { Confirm, PageHead, State, Toast } from '../../components/UI';
+import { Confirm, PageHead, State, Toast, Toggle } from '../../components/UI';
 import {
   autoRenewBlock,
   cancelMySubscription,
@@ -122,16 +122,13 @@ export function ApiLicense() {
                   <div>
                     <dt id="auto-renew-label">{t('Tự gia hạn')}</dt>
                     <dd className="stack">
-                      <label className="row">
-                        <input
-                          type="checkbox"
-                          role="switch"
-                          aria-labelledby="auto-renew-label"
-                          aria-describedby="auto-renew-hint"
+                      <div className="row">
+                        <Toggle
+                          labelledBy="auto-renew-label"
+                          describedBy="auto-renew-hint"
                           checked={detail.data.autoRenew && !cancelled}
                           disabled={renewing || detail.isFetching || !!autoRenewBlock(detail.data)}
-                          onChange={async (e) => {
-                            const next = e.currentTarget.checked;
+                          onChange={async (next) => {
                             const key = ['license-subscription', user.id, user.orgId];
                             setRenewing(true);
                             setRenewError('');
@@ -153,7 +150,7 @@ export function ApiLicense() {
                           }}
                         />
                         {detail.data.autoRenew && !cancelled ? t('Bật') : t('Tắt')}
-                      </label>
+                      </div>
                       <small id="auto-renew-hint">
                         {autoRenewBlock(detail.data) ??
                           (cancelled

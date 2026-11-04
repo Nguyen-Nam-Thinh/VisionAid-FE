@@ -2679,4 +2679,5 @@ export const en = {
   'Đang có cảnh báo': 'Open alert',
   'Chưa có vị trí': 'No position yet',
   '{name} · Đang có cảnh báo': '{name} · Open alert',
+  'Vị trí hiện tại': 'Current location',
 } satisfies Record<string, EnMessage>;
