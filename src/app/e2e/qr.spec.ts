@@ -8,7 +8,7 @@ test('decodes an invitation image and links a secondary caregiver once', async (
   const qr = await page.getByRole('dialog').locator('svg').last().screenshot();
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await expect(page.getByRole('heading', { name: 'Chào mừng trở lại.' })).toBeVisible();
   await page.getByLabel('Địa chỉ email').fill('secondary@demo.vn');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();

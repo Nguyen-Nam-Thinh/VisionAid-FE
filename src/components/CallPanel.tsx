@@ -11,6 +11,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Maximize2, Mic, MicOff, Minus, Phone, PhoneIncoming, PhoneOff, Video } from 'lucide-react';
 import type { CallClient, CallView } from '../services/realtime/calls';
 import { Dialog } from './UI';
+import * as AnimatedDialog from '@animate-ui/react/primitives/radix-ui/dialog';
 
 export const CallContext = createContext<CallClient | null>(null);
 export function CallAvailability() {
@@ -95,40 +96,48 @@ export function CallPanel({ client }: { client: CallClient }) {
   );
 }
 function IncomingCall({ client, call }: { client: CallClient; call: CallView }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const trigger = document.activeElement as HTMLElement | null;
-    const element = dialog.current;
-    element?.showModal();
-    return () => {
-      element?.close();
-      if (trigger?.isConnected) trigger.focus();
-    };
-  }, []);
+  // The call client decides when this closes, so only the entrance is animated.
+  const [trigger] = useState(() => document.activeElement as HTMLElement | null);
   return (
-    <dialog
-      ref={dialog}
-      className="dialog incoming-call"
-      aria-label={t('Cuộc gọi đến từ ') + call.name}
-      onCancel={(event) => event.preventDefault()}
-    >
-      <div className="incoming-call-avatar">
-        <PhoneIncoming size={32} aria-hidden="true" />
-      </div>
-      <p className="muted">{t('Cuộc gọi hỗ trợ đến')}</p>
-      <h2>{call.name}</h2>
-      <p role="status">{call.message}</p>
-      <p className="muted">{t('Micro chỉ bật khi bạn nhận cuộc gọi. Camera của bạn không bật.')}</p>
-      <div className="row">
-        <button className="btn" onClick={() => void client.reject()}>
-          {t('Từ chối')}
-        </button>
-        <button className="btn primary" onClick={() => void client.accept()}>
-          <Phone size={18} aria-hidden="true" />
-          {t('Nhận cuộc gọi')}
-        </button>
-      </div>
-    </dialog>
+    <AnimatedDialog.Root open>
+      <AnimatedDialog.Portal>
+        <AnimatedDialog.Overlay className="dialog-overlay" />
+        <AnimatedDialog.Content
+          className="dialog incoming-call"
+          aria-describedby={undefined}
+          from="bottom"
+          // Answer or decline is required: Escape and outside clicks do nothing.
+          onEscapeKeyDown={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (trigger?.isConnected) trigger.focus();
+          }}
+        >
+          <div className="incoming-call-avatar">
+            <PhoneIncoming size={32} aria-hidden="true" />
+          </div>
+          <p className="muted">{t('Cuộc gọi hỗ trợ đến')}</p>
+          <AnimatedDialog.Title>
+            <span className="sr-only">{t('Cuộc gọi đến từ ')}</span>
+            {call.name}
+          </AnimatedDialog.Title>
+          <p role="status">{call.message}</p>
+          <p className="muted">
+            {t('Micro chỉ bật khi bạn nhận cuộc gọi. Camera của bạn không bật.')}
+          </p>
+          <div className="row">
+            <button className="btn" onClick={() => void client.reject()}>
+              {t('Từ chối')}
+            </button>
+            <button className="btn primary" onClick={() => void client.accept()}>
+              <Phone size={18} aria-hidden="true" />
+              {t('Nhận cuộc gọi')}
+            </button>
+          </div>
+        </AnimatedDialog.Content>
+      </AnimatedDialog.Portal>
+    </AnimatedDialog.Root>
   );
 }
 function CallWorkspace({ client, call }: { client: CallClient; call: CallView }) {

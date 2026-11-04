@@ -22,7 +22,7 @@ test('public home, signup, login and protected dashboard stay separate', async (
   await page.getByRole('banner').getByRole('link', { name: 'Đăng nhập' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
 });
 

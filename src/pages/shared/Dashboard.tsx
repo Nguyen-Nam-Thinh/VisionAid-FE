@@ -16,6 +16,8 @@ import { useWorkspace } from '../../hooks/useWorkspace';
 import { useNow } from '../../hooks/useNow';
 import { PageHead, State, Badge } from '../../components/UI';
 import { MapPanel } from '../../components/MapPanel';
+import { CountingNumber } from '@animate-ui/react/primitives/texts/counting-number';
+import { Effects } from '@animate-ui/react/primitives/effects/effect';
 import { formatTime, statuses } from '../../constants/labels';
 export function Dashboard() {
   const { query, db, user, setSelected } = useWorkspace();
@@ -114,20 +116,25 @@ export function Dashboard() {
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <div className="stack">
           <div className="grid dashboard-stats">
-            {cards.map((c) => (
-              <Link to={base + '/' + c.path} className="glass card stat-card" key={c.label}>
-                <div className="row between">
-                  <span className="muted">{c.label}</span>
-                  <span className="icon-tile">
-                    <c.icon size={19} />
+            {/* Cards fade and slide in one after another. */}
+            <Effects asChild fade slide={{ offset: 12 }} holdDelay={60}>
+              {cards.map((c) => (
+                <Link to={base + '/' + c.path} className="glass card stat-card" key={c.label}>
+                  <div className="row between">
+                    <span className="muted">{c.label}</span>
+                    <span className="icon-tile">
+                      <c.icon size={19} />
+                    </span>
+                  </div>
+                  <strong className="stat">
+                    <CountingNumber number={c.value} />
+                  </strong>
+                  <span className="muted">
+                    {c.foot} <ArrowUpRight size={13} />
                   </span>
-                </div>
-                <strong className="stat">{c.value}</strong>
-                <span className="muted">
-                  {c.foot} <ArrowUpRight size={13} />
-                </span>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </Effects>
           </div>
           <div className="dashboard-columns">
             <section className="glass card stack">

@@ -30,8 +30,12 @@ import { ApiContacts } from '../pages/caregiver/ApiContacts';
 import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
-import { features } from './features';
-import { useState, Suspense } from 'react';
+import { features, type Feature } from './features';
+import * as AccountMenu from '@animate-ui/react/primitives/radix-ui/dropdown-menu';
+import { Highlight as NavHighlight } from '@animate-ui/react/primitives/sidebar';
+import * as Tooltip from '@animate-ui/react/primitives/radix-ui/tooltip';
+import { useEffect, useState, Suspense, type ReactElement } from 'react';
+import { useAnimate, useReducedMotion } from 'motion/react';
 import {
   BrowserRouter,
   Routes,
@@ -218,6 +222,28 @@ const navigationIcons = {
   delivery: Send,
   audit: History,
 };
+/** A collapsed sidebar shows icons only; the animated tooltip names each link on hover and focus. */
+function NavTip({
+  label,
+  show,
+  children,
+}: {
+  label: string;
+  show: boolean;
+  children: ReactElement;
+}) {
+  if (!show) return children;
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content className="nav-tooltip" side="right" sideOffset={12}>
+          {label}
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  );
+}
 function Shell() {
   const location = useLocation();
   const { data: user } = useSession();
@@ -227,6 +253,13 @@ function Shell() {
   const [reset, setReset] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { notice } = useUI();
+  // Each new page fades up into place; the page itself is not remounted.
+  const [view, animate] = useAnimate<HTMLDivElement>();
+  const still = useReducedMotion();
+  useEffect(() => {
+    if (!still && view.current)
+      animate(view.current, { opacity: [0, 1], y: [6, 0] }, { duration: 0.2, ease: 'easeOut' });
+  }, [location.pathname, still, view, animate]);
   useSessionExpiry();
   const warning = useLicenseWarning();
   if (!user) return null;
@@ -234,209 +267,175 @@ function Shell() {
   const graceDays = runtime.mode === 'api' ? licenseGraceDays(user, warning) : null;
   const locked = (path: string) =>
     !!block && (licensedCaregiverPaths as readonly string[]).includes(path);
+  const api = runtime.mode === 'api';
+  const menuLabel = (item: Pick<Feature, 'path' | 'label'>) =>
+    api && user.role === 'Caregiver' && item.path === 'caregivers'
+      ? t('Liên kết của tôi')
+      : t(item.label);
+  const menuItems = (menu[user.role] ?? []).filter(
+    (item) =>
+      runtime.mode === 'mock' ||
+      (user.role === 'Caregiver' &&
+        [
+          'users',
+          'caregivers',
+          'map',
+          'alerts',
+          'notifications',
+          'contacts',
+          'activity',
+          'registry',
+          'locations',
+          'tts',
+        ].includes(item.path)) ||
+      (user.role === 'Admin' &&
+        [
+          'organizations',
+          'accounts',
+          'links',
+          'rules',
+          'configurations',
+          'metrics',
+          'audit',
+          'delivery',
+        ].includes(item.path)) ||
+      (user.role === 'CenterAdmin' &&
+        ['organization', 'staff', 'users', 'assignments', 'map', 'routing', 'reports'].includes(
+          item.path,
+        )),
+  );
+  // Secondary links at the foot of the sidebar; each entry is shown only where its API exists.
+  const footItems: { to: string; label: string; Icon: typeof Phone }[] = [
+    ...(api && (user.role === 'Caregiver' || user.role === 'CenterAdmin')
+      ? [
+          {
+            to: user.role === 'Caregiver' ? '/caregiver/calls' : '/center-admin/calls',
+            label: t('Lịch sử cuộc gọi'),
+            Icon: Phone,
+          },
+        ]
+      : []),
+    ...(api && user.role === 'CenterAdmin' && user.orgId
+      ? [
+          { to: '/center-admin/licenses', label: t('Kho license'), Icon: ShieldCheck },
+          { to: '/center-admin/payments', label: t('Thanh toán'), Icon: CreditCard },
+        ]
+      : []),
+    ...(api && user.role === 'Admin'
+      ? [
+          { to: '/admin/license-pools', label: t('Kho license các trung tâm'), Icon: ShieldCheck },
+          { to: '/admin/revenue', label: t('Báo cáo doanh thu'), Icon: BarChart3 },
+          { to: '/admin/hybrid', label: t('Nhật ký Hybrid'), Icon: Activity },
+          { to: '/admin/ice-servers', label: t('Máy chủ cuộc gọi'), Icon: Settings },
+        ]
+      : []),
+    ...(api ? [{ to: '/license', label: 'License', Icon: ShieldCheck }] : []),
+    ...(api && user.role === 'Caregiver' && !user.orgId
+      ? [{ to: '/caregiver/payments', label: t('Thanh toán'), Icon: CreditCard }]
+      : []),
+    ...(api &&
+    (user.role === 'Admin' ||
+      user.role === 'CenterAdmin' ||
+      (user.role === 'Caregiver' && !user.orgId))
+      ? [
+          {
+            to: user.role === 'Admin' ? '/admin/packages' : '/packages',
+            label: t('Gói dịch vụ'),
+            Icon: Package,
+          },
+        ]
+      : []),
+  ];
+  // The topbar names the page that the sidebar marks as current (longest matching link).
+  const pages = [
+    { to: '/dashboard', label: t('Tổng quan') },
+    ...menuItems.map((item) => ({
+      to: roleBase(user.role) + '/' + item.path,
+      label: menuLabel(item),
+    })),
+    ...footItems,
+    { to: '/profile', label: t('Hồ sơ của tôi') },
+  ];
+  const currentPage = pages
+    .filter((page) => location.pathname === page.to || location.pathname.startsWith(page.to + '/'))
+    .sort((a, b) => b.to.length - a.to.length)[0];
   const content = (
     <div className={'shell' + (collapsed ? ' sidebar-collapsed' : '')}>
       <a className="skip" href="#main">
         {t('Đến nội dung chính')}
       </a>
-      <aside className={'sidebar' + (open ? ' open' : '')}>
-        <div className="sidebar-brand">
-          <Brand />
-          <button
-            className="btn sidebar-toggle"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
-            title={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
-            aria-expanded={!collapsed}
-          >
-            {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
-          </button>
-        </div>
-        <div>
-          <nav className="nav" aria-label={t('Điều hướng chính')}>
-            <NavLink to="/dashboard" title={t('Tổng quan')} end onClick={() => setOpen(false)}>
-              <LayoutDashboard size={18} />
-              <span>{t('Tổng quan')}</span>
-            </NavLink>
-            {menu[user.role]
-              ?.filter(
-                (item) =>
-                  runtime.mode === 'mock' ||
-                  (user.role === 'Caregiver' &&
-                    [
-                      'users',
-                      'caregivers',
-                      'map',
-                      'alerts',
-                      'notifications',
-                      'contacts',
-                      'activity',
-                      'registry',
-                      'locations',
-                      'tts',
-                    ].includes(item.path)) ||
-                  (user.role === 'Admin' &&
-                    [
-                      'organizations',
-                      'accounts',
-                      'links',
-                      'rules',
-                      'configurations',
-                      'metrics',
-                      'audit',
-                      'delivery',
-                    ].includes(item.path)) ||
-                  (user.role === 'CenterAdmin' &&
-                    [
-                      'organization',
-                      'staff',
-                      'users',
-                      'assignments',
-                      'map',
-                      'routing',
-                      'reports',
-                    ].includes(item.path)),
-              )
-              .map((item) => (
-                <NavLink
-                  key={item.path}
-                  title={
-                    runtime.mode === 'api' &&
-                    user.role === 'Caregiver' &&
-                    item.path === 'caregivers'
-                      ? t('Liên kết của tôi')
-                      : t(item.label)
-                  }
-                  to={roleBase(user.role) + '/' + item.path}
-                  onClick={() => setOpen(false)}
-                >
-                  {(() => {
-                    const Icon =
-                      navigationIcons[item.path as keyof typeof navigationIcons] || FileText;
-                    return <Icon size={18} aria-hidden="true" />;
-                  })()}
-                  <span>
-                    {runtime.mode === 'api' &&
-                    user.role === 'Caregiver' &&
-                    item.path === 'caregivers'
-                      ? t('Liên kết của tôi')
-                      : t(item.label)}
-                  </span>
-                  {locked(item.path) && (
-                    <span className="nav-lock" title={t('Cần gói dịch vụ')}>
-                      <Lock size={14} aria-hidden="true" />
-                      <span className="sr-only">{t('(cần gói dịch vụ)')}</span>
-                    </span>
-                  )}
-                </NavLink>
-              ))}
-          </nav>
-        </div>
-        <div className="sidebar-foot stack">
-          <nav className="nav">
-            {runtime.mode === 'api' &&
-              (user.role === 'Caregiver' || user.role === 'CenterAdmin') && (
-                <NavLink
-                  title={t('Lịch sử cuộc gọi')}
-                  to={user.role === 'Caregiver' ? '/caregiver/calls' : '/center-admin/calls'}
-                  onClick={() => setOpen(false)}
-                >
-                  <Phone size={18} aria-hidden="true" />
-                  <span>{t('Lịch sử cuộc gọi')}</span>
-                </NavLink>
+      <Tooltip.Provider delayDuration={150}>
+        <aside className={'sidebar' + (open ? ' open' : '')}>
+          <div className="sidebar-brand">
+            <Brand />
+            <button
+              className="btn sidebar-toggle"
+              onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
+              title={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
+              aria-expanded={!collapsed}
+            >
+              {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+            </button>
+          </div>
+          <div>
+            <nav className="nav" aria-label={t('Điều hướng chính')}>
+              {/* animate-ui glides the hover fill between links marked data-sidebar="menu-button". */}
+              <NavHighlight className="nav-items">
+                <NavTip label={t('Tổng quan')} show={collapsed}>
+                  <NavLink
+                    to="/dashboard"
+                    end
+                    data-sidebar="menu-button"
+                    onClick={() => setOpen(false)}
+                  >
+                    <LayoutDashboard size={18} />
+                    <span>{t('Tổng quan')}</span>
+                  </NavLink>
+                </NavTip>
+                {menuItems.map((item) => (
+                  <NavTip key={item.path} label={menuLabel(item)} show={collapsed}>
+                    <NavLink
+                      to={roleBase(user.role) + '/' + item.path}
+                      data-sidebar="menu-button"
+                      onClick={() => setOpen(false)}
+                    >
+                      {(() => {
+                        const Icon =
+                          navigationIcons[item.path as keyof typeof navigationIcons] || FileText;
+                        return <Icon size={18} aria-hidden="true" />;
+                      })()}
+                      <span>{menuLabel(item)}</span>
+                      {locked(item.path) && (
+                        <span className="nav-lock" title={t('Cần gói dịch vụ')}>
+                          <Lock size={14} aria-hidden="true" />
+                          <span className="sr-only">{t('(cần gói dịch vụ)')}</span>
+                        </span>
+                      )}
+                    </NavLink>
+                  </NavTip>
+                ))}
+              </NavHighlight>
+            </nav>
+          </div>
+          <div className="sidebar-foot stack">
+            <nav className="nav">
+              {footItems.length > 0 && (
+                <NavHighlight className="nav-items">
+                  {footItems.map(({ to, label, Icon }) => (
+                    <NavTip key={to} label={label} show={collapsed}>
+                      <NavLink to={to} data-sidebar="menu-button" onClick={() => setOpen(false)}>
+                        <Icon size={18} aria-hidden="true" />
+                        <span>{label}</span>
+                      </NavLink>
+                    </NavTip>
+                  ))}
+                </NavHighlight>
               )}
-            {runtime.mode === 'api' && user.role === 'CenterAdmin' && user.orgId && (
-              <>
-                <NavLink
-                  title={t('Kho license')}
-                  to="/center-admin/licenses"
-                  onClick={() => setOpen(false)}
-                >
-                  <ShieldCheck size={18} aria-hidden="true" />
-                  <span>{t('Kho license')}</span>
-                </NavLink>
-                <NavLink
-                  title={t('Thanh toán')}
-                  to="/center-admin/payments"
-                  onClick={() => setOpen(false)}
-                >
-                  <CreditCard size={18} aria-hidden="true" />
-                  <span>{t('Thanh toán')}</span>
-                </NavLink>
-              </>
-            )}
-            {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink
-                title={t('Kho license các trung tâm')}
-                to="/admin/license-pools"
-                onClick={() => setOpen(false)}
-              >
-                <ShieldCheck size={18} aria-hidden="true" />
-                <span>{t('Kho license các trung tâm')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink
-                title={t('Báo cáo doanh thu')}
-                to="/admin/revenue"
-                onClick={() => setOpen(false)}
-              >
-                <BarChart3 size={18} aria-hidden="true" />
-                <span>{t('Báo cáo doanh thu')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink
-                title={t('Nhật ký Hybrid')}
-                to="/admin/hybrid"
-                onClick={() => setOpen(false)}
-              >
-                <Activity size={18} aria-hidden="true" />
-                <span>{t('Nhật ký Hybrid')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink
-                title={t('Máy chủ cuộc gọi')}
-                to="/admin/ice-servers"
-                onClick={() => setOpen(false)}
-              >
-                <Settings size={18} aria-hidden="true" />
-                <span>{t('Máy chủ cuộc gọi')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && (
-              <NavLink title="License" to="/license">
-                <ShieldCheck size={18} aria-hidden="true" />
-                <span>License</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && user.role === 'Caregiver' && !user.orgId && (
-              <NavLink
-                title={t('Thanh toán')}
-                to="/caregiver/payments"
-                onClick={() => setOpen(false)}
-              >
-                <CreditCard size={18} aria-hidden="true" />
-                <span>{t('Thanh toán')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' &&
-              (user.role === 'Admin' ||
-                user.role === 'CenterAdmin' ||
-                (user.role === 'Caregiver' && !user.orgId)) && (
-                <NavLink
-                  title={t('Gói dịch vụ')}
-                  to={user.role === 'Admin' ? '/admin/packages' : '/packages'}
-                  onClick={() => setOpen(false)}
-                >
-                  <Package size={18} aria-hidden="true" />
-                  <span>{t('Gói dịch vụ')}</span>
-                </NavLink>
-              )}
-          </nav>
-        </div>
-      </aside>
+            </nav>
+          </div>
+        </aside>
+      </Tooltip.Provider>
       <div className="workspace">
         <header className="topbar">
           <div className="row">
@@ -448,53 +447,56 @@ function Shell() {
             >
               <Menu size={18} />
             </button>
-            <span className="muted" style={{ fontSize: 13 }}>
-              VisionAid <span aria-hidden="true">/</span> {roles[user.role]}
-            </span>
+            <nav aria-label={t('Vị trí hiện tại')} className="muted" style={{ fontSize: 13 }}>
+              VisionAid <span aria-hidden="true">/</span>{' '}
+              <span aria-current="page">{currentPage?.label ?? roles[user.role]}</span>
+            </nav>
           </div>
           <div className="topbar-actions">
             <LanguageSwitch />
-            <button
-              className="row account-trigger"
-              popoverTarget="account-menu"
-              aria-label={t('Menu tài khoản')}
-            >
-              <span className="avatar">
-                {user.name.split(' ').at(-1)?.slice(0, 2).toUpperCase()}
-              </span>
-              <span style={{ fontSize: 13, color: 'var(--text)' }}>
-                <strong>{user.name}</strong>
-                <br />
-                <small>{roles[user.role]}</small>
-              </span>
-              <ChevronDown size={16} aria-hidden="true" />
-            </button>
-          </div>
-          <div id="account-menu" popover="auto" className="account-menu">
-            <Link
-              to="/profile"
-              onClick={(event) => {
-                event.currentTarget.parentElement?.hidePopover();
-                setOpen(false);
-              }}
-            >
-              <UserRound size={18} aria-hidden="true" /> {t('Hồ sơ của tôi')}
-            </Link>{' '}
-            <button
-              className="btn"
-              disabled={signingOut}
-              onClick={async () => {
-                setSigningOut(true);
-                try {
-                  await auth.logout();
-                } finally {
-                  setSigningOut(false);
-                }
-              }}
-            >
-              <LogOut size={16} />
-              {signingOut ? t('Đang đăng xuất…') : t('Đăng xuất')}
-            </button>
+            {/* animate-ui (Radix) menu: arrow keys move, Escape closes and returns focus. */}
+            <AccountMenu.Root modal={false}>
+              <AccountMenu.Trigger className="row account-trigger" aria-label={t('Menu tài khoản')}>
+                <span className="avatar">
+                  {user.name.split(' ').at(-1)?.slice(0, 2).toUpperCase()}
+                </span>
+                <span style={{ fontSize: 13, color: 'var(--text)' }}>
+                  <strong>{user.name}</strong>
+                  <br />
+                  <small>{roles[user.role]}</small>
+                </span>
+                <ChevronDown size={16} aria-hidden="true" />
+              </AccountMenu.Trigger>
+              <AccountMenu.Portal>
+                <AccountMenu.Content
+                  id="account-menu"
+                  className="account-menu"
+                  align="end"
+                  sideOffset={8}
+                >
+                  <AccountMenu.Item asChild>
+                    <Link to="/profile" onClick={() => setOpen(false)}>
+                      <UserRound size={18} aria-hidden="true" /> {t('Hồ sơ của tôi')}
+                    </Link>
+                  </AccountMenu.Item>
+                  <AccountMenu.Item
+                    className="account-menu-signout"
+                    disabled={signingOut}
+                    onSelect={async () => {
+                      setSigningOut(true);
+                      try {
+                        await auth.logout();
+                      } finally {
+                        setSigningOut(false);
+                      }
+                    }}
+                  >
+                    <LogOut size={16} aria-hidden="true" />
+                    {signingOut ? t('Đang đăng xuất…') : t('Đăng xuất')}
+                  </AccountMenu.Item>
+                </AccountMenu.Content>
+              </AccountMenu.Portal>
+            </AccountMenu.Root>
           </div>
         </header>
         {auth.mode === 'api' &&
@@ -540,7 +542,9 @@ function Shell() {
             }
           >
             <ErrorBoundary scope="route" resetKey={location.pathname}>
-              <Outlet />
+              <div ref={view} className="route-view">
+                <Outlet />
+              </div>
             </ErrorBoundary>
           </Suspense>
         </main>

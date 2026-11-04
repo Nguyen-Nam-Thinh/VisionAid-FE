@@ -98,7 +98,7 @@ test('linked user creation, QR and secondary flags', async ({ page }) => {
   await dialog(page).getByRole('button', { name: 'Lưu thay đổi' }).click();
   await expect(row).toContainText('Registry');
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await login(page, 'secondary@demo.vn');
   await screen(page, '/caregiver/registry', 'Gương mặt thân quen');
   await expect(page.getByRole('button', { name: 'Thêm mới' })).toBeVisible();
@@ -247,7 +247,7 @@ test('every role route renders on tablet without console errors or document over
       await expect(page.getByRole('alert')).toHaveCount(0);
     }
     await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-    await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   }
   expect(errors).toEqual([]);
 });

@@ -34,7 +34,7 @@ test('registration, password recovery and session logout work without reload', a
   await page.getByRole('button', { name: 'Tạo tài khoản' }).click();
   await expect(page.getByRole('heading', { name: /Xin chào/ })).toBeVisible();
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await expect(page.getByRole('heading', { name: 'Chào mừng trở lại.' })).toBeVisible();
   await page.getByRole('link', { name: 'Quên mật khẩu?' }).click();
   await page.getByLabel('Địa chỉ email').fill('family-new@demo.vn');

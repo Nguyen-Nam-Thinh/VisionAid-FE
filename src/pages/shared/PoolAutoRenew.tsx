@@ -2,6 +2,7 @@ import { t } from '../../i18n';
 import { useId, useState } from 'react';
 import { setPoolAutoRenew, type OrganizationPool } from '../../services/api/licenses';
 import type { Person } from '../../models/domain';
+import { Toggle } from '../../components/UI';
 
 /** BR-57: pool auto-renew switch shared by the CenterAdmin pool page and the Admin organization view. */
 export function PoolAutoRenew({
@@ -21,16 +22,13 @@ export function PoolAutoRenew({
   const on = !!pool.autoRenew;
   return (
     <div className="stack">
-      <label className="row">
-        <input
-          type="checkbox"
-          role="switch"
-          aria-labelledby={id + '-label'}
-          aria-describedby={id + '-hint'}
+      <div className="row">
+        <Toggle
+          labelledBy={id + '-label'}
+          describedBy={id + '-hint'}
           checked={on}
           disabled={pending || !known}
-          onChange={async (e) => {
-            const next = e.currentTarget.checked;
+          onChange={async (next) => {
             setPending(true);
             setMessage('');
             setError('');
@@ -48,7 +46,7 @@ export function PoolAutoRenew({
         />
         <span id={id + '-label'}>{t('Tự gia hạn kho')}</span>
         <strong>{known ? (on ? t('Bật') : t('Tắt')) : t('Chưa có từ máy chủ')}</strong>
-      </label>
+      </div>
       <small id={id + '-hint'}>
         {!known
           ? t('Máy chủ chưa trả trạng thái tự gia hạn. Hãy tải lại kho license.')

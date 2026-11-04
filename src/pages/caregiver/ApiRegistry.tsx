@@ -14,7 +14,7 @@ import {
 } from '../../services/api/registry';
 import { onSessionEnded } from '../../services/sessionLifecycle';
 import { FilterPanel } from '../../components/FilterPanel';
-import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
+import { PageHead, State, Dialog, Confirm, Badge, Checkbox } from '../../components/UI';
 import { Form, type FieldSpec } from '../../components/Form';
 import type { Person, Fields } from '../../models/domain';
 import { uiStore, useUI } from '../../stores/ui';
@@ -494,12 +494,7 @@ function RegistryPhotos({
                     )}
                   </p>
                   <div className="field field-checkbox">
-                    <input
-                      id="registry-upload-primary"
-                      type="checkbox"
-                      name="primary"
-                      disabled={pending}
-                    />
+                    <Checkbox id="registry-upload-primary" name="primary" disabled={pending} />
                     <label htmlFor="registry-upload-primary">
                       {t('Đặt ảnh vừa tải làm ảnh chính')}
                     </label>

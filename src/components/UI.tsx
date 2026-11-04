@@ -1,5 +1,10 @@
 import { t } from '../i18n';
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import * as AnimatedDialog from '@animate-ui/react/primitives/radix-ui/dialog';
+import * as AnimatedSwitch from '@animate-ui/react/primitives/radix-ui/switch';
+import * as AnimatedCollapsible from '@animate-ui/react/primitives/radix-ui/collapsible';
+import * as AnimatedCheckbox from '@animate-ui/react/primitives/radix-ui/checkbox';
 import { X, Search, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ServiceError } from '../services/contracts';
@@ -36,9 +41,12 @@ export const CardActions = ({ children }: { children: ReactNode }) =>
 export const Badge = ({ children, tone = 'blue' }: { children: ReactNode; tone?: string }) => (
   <span className={'badge ' + tone}>{children}</span>
 );
+// True inside a Dialog, whose own toasts stay in the dialog so they are announced and scoped with it.
+const InDialog = createContext(false);
 export function Toast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
+  const inDialog = useContext(InDialog);
   useEffect(() => {
     ref.current?.showPopover();
   }, []);
@@ -47,7 +55,9 @@ export function Toast({ message, onDismiss }: { message: string; onDismiss: () =
     const timer = setTimeout(onDismiss, 8000);
     return () => clearTimeout(timer);
   }, [message, onDismiss, paused]);
-  return (
+  // Outside a dialog it renders straight into <body>: an open modal hides the app root from
+  // assistive technology, and a toast inside it would never be announced.
+  const toast = (
     <div
       ref={ref}
       popover="manual"
@@ -67,6 +77,7 @@ export function Toast({ message, onDismiss }: { message: string; onDismiss: () =
       </button>
     </div>
   );
+  return inDialog ? toast : createPortal(toast, document.body);
 }
 /** 402 follow-up. Organization staff (UC-79) cannot buy a Personal plan; their license comes from the center. */
 function LicenseActions() {
@@ -125,6 +136,76 @@ export function State({
     );
   return <>{children}</>;
 }
+/**
+ * On/off switch on the animate-ui Radix primitive (role="switch", Space/Enter toggle, animated
+ * thumb). Controlled: `checked` is the server value and `onChange` asks for the next one.
+ */
+export function Toggle({
+  checked,
+  disabled,
+  onChange,
+  labelledBy,
+  describedBy,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (next: boolean) => void;
+  labelledBy: string;
+  describedBy?: string;
+}) {
+  return (
+    <AnimatedSwitch.Root
+      className="toggle"
+      checked={checked}
+      disabled={disabled}
+      onCheckedChange={onChange}
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
+    >
+      <AnimatedSwitch.Thumb className="toggle-thumb" />
+    </AnimatedSwitch.Root>
+  );
+}
+/** Show/hide block on the animate-ui Collapsible: the content slides open and closed. */
+export function Disclosure({
+  summary,
+  className,
+  children,
+}: {
+  summary: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <AnimatedCollapsible.Root className={'disclosure' + (className ? ' ' + className : '')}>
+      <AnimatedCollapsible.Trigger className="disclosure-trigger">
+        <ChevronRight size={16} aria-hidden="true" />
+        {summary}
+      </AnimatedCollapsible.Trigger>
+      <AnimatedCollapsible.Content className="disclosure-content">
+        {children}
+      </AnimatedCollapsible.Content>
+    </AnimatedCollapsible.Root>
+  );
+}
+/**
+ * Uncontrolled checkbox on the animate-ui primitive (drawn check). Inside a form it submits
+ * `name` like a native checkbox, so FormData.has(name) still tells whether it is ticked.
+ */
+export function Checkbox({ id, name, disabled }: { id: string; name: string; disabled?: boolean }) {
+  return (
+    <AnimatedCheckbox.Root id={id} name={name} disabled={disabled} className="checkbox">
+      <AnimatedCheckbox.Indicator className="checkbox-indicator" />
+    </AnimatedCheckbox.Root>
+  );
+}
+// Exit animation of the animate-ui dialog; the parent unmounts the dialog only after it.
+const DIALOG_EXIT_MS = 180;
+/**
+ * Modal built on the animate-ui Radix primitive (motion enter/exit, focus trap, Escape).
+ * Callers keep the "render it to open it" pattern: the dialog opens on mount and tells the
+ * parent to unmount it once the closing animation has finished.
+ */
 export function Dialog({
   title,
   children,
@@ -134,38 +215,46 @@ export function Dialog({
   children: ReactNode;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const label = useId();
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(true);
+  // Focus returns to whatever opened the dialog, captured before focus moves inside it.
+  const [trigger] = useState(() => document.activeElement as HTMLElement | null);
+  const done = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(done.current), []);
   const close = () => {
-    if (!ref.current?.querySelector('form[aria-busy="true"]')) onClose();
+    // A form that is still saving keeps the dialog open.
+    if (!open || ref.current?.querySelector('form[aria-busy="true"]')) return;
+    setOpen(false);
+    done.current = setTimeout(onClose, DIALOG_EXIT_MS);
   };
-  useEffect(() => {
-    const trigger = document.activeElement as HTMLElement | null;
-    const dialog = ref.current;
-    dialog?.showModal();
-    return () => {
-      dialog?.close();
-      trigger?.focus();
-    };
-  }, []);
   return (
-    <dialog
-      ref={ref}
-      className="dialog"
-      aria-labelledby={label}
-      onCancel={(event) => {
-        event.preventDefault();
-        close();
-      }}
-    >
-      <header className="dialog-header row between">
-        <h2 id={label}>{title}</h2>
-        <button className="btn small" aria-label={t('Đóng hộp thoại')} onClick={close}>
-          <X size={18} />
-        </button>
-      </header>
-      <div className="dialog-body">{children}</div>
-    </dialog>
+    <AnimatedDialog.Root open={open} onOpenChange={(next) => !next && close()}>
+      <AnimatedDialog.Portal>
+        <AnimatedDialog.Overlay className="dialog-overlay" />
+        <AnimatedDialog.Content
+          ref={ref}
+          className="dialog"
+          aria-describedby={undefined}
+          from="bottom"
+          // Clicking the backdrop must not throw away a half-filled form; Escape and the close button do close.
+          onInteractOutside={(event) => event.preventDefault()}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            trigger?.focus();
+          }}
+        >
+          <header className="dialog-header row between">
+            <AnimatedDialog.Title>{title}</AnimatedDialog.Title>
+            <button className="btn small" aria-label={t('Đóng hộp thoại')} onClick={close}>
+              <X size={18} />
+            </button>
+          </header>
+          <div className="dialog-body">
+            <InDialog.Provider value>{children}</InDialog.Provider>
+          </div>
+        </AnimatedDialog.Content>
+      </AnimatedDialog.Portal>
+    </AnimatedDialog.Root>
   );
 }
 export function Confirm({

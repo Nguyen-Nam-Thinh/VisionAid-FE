@@ -31,6 +31,7 @@ import { paymentsApi, canPay, paymentHistoryPath } from '../../services/api/paym
 import { monitoringApi } from '../../services/api/monitoring';
 import { ServiceError } from '../../services/contracts';
 import type { Person } from '../../models/domain';
+import { CountingNumber } from '@animate-ui/react/primitives/texts/counting-number';
 
 const refresh = { retry: false, gcTime: 0, refetchInterval: 60000 } as const;
 const time = (value: string | null) =>
@@ -338,7 +339,9 @@ function AlertCount({
       <State loading={query.isPending} error={query.error}>
         {query.data !== undefined && (
           <p>
-            <strong>{query.data}</strong>{' '}
+            <strong>
+              <CountingNumber number={query.data} />
+            </strong>{' '}
             {t('cảnh báo · cập nhật {p3}', {
               p3: time(new Date(query.dataUpdatedAt).toISOString()),
             })}
