@@ -38,7 +38,7 @@ function Places({ actor }: { actor: Person }) {
         title={t('Địa điểm và vùng an toàn')}
         description={t('Lưu nơi thường đến và cấu hình vùng tròn cho người được chăm sóc.')}
       />
-      <section className="glass card stack">
+      <section className="glass card stack viu-picker">
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {

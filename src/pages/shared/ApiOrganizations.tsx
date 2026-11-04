@@ -1,4 +1,4 @@
-import { RefreshCw } from 'lucide-react';
+import { Building2, RefreshCw } from 'lucide-react';
 import { t, msg } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -400,26 +400,51 @@ function OrganizationDetails({
   });
   return (
     <section className="glass card stack">
-      <h2>{org.name}</h2>
-      <OrganizationStatus org={org} />
-      <p>{t('Mã tổ chức: {id}', { id: org.id })}</p>
-      <p>
-        {t('Mã số thuế:')} {org.taxCode || t('Chưa có')} {t('· Địa chỉ:')}{' '}
-        {org.address || t('Chưa có')}
-      </p>
-      <p>
-        {t('Liên hệ:')} {org.phoneNumber || t('Chưa có số điện thoại')} ·{' '}
-        {org.contactEmail || t('Chưa có email')}
-      </p>
-      <p>
-        {t('Quản trị trung tâm:')} {org.centerAdminName || t('Chưa có')}{' '}
-        {t('· Nhân viên: {staffCount} · Người khiếm thị: {viuCount}', {
-          staffCount: org.staffCount,
-          viuCount: org.viuCount,
-        })}
-      </p>
+      <header className="org-detail-head">
+        <span className="icon-tile org-detail-icon" aria-hidden="true">
+          <Building2 size={22} />
+        </span>
+        <h2>{org.name}</h2>
+        <OrganizationStatus org={org} />
+      </header>
+      <div className="org-detail-stats">
+        <div>
+          <span className="muted">{t('Nhân viên chăm sóc')}</span>
+          <strong>{org.staffCount}</strong>
+        </div>
+        <div>
+          <span className="muted">{t('Người khiếm thị')}</span>
+          <strong>{org.viuCount}</strong>
+        </div>
+        <div>
+          <span className="muted">{t('Quản trị trung tâm')}</span>
+          <strong className="org-detail-admin">{org.centerAdminName || t('Chưa có')}</strong>
+        </div>
+      </div>
+      <div className="org-detail-info">
+        <dl className="record-details">
+          <div>
+            <dt>{t('Email liên hệ')}</dt>
+            <dd>{org.contactEmail || t('Chưa có email')}</dd>
+          </div>
+          <div>
+            <dt>{t('Số điện thoại')}</dt>
+            <dd>{org.phoneNumber || t('Chưa có số điện thoại')}</dd>
+          </div>
+        </dl>
+        <dl className="record-details">
+          <div>
+            <dt>{t('Mã số thuế')}</dt>
+            <dd>{org.taxCode || t('Chưa có')}</dd>
+          </div>
+          <div>
+            <dt>{t('Địa chỉ')}</dt>
+            <dd>{org.address || t('Chưa có')}</dd>
+          </div>
+        </dl>
+      </div>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
-      <div className="row">
+      <div className="row org-detail-actions">
         {!org.deletedAt && (
           <button className="btn" onClick={() => setEdit(true)}>
             {t('Sửa tổ chức')}

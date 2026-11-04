@@ -60,7 +60,7 @@ function History({ actor }: { actor: Person }) {
   });
   const nameOf = (id: string | null) =>
     id
-      ? (people.data?.find((person) => person.id === id)?.fullName ?? id)
+      ? (people.data?.find((person) => person.id === id)?.fullName ?? t('Một người được chăm sóc'))
       : t('Không còn thông tin');
   return (
     <>
@@ -196,10 +196,6 @@ function History({ actor }: { actor: Person }) {
             <Dialog title={t('Chi tiết cuộc gọi')} onClose={() => setSelected(null)}>
               <div className="stack" style={{ overflowWrap: 'anywhere' }}>
                 <dl className="record-details">
-                  <div>
-                    <dt>{t('Mã phiên')}</dt>
-                    <dd>{selected.sessionId}</dd>
-                  </div>
                   <div>
                     <dt>{t('Người được chăm sóc')}</dt>
                     <dd>{nameOf(selected.viuUserId)}</dd>

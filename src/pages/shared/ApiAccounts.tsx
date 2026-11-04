@@ -20,6 +20,7 @@ import { useOwnOrgName } from '../../hooks/useOrgPeople';
 import { SearchPicker } from '../../components/SearchPicker';
 import { FilterPanel } from '../../components/FilterPanel';
 import { searchOrganizations } from '../../services/api/pickers';
+import { organizationsApi } from '../../services/api/organizations';
 
 const profileFields: FieldSpec[] = [
   { key: 'fullName', label: msg('Họ và tên'), required: true, min: 2, max: 200 },
@@ -385,7 +386,7 @@ function AccountEditor({
         <div className="stack">
           <p>
             {t('Tổ chức: {p1} · Vai trò: {p3}', {
-              p1: orgName ?? actor.orgId,
+              p1: orgName ?? t('Tổ chức của bạn'),
               p3: roles[fixedRole || 'Caregiver'],
             })}
           </p>
@@ -484,42 +485,82 @@ function AccountDetails({
   const [action, setAction] = useState<'activate' | 'deactivate' | 'delete' | null>(null);
   const [notice, setNotice] = useState('');
   const orgName = useOwnOrgName(actor);
+  // Admin may open accounts of any organization: name it from the org record, never the raw id.
+  const otherOrg = !!account.organizationId && account.organizationId !== actor.orgId;
+  const org = useQuery({
+    queryKey: ['api-account-org', actor.id, account.organizationId],
+    queryFn: ({ signal }) => organizationsApi.detail(actor, account.organizationId!, signal),
+    enabled: actor.role === 'Admin' && otherOrg,
+    staleTime: 5 * 60000,
+    retry: false,
+  });
+  const orgLabel = !account.organizationId
+    ? t('Không thuộc tổ chức')
+    : (otherOrg ? org.data?.name : orgName) ||
+      (org.isPending && otherOrg ? t('Đang tải…') : t('Một tổ chức'));
+  const initials = account.fullName
+    .split(' ')
+    .filter(Boolean)
+    .slice(-2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
   return (
-    <section className="glass card stack">
-      <h2>{account.fullName}</h2>
-      <AccountStatus account={account} />
-      <p>
-        {account.email} · {account.phoneNumber || t('Chưa có điện thoại')} · {roles[account.role]}
-      </p>
-      <p>
-        {t('Mã tài khoản: {id} · Tổ chức:', { id: account.id })}{' '}
-        {account.organizationId
-          ? (account.organizationId === actor.orgId && orgName) || account.organizationId
-          : t('Không thuộc tổ chức')}
-      </p>
-      <p>
-        {t('URL ảnh:')} {account.avatarUrl || t('Chưa có')}
-      </p>
-      {account.role === 'VisuallyImpaired' && (
-        <p>
-          License: {viuLicenseLabel(account.licenseStatus)}
-          {account.licenseExpiresAt &&
-            t(' · Hết hạn: {p0}', {
-              p0: formatLocaleDateTime(account.licenseExpiresAt),
-            })}
-          {actor.role === 'CenterAdmin' && (
-            <>
-              {' '}
-              · <Link to="/center-admin/licenses">{t('Quản lý cấp và thu hồi')}</Link>
-            </>
-          )}
-        </p>
-      )}
+    <section className="stack account-detail">
+      <header className="account-detail-head">
+        <span className="avatar account-detail-avatar" aria-hidden="true">
+          {initials}
+        </span>
+        <div className="account-detail-title">
+          <h2>{account.fullName}</h2>
+          <span className="muted">{roles[account.role]}</span>
+        </div>
+        <AccountStatus account={account} />
+      </header>
+      <dl className="record-details">
+        <div>
+          <dt>Email</dt>
+          <dd>{account.email}</dd>
+        </div>
+        <div>
+          <dt>{t('Số điện thoại')}</dt>
+          <dd>{account.phoneNumber || t('Chưa có điện thoại')}</dd>
+        </div>
+        <div>
+          <dt>{t('Tổ chức')}</dt>
+          <dd>{orgLabel}</dd>
+        </div>
+        <div>
+          <dt>{t('Ảnh đại diện')}</dt>
+          <dd>{account.avatarUrl ? t('Đã có') : t('Chưa có')}</dd>
+        </div>
+        {account.role === 'VisuallyImpaired' && (
+          <div>
+            <dt>License</dt>
+            <dd className="stack account-detail-license">
+              <span>
+                <Badge tone={account.licenseStatus === 'Active' ? 'green' : 'amber'}>
+                  {viuLicenseLabel(account.licenseStatus)}
+                </Badge>
+                {account.licenseExpiresAt && (
+                  <span className="muted">
+                    {' '}
+                    {t('Hết hạn {p0}', { p0: formatLocaleDateTime(account.licenseExpiresAt) })}
+                  </span>
+                )}
+              </span>
+              {actor.role === 'CenterAdmin' && (
+                <Link to="/center-admin/licenses">{t('Quản lý cấp và thu hồi')}</Link>
+              )}
+            </dd>
+          </div>
+        )}
+      </dl>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {account.deletedAt ? (
         <p>{t('Tài khoản đã xóa. Chưa có API khôi phục tài khoản.')}</p>
       ) : (
-        <div className="row">
+        <div className="row account-detail-actions">
           <button className="btn" onClick={() => setEdit(true)}>
             {t('Sửa hồ sơ tài khoản')}
           </button>

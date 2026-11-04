@@ -77,8 +77,6 @@ export function Audit() {
       {entry && (
         <Dialog title={t('Chi tiết bản ghi audit')} onClose={() => setSelected('')}>
           <dl>
-            <dt>{t('Mã bản ghi')}</dt>
-            <dd className="mono">{entry.id}</dd>
             <dt>{t('Hành động')}</dt>
             <dd>{entry.action}</dd>
             <dt>{t('Đối tượng')}</dt>

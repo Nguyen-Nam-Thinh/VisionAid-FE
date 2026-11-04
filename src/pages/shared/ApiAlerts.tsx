@@ -1,4 +1,5 @@
-import { RefreshCw } from 'lucide-react';
+import { ArrowRight, MapPinned, RefreshCw, Siren } from 'lucide-react';
+import * as AnimatedTabs from '@animate-ui/react/primitives/radix-ui/tabs';
 import { t, msg, labelMap, formatLocaleDateTime } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -20,7 +21,7 @@ import {
   type BoundaryFilters,
 } from '../../services/api/locations';
 import { caregivingApi } from '../../services/api/caregiving';
-import { PageHead, State, Dialog, Confirm } from '../../components/UI';
+import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
 import { SearchPicker } from '../../components/SearchPicker';
 import { searchCareRecipients } from '../../services/api/pickers';
@@ -62,7 +63,8 @@ function Alerts({ actor }: { actor: Person }) {
     retry: false,
   });
   const nameOf = (id: string) =>
-    recipients.data?.items.find((person) => person.id === id)?.fullName ?? id;
+    recipients.data?.items.find((person) => person.id === id)?.fullName ??
+    t('Một người được chăm sóc');
   const query = useQuery({
     queryKey: ['api-alerts', actor.id, actor.orgId, filters],
     queryFn: ({ signal }) => emergenciesApi.list(actor, filters, signal),
@@ -78,153 +80,180 @@ function Alerts({ actor }: { actor: Person }) {
         )}
       />
       <EscalationBanner actor={actor} open={setSelected} />
-      <section className="glass card stack">
-        <FilterPanel
-          active={
-            [filters.viuId, filters.status, filters.dateFrom, filters.dateTo].filter(Boolean).length
-          }
-          submitLabel={t('Lọc cảnh báo')}
-          onApply={(form) => {
-            const data = new FormData(form);
-            try {
-              const range = historyRange(String(data.get('from')), String(data.get('to')));
-              setFilters({ ...range, viuId: viu, status: String(data.get('status')), page: 1 });
-              setSelected('');
-              setError('');
-            } catch (err) {
-              setError((err as Error).message);
-            }
-          }}
-          onReset={() => {
-            setViu('');
-            setFilters({ viuId: '', status: '', dateFrom: '', dateTo: '', page: 1 });
-            setSelected('');
-            setError('');
-          }}
-          tools={
-            <button
-              type="button"
-              className="btn"
-              disabled={query.isFetching}
-              onClick={() =>
-                void cache.invalidateQueries({ queryKey: ['api-alerts', actor.id, actor.orgId] })
+      {/* Emergency and safe-zone alerts are separate lists in one card (the tabs sit inside it, so the
+          card starts where other pages' cards do). Both stay
+          mounted so filters and pages survive switching. */}
+      <AnimatedTabs.Root defaultValue="emergency" className="glass card stack alert-tabs">
+        <AnimatedTabs.List className="tabs-list" aria-label={t('Loại cảnh báo')}>
+          <AnimatedTabs.Trigger value="emergency" className="tabs-trigger">
+            <Siren size={16} aria-hidden="true" />
+            {t('Cảnh báo khẩn cấp')}
+            {query.data && query.data.totalCount > 0 && (
+              <span className="tabs-count">{query.data.totalCount}</span>
+            )}
+          </AnimatedTabs.Trigger>
+          <AnimatedTabs.Trigger value="boundary" className="tabs-trigger">
+            <MapPinned size={16} aria-hidden="true" />
+            {t('Cảnh báo vùng an toàn')}
+          </AnimatedTabs.Trigger>
+        </AnimatedTabs.List>
+        <AnimatedTabs.Content value="emergency" forceMount>
+          <section className="stack">
+            <FilterPanel
+              active={
+                [filters.viuId, filters.status, filters.dateFrom, filters.dateTo].filter(Boolean)
+                  .length
+              }
+              submitLabel={t('Lọc cảnh báo')}
+              onApply={(form) => {
+                const data = new FormData(form);
+                try {
+                  const range = historyRange(String(data.get('from')), String(data.get('to')));
+                  setFilters({ ...range, viuId: viu, status: String(data.get('status')), page: 1 });
+                  setSelected('');
+                  setError('');
+                } catch (err) {
+                  setError((err as Error).message);
+                }
+              }}
+              onReset={() => {
+                setViu('');
+                setFilters({ viuId: '', status: '', dateFrom: '', dateTo: '', page: 1 });
+                setSelected('');
+                setError('');
+              }}
+              tools={
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={query.isFetching}
+                  onClick={() =>
+                    void cache.invalidateQueries({
+                      queryKey: ['api-alerts', actor.id, actor.orgId],
+                    })
+                  }
+                >
+                  <RefreshCw size={16} aria-hidden="true" />
+                  {t('Tải lại cảnh báo')}
+                </button>
               }
             >
-              <RefreshCw size={16} aria-hidden="true" />
-              {t('Tải lại cảnh báo')}
-            </button>
-          }
-        >
-          <SearchPicker
-            label={t('Người được chăm sóc')}
-            placeholder={t('Gõ tên hoặc email')}
-            value={viu}
-            onChange={setViu}
-            search={searchCareRecipients()}
-            queryKey={['alert-viu', actor.id, actor.orgId]}
-          />
-          <label className="field">
-            {t('Trạng thái cảnh báo')}
-            <select name="status">
-              <option value="">{t('Tất cả')}</option>
-              {Object.entries(alertLabels).map(([v, l]) => (
-                <option key={v} value={v}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="filter-range wide">
-            <label className="field">
-              {t('Từ thời gian')}
-              <input name="from" type="datetime-local" />
-            </label>
-            <label className="field">
-              {t('Đến thời gian')}
-              <input name="to" type="datetime-local" />
-            </label>
-          </div>
-        </FilterPanel>
-        <small>
-          {t('Thời gian theo {timeZone}.', {
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          })}
-        </small>
-        {error && (
-          <p role="alert" className="notice error">
-            {error}
-          </p>
-        )}
-        <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
-          {query.data && (
-            <>
-              {!query.data.items.length && <p>{t('Không có cảnh báo phù hợp.')}</p>}
-              <div
-                className="table-scroll"
-                tabIndex={0}
-                role="region"
-                aria-label={t('Danh sách cảnh báo')}
-              >
-                <table className="alerts-table">
-                  <thead>
-                    <tr>
-                      <th>{t('Người được chăm sóc')}</th>
-                      <th>{t('Phát hiện')}</th>
-                      <th>{t('Trạng thái')}</th>
-                      <th>{t('Thời gian')}</th>
-                      <th>{t('Thao tác')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {query.data.items.map((event) => (
-                      <tr key={event.id}>
-                        <td>{nameOf(event.visuallyImpairedUserId)}</td>
-                        <td>{methods[event.detectionMethod] || event.detectionMethod}</td>
-                        <td>
-                          <strong>{alertLabels[event.currentStatus]}</strong>
-                        </td>
-                        <td>{time(event.detectedAt)}</td>
-                        <td>
-                          <button className="btn" onClick={() => setSelected(event.id)}>
-                            {t('Xem chi tiết')}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <SearchPicker
+                label={t('Người được chăm sóc')}
+                placeholder={t('Gõ tên hoặc email')}
+                value={viu}
+                onChange={setViu}
+                search={searchCareRecipients()}
+                queryKey={['alert-viu', actor.id, actor.orgId]}
+              />
+              <label className="field">
+                {t('Trạng thái cảnh báo')}
+                <select name="status">
+                  <option value="">{t('Tất cả')}</option>
+                  {Object.entries(alertLabels).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="filter-range wide">
+                <label className="field">
+                  {t('Từ thời gian')}
+                  <input name="from" type="datetime-local" />
+                </label>
+                <label className="field">
+                  {t('Đến thời gian')}
+                  <input name="to" type="datetime-local" />
+                </label>
               </div>
-              <div className="row pagination">
-                <span>
-                  {t('{totalCount} cảnh báo · Trang {page}/{p4}', {
-                    totalCount: query.data.totalCount,
-                    page: query.data.page,
-                    p4: Math.max(1, query.data.totalPages),
-                  })}
-                </span>
-                <button
-                  className="btn"
-                  disabled={query.isFetching || !query.data.hasPreviousPage}
-                  onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={query.isFetching || !query.data.hasNextPage}
-                  onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-                >
-                  {t('Trang sau')}
-                </button>
-              </div>
-            </>
-          )}
-        </State>
-      </section>
+            </FilterPanel>
+            <small>
+              {t('Thời gian theo {timeZone}.', {
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              })}
+            </small>
+            {error && (
+              <p role="alert" className="notice error">
+                {error}
+              </p>
+            )}
+            <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
+              {query.data && (
+                <>
+                  {!query.data.items.length && <p>{t('Không có cảnh báo phù hợp.')}</p>}
+                  <div
+                    className="table-scroll"
+                    tabIndex={0}
+                    role="region"
+                    aria-label={t('Danh sách cảnh báo')}
+                  >
+                    <table className="alerts-table">
+                      <thead>
+                        <tr>
+                          <th>{t('Người được chăm sóc')}</th>
+                          <th>{t('Phát hiện')}</th>
+                          <th>{t('Trạng thái')}</th>
+                          <th>{t('Thời gian')}</th>
+                          <th>{t('Thao tác')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {query.data.items.map((event) => (
+                          <tr key={event.id}>
+                            <td>{nameOf(event.visuallyImpairedUserId)}</td>
+                            <td>{methods[event.detectionMethod] || event.detectionMethod}</td>
+                            <td>
+                              <Badge tone={statusTones[event.currentStatus]}>
+                                {alertLabels[event.currentStatus]}
+                              </Badge>
+                            </td>
+                            <td>{time(event.detectedAt)}</td>
+                            <td>
+                              <button className="btn" onClick={() => setSelected(event.id)}>
+                                {t('Xem chi tiết')}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="row pagination">
+                    <span>
+                      {t('{totalCount} cảnh báo · Trang {page}/{p4}', {
+                        totalCount: query.data.totalCount,
+                        page: query.data.page,
+                        p4: Math.max(1, query.data.totalPages),
+                      })}
+                    </span>
+                    <button
+                      className="btn"
+                      disabled={query.isFetching || !query.data.hasPreviousPage}
+                      onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+                    >
+                      {t('Trang trước')}
+                    </button>
+                    <button
+                      className="btn"
+                      disabled={query.isFetching || !query.data.hasNextPage}
+                      onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+                    >
+                      {t('Trang sau')}
+                    </button>
+                  </div>
+                </>
+              )}
+            </State>
+          </section>
+        </AnimatedTabs.Content>
+        <AnimatedTabs.Content value="boundary" forceMount>
+          <BoundaryAlerts actor={actor} />
+        </AnimatedTabs.Content>
+      </AnimatedTabs.Root>
       {selected && !query.isError && (
         <AlertDetail key={selected} actor={actor} id={selected} onClose={() => setSelected('')} />
       )}
-      <BoundaryAlerts actor={actor} />
     </>
   );
 }
@@ -248,8 +277,11 @@ function BoundaryAlerts({ actor }: { actor: Person }) {
     retry: false,
   });
   return (
-    <section className="glass card stack" aria-labelledby="boundary-alerts-title">
-      <h2 id="boundary-alerts-title">{t('Cảnh báo vùng an toàn')}</h2>
+    <section className="stack" aria-labelledby="boundary-alerts-title">
+      {/* The tab already shows this title; keep it for screen readers so both panels start alike. */}
+      <h2 id="boundary-alerts-title" className="sr-only">
+        {t('Cảnh báo vùng an toàn')}
+      </h2>
       <FilterPanel
         active={[viuId, filters.eventType, filters.dateFrom, filters.dateTo].filter(Boolean).length}
         submitLabel={t('Xem sự kiện vùng')}
@@ -393,6 +425,24 @@ function BoundaryAlerts({ actor }: { actor: Person }) {
 }
 // BR-29 / UC-132: alerts still Sent after 5 minutes. SignalR EscalationSuggestion (every minute)
 // refreshes this 'api-alerts' query; the Web only suggests and never calls or escalates by itself.
+// Events carry only the VIU id; resolve names from the caregiver's linked VIUs (BE-scoped list).
+function useViuNames(actor: Person, enabled = true) {
+  return useQuery({
+    queryKey: ['api-alert-viu-names', actor.id, actor.orgId],
+    queryFn: async ({ signal }) => {
+      const map: Record<string, string> = {};
+      for (let page = 1; page <= 5; page++) {
+        const result = await caregivingApi.users(page, '', signal);
+        for (const user of result.items) map[user.id] = user.fullName;
+        if (!result.hasNextPage) break;
+      }
+      return map;
+    },
+    enabled,
+    staleTime: 5 * 60000,
+    retry: false,
+  });
+}
 function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) => void }) {
   const now = useNow();
   const sent = useQuery({
@@ -407,22 +457,7 @@ function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) =
     retry: false,
   });
   const overdue = sent.data ? overdueAlerts(sent.data.items, now) : [];
-  // Events carry only the VIU id; resolve names from the caregiver's linked VIUs (BE-scoped list).
-  const names = useQuery({
-    queryKey: ['api-alert-viu-names', actor.id, actor.orgId],
-    queryFn: async ({ signal }) => {
-      const map: Record<string, string> = {};
-      for (let page = 1; page <= 5; page++) {
-        const result = await caregivingApi.users(page, '', signal);
-        for (const user of result.items) map[user.id] = user.fullName;
-        if (!result.hasNextPage) break;
-      }
-      return map;
-    },
-    enabled: overdue.length > 0,
-    staleTime: 5 * 60000,
-    retry: false,
-  });
+  const names = useViuNames(actor, overdue.length > 0);
   if (!overdue.length) return null;
   return (
     <section
@@ -468,6 +503,16 @@ function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) =
     </section>
   );
 }
+// Timeline tone per status the alert moved into.
+const statusTones = {
+  Detected: 'amber',
+  Dismissed: 'gray',
+  Sent: 'red',
+  Acknowledged: 'blue',
+  Escalated: 'red',
+  Resolved: 'green',
+  Called: 'green',
+} as const;
 function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClose: () => void }) {
   const cache = useQueryClient();
   const [action, setAction] = useState<AlertAction | null>(null);
@@ -475,6 +520,7 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
   const [message, setMessage] = useState('');
   const [contacts, setContacts] = useState<Escalation | null>(null);
   const [pending, setPending] = useState(false);
+  const names = useViuNames(actor);
   const key = ['api-alert-detail', actor.id, actor.orgId, id];
   const detail = useQuery({
     queryKey: key,
@@ -510,8 +556,10 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                 <strong>{alertLabels[event.currentStatus]}</strong>
                 <dl className="record-details">
                   <div>
-                    <dt>{t('Mã VIU')}</dt>
-                    <dd>{event.visuallyImpairedUserId}</dd>
+                    <dt>{t('Người được chăm sóc')}</dt>
+                    <dd>
+                      {names.data?.[event.visuallyImpairedUserId] ?? t('Một người được chăm sóc')}
+                    </dd>
                   </div>
                   <div>
                     <dt>{t('Phát hiện')}</dt>
@@ -596,17 +644,31 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                 )}
                 <h3>{t('Lịch sử xử lý')}</h3>
                 {!event.statusHistory.length && <p>{t('Chưa có lịch sử xử lý.')}</p>}
-                {event.statusHistory.map((h) => (
-                  <div key={h.id}>
-                    <strong>
-                      {alertLabels[h.fromStatus]} → {alertLabels[h.toStatus]}
-                    </strong>
-                    <p>
-                      {time(h.changedAt)} · {h.changedBy || t('Hệ thống')}
-                    </p>
-                    <p>{h.reason || t('Không có ghi chú')}</p>
-                  </div>
-                ))}
+                {event.statusHistory.length > 0 && (
+                  <ol className="alert-timeline">
+                    {event.statusHistory.map((h) => (
+                      <li key={h.id} className={'alert-timeline-step ' + statusTones[h.toStatus]}>
+                        <div className="alert-timeline-head">
+                          <span className="alert-timeline-status">
+                            <Badge tone="gray">{alertLabels[h.fromStatus]}</Badge>
+                            <ArrowRight size={14} aria-label={t('chuyển sang')} />
+                            <Badge tone={statusTones[h.toStatus]}>{alertLabels[h.toStatus]}</Badge>
+                          </span>
+                          <time dateTime={h.changedAt}>{time(h.changedAt)}</time>
+                        </div>
+                        <p className="alert-timeline-actor">
+                          {/* The history carries only an account id; name it instead of printing it. */}
+                          {!h.changedBy
+                            ? t('Hệ thống')
+                            : h.changedBy === actor.id
+                              ? t('Bạn')
+                              : (names.data?.[h.changedBy] ?? t('Người dùng khác'))}
+                        </p>
+                        {h.reason && <p className="alert-timeline-note">{h.reason}</p>}
+                      </li>
+                    ))}
+                  </ol>
+                )}
               </>
             )}
           </State>
@@ -621,8 +683,7 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                   'Chỉ xác nhận khi bạn đã thực sự gọi cho người được chăm sóc, người thân hoặc 115; Web không tự gọi. Sau khi xác nhận, cảnh báo kết thúc ở trạng thái Đã gọi và không chuyển sang Đã giải quyết được nữa. {p1}',
                   { p1: notes || t('Không có ghi chú.') },
                 )
-              : t('Xác nhận xử lý cảnh báo {id}? {p1}', {
-                  id,
+              : t('Xác nhận xử lý cảnh báo này? {p1}', {
                   p1: notes || t('Không có ghi chú.'),
                 })
           }

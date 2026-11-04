@@ -387,14 +387,6 @@ a {
   background: transparent;
   border-top: 1px solid var(--border);
 }
-.report-totals th:last-child,
-.report-totals td:last-child {
-  text-align: right;
-  width: 120px;
-}
-.report-totals td:last-child {
-  font-weight: 700;
-}
 .report-note {
   max-width: 75ch;
   color: var(--muted);
@@ -893,7 +885,35 @@ tbody tr:hover {
   margin-bottom: 24px;
 }
 .payment-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 10px;
+  background: var(--stone);
+  color: var(--secondary);
   font-size: 1.125rem;
+}
+.payment-status.green {
+  border-color: #b9dcd2;
+  border-left-color: var(--success);
+  background: var(--primary-soft);
+  color: var(--success-text);
+}
+.payment-status.red {
+  border-color: #f2c4c8;
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+.payment-status.amber {
+  border-color: #f0dcae;
+  border-left-color: #d49a2a;
+  background: var(--accent);
+  color: var(--warning-text);
 }
 .payment-amount {
   font-size: 1.5rem;
@@ -1127,10 +1147,12 @@ tbody tr:hover {
   background: #fff;
   box-shadow: 0 1px 3px rgb(15 35 49 / 30%);
 }
+/* Same layer as .dialog: each dialog's overlay comes after the dialogs already open, so a
+   nested dialog dims the one beneath it instead of sliding under it. */
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  z-index: 69;
+  z-index: 70;
   background: rgb(15 35 49 / 48%);
 }
 .dialog-header {
@@ -2012,5 +2034,631 @@ tbody tr:hover {
   .disclosure-trigger > svg,
   .checkbox {
     transition: none;
+  }
+}
+/* Revenue report: KPI tiles, one-hue column chart and share bars. */
+.revenue-period {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--stone);
+  color: var(--secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.revenue-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.revenue-kpi {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.revenue-kpi.hero {
+  grid-column: span 2;
+  background: var(--primary-soft);
+  border-color: #cfe3dd;
+}
+.revenue-kpi-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.revenue-kpi-label > svg {
+  color: var(--primary);
+}
+.revenue-kpi-value {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.revenue-kpi.hero .revenue-kpi-value {
+  font-size: 2rem;
+  color: var(--primary-hover);
+}
+.revenue-kpi-foot {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.revenue-card {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  min-width: 0;
+}
+.revenue-card h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.revenue-chart {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  height: 240px;
+}
+.revenue-chart-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-bottom: 26px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.revenue-chart-axis > span {
+  transform: translateY(-50%);
+}
+.revenue-chart-axis > span:last-child {
+  transform: translateY(50%);
+}
+.revenue-chart-plot {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  padding-bottom: 26px;
+  min-width: 0;
+}
+.revenue-chart-gridlayer {
+  position: absolute;
+  inset: 0 0 26px;
+  pointer-events: none;
+}
+.revenue-chart-grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--border);
+}
+.revenue-chart-col {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 64px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin-bottom: -26px;
+}
+.revenue-chart-slot {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  cursor: default;
+}
+.revenue-chart-slot:hover {
+  background: rgb(8 115 111 / 6%);
+  border-radius: 4px 4px 0 0;
+}
+.revenue-chart-bar {
+  width: min(70%, 40px);
+  background: var(--primary);
+  border-radius: 4px 4px 0 0;
+}
+.revenue-chart-slot:hover .revenue-chart-bar {
+  background: var(--primary-hover);
+}
+.revenue-chart-tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  z-index: 2;
+  display: none;
+  gap: 2px;
+  transform: translateX(-50%);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--text);
+  color: #fff;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  box-shadow: var(--shadow-float);
+  pointer-events: none;
+}
+.revenue-chart-slot:hover .revenue-chart-tip {
+  display: grid;
+  bottom: auto;
+  top: 0;
+}
+.revenue-chart-label {
+  height: 26px;
+  padding-top: 6px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: visible;
+}
+.revenue-breakdowns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.revenue-share {
+  width: 100%;
+  border-collapse: collapse;
+}
+.revenue-share tr + tr > * {
+  border-top: 1px solid var(--border);
+}
+.revenue-share th,
+.revenue-share td {
+  border: 0;
+  padding: 10px 0;
+  vertical-align: top;
+  background: none;
+}
+.revenue-share th {
+  width: 100%;
+  padding-right: 16px;
+  font-weight: 600;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+  font-size: 0.875rem;
+}
+.revenue-share-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.revenue-share-track {
+  display: block;
+  height: 8px;
+  margin-top: 8px;
+  border-radius: 4px;
+  background: var(--stone);
+  overflow: hidden;
+}
+.revenue-share-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--primary);
+}
+.revenue-share td {
+  white-space: nowrap;
+  text-align: right;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.revenue-share td .muted {
+  display: block;
+  font-size: 0.75rem;
+}
+.revenue-share-pct {
+  padding-left: 12px !important;
+  color: var(--muted);
+  min-width: 52px;
+}
+@media (max-width: 900px) {
+  .revenue-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+  .revenue-kpi.hero {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 600px) {
+  .revenue-period {
+    border-radius: 12px;
+  }
+  .revenue-kpi {
+    padding: 12px;
+  }
+  .revenue-kpi-value {
+    font-size: 1.125rem;
+  }
+  .revenue-kpi.hero .revenue-kpi-value {
+    font-size: 1.75rem;
+  }
+  .revenue-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+  .revenue-kpi.hero {
+    grid-column: 1 / -1;
+  }
+  .revenue-breakdowns {
+    grid-template-columns: 1fr;
+  }
+  .revenue-chart {
+    height: 200px;
+  }
+}
+/* Account details dialog: identity header, labeled rows, destructive action set apart. */
+.account-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.account-detail-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+.account-detail-title {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.account-detail-title h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  overflow-wrap: anywhere;
+}
+.account-detail-head > .badge {
+  align-self: flex-start;
+}
+.account-detail-license {
+  gap: 6px;
+}
+.account-detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.account-detail-actions > .btn {
+  width: 100%;
+}
+/* An odd last button (usually Delete) takes the full row instead of hanging alone. */
+.account-detail-actions > .btn:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+/* Organization profile: identity header, counts, contact rows in two columns. */
+.org-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.org-detail-head h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.org-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.org-detail-stats > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--stone);
+  font-size: 0.8125rem;
+  min-width: 0;
+}
+.org-detail-stats strong {
+  font-size: 1.375rem;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.org-detail-stats .org-detail-admin {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+.org-detail-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+}
+.org-detail-actions {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 700px) {
+  .org-detail-info {
+    grid-template-columns: 1fr;
+  }
+  .org-detail-info > .record-details:first-child > div:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+  .org-detail-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .org-detail-stats > div:last-child {
+    grid-column: 1 / -1;
+  }
+}
+/* Center activity report: one tile per activity group (groups overlap, so no grand total). */
+.report-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.report-tile {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  min-width: 0;
+}
+.report-tile-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.report-tile-icon.danger {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+.report-tile-icon.warning {
+  background: var(--accent);
+  color: var(--warning-text);
+}
+.report-tile-value {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.report-tile-label {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+@media (max-width: 900px) {
+  .report-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* Alert status history as a vertical timeline; the dot takes the tone of the new status. */
+.alert-timeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.alert-timeline-step {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 0 0 18px 26px;
+}
+.alert-timeline-step::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--muted);
+  box-shadow: 0 0 0 1px var(--border);
+}
+.alert-timeline-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 22px;
+  bottom: 2px;
+  width: 2px;
+  background: var(--border);
+}
+.alert-timeline-step.green::before {
+  background: var(--success);
+}
+.alert-timeline-step.red::before {
+  background: var(--danger);
+}
+.alert-timeline-step.amber::before {
+  background: #d49a2a;
+}
+.alert-timeline-step.blue::before {
+  background: var(--primary);
+}
+.alert-timeline-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.alert-timeline-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.alert-timeline-head time {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+.alert-timeline-actor {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.alert-timeline-note {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--stone);
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+/* animate-ui tabs: a pill row; the active tab carries the surface colour. */
+.tabs-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--stone);
+}
+.tabs-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tabs-trigger:hover {
+  color: var(--text);
+}
+.tabs-trigger[data-state='active'] {
+  background: var(--surface);
+  color: var(--primary-hover);
+  box-shadow: 0 1px 3px rgb(23 45 59 / 12%);
+}
+.tabs-count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  font-size: 0.75rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 600px) {
+  .tabs-list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+  .tabs-trigger {
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 0.8125rem;
+  }
+  /* Both labels stay on one line, so the two tabs keep the same height. */
+  .tabs-trigger > svg {
+    display: none;
+  }
+}
+/* Care-recipient picker shared by the caregiver pages: the select and its tools sit on one
+   row, the pager is a small line underneath, so the page content starts higher. */
+.viu-picker {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'select tools'
+    'pager pager';
+  align-items: end;
+  gap: 10px 16px;
+  padding-block: 18px;
+}
+.viu-picker > * {
+  grid-column: 1 / -1;
+}
+.viu-picker > .filter-bar {
+  grid-area: tools;
+}
+.viu-picker > label.field {
+  grid-area: select;
+  margin: 0;
+}
+.viu-picker > .pagination {
+  grid-area: pager;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.viu-picker > .pagination .btn {
+  min-height: 32px;
+  padding: 4px 12px;
+  font-size: 0.8125rem;
+}
+@media (max-width: 760px) {
+  .viu-picker {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'tools'
+      'select'
+      'pager';
+  }
+}
+/* The filter button sits at the right edge here, so its panel opens towards the left. */
+.viu-picker .filter-popover {
+  left: auto;
+  right: 0;
+  width: min(420px, calc(100vw - 32px));
+}
+@media (max-width: 760px) {
+  .viu-picker .filter-popover {
+    left: 0;
+    right: auto;
   }
 }

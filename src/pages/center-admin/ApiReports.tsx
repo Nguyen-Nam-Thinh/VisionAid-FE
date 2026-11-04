@@ -1,5 +1,5 @@
-import { RefreshCw } from 'lucide-react';
-import { t } from '../../i18n';
+import { CalendarRange, MapPinned, RefreshCw, ScanFace, ScanText, Siren } from 'lucide-react';
+import { t, formatNumber } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -90,40 +90,43 @@ function Reports({ actor }: { actor: Person }) {
         <State loading={summary.isPending} error={summary.error} retry={() => summary.refetch()}>
           {summary.data && (
             <>
-              <p role="status">
+              <p role="status" className="revenue-period">
+                <CalendarRange size={16} aria-hidden="true" />
                 {t('Kỳ báo cáo UTC:')} {summary.data.dateFrom || t('Không giới hạn đầu kỳ')} →{' '}
                 {summary.data.dateTo || t('Không giới hạn cuối kỳ')}
               </p>
-              <div className="table-scroll">
-                <table className="report-totals">
-                  <caption className="sr-only">
-                    {t('Số bản ghi hoạt động trong kỳ báo cáo')}
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th>{t('Hoạt động')}</th>
-                      <th>{t('Số bản ghi')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>{t('Sự kiện khẩn cấp')}</td>
-                      <td>{summary.data.emergencyEventCount}</td>
-                    </tr>
-                    <tr>
-                      <td>{t('Sự kiện ranh giới vùng an toàn')}</td>
-                      <td>{summary.data.geofenceBreachCount}</td>
-                    </tr>
-                    <tr>
-                      <td>{t('Yêu cầu đọc chữ và quét QR')}</td>
-                      <td>{summary.data.ocrRequestCount}</td>
-                    </tr>
-                    <tr>
-                      <td>{t('Lượt nhận diện khuôn mặt')}</td>
-                      <td>{summary.data.faceRecognitionCount}</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className="report-tiles">
+                {(
+                  [
+                    [t('Sự kiện khẩn cấp'), summary.data.emergencyEventCount, Siren, 'danger'],
+                    [
+                      t('Sự kiện ranh giới vùng an toàn'),
+                      summary.data.geofenceBreachCount,
+                      MapPinned,
+                      'warning',
+                    ],
+                    [
+                      t('Yêu cầu đọc chữ và quét QR'),
+                      summary.data.ocrRequestCount,
+                      ScanText,
+                      'primary',
+                    ],
+                    [
+                      t('Lượt nhận diện khuôn mặt'),
+                      summary.data.faceRecognitionCount,
+                      ScanFace,
+                      'primary',
+                    ],
+                  ] as const
+                ).map(([label, count, Icon, tone]) => (
+                  <div key={label} className="report-tile" role="group" aria-label={label}>
+                    <span className={'report-tile-icon ' + tone} aria-hidden="true">
+                      <Icon size={20} />
+                    </span>
+                    <strong className="report-tile-value">{formatNumber(count)}</strong>
+                    <span className="report-tile-label">{label}</span>
+                  </div>
+                ))}
               </div>
               <p className="report-note">
                 {t(
@@ -212,7 +215,9 @@ function Reports({ actor }: { actor: Person }) {
                         <strong>{member.fullName}</strong>
                       </td>
                       <td style={{ overflowWrap: 'anywhere' }}>{member.email}</td>
-                      <td>{roles[member.role]}</td>
+                      <td>
+                        <Badge tone="blue">{roles[member.role]}</Badge>
+                      </td>
                       <td>
                         <Badge tone={member.isActive ? 'green' : 'gray'}>
                           {member.isActive ? t('Hoạt động') : t('Vô hiệu hóa')}
