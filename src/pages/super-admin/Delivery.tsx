@@ -89,7 +89,6 @@ export function Delivery() {
       {delivery && (
         <Dialog title={t('Chi tiết delivery mô phỏng')} onClose={() => setSelected('')}>
           <div className="stack">
-            <p className="mono">{delivery.id}</p>
             <Badge>{labels[delivery.status]}</Badge>
             <p>
               {delivery.status === 'FAILED'

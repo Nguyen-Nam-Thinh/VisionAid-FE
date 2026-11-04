@@ -170,6 +170,10 @@ small,
   background: var(--primary-soft);
   color: var(--success-text);
 }
+.badge.gray {
+  background: var(--stone);
+  color: var(--muted);
+}
 .badge.red {
   background: var(--danger-soft);
   color: var(--danger-text);

@@ -192,7 +192,7 @@ function Tts({ actor }: { actor: Person }) {
           'Chọn giọng, tốc độ và âm lượng đọc trên điện thoại của người được chăm sóc.',
         )}
       />
-      <section className="glass card stack">
+      <section className="glass card stack viu-picker">
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {

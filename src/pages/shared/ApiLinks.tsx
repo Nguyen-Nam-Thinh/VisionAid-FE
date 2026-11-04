@@ -1,5 +1,5 @@
 import { RefreshCw } from 'lucide-react';
-import { t, msg } from '../../i18n';
+import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
 import { useState } from 'react';
@@ -296,6 +296,9 @@ function LinkEditor({
   saved: (link: CareLink) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  // Saving takes two steps: the form, then a separate review the user confirms.
+  const [review, setReview] = useState<Record<string, unknown> | null>(null);
+  const [error, setError] = useState('');
   const maxCaregivers = useLimit('caregiving.max_caregivers_per_viu');
   const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const picking = !link && actor.role === 'CenterAdmin';
@@ -362,14 +365,41 @@ function LinkEditor({
         ]
       : []),
     ...permissionFields,
-    {
-      key: 'confirmed',
-      label: link
-        ? t('Tôi xác nhận cập nhật các quyền trên')
-        : t('Tôi xác nhận tạo liên kết giữa các tài khoản trên'),
-      type: 'checkbox',
-    },
   ];
+  const save = async (values: Record<string, unknown>) => {
+    setBusy(true);
+    setError('');
+    try {
+      const permissions = {
+        canReceiveAlerts: !!values.canReceiveAlerts,
+        canManageRegistry: !!values.canManageRegistry,
+        canManageLocations: !!values.canManageLocations,
+      };
+      const result = link
+        ? await linksApi.permissions(actor, link.id, permissions)
+        : await linksApi.create(actor, {
+            ...permissions,
+            caregiverId: String(values.caregiverId || ''),
+            caregiverEmail: String(values.caregiverEmail || ''),
+            viuId: String(values.viuId || ''),
+            linkType: String(values.linkType || ''),
+          });
+      await saved(result);
+    } catch (e) {
+      const status = (e as { status?: number }).status || 0;
+      setError(
+        status === 409 || status >= 500
+          ? t(
+              'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo hai tài khoản và tải lại trước khi gửi lại.',
+            )
+          : e instanceof Error
+            ? e.message
+            : t('Không thể thực hiện.'),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <Dialog
       title={
@@ -398,55 +428,77 @@ function LinkEditor({
       {picking && (staff.isLoading || vius.isLoading) ? (
         <p role="status">{t('Đang tải danh sách nhân viên và người được chăm sóc…')}</p>
       ) : (
-        <Form
-          fields={fields}
-          initial={{
-            canReceiveAlerts: link?.canReceiveAlerts ?? true,
-            canManageRegistry: link?.canManageRegistry ?? false,
-            canManageLocations: link?.canManageLocations ?? false,
-            linkType: 'Organization',
-          }}
-          submit={
-            link
-              ? t('Lưu quyền liên kết')
-              : actor.role === 'Caregiver'
-                ? t('Thêm người chăm sóc phụ')
-                : t('Tạo liên kết')
-          }
-          onSubmit={async (values) => {
-            if (!values.confirmed) throw new Error(t('Vui lòng xác nhận thao tác.'));
-            setBusy(true);
-            try {
-              const permissions = {
-                canReceiveAlerts: !!values.canReceiveAlerts,
-                canManageRegistry: !!values.canManageRegistry,
-                canManageLocations: !!values.canManageLocations,
-              };
-              const result = link
-                ? await linksApi.permissions(actor, link.id, permissions)
-                : await linksApi.create(actor, {
-                    ...permissions,
-                    caregiverId: String(values.caregiverId || ''),
-                    caregiverEmail: String(values.caregiverEmail || ''),
-                    viuId: String(values.viuId || ''),
-                    linkType: String(values.linkType || ''),
-                  });
-              await saved(result);
-            } catch (error) {
-              const status = (error as { status?: number }).status || 0;
-              if (status === 409 || status >= 500)
-                throw new Error(
-                  t(
-                    'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo hai tài khoản và tải lại trước khi gửi lại.',
-                  ),
-                  { cause: error },
-                );
-              throw error;
-            } finally {
-              setBusy(false);
-            }
-          }}
-        />
+        <>
+          {/* The form stays mounted under the review so going back keeps every choice. */}
+          <div hidden={!!review}>
+            <Form
+              fields={fields}
+              initial={{
+                canReceiveAlerts: link?.canReceiveAlerts ?? true,
+                canManageRegistry: link?.canManageRegistry ?? false,
+                canManageLocations: link?.canManageLocations ?? false,
+                linkType: 'Organization',
+              }}
+              submit={
+                link
+                  ? t('Lưu quyền liên kết')
+                  : actor.role === 'Caregiver'
+                    ? t('Thêm người chăm sóc phụ')
+                    : t('Tạo liên kết')
+              }
+              onSubmit={async (values) => {
+                setError('');
+                setReview(values);
+              }}
+            />
+          </div>
+          {review && (
+            <section className="stack link-review" aria-label={t('Xác nhận thay đổi')}>
+              <p>
+                {link
+                  ? t('Kiểm tra lại các quyền sẽ được lưu cho liên kết này.')
+                  : t('Kiểm tra lại các quyền của liên kết sắp tạo.')}
+              </p>
+              <dl className="record-details">
+                {permissionFields.map((field) => {
+                  const next = !!review[field.key];
+                  const before = link?.[field.key as keyof CareLink];
+                  return (
+                    <div key={field.key}>
+                      <dt>{tText(field.label)}</dt>
+                      <dd>
+                        {next ? t('Có') : t('Không')}
+                        {link && before !== next && (
+                          <>
+                            {' '}
+                            <Badge tone="amber">{t('Thay đổi')}</Badge>
+                          </>
+                        )}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+              {error && (
+                <p className="notice error" role="alert">
+                  {error}
+                </p>
+              )}
+              <div className="row">
+                <button className="btn" disabled={busy} onClick={() => setReview(null)}>
+                  {t('Quay lại chỉnh sửa')}
+                </button>
+                <button className="btn primary" disabled={busy} onClick={() => void save(review)}>
+                  {busy
+                    ? t('Đang lưu…')
+                    : link
+                      ? t('Xác nhận lưu quyền')
+                      : t('Xác nhận tạo liên kết')}
+                </button>
+              </div>
+            </section>
+          )}
+        </>
       )}
       {picking && (staff.isError || vius.isError) && (
         <p className="muted">{t('Không tải được danh sách tổ chức; tìm theo tên hoặc email.')}</p>
@@ -502,10 +554,6 @@ function LinkDetails({
               })}
             </p>
           </dd>
-        </div>
-        <div>
-          <dt>{t('Mã liên kết')}</dt>
-          <dd>{link.id}</dd>
         </div>
         <div>
           <dt>{t('Nhận cảnh báo')}</dt>

@@ -739,8 +739,10 @@ test('12b: organization report totals, UTC days, member pagination and scope err
   });
   await login(page);
   await page.getByRole('link', { name: 'Báo cáo hoạt động', exact: true }).click();
-  await expect(page.getByRole('cell', { name: '101', exact: true })).toBeVisible();
-  await expect(page.getByRole('cell', { name: '0', exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Sự kiện khẩn cấp' })).toContainText('101');
+  await expect(page.getByRole('group', { name: 'Sự kiện ranh giới vùng an toàn' })).toContainText(
+    '0',
+  );
   await expect(page.getByText('11 thành viên · Trang 1/2')).toBeVisible();
   await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
   await expect(page.getByText('Thành viên trang hai')).toBeVisible();
@@ -788,7 +790,7 @@ test('12b: organization report totals, UTC days, member pagination and scope err
   await page.getByLabel('Từ ngày UTC').fill('2026-10-01');
   await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('không thuộc tổ chức');
-  await expect(page.getByRole('cell', { name: '101', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Sự kiện khẩn cấp' })).toHaveCount(0);
   wrongOrg = false;
   failure = 403;
   await page.getByRole('button', { name: 'Tải lại báo cáo', exact: true }).click();
@@ -1420,7 +1422,7 @@ test('U6a: outgoing call negotiates native local media, mutes, ends and refreshe
   await expect(page.getByRole('cell', { name: 'Đã kết thúc', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Chi tiết', exact: true }).first().click();
   const historyDialog = page.getByRole('dialog', { name: 'Chi tiết cuộc gọi' });
-  await expect(historyDialog.locator('.record-details dd')).toHaveCount(7);
+  await expect(historyDialog.locator('.record-details dd')).toHaveCount(6);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(historyDialog).toBeVisible();
@@ -3257,8 +3259,8 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
         await pick(dialog, 'Người chăm sóc *', 'Nhân', /Nhân viên mẫu/);
         await pick(dialog, 'Người được chăm sóc *', 'VIU', /VIU mẫu/);
       }
-      await dialog.getByLabel('Tôi xác nhận tạo liên kết giữa các tài khoản trên').check();
       await dialog.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Xác nhận tạo liên kết' }).click();
       await expect(dialog).toHaveCount(0);
       await expect(page.getByRole('heading', { name: 'Chi tiết liên kết' })).toBeVisible();
       await page.setViewportSize({ width: 1440, height: 900 });
@@ -3268,12 +3270,15 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.getByRole('button', { name: 'Sửa quyền liên kết', exact: true }).click();
       await dialog.getByLabel('Quản lý gương mặt').check();
-      await dialog.getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
       await dialog.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
+      // Saving is confirmed on a separate review step that marks what changes.
+      const review = dialog.getByRole('region', { name: 'Xác nhận thay đổi' });
+      await expect(review).toContainText('Thay đổi');
+      await review.getByRole('button', { name: 'Xác nhận lưu quyền' }).click();
       await expect(dialog.getByRole('alert')).toContainText(
         'Bạn không có quyền thực hiện thao tác này.',
       );
-      await dialog.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
+      await review.getByRole('button', { name: 'Xác nhận lưu quyền' }).click();
       await expect(dialog).toHaveCount(0);
       await page.getByRole('button', { name: 'Chuyển thành chăm sóc chính' }).click();
       await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
@@ -3343,8 +3348,8 @@ test('5c Caregiver (UC-32–34): primary manages a secondary; secondary only can
   await expect(info.getByRole('button', { name: 'Chuyển thành chăm sóc chính' })).toHaveCount(0);
   await info.getByRole('button', { name: 'Sửa quyền liên kết', exact: true }).click();
   await actionDialog(page).getByLabel('Quản lý gương mặt').check();
-  await actionDialog(page).getByLabel('Tôi xác nhận cập nhật các quyền trên').check();
   await page.getByRole('button', { name: 'Lưu quyền liên kết' }).click();
+  await page.getByRole('button', { name: 'Xác nhận lưu quyền' }).click();
   await expect(actionDialog(page)).toHaveCount(0);
   expect(secondary.canManageRegistry).toBe(true);
   await info.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
@@ -3841,8 +3846,12 @@ test('ST-02: an alert closed by the system shows Hệ thống and offers no furt
   await page.goto('/caregiver/alerts');
   await page.getByRole('button', { name: 'Xem chi tiết' }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByText('Đã gửi → Đã giải quyết')).toBeVisible();
-  await expect(dialog.getByText(/· Hệ thống$/)).toBeVisible();
+  // The history is a timeline: from/to badges, then who made the change.
+  const step = dialog.locator('.alert-timeline-step');
+  await expect(step).toHaveCount(1);
+  await expect(step).toContainText('Đã gửi');
+  await expect(step).toContainText('Đã giải quyết');
+  await expect(step.locator('.alert-timeline-actor')).toHaveText('Hệ thống');
   await expect(dialog.getByText('Auto-resolved')).toBeVisible();
   await expect(dialog.getByRole('alert')).toHaveCount(0);
   for (const name of [
@@ -6229,8 +6238,8 @@ test('BR-04/BR-33: primary caregiver adds a secondary by email; BE error codes s
   await expect(dialog.getByRole('option', { name: /VIU phụ trách phụ/ })).toHaveCount(0);
   await dialog.getByRole('option', { name: /VIU test/ }).click();
   await dialog.getByLabel('Email người chăm sóc phụ *').fill('Sub@Example.test');
-  await dialog.getByLabel('Tôi xác nhận tạo liên kết giữa các tài khoản trên').check();
   await dialog.getByRole('button', { name: 'Thêm người chăm sóc phụ' }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận tạo liên kết' }).click();
   await expect(dialog).toContainText('Không tìm thấy tài khoản người chăm sóc với email này.');
   expect(posts[0]).toEqual({
     caregiverEmail: 'sub@example.test',
@@ -6242,7 +6251,7 @@ test('BR-04/BR-33: primary caregiver adds a secondary by email; BE error codes s
     canManageLocations: false,
   });
   reply = 'ok';
-  await dialog.getByRole('button', { name: 'Thêm người chăm sóc phụ' }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận tạo liên kết' }).click();
   await expect(dialog).toHaveCount(0);
   expect(posts).toHaveLength(2);
 });
@@ -6532,10 +6541,11 @@ test('FE-18: caregiver views geofence alerts of a chosen VIU with type and page 
   });
   await login(page);
   await page.goto('/caregiver/alerts');
+  await page.getByRole('tab', { name: 'Cảnh báo vùng an toàn' }).click();
   const section = page.getByRole('region', { name: 'Cảnh báo vùng an toàn' });
   await expect(section.getByText('Chưa chọn người được chăm sóc.')).toBeVisible();
   expect(reads).toHaveLength(0);
-  await openFilters(page, 1);
+  await openFilters(page);
   await pick(section, 'Người được chăm sóc', 'VIU', /VIU mẫu/);
   await section.getByRole('button', { name: 'Xem sự kiện vùng' }).click();
   const table = section.getByRole('region', { name: 'Danh sách sự kiện vùng an toàn' });
@@ -6547,7 +6557,7 @@ test('FE-18: caregiver views geofence alerts of a chosen VIU with type and page 
   expect(reads[0].searchParams.get('viuId')).toBe(viu);
   expect(reads[0].searchParams.has('eventType')).toBe(false);
   await page.screenshot({ path: 'test-results/fe18-geofence-alerts.png', fullPage: true });
-  await openFilters(page, 1);
+  await openFilters(page);
   await section.getByLabel('Loại sự kiện').selectOption('Exited');
   await section.getByRole('button', { name: 'Xem sự kiện vùng' }).click();
   await expect(table.getByRole('row')).toHaveCount(2);

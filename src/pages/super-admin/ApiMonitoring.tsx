@@ -53,7 +53,7 @@ const labels: Record<string, string> = labelMap({
   actorEmail: msg('Email người thực hiện'),
   actorId: msg('Mã người thực hiện'),
   actionType: msg('Hành động'),
-  targetTable: msg('Bảng đối tượng'),
+  targetTable: msg('Đối tượng'),
   targetRecordId: msg('Mã đối tượng'),
   performedAt: msg('Thời gian'),
   sourceType: msg('Nguồn thông báo'),
@@ -91,12 +91,47 @@ const decisions = new Map([
   ['TURN_RIGHT', msg('Rẽ phải')],
   ['PROCEED', msg('Tiếp tục')],
 ]);
+// Record ids and aggregation internals stay out of the details dialog; ids are only used to
+// filter (e.g. "same navigation session"), never shown.
+const hiddenDetail = (key: string) => key === 'id' || key.endsWith('Id') || key === 'aggregatedBy';
+// Server-side table/entity names in plain words; unknown ones fall back to the raw name.
+const entities: Record<string, string> = labelMap({
+  user: msg('Tài khoản'),
+  organization: msg('Tổ chức'),
+  caregiverlink: msg('Liên kết chăm sóc'),
+  emergencyevent: msg('Cảnh báo khẩn cấp'),
+  emergencycontact: msg('Liên hệ khẩn cấp'),
+  faceregistryperson: msg('Người quen trong danh bạ khuôn mặt'),
+  faceregistryimage: msg('Ảnh khuôn mặt'),
+  facerecognitionlog: msg('Nhận diện khuôn mặt'),
+  savedlocation: msg('Địa điểm đã lưu'),
+  geofence: msg('Vùng an toàn'),
+  systemconfiguration: msg('Cấu hình hệ thống'),
+  systemconfigurationhistory: msg('Lịch sử cấu hình'),
+  globalnotificationrule: msg('Quy tắc thông báo'),
+  organizationlicensepool: msg('Kho license tổ chức'),
+  licensepackage: msg('Gói dịch vụ'),
+  licensesubscription: msg('Đăng ký gói'),
+  paymenttransaction: msg('Giao dịch thanh toán'),
+  webrtcsession: msg('Cuộc gọi'),
+  webrtciceserver: msg('Máy chủ cuộc gọi'),
+  obstacledetectionsession: msg('Phiên phát hiện vật cản'),
+  ocrrequest: msg('Đọc chữ (OCR)'),
+  qrscanresult: msg('Quét mã QR'),
+  voicecommandlog: msg('Lệnh giọng nói'),
+  navigationguidancelog: msg('Hướng dẫn di chuyển'),
+});
+const entityText = (raw: string) => {
+  const key = raw.toLowerCase().replace(/_/g, '').replace(/logs$/, 'log').replace(/s$/, '');
+  return entities[key] ?? entities[key + 's'] ?? raw;
+};
 function valueText(key: string, value: string | number | boolean | null) {
   if (value === null || value === undefined)
     return key === 'actorId' || key === 'actorName'
       ? t('Hệ thống hoặc chưa ghi nhận')
       : t('Chưa có dữ liệu');
   if (key === 'isOfflineFallback') return value ? t('Có') : t('Không');
+  if (key === 'sourceTable' || key === 'targetTable') return entityText(String(value));
   if (key === 'decision') return tText(decisions.get(String(value)) ?? String(value));
   if (key.endsWith('At')) return formatTime(String(value)) + ' · UTC+7';
   if (key.endsWith('Ms')) return value + ' ms';
@@ -376,10 +411,8 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                               <td key={key}>
                                 {valueText(
                                   key,
-                                  // Older BE deploys have no actorName: fall back to the actor ID.
-                                  key === 'actorName'
-                                    ? (row.actorName ?? row.actorId ?? null)
-                                    : row[key],
+                                  // Older BE deploys have no actorName; never show the raw actor ID.
+                                  key === 'actorName' ? (row.actorName ?? null) : row[key],
                                 )}
                               </td>
                             ))}
@@ -433,12 +466,14 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
       {selected && (
         <Dialog title={t('Chi tiết bản ghi')} onClose={() => setSelected(null)}>
           <dl className="record-details">
-            {Object.entries(selected).map(([key, value]) => (
-              <div key={key}>
-                <dt>{labels[key] ?? key}</dt>
-                <dd style={{ whiteSpace: 'pre-wrap' }}>{valueText(key, value)}</dd>
-              </div>
-            ))}
+            {Object.entries(selected)
+              .filter(([key]) => !hiddenDetail(key))
+              .map(([key, value]) => (
+                <div key={key}>
+                  <dt>{labels[key] ?? key}</dt>
+                  <dd style={{ whiteSpace: 'pre-wrap' }}>{valueText(key, value)}</dd>
+                </div>
+              ))}
           </dl>
           {kind === 'guidance' && selected.sessionId && (
             <button

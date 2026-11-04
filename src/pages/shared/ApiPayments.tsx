@@ -1,11 +1,11 @@
 import { t, formatLocaleDateTime } from '../../i18n';
-import { RefreshCw } from 'lucide-react';
+import { CircleCheck, CircleX, Clock, RefreshCw, RotateCcw, Ban } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { OrganizationPool } from './ApiLicensePool';
 import { useSession } from '../../hooks/useService';
-import { Dialog, Confirm, PageHead, State, CardActions } from '../../components/UI';
+import { Dialog, Confirm, PageHead, State, CardActions, Badge } from '../../components/UI';
 import {
   getMySubscription,
   isPersonalCaregiver,
@@ -25,6 +25,21 @@ import {
 import type { Person } from '../../models/domain';
 import { ServiceError } from '../../services/contracts';
 import { PAYMENT_DISABLED } from '../../services/api/payments';
+// Status colors: paid is green, failed is red; icons keep the state readable without color.
+const paymentTones = {
+  Pending: 'amber',
+  Success: 'green',
+  Failed: 'red',
+  Refunded: 'blue',
+  Cancelled: 'gray',
+} as const;
+const paymentIcons = {
+  Pending: Clock,
+  Success: CircleCheck,
+  Failed: CircleX,
+  Refunded: RotateCcw,
+  Cancelled: Ban,
+} as const;
 
 export function PackageCheckout({
   actor,
@@ -216,7 +231,9 @@ function PaymentHistory({ actor }: { actor: Person }) {
                   <tr key={item.id}>
                     <td>{item.payosOrderId}</td>
                     <td>{packagePrice(item.amount, item.currency)}</td>
-                    <td>{paymentLabels[item.status]}</td>
+                    <td>
+                      <Badge tone={paymentTones[item.status]}>{paymentLabels[item.status]}</Badge>
+                    </td>
                     <td>{formatLocaleDateTime(item.createdAt)}</td>
                     <td>
                       <Link className="btn" to={'/payments/return?orderCode=' + item.payosOrderId}>
@@ -346,9 +363,15 @@ function PaymentResult({
               )}
               {payment && (
                 <>
-                  <p role="status" className="payment-status">
-                    <strong>{paymentLabels[payment.status]}</strong>
-                  </p>
+                  {(() => {
+                    const Icon = paymentIcons[payment.status];
+                    return (
+                      <p role="status" className={'payment-status ' + paymentTones[payment.status]}>
+                        <Icon size={22} aria-hidden="true" />
+                        <strong>{paymentLabels[payment.status]}</strong>
+                      </p>
+                    );
+                  })()}
                   <p className="payment-amount">{packagePrice(payment.amount, payment.currency)}</p>
                   {payment.status === 'Pending' && (
                     <>

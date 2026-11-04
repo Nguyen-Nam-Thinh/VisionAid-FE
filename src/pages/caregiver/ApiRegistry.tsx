@@ -46,7 +46,7 @@ function Registry({ actor }: { actor: Person }) {
         title={t('Gương mặt thân quen')}
         description={t('Quản lý người thân và ảnh dùng cho nhận diện của người được chăm sóc.')}
       />
-      <section className="glass card stack">
+      <section className="glass card stack viu-picker">
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {

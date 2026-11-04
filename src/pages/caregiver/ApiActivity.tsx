@@ -448,7 +448,7 @@ function Activity({ actor }: { actor: Person }) {
         title={t('Lịch sử hoạt động')}
         description={t('Xem các hoạt động đã được ghi nhận của người bạn chăm sóc.')}
       />
-      <section className="glass card stack">
+      <section className="glass card stack viu-picker">
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {
