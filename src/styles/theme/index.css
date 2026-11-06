@@ -1,42 +1,79 @@
-@import '@fontsource/jetbrains-mono/latin-400.css';
+@import '@fontsource-variable/inclusive-sans';
 @import 'tailwindcss';
 @theme {
   --color-brand: var(--primary);
-  --font-sans: 'Be Vietnam Pro', sans-serif;
+  --font-sans: var(--font);
 }
+/* VisionAid Wayfinding: the only token source (see ../wayfinding.css and the design system's
+   README). Tactile yellow marks the next step; ink carries text and structure; signals always
+   come with words. Older names (--primary, --surface, --text…) are kept as the component API. */
 :root {
-  font-family: 'Be Vietnam Pro', sans-serif;
+  --font: 'Inclusive Sans Variable', 'Inclusive Sans', system-ui, sans-serif;
+  /* Palette */
+  --concrete: #e7e8e2;
+  --panel: #ffffff;
+  --panel-sunk: #f3f4ef;
+  --ink: #1b1d19;
+  --ink-raised: #34372f;
+  --ink-muted: #50544c;
+  --on-ink-muted: #c9ccc4;
+  --line: #cdd0c7;
+  --line-strong: #7e8279;
+  --tactile: #f2c200;
+  --tactile-hover: #e0b300;
+  --tactile-soft: #fbedb0;
+  --tactile-text: #6e5600;
+  --signal: #b42318;
+  --signal-hover: #8f1c13;
+  --signal-soft: #fce8e6;
+  --signal-soft-hover: #f9d9d5;
+  --signal-line: #edb8b1;
+  --guide: #23684a;
+  --guide-soft: #e1efe7;
+  --guide-line: #b3d3c1;
+  --caution: #7a4a00;
+  --caution-soft: #f6e9cf;
+  --caution-line: #e5cf9f;
+  /* Component API */
+  --background: var(--concrete);
+  --surface: var(--panel);
+  --glass: var(--panel);
+  --stone: var(--panel-sunk);
+  --text: var(--ink);
+  --muted: var(--ink-muted);
+  --primary: var(--ink);
+  --primary-hover: var(--ink-raised);
+  --primary-soft: var(--tactile-soft);
+  --on-primary: #ffffff;
+  --secondary: var(--ink-muted);
+  --clay: var(--line);
+  --accent: var(--caution-soft);
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --input-border: var(--line-strong);
+  --success: var(--guide);
+  --success-text: var(--guide);
+  --warning: var(--caution);
+  --warning-text: var(--caution);
+  --danger: var(--signal);
+  --danger-text: var(--signal);
+  --danger-soft: var(--signal-soft);
+  /* Shape and depth: radius grows with the thing; only floating layers cast a shadow. */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius: var(--radius-lg);
+  --pill: 9999px;
+  --shadow: none;
+  --shadow-float: 0 18px 48px rgb(27 29 25 / 16%);
+  --focus-ring: 0 0 0 3px var(--ink), 0 0 0 7px var(--tactile);
+  font-family: var(--font);
   color: var(--text);
   background: var(--background);
-  --background: #fdfcf8;
-  --primary: #5d7052;
-  --primary-hover: #46563d;
-  --primary-soft: #e9eee4;
-  --on-primary: #f3f4f1;
-  --secondary: #875831;
-  --clay: #c18c5d;
-  --accent: #e6dccd;
-  --surface: #fefefa;
-  --stone: #f0ebe5;
-  --text: #2c2c24;
-  --muted: #646458;
-  --border: #ded8cf;
-  --input-border: #918d80;
-  --success: #5d7052;
-  --success-text: #405539;
-  --warning: #c18c5d;
-  --warning-text: #784517;
-  --danger: #a85448;
-  --danger-text: #943e34;
-  --danger-soft: #faeee9;
-  --glass: rgb(254 254 250 / 88%);
-  --shadow: 0 4px 20px -2px rgb(93 112 82 / 12%);
-  --shadow-float: 0 10px 40px -10px rgb(193 140 93 / 20%);
-  --radius: 24px;
-  --pill: 9999px;
   font-synthesis: none;
   font-weight: 400;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 * {
   box-sizing: border-box;
@@ -101,7 +138,8 @@ small,
   color: var(--muted);
 }
 .mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font);
+  font-variant-numeric: tabular-nums;
   font-size: 0.78rem;
 }
 .glass {
@@ -488,19 +526,19 @@ tbody tr:hover {
   right: 24px;
   z-index: 100;
   max-width: 400px;
-  background: #163b2b;
+  background: var(--ink);
   color: white;
   padding: 16px 24px;
   border-radius: 14px;
-  box-shadow: 0 10px 30px #1233;
+  box-shadow: 0 10px 30px rgb(27 29 25 / 20%);
 }
 .map {
   position: relative;
   min-height: 350px;
   overflow: hidden;
-  background: #eaf0e7;
+  background: var(--panel-sunk);
   border-radius: 16px;
-  border: 1px solid #d7e2d2;
+  border: 1px solid var(--line);
   background-image:
     linear-gradient(29deg, transparent 46%, #fff 47%, #fff 50%, transparent 51%),
     linear-gradient(95deg, transparent 44%, #fff 45%, #fff 48%, transparent 49%);
@@ -512,7 +550,7 @@ tbody tr:hover {
   content: '';
   position: absolute;
   inset: 0 48% 0 36%;
-  background: #c3dff0;
+  background: #cbd9df;
   transform: rotate(18deg);
 }
 .map-pin {
@@ -524,7 +562,7 @@ tbody tr:hover {
   border-radius: 18px;
   min-width: 40px;
   height: 40px;
-  box-shadow: 0 4px 12px #1234;
+  box-shadow: 0 4px 12px rgb(27 29 25 / 25%);
   font-weight: 700;
   z-index: 1;
 }
@@ -767,7 +805,7 @@ tbody tr:hover {
 .stat-card:hover {
   text-decoration: none;
   border-color: var(--border);
-  box-shadow: 0 6px 22px rgb(23 45 59 / 7%);
+  box-shadow: 0 6px 22px rgb(27 29 25 / 7%);
 }
 .stat-card > .muted {
   font-size: 0.7rem;
@@ -801,13 +839,13 @@ tbody tr:hover {
   gap: 10px;
   padding: 18px;
   background: var(--danger-soft);
-  border: 1px solid #f4d9df;
+  border: 1px solid var(--signal-line);
   border-radius: 15px;
   color: var(--text);
 }
 .alert-preview:hover {
   text-decoration: none;
-  border-color: #ea9cab;
+  border-color: var(--signal);
 }
 .alert-preview p {
   font-size: 0.8rem;
@@ -903,10 +941,10 @@ tbody tr:hover {
     box-shadow 160ms ease;
 }
 .btn:active:not(:disabled) {
-  box-shadow: inset 0 2px 5px #15274818;
+  box-shadow: inset 0 2px 5px rgb(27 29 25 / 10%);
 }
 .btn.primary {
-  box-shadow: 0 4px 12px rgb(23 45 59 / 12%);
+  box-shadow: 0 4px 12px rgb(27 29 25 / 12%);
 }
 .nav svg {
   flex-shrink: 0;
@@ -1013,7 +1051,7 @@ tbody tr:hover {
   color: var(--primary);
   background: #ffffffa8;
   border: 1px solid #fff;
-  box-shadow: 0 10px 30px rgb(23 45 59 / 7%);
+  box-shadow: 0 10px 30px rgb(27 29 25 / 7%);
 }
 .overview-grid {
   display: grid;
@@ -1038,7 +1076,7 @@ tbody tr:hover {
   text-decoration: none;
   background: white;
   border-color: var(--border);
-  box-shadow: 0 8px 24px rgb(23 45 59 / 5%);
+  box-shadow: 0 8px 24px rgb(27 29 25 / 5%);
 }
 .quick-link p {
   color: var(--muted);
@@ -1260,10 +1298,10 @@ td .row {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 28px;
-  box-shadow: 0 24px 80px rgb(44 44 36 / 25%);
+  box-shadow: 0 24px 80px rgb(27 29 25 / 25%);
 }
 .dialog::backdrop {
-  background: rgb(44 44 36 / 46%);
+  background: rgb(27 29 25 / 46%);
 }
 .dialog-header {
   background: var(--surface);

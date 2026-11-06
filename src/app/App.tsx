@@ -1,4 +1,5 @@
 import { t, useI18n } from '../i18n';
+import { Avatar } from '../components/Avatar';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ApiNotifications } from '../pages/shared/ApiNotifications';
 import { ApiPackages } from '../pages/shared/ApiPackages';
@@ -23,6 +24,8 @@ import { ApiActivity } from '../pages/caregiver/ApiActivity';
 import { ApiReports } from '../pages/center-admin/ApiReports';
 import { ApiIceServers } from '../pages/super-admin/ApiIceServers';
 import { ApiMonitoring } from '../pages/super-admin/ApiMonitoring';
+import { ApiInbox, InboxBell } from '../pages/shared/ApiInbox';
+import { ApiNotificationLookup } from '../pages/shared/ApiNotificationLookup';
 import { ApiConfigurations } from '../pages/super-admin/ApiConfigurations';
 import { ApiRevenue } from '../pages/super-admin/ApiRevenue';
 import { ApiLicensePools } from '../pages/super-admin/ApiLicensePools';
@@ -63,6 +66,8 @@ import {
   Users,
   MapPin,
   Bell,
+  Inbox as InboxIcon,
+  SearchCheck,
   ScanFace,
   Contact,
   Link2,
@@ -306,6 +311,10 @@ function Shell() {
   );
   // Secondary links at the foot of the sidebar; each entry is shown only where its API exists.
   const footItems: { to: string; label: string; Icon: typeof Phone }[] = [
+    ...(api ? [{ to: '/inbox', label: t('Hộp thư thông báo'), Icon: InboxIcon }] : []),
+    ...(api && (user.role === 'Admin' || (user.role === 'CenterAdmin' && user.orgId))
+      ? [{ to: '/notifications/lookup', label: t('Tra cứu thông báo'), Icon: SearchCheck }]
+      : []),
     ...(api && (user.role === 'Caregiver' || user.role === 'CenterAdmin')
       ? [
           {
@@ -453,13 +462,12 @@ function Shell() {
             </nav>
           </div>
           <div className="topbar-actions">
+            {api && <InboxBell actor={user} />}
             <LanguageSwitch />
             {/* animate-ui (Radix) menu: arrow keys move, Escape closes and returns focus. */}
             <AccountMenu.Root modal={false}>
               <AccountMenu.Trigger className="row account-trigger" aria-label={t('Menu tài khoản')}>
-                <span className="avatar">
-                  {user.name.split(' ').at(-1)?.slice(0, 2).toUpperCase()}
-                </span>
+                <Avatar url={user.avatar} name={user.name} />
                 <span style={{ fontSize: 13, color: 'var(--text)' }}>
                   <strong>{user.name}</strong>
                   <br />
@@ -664,6 +672,10 @@ export function App() {
                 </Route>
               )}
               {runtime.mode === 'api' && <Route path="license" element={<ApiLicense />} />}
+              {runtime.mode === 'api' && <Route path="inbox" element={<ApiInbox />} />}
+              {runtime.mode === 'api' && (
+                <Route path="notifications/lookup" element={<ApiNotificationLookup />} />
+              )}
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>
                   <Route

@@ -77,12 +77,7 @@ export function packageInput(values: Fields, current?: LicensePackage) {
     });
   }
   const annual = String(values.priceYearly ?? '').trim();
-  if (current?.priceYearly != null && !annual)
-    throw new ServiceError(
-      t('BE chưa hỗ trợ xóa giá năm đã lưu. Giữ giá hiện tại hoặc nhập giá mới.'),
-      400,
-      { priceYearly: t('Không thể xóa giá năm đã lưu.') },
-    );
+  // Empty yearly price is sent as null: BE clears it, and the package is sold monthly only.
   const schema = current ? fields.extend({ isActive: z.boolean() }) : fields.extend(identity);
   const result = schema.safeParse({
     ...values,

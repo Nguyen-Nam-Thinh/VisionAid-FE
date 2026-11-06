@@ -20,6 +20,7 @@ import { toCsv, downloadCsv } from '../../services/csv';
 import { formatTime } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 import { uiStore, useUI } from '../../stores/ui';
+import { ActivityTimeline } from './ActivityTimeline';
 
 const labels: Record<string, string> = labelMap({
   startedAt: msg('Bắt đầu'),
@@ -63,6 +64,8 @@ const labels: Record<string, string> = labelMap({
   audioDurationMs: msg('Thời lượng âm thanh'),
   isOffline: msg('Xử lý ngoại tuyến'),
   executedAt: msg('Thời gian thực hiện'),
+  responseText: msg('Phản hồi'),
+  spokenText: msg('Câu đã đọc'),
 });
 const values: Record<string, string> = labelMap({
   Full: msg('Đầy đủ'),
@@ -151,34 +154,35 @@ function Events({ actor, viuId, sessionId }: { actor: Person; viuId: string; ses
         {t('Sắp xếp từ cũ đến mới. Đây là nhật ký phát hiện, không phải toàn bộ lộ trình GPS.')}
       </p>
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
-        {query.data?.items.length ? (
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{t('Thời gian')}</th>
-                  <th>{t('Đối tượng')}</th>
-                  <th>{t('Độ tin cậy')}</th>
-                  <th>{t('Khoảng cách')}</th>
-                  <th>{t('Đã cảnh báo')}</th>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{t('Thời gian')}</th>
+                <th>{t('Đối tượng')}</th>
+                <th>{t('Độ tin cậy')}</th>
+                <th>{t('Khoảng cách')}</th>
+                <th>{t('Đã cảnh báo')}</th>
+                <th>{t('Câu đã đọc')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {query.data?.items.map((item) => (
+                <tr key={item.id}>
+                  <td>{display('detectedAt', item.detectedAt)}</td>
+                  <td>{item.objectClass}</td>
+                  <td>{display('confidenceScore', item.confidenceScore)}</td>
+                  <td>{display('distanceRange', item.distanceRange)}</td>
+                  <td>{display('alertIssued', item.alertIssued)}</td>
+                  <td>{item.spokenText ? String(item.spokenText) : '—'}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {query.data.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>{display('detectedAt', item.detectedAt)}</td>
-                    <td>{item.objectClass}</td>
-                    <td>{display('confidenceScore', item.confidenceScore)}</td>
-                    <td>{display('distanceRange', item.distanceRange)}</td>
-                    <td>{display('alertIssued', item.alertIssued)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>{t('Chưa có phát hiện được lưu trong phiên này.')}</p>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {!query.data?.items.length && (
+            <p className="empty">{t('Chưa có phát hiện được lưu trong phiên này.')}</p>
+          )}
+        </div>
         {query.data && <Pager data={query.data} busy={query.isFetching} onPage={setPage} />}
       </State>
     </section>
@@ -368,36 +372,33 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
       )}
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
-        {query.data?.items.length ? (
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{t('Thời gian')}</th>
-                  <th>{kind === 'navigation' ? t('Chế độ phát hiện') : t('Kết quả')}</th>
-                  <th>{t('Thao tác')}</th>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{t('Thời gian')}</th>
+                <th>{kind === 'navigation' ? t('Chế độ phát hiện') : t('Kết quả')}</th>
+                <th>{t('Thao tác')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {query.data?.items.map((item) => (
+                <tr key={item.id}>
+                  <td>{display(activityKinds[kind].at, item[activityKinds[kind].at])}</td>
+                  <td>{display(activityKinds[kind].summary, item[activityKinds[kind].summary])}</td>
+                  <td>
+                    <button className="btn small" onClick={() => setDetail(item.id)}>
+                      {t('Chi tiết')}
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {query.data.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>{display(activityKinds[kind].at, item[activityKinds[kind].at])}</td>
-                    <td>
-                      {display(activityKinds[kind].summary, item[activityKinds[kind].summary])}
-                    </td>
-                    <td>
-                      <button className="btn small" onClick={() => setDetail(item.id)}>
-                        {t('Chi tiết')}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>{t('Chưa có lịch sử phù hợp với bộ lọc.')}</p>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {!query.data?.items.length && (
+            <p className="empty">{t('Chưa có lịch sử phù hợp với bộ lọc.')}</p>
+          )}
+        </div>
         {query.data && (
           <Pager
             data={query.data}
@@ -524,6 +525,14 @@ function Activity({ actor }: { actor: Person }) {
           {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
         </State>
       </section>
+      {!users.error && person && (
+        <ActivityTimeline
+          key={'timeline-' + actor.id + person.id}
+          actor={actor}
+          viuId={person.id}
+          name={person.fullName}
+        />
+      )}
       {!users.error && person && (
         <ActivityHistory
           key={actor.id + person.id}

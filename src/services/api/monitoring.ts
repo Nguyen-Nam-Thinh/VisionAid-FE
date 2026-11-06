@@ -1,6 +1,6 @@
 import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
-import { apiGet } from './adapter';
+import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 
@@ -44,10 +44,34 @@ const failed = z.object({
   recipientId: uuid,
   notificationType: z.string(),
   channel: z.string(),
-  status: z.literal('Failed'),
+  status: z.string(),
   failureReason: z.string().nullable(),
   createdAt: time,
+  // Manual resend (BE 4ed129c); optional so older deploys still parse.
+  retryCount: count.optional(),
+  lastRetriedAt: time.nullable().optional(),
+  sentAt: time.nullable().optional(),
+  canRetry: z.boolean().optional(),
+  retryBlockedCode: z.string().nullable().optional(),
+  retryBlockedReason: z.string().nullable().optional(),
 });
+/** Why a failed notification cannot be resent, keyed by the BE's retryBlockedCode. */
+export const retryBlockedLabels: Record<string, string> = labelMap({
+  NOT_FAILED: msg('Chỉ gửi lại được thông báo đang thất bại.'),
+  RETRY_LIMIT_REACHED: msg('Đã gửi lại tối đa 3 lần.'),
+  RECIPIENT_INACTIVE: msg('Tài khoản người nhận đã bị khóa hoặc xóa.'),
+  UNSUPPORTED_CHANNEL: msg('Kênh gửi này không hỗ trợ gửi lại.'),
+  TIME_SENSITIVE: msg('Thông báo đến nơi chỉ có ý nghĩa lúc đến; gửi muộn sẽ sai.'),
+  NO_ACTIVE_DEVICE: msg(
+    'Người nhận chưa đăng nhập thiết bị nào. Gửi lại sau khi họ đăng nhập ứng dụng.',
+  ),
+  EMERGENCY_CLOSED: msg('Sự cố khẩn cấp đã được xử lý, bỏ qua hoặc đã gọi.'),
+  EVENT_TOO_OLD: msg('Thông báo đã quá cũ để gửi lại.'),
+  NO_LONGER_APPLIES: msg('License đã được gia hạn nên nhắc nhở không còn đúng.'),
+  RECIPIENT_NO_LONGER_LINKED: msg('Người nhận không còn nhận cảnh báo của người này.'),
+  NOTIFICATION_RETRY_IN_PROGRESS: msg('Thông báo này đang được gửi lại.'),
+});
+export type FailedNotification = z.infer<typeof failed>;
 // Keep operational metadata only; scene JSON and spoken content stay out of cache/UI.
 const guidance = z.object({
   id: uuid,
@@ -60,7 +84,7 @@ const guidance = z.object({
   latencyMs: count.nullable(),
   createdAt: time,
 });
-export const guidanceEngines = ['Jev', 'Groq', 'RuleBased'] as const;
+export const guidanceEngines = ['Jev', 'Groq', 'RuleBased', 'OnDeviceRules'] as const;
 const period = z.object({
   totalSent: count,
   totalFailed: count,
@@ -157,7 +181,7 @@ function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
   if (!result.success) throw new ServiceError(t('Dữ liệu giám sát từ máy chủ không hợp lệ.'), 502);
   return result.data;
 }
-export function createMonitoringApi(get = apiGet) {
+export function createMonitoringApi(get = apiGet, write = apiWrite) {
   return {
     async list(
       actor: Pick<Person, 'role'>,
@@ -220,6 +244,15 @@ export function createMonitoringApi(get = apiGet) {
           parse(kinds[kind].schema as z.ZodType<MonitoringRecord>, item),
         ),
       };
+    },
+    /** Resend one failed notification now; the reply carries its new status. */
+    async retry(actor: Pick<Person, 'role'>, id: string) {
+      authorize(actor);
+      if (!uuid.safeParse(id).success) throw new ServiceError(t('Thông báo không hợp lệ.'), 400);
+      return parse(
+        failed,
+        await write('/api/notifications/failed/' + id + '/retry', { method: 'POST' }),
+      );
     },
     async status(actor: Pick<Person, 'role'>, signal?: AbortSignal) {
       authorize(actor);

@@ -93,9 +93,6 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
                       <td>
                         <strong>{item.viuUser.fullName}</strong>
                         <p className="assignment-meta">{item.viuUser.email}</p>
-                        <small className="assignment-meta">
-                          {t('Mã: {id}', { id: item.viuUser.id })}
-                        </small>
                       </td>
                       <td>{formatLocaleDateTime(item.assignedAt)}</td>
                       <td>
@@ -116,8 +113,10 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
                   ))}
                 </tbody>
               </table>
+              {!query.data.items.length && (
+                <p className="empty">{t('Không có license phù hợp bộ lọc.')}</p>
+              )}
             </div>
-            {!query.data.items.length && <p>{t('Không có license phù hợp bộ lọc.')}</p>}
             <p>
               {t(
                 'Chưa thu hồi không đồng nghĩa còn hạn sử dụng; thời hạn và quyền truy cập do máy chủ kiểm tra.',

@@ -223,55 +223,47 @@ function ConfigPanel({
       </button>
       <h3>{t('Lịch sử thay đổi')}</h3>
       <State loading={history.isPending} error={history.error} retry={() => history.refetch()}>
-        {history.data?.items.length ? (
-          <div
-            className="table-scroll"
-            tabIndex={0}
-            role="region"
-            aria-label={t('Lịch sử cấu hình')}
-          >
-            <table style={{ minWidth: 650 }}>
-              <thead>
-                <tr>
-                  <th>{t('Thời gian')}</th>
-                  <th>{t('Trước → Sau')}</th>
-                  <th>{t('Lý do / người thay đổi')}</th>
-                  <th>{t('Thao tác')}</th>
+        <div className="table-scroll" tabIndex={0} role="region" aria-label={t('Lịch sử cấu hình')}>
+          <table style={{ minWidth: 650 }}>
+            <thead>
+              <tr>
+                <th>{t('Thời gian')}</th>
+                <th>{t('Trước → Sau')}</th>
+                <th>{t('Lý do / người thay đổi')}</th>
+                <th>{t('Thao tác')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.data?.items.map((entry) => (
+                <tr key={entry.id}>
+                  <td>{formatTime(entry.changedAt)}</td>
+                  <td style={{ overflowWrap: 'anywhere' }}>
+                    {entry.oldValue ?? t('Chưa có')} → {entry.newValue}
+                  </td>
+                  <td style={{ overflowWrap: 'anywhere' }}>
+                    {entry.reason || t('Không ghi lý do')}
+                    <p>
+                      {entry.changedByName
+                        ? entry.changedByName +
+                          (entry.changedByEmail ? ' · ' + entry.changedByEmail : '')
+                        : entry.changedBy || t('Hệ thống')}
+                    </p>
+                  </td>
+                  <td>
+                    <button
+                      className="btn small"
+                      disabled={entry.oldValue === null}
+                      onClick={() => setChange(entry)}
+                    >
+                      {t('Khôi phục')}
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {history.data.items.map((entry) => (
-                  <tr key={entry.id}>
-                    <td>{formatTime(entry.changedAt)}</td>
-                    <td style={{ overflowWrap: 'anywhere' }}>
-                      {entry.oldValue ?? t('Chưa có')} → {entry.newValue}
-                    </td>
-                    <td style={{ overflowWrap: 'anywhere' }}>
-                      {entry.reason || t('Không ghi lý do')}
-                      <p>
-                        {entry.changedByName
-                          ? entry.changedByName +
-                            (entry.changedByEmail ? ' · ' + entry.changedByEmail : '')
-                          : entry.changedBy || t('Hệ thống')}
-                      </p>
-                    </td>
-                    <td>
-                      <button
-                        className="btn small"
-                        disabled={entry.oldValue === null}
-                        onClick={() => setChange(entry)}
-                      >
-                        {t('Khôi phục')}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>{t('Chưa có lịch sử thay đổi.')}</p>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {!history.data?.items.length && <p className="empty">{t('Chưa có lịch sử thay đổi.')}</p>}
+        </div>
         {history.data && <Pager data={history.data} busy={history.isFetching} change={setPage} />}
       </State>
       {change && (
@@ -374,48 +366,45 @@ function Configurations({ actor }: { actor: Person }) {
           </button>
         </form>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
-          {query.data?.items.length ? (
-            <div
-              className="table-scroll"
-              tabIndex={0}
-              role="region"
-              aria-label={t('Danh sách cấu hình')}
-            >
-              <table style={{ minWidth: 650 }}>
-                <thead>
-                  <tr>
-                    <th>{t('Khóa / nhóm')}</th>
-                    <th>{t('Giá trị')}</th>
-                    <th>{t('Thao tác')}</th>
+          <div
+            className="table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label={t('Danh sách cấu hình')}
+          >
+            <table style={{ minWidth: 650 }}>
+              <thead>
+                <tr>
+                  <th>{t('Khóa / nhóm')}</th>
+                  <th>{t('Giá trị')}</th>
+                  <th>{t('Thao tác')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {query.data?.items.map((item) => (
+                  <tr key={item.id}>
+                    <td style={{ overflowWrap: 'anywhere' }}>
+                      <strong>{item.configKey}</strong>
+                      <p>{item.category}</p>
+                    </td>
+                    <td style={{ overflowWrap: 'anywhere' }}>
+                      {item.reviewed ? item.configValue : t('Chưa duyệt hiển thị trên Web')}
+                    </td>
+                    <td>
+                      <button
+                        className="btn small"
+                        disabled={!item.reviewed}
+                        onClick={() => setSelected(item.id)}
+                      >
+                        {t('Chi tiết')}
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {query.data.items.map((item) => (
-                    <tr key={item.id}>
-                      <td style={{ overflowWrap: 'anywhere' }}>
-                        <strong>{item.configKey}</strong>
-                        <p>{item.category}</p>
-                      </td>
-                      <td style={{ overflowWrap: 'anywhere' }}>
-                        {item.reviewed ? item.configValue : t('Chưa duyệt hiển thị trên Web')}
-                      </td>
-                      <td>
-                        <button
-                          className="btn small"
-                          disabled={!item.reviewed}
-                          onClick={() => setSelected(item.id)}
-                        >
-                          {t('Chi tiết')}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>{t('Chưa có cấu hình phù hợp.')}</p>
-          )}
+                ))}
+              </tbody>
+            </table>
+            {!query.data?.items.length && <p className="empty">{t('Chưa có cấu hình phù hợp.')}</p>}
+          </div>
           {query.data && <Pager data={query.data} busy={query.isFetching} change={setPage} />}
           {selected && <ConfigDetail actor={actor} id={selected} close={() => setSelected('')} />}
         </State>

@@ -53,8 +53,31 @@ const detailSchema = eventSchema.extend({
       changedBy: z.string().uuid().nullable(),
       changedAt: date,
       reason: z.string().nullable(),
+      changedByName: z.string().nullable().optional(),
     }),
   ),
+  // Traceability (BE 4cea9d1); optional so older deploys still parse.
+  acknowledgedByName: z.string().nullable().optional(),
+  resolvedByName: z.string().nullable().optional(),
+  notifications: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        notificationType: z.string(),
+        channel: z.string(),
+        status: z.string(),
+        recipientId: z.string().uuid(),
+        recipientName: z.string().nullable(),
+        recipientRole: z.string().nullable(),
+        caregiverLinkId: z.string().uuid().nullable(),
+        createdAt: date,
+        sentAt: date.nullable(),
+        readAt: date.nullable(),
+        failureReason: z.string().nullable(),
+      }),
+    )
+    .nullable()
+    .optional(),
 });
 const pageSchema = z.object({
   items: z.array(eventSchema),
@@ -153,7 +176,19 @@ export function createEmergenciesApi(
   async function detail(actor: Actor, id: string, signal?: AbortSignal) {
     authorize(actor);
     uuid(id);
-    const result = parse(detailSchema, await get('/api/emergency-events/' + id, signal));
+    let raw: unknown;
+    try {
+      raw = await get('/api/emergency-events/' + id, signal);
+    } catch (error) {
+      // An old notification can point to a person this caregiver is no longer linked to.
+      if (error instanceof ServiceError && error.status === 403)
+        throw new ServiceError(
+          t('Bạn không còn quyền xem cảnh báo này (liên kết chăm sóc đã kết thúc).'),
+          403,
+        );
+      throw error;
+    }
+    const result = parse(detailSchema, raw);
     if (result.id !== id) throw new ServiceError(t('Cảnh báo không khớp yêu cầu.'), 403);
     return result;
   }

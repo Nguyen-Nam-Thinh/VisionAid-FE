@@ -19,7 +19,9 @@ test('public home, signup, login and protected dashboard stay separate', async (
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     'Biết người thân đang ở đâu.',
   );
-  await page.getByRole('banner').getByRole('link', { name: 'Đăng nhập' }).click();
+  // Signed in: the header offers the workspace instead of sign-in.
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng nhập' })).toHaveCount(0);
+  await page.getByRole('banner').getByRole('link', { name: 'Tổng quan' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();

@@ -827,10 +827,6 @@ export const en = {
   'Đóng menu': 'Close menu',
   'Mở menu': 'Open menu',
   'Dành cho gia đình và các trung tâm chăm sóc': 'For families and care centers',
-  'Minh họa kết nối giữa ứng dụng di động và người chăm sóc, với vị trí và thông báo hỗ trợ.':
-    'Illustration of the connection between the mobile app and caregivers, with location and support notifications.',
-  'Hỗ trợ bằng giọng nói': 'Voice assistance',
-  'Minh họa trải nghiệm VisionAid': 'Illustration of the VisionAid experience',
   'VisionAid đang trong giai đoạn kiểm thử liên thông. Hybrid AI, cuộc gọi và thông báo cần được xác minh cùng ứng dụng di động trước khi sử dụng thực tế; trang này không cam kết mọi tính năng đã sẵn sàng trên mọi thiết bị.':
     'VisionAid is in integration testing. Hybrid AI, calls and notifications must be verified with the mobile app before real-world use; this page does not promise every feature is ready on every device.',
   'Nhận biết trên thiết bị. Kết nối khi cần.': 'Recognition on the device. Connection when needed.',
@@ -916,8 +912,6 @@ export const en = {
   'Chưa có điện thoại': 'No phone yet',
   'Không thuộc tổ chức': 'No organization',
   'Quản lý cấp và thu hồi': 'Manage assignment and revocation',
-  'Tài khoản đã xóa. Chưa có API khôi phục tài khoản.':
-    'Account deleted. There is no account restore API yet.',
   'Vô hiệu hóa tài khoản': 'Deactivate account',
   'Kích hoạt tài khoản': 'Activate account',
   'Xóa tài khoản': 'Delete account',
@@ -925,7 +919,6 @@ export const en = {
   ': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.':
     ': reopens the account. The organization must also be active to sign in.',
   ': thu hồi phiên refresh và FCM. ': ': revokes refresh sessions and FCM. ',
-  'Xóa mềm, hiện chưa có API khôi phục.': 'Soft delete; no restore API yet.',
   'Người dùng sẽ bị chặn đăng nhập.': 'The user will be blocked from signing in.',
   'Đã cập nhật trạng thái.': 'Status updated.',
   'Tài khoản: {email}. Đặt lại mật khẩu sẽ thu hồi các phiên refresh; người dùng cần đăng nhập lại.':
@@ -1134,8 +1127,6 @@ export const en = {
   'Tên gói': 'Plan name',
   'Giá tháng': 'Monthly price',
   'Giá năm': 'Yearly price',
-  'Có thể để trống khi tạo. Giá năm chưa dùng để thanh toán trên Web; không thể xóa giá đã lưu.':
-    'May be left empty when creating. The yearly price is not yet used for Web payments; a saved price cannot be removed.',
   'Đơn vị tiền tệ': 'Currency',
   'VIU trên license (cấu hình gói)': 'VIUs per license (plan configuration)',
   'Số VIU của B2C vẫn theo cấu hình caregiving.max_vius_per_caregiver; trường này không thay đổi giới hạn đó.':
@@ -1188,8 +1179,6 @@ export const en = {
   'Thanh toán gói Personal': 'Pay for Personal plan',
   'Gói đã chọn': 'Selected plan',
   'Giá đang xem': 'Displayed price',
-  'Mua mới hoặc bổ sung license do máy chủ quyết định. Khi gia hạn kho hiện có, thời hạn được tính lại từ ngày thanh toán; chưa hỗ trợ đổi sang gói khác.':
-    'Whether this is a new purchase or extra licenses is decided by the server. When renewing an existing pool, the term is recalculated from the payment date; switching to another plan is not supported yet.',
   'Máy chủ sẽ kiểm tra lại gói và tạo đơn. Chỉ thanh toán khi bạn tiếp tục sang PayOS và xác nhận chuyển tiền.':
     'The server will re-check the plan and create the order. You only pay when you continue to PayOS and confirm the transfer.',
   'Không xác nhận được việc tạo đơn.': 'Order creation could not be confirmed.',
@@ -1376,7 +1365,6 @@ export const en = {
   'Mua thêm license': 'Buy more licenses',
   'License đã cấp cho người được chăm sóc': 'Licenses assigned to care recipients',
   'Ngày cấp': 'Assigned on',
-  'Mã: {id}': 'ID: {id}',
   'Đã thu hồi · {p0}': 'Revoked · {p0}',
   'Thu hồi': 'Revoke',
   'Không có license phù hợp bộ lọc.': 'No licenses match the filter.',
@@ -1422,10 +1410,6 @@ export const en = {
   'Nhập key kích hoạt': 'Enter activation key',
   'Tạo key khác': 'Create another key',
   'Bắt đầu key mới': 'Start a new key',
-  'Hãy bảo đảm đã lưu key vừa tạo. Tiếp tục sẽ xóa key khỏi màn hình, không thu hồi key và không hoàn lại suất đã sử dụng.':
-    'Make sure you have saved the created key. Continuing removes it from the screen; it does not revoke the key or refund the used seat.',
-  'Chưa có API xem lại hoặc thu hồi key đã phát. Key chỉ giữ trong màn hình này; sao chép và lưu ở nơi an toàn trước khi rời trang.':
-    'There is no API yet to view again or revoke issued keys. The key is kept only on this screen; copy it and store it somewhere safe before leaving the page.',
   'Kích hoạt license': 'Activate license',
   'Đã tạo key và sử dụng một suất license.': 'Key created and one license seat used.',
   'Key vừa tạo': 'Created key',
@@ -1437,8 +1421,6 @@ export const en = {
   'Đã sao chép key.': 'Key copied.',
   'Không sao chép được. Nhấn Hiện key để sao chép thủ công.':
     'Could not copy. Press Show key to copy it manually.',
-  'Chỉ đóng popup vẫn có thể xem lại key tại màn hình này. Rời trang hoặc tải lại sẽ mất key đang hiển thị.':
-    'Just closing the popup still lets you view the key on this screen. Leaving or reloading the page loses the displayed key.',
   'Xác nhận tạo một key và sử dụng một suất trong kho. Ghi chú không phải địa chỉ gửi thư.':
     'Confirm creating one key and using one seat from the pool. The note is not a mailing address.',
   'Xác nhận sử dụng key một lần cho tài khoản của bạn. Hãy kiểm tra thời hạn với trung tâm trước khi kích hoạt.':
@@ -1452,12 +1434,8 @@ export const en = {
     'Personal information and sign-in session protection.',
   'Thông tin cá nhân': 'Personal information',
   'Chỉnh sửa hồ sơ': 'Edit profile',
-  'Ảnh đại diện JPG/PNG · bản demo tối đa 2 MB': 'JPG/PNG avatar · demo up to 2 MB',
   'Chọn ảnh JPG/PNG dưới 2 MB.': 'Choose a JPG/PNG image under 2 MB.',
   'Đã cập nhật avatar demo.': 'Demo avatar updated.',
-  'Không thể đọc ảnh.': 'Could not read the image.',
-  'Ảnh đại diện hiện tại được giữ nguyên. Chưa tích hợp tải ảnh lên.':
-    'The current avatar is kept. Photo upload is not integrated yet.',
   'Ảnh đại diện của bạn': 'Your avatar',
   'Đổi mật khẩu': 'Change password',
   'Dùng mật khẩu riêng cho VisionAid. Bạn cần nhập mật khẩu hiện tại để thay đổi.':
@@ -2007,9 +1985,6 @@ export const en = {
   'Dữ liệu gói không hợp lệ. Hãy tải lại.': 'Invalid plan data. Please reload.',
   'Feature flags cần là JSON với giá trị true/false.':
     'Feature flags must be JSON with true/false values.',
-  'BE chưa hỗ trợ xóa giá năm đã lưu. Giữ giá hiện tại hoặc nhập giá mới.':
-    'The BE does not support removing a saved yearly price yet. Keep the current price or enter a new one.',
-  'Không thể xóa giá năm đã lưu.': 'Cannot remove the saved yearly price.',
   'Kiểm tra thông tin gói: giá hợp lệ, số lượng/ngày là số nguyên và flags chỉ chứa true/false.':
     'Check the plan details: a valid price, whole numbers for quantities/days and flags containing only true/false.',
   'Máy chủ trả về sai gói.': 'The server returned the wrong plan.',
@@ -2031,8 +2006,6 @@ export const en = {
   'Địa chỉ Web thanh toán không hợp lệ.': 'Invalid payment Web address.',
   'Gói đã thay đổi hoặc ngừng mở. Đóng hộp thoại và tải lại danh mục để kiểm tra.':
     'The plan has changed or is closed. Close the dialog and reload the catalog to check.',
-  'Kho hiện tại dùng gói khác. Chưa hỗ trợ đổi gói Business qua thanh toán; chọn đúng gói của kho hoặc liên hệ hỗ trợ.':
-    "The current pool uses a different plan. Switching Business plans through payment is not supported yet; choose the pool's plan or contact support.",
   'Liên kết thanh toán không thuộc PayOS được hỗ trợ. Kiểm tra lịch sử; không tạo lại giao dịch ngay.':
     'The payment link is not a supported PayOS link. Check the history; do not create a new transaction right away.',
   'Không tìm thấy giao dịch của tài khoản này.': 'No transaction found for this account.',
@@ -2601,13 +2574,207 @@ export const en = {
   'Người khiếm thị dùng ứng dụng VisionAid trên điện thoại để tránh vật cản, đọc chữ và gọi trợ giúp. Người chăm sóc dùng trang Web này để xem vị trí, nhận cảnh báo và quản lý thông tin hỗ trợ.':
     'People with visual impairments use the VisionAid phone app to avoid obstacles, read text and call for help. Caregivers use this website to see their location, receive alerts and manage support information.',
   'Xem cách hoạt động': 'See how it works',
+  'Người khiếm thị đi trên vỉa hè có gạch dẫn hướng, cầm gậy trắng và đeo điện thoại trước ngực.':
+    'A visually impaired person walks along a sidewalk with a tactile guiding strip, holding a white cane, a phone strapped to their chest.',
+  'Một người bước đi với gậy trắng và điện thoại đeo trước ngực.':
+    'One person walks with a white cane and a phone strapped to their chest.',
+  'Một người ở xa, muốn biết họ có an toàn.': 'Someone far away wants to know they are safe.',
+  'VisionAid nối hai đầu của cùng một hành trình.':
+    'VisionAid connects both ends of the same journey.',
+  'Minh họa: vật cản tiến lại gần qua ba vùng nhận biết.':
+    'Illustration: an obstacle approaches through three detection zones.',
+  'Máy chủ': 'Server',
+  'Trên điện thoại': 'On the phone',
+  'Minh họa, không phải dữ liệu thật.': 'Illustration, not real data.',
+  'Tài khoản đã xóa lúc {time}.': 'Account deleted at {time}.',
+  'Đã quá {days} ngày nên máy chủ có thể không cho khôi phục.':
+    'More than {days} days have passed, so the server may refuse to restore it.',
+  'Có thể khôi phục trong {days} ngày kể từ lúc xóa.':
+    'It can be restored within {days} days of deletion.',
+  'Khôi phục tài khoản': 'Restore account',
+  'Xóa mềm; Admin có thể khôi phục trong {days} ngày.':
+    'Soft delete; an Admin can restore it within {days} days.',
+  '{email}: mở lại tài khoản với mật khẩu cũ, giữ liên kết và dữ liệu còn lại. Dữ liệu đã bị dọn theo thời hạn lưu trữ không lấy lại được.':
+    '{email}: reopen the account with its old password, keeping its links and remaining data. Data already removed by retention cannot be recovered.',
+  'Đã khôi phục tài khoản. Kho của tổ chức hết suất nên người dùng chưa có license; trung tâm cần cấp một suất, trước đó chỉ dùng được SOS.':
+    'Account restored. The organization pool has no free seat, so the user has no license; the center must assign one, and until then only SOS works.',
+  'Đã khôi phục tài khoản.': 'Account restored.',
+  'Đã hẹn đổi sang gói {name} ({seats} suất) vào {time}. Trước thời điểm đó, cấp license mới bị giới hạn ở số suất của gói mới.':
+    'Switch to {name} ({seats} seats) scheduled for {time}. Until then, new licenses are capped at the new package seat count.',
+  'Giữ gói hiện tại': 'Keep current package',
+  'Hủy hẹn đổi gói': 'Cancel scheduled change',
+  'Kho tiếp tục dùng gói {name} sau khi hết kỳ.': 'The pool keeps {name} after this period.',
+  'Để trống để bỏ giá năm; gói khi đó chỉ bán theo tháng. Giá năm chưa dùng để thanh toán trên Web.':
+    'Leave empty to remove the yearly price; the package is then sold monthly only. The yearly price is not used for web checkout yet.',
+  'Loại thay đổi': 'Change type',
+  'Gói hiện tại': 'Current package',
+  'Trả bây giờ': 'Pay now',
+  'Áp dụng từ': 'Applies from',
+  'Hết hạn kho sau khi đổi': 'Pool expiry after the change',
+  'Số suất': 'Seats',
+  '{from} → {to} suất, đang dùng {used}': '{from} → {to} seats, {used} in use',
+  '{to} suất': '{to} seats',
+  'Chỉ trả phần chênh lệch cho {days} ngày còn lại. Số suất đổi ngay sau khi thanh toán, ngày hết hạn giữ nguyên.':
+    'You pay only the difference for the {days} days left. Seats change right after payment; the expiry date stays the same.',
+  'Gói rẻ hơn gói hiện tại: không trả tiền và không hoàn tiền. Kho đổi sang gói này khi hết kỳ đã trả.':
+    'Cheaper than the current package: nothing to pay and no refund. The pool switches at the end of the paid period.',
+  'Trả trọn giá; kỳ mới nối tiếp sau ngày hết hạn hiện tại.':
+    'Full price; the new period follows the current expiry date.',
+  'Trả trọn giá; kỳ mới bắt đầu từ lúc thanh toán thành công.':
+    'Full price; the new period starts when the payment succeeds.',
+  'Đang dùng nhiều hơn số suất của gói này. Thu hồi {count} license trong kho trước khi đổi gói.':
+    'More seats are in use than this package has. Revoke {count} licenses in the pool before switching.',
+  'Kho hiện không đổi gói được. Tải lại kho license để kiểm tra trạng thái.':
+    'The pool cannot change package right now. Reload the license pool to check its status.',
+  'Đã hẹn đổi sang gói {name} vào {time}.': 'Switch to {name} scheduled for {time}.',
+  'Hẹn đổi gói vào cuối kỳ': 'Schedule for end of period',
+  'Key đã phát': 'Issued keys',
+  'Xem lại key đã tạo và thu hồi key chưa dùng nếu phát nhầm. Thu hồi trả suất về kho; key đã kích hoạt hoặc đã hết hạn không thu hồi được.':
+    'Look up keys you created and revoke an unused key sent by mistake. Revoking returns the seat to the pool; activated or expired keys cannot be revoked.',
+  'Tìm theo key, ghi chú hoặc người kích hoạt': 'Search by key, note or activating caregiver',
+  'Trạng thái key': 'Key status',
+  Key: 'Key',
+  'Hạn dùng': 'Valid until',
+  'Người kích hoạt': 'Activated by',
+  'Thu hồi lúc {time}': 'Revoked at {time}',
+  'Không có key phù hợp với bộ lọc.': 'No keys match the filter.',
+  'Chưa phát key nào từ kho này.': 'No keys have been issued from this pool yet.',
+  'Thu hồi key': 'Revoke key',
+  'Thu hồi key có ghi chú "{note}", tạo lúc {time}. Gia đình sẽ không kích hoạt được key này nữa và một suất được trả về kho.':
+    'Revoke the key noted "{note}", created at {time}. The family can no longer activate it and one seat returns to the pool.',
+  'không có ghi chú': 'no note',
+  'Đã thu hồi key và trả một suất về kho.': 'Key revoked and one seat returned to the pool.',
+  'Key vừa tạo vẫn còn trong danh sách Key đã phát. Tiếp tục không thu hồi key và không hoàn lại suất đã sử dụng.':
+    'The new key stays in the Issued keys list. Continuing does not revoke it or return the seat it used.',
+  'Có thể xem lại key này bất cứ lúc nào trong danh sách Key đã phát.':
+    'You can look this key up again any time in the Issued keys list.',
+  'Đã cập nhật ảnh đại diện.': 'Profile picture updated.',
+  'Không thể tải ảnh lên.': 'Could not upload the picture.',
+  'Xóa ảnh đại diện': 'Remove profile picture',
+  'Ảnh đại diện sẽ bị xóa khỏi máy chủ. Bạn có thể tải ảnh khác sau.':
+    'Your profile picture will be deleted from the server. You can upload another later.',
+  'Đã xóa ảnh đại diện.': 'Profile picture removed.',
+  'Máy chủ không cho gửi lại thông báo này.':
+    'The server does not allow resending this notification.',
+  'Đã gửi lại thành công.': 'Resent successfully.',
+  'Đang gửi lại; trạng thái sẽ cập nhật sau.': 'Resending; the status will update shortly.',
+  'Gửi lại vẫn thất bại: {reason}': 'Resend failed again: {reason}',
+  'không rõ lý do': 'unknown reason',
+  'Đang gửi lại…': 'Resending…',
+  'Gửi lại': 'Resend',
+  'Chỉ Admin được khôi phục tài khoản.': 'Only an Admin can restore accounts.',
+  'Tài khoản không hợp lệ.': 'Invalid account.',
+  'Máy chủ trả về tài khoản khác với tài khoản đã chọn.':
+    'The server returned a different account from the one selected.',
+  'Ảnh đại diện tối đa 10 MB.': 'Profile pictures are limited to 10 MB.',
+  'Đã gửi ảnh nhưng chưa đọc được kết quả. Hãy tải lại trang.':
+    'The picture was sent but the result could not be read. Reload the page.',
+  'Địa chỉ ảnh không hợp lệ.': 'Invalid picture address.',
+  'Chưa dùng': 'Unused',
+  'Đã kích hoạt': 'Activated',
+  'Chỉ quản trị trung tâm có tổ chức được xem key đã phát.':
+    'Only a center admin with an organization can view issued keys.',
+  'Dữ liệu key đã phát không hợp lệ. Hãy tải lại.': 'Issued key data is invalid. Please reload.',
+  'Chỉ quản trị trung tâm có tổ chức được thu hồi key.':
+    'Only a center admin with an organization can revoke keys.',
+  'Chỉ thu hồi được key chưa dùng và còn hạn.':
+    'Only unused keys that are still valid can be revoked.',
+  'Key không hợp lệ. Hãy tải lại.': 'Invalid key. Please reload.',
+  'Mua kho lần đầu': 'First pool purchase',
+  'Gia hạn cùng gói': 'Renew same package',
+  'Kỳ mới sau khi kho hết hạn': 'New period after expiry',
+  'Nâng gói': 'Upgrade',
+  'Hạ gói vào cuối kỳ': 'Downgrade at end of period',
+  'Chỉ quản trị trung tâm có tổ chức được đổi gói Business.':
+    'Only a center admin with an organization can change the Business package.',
+  'Chưa đọc được báo giá đổi gói. Hãy tải lại.':
+    'Could not read the package change quote. Please reload.',
+  'Kho hoặc gói không hợp lệ. Hãy tải lại.': 'Invalid pool or package. Please reload.',
+  'Chỉ gửi lại được thông báo đang thất bại.': 'Only failed notifications can be resent.',
+  'Đã gửi lại tối đa 3 lần.': 'Already resent the maximum of 3 times.',
+  'Tài khoản người nhận đã bị khóa hoặc xóa.': 'The recipient account is deactivated or deleted.',
+  'Kênh gửi này không hỗ trợ gửi lại.': 'This channel does not support resending.',
+  'Thông báo đến nơi chỉ có ý nghĩa lúc đến; gửi muộn sẽ sai.':
+    'Arrival notices only make sense on arrival; a late resend would be wrong.',
+  'Người nhận chưa đăng nhập thiết bị nào. Gửi lại sau khi họ đăng nhập ứng dụng.':
+    'The recipient has no signed-in device. Resend after they sign in to the app.',
+  'Sự cố khẩn cấp đã được xử lý, bỏ qua hoặc đã gọi.':
+    'The emergency was already resolved, dismissed or called.',
+  'Thông báo đã quá cũ để gửi lại.': 'The notification is too old to resend.',
+  'License đã được gia hạn nên nhắc nhở không còn đúng.':
+    'The license has been renewed, so the reminder no longer applies.',
+  'Người nhận không còn nhận cảnh báo của người này.':
+    'The recipient no longer receives alerts for this person.',
+  'Thông báo này đang được gửi lại.': 'This notification is already being resent.',
+  'Thông báo không hợp lệ.': 'Invalid notification.',
+  'Gói rẻ hơn gói hiện tại: hẹn đổi vào cuối kỳ, không cần thanh toán.':
+    'Cheaper than the current package: schedule the switch for the end of the period, no payment needed.',
+  'Cần thu hồi {count} license đang dùng trước khi đổi sang gói này.':
+    'Revoke {count} licenses in use before switching to this package.',
+  'Nâng gói Business': 'Business upgrade',
+  'Hộp thư thông báo': 'Notification inbox',
+  'Tra cứu thông báo': 'Notification lookup',
+  'Xem bản đồ': 'View map',
+  'Truy vết hoạt động của {name}': 'Activity trace for {name}',
+  'Tất cả hoạt động': 'All activities',
+  'Cách xem': 'View',
+  'Dòng thời gian': 'Timeline',
+  'Hướng dẫn dẫn đường': 'Navigation guidance',
+  'Câu đã đọc': 'Spoken text',
+  'Người xử lý': 'Handled by',
+  'Mỗi dòng là một quyết định dẫn đường. "Điện thoại tự quyết định" là khi máy chủ chậm, mất mạng hoặc chưa có phiên; câu đã đọc trống nghĩa là ứng dụng không nói gì.':
+    'Each row is one guidance decision. "Decided on the phone" means the server was slow, offline or had no session; an empty spoken text means the app stayed silent.',
+  'Chưa có hướng dẫn dẫn đường được ghi nhận.': 'No navigation guidance recorded yet.',
+  'Nơi quyết định': 'Decided by',
+  'Không đọc': 'Not spoken',
+  'Phản hồi': 'Response',
+  'Tiếp nhận bởi {name}.': 'Acknowledged by {name}.',
+  'Giải quyết bởi {name}.': 'Resolved by {name}.',
+  'Đã thông báo cho': 'Notified',
+  'Chưa có thông báo nào được ghi nhận cho cảnh báo này.':
+    'No notifications recorded for this alert.',
+  'Đã xem': 'Read',
+  'Chưa xem': 'Unread',
+  'Thông báo, {count} chưa đọc': 'Notifications, {count} unread',
+  'Thông báo': 'Notifications',
+  'Mọi thông báo đã gửi cho bạn, gộp các kênh Push, Email và Realtime vào một mục.':
+    'Every notification sent to you, with Push, Email and Realtime grouped into one item.',
+  'Lọc thông báo': 'Filter notifications',
+  'Đã đánh dấu {count} thông báo là đã xem.': 'Marked {count} notifications as read.',
+  'Đánh dấu tất cả đã xem': 'Mark all as read',
+  'Tất cả thông báo': 'All notifications',
+  'Chỉ thông báo chưa xem': 'Unread only',
+  'Không có thông báo phù hợp.': 'No matching notifications.',
+  'Đã xem lúc {time}': 'Read at {time}',
+  'Mở chi tiết': 'Open details',
+  'Đánh dấu đã xem': 'Mark as read',
+  'Từng lần gửi thông báo: người nhận, người được chăm sóc, kênh, trạng thái và đã xem.':
+    'Each notification delivery: recipient, care recipient, channel, status and read state.',
+  'Thông báo gửi cho người nhận hoặc về người được chăm sóc trong trung tâm của bạn.':
+    'Notifications sent to recipients or about care recipients in your center.',
+  'Không rõ tên': 'Unknown name',
+  'qua liên kết chăm sóc': 'through a care link',
+  'OnDeviceRules là quyết định điện thoại tự đưa ra khi mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.':
+    'OnDeviceRules are decisions the phone made itself when offline, without a session or when the server was slow; the app uploads them later for tracing. Spoken text and location are shown only to linked caregivers.',
+  'Phát hiện vật cản': 'Obstacle detection',
+  'Ra/vào vùng an toàn': 'Safe zone entry/exit',
+  'Máy chủ · JEV': 'Server · JEV',
+  'Máy chủ · Groq': 'Server · Groq',
+  'Máy chủ · quy tắc': 'Server · rules',
+  'Điện thoại tự quyết định': 'Decided on the phone',
+  'Bạn không còn quyền xem cảnh báo này (liên kết chăm sóc đã kết thúc).':
+    'You can no longer view this alert (the care link has ended).',
+  'Cảnh báo license sắp hết hạn': 'License expiry warning',
+  'Gợi ý gọi hỗ trợ khẩn cấp': 'Emergency call suggestion',
+  'Không liên hệ được ai': 'Nobody reachable',
+  'Nhắc gia hạn license': 'License renewal reminder',
+  'Gửi lỗi': 'Failed',
+  'Chỉ quản trị viên được tra cứu thông báo.': 'Only administrators can look up notifications.',
+  'JPG hoặc PNG, bản demo tối đa 2 MB.': 'JPG or PNG, up to 2 MB in the demo.',
+  'JPG, PNG hoặc WebP, tối đa 10 MB. Ảnh được cắt vuông và xóa thông tin vị trí; chỉ người có liên quan đến bạn trong VisionAid xem được.': 'JPG, PNG or WebP, up to 10 MB. The picture is cropped square and its location data removed; only people connected to you in VisionAid can see it.',
+  'Đổi ảnh': 'Change picture',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
-  'Đang dẫn đường': 'Guiding',
-  'Đã đến nơi': 'Arrived',
-  'Nhà văn hóa phường': 'Community center',
-  'Cảnh báo đã được tiếp nhận': 'Alert acknowledged',
-  'bởi người chăm sóc chính': 'by the primary caregiver',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',
   'Mọi thao tác đều theo quyền mà người khiếm thị hoặc trung tâm đã cấp cho bạn.':
     'Everything follows the permissions the person you care for or the center has given you.',

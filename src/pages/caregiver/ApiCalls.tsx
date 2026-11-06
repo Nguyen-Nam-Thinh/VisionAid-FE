@@ -128,7 +128,6 @@ function History({ actor }: { actor: Person }) {
           </div>
         </FilterPanel>
         <State loading={result.isPending} error={result.error} retry={() => result.refetch()}>
-          {!result.data?.items.length && <p>{t('Chưa có cuộc gọi phù hợp.')}</p>}
           <div className="table-scroll">
             <table>
               <thead>
@@ -162,6 +161,9 @@ function History({ actor }: { actor: Person }) {
                 ))}
               </tbody>
             </table>
+            {!result.data?.items.length && (
+              <p className="empty">{t('Chưa có cuộc gọi phù hợp.')}</p>
+            )}
           </div>
           <div className="row pagination">
             <span>

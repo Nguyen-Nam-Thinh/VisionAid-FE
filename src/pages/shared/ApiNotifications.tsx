@@ -200,9 +200,6 @@ function Notifications({ actor }: { actor: Person }) {
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           {personal ? (
             <>
-              {!prefs.data?.length && (
-                <p>{t('Chưa lưu tùy chọn nào. Máy chủ áp dụng quy tắc mặc định.')}</p>
-              )}
               <div className="table-scroll">
                 <table>
                   <thead>
@@ -237,11 +234,15 @@ function Notifications({ actor }: { actor: Person }) {
                     ))}
                   </tbody>
                 </table>
+                {!prefs.data?.length && (
+                  <p className="empty">
+                    {t('Chưa lưu tùy chọn nào. Máy chủ áp dụng quy tắc mặc định.')}
+                  </p>
+                )}
               </div>
             </>
           ) : (
             <>
-              {!rules.data?.items.length && <p>{t('Không có quy tắc phù hợp.')}</p>}
               <div className="table-scroll">
                 <table>
                   <thead>
@@ -308,6 +309,9 @@ function Notifications({ actor }: { actor: Person }) {
                     ))}
                   </tbody>
                 </table>
+                {!rules.data?.items.length && (
+                  <p className="empty">{t('Không có quy tắc phù hợp.')}</p>
+                )}
               </div>
               {rules.data && (
                 <div className="row pagination">

@@ -8,6 +8,7 @@ import { PageHead, State, Dialog } from '../../components/UI';
 import { formatTime } from '../../constants/labels';
 import {
   monitoringApi,
+  retryBlockedLabels,
   auditActions,
   auditActionLabels,
   guidanceEngines,
@@ -159,10 +160,64 @@ export function ApiMonitoring({ kind }: { kind: MonitoringKind }) {
     );
   return <Monitoring key={actor.id + kind} actor={actor} kind={kind} />;
 }
+/** Resend one failed notification; disabled with the reason when the BE says it would mislead. */
+function RetryButton({
+  actor,
+  row,
+  done,
+}: {
+  actor: Person;
+  row: MonitoringRecord;
+  done: (message: string) => void;
+}) {
+  const [pending, setPending] = useState(false);
+  const blocked =
+    row.canRetry === false
+      ? retryBlockedLabels[String(row.retryBlockedCode)] ||
+        t('Máy chủ không cho gửi lại thông báo này.')
+      : '';
+  return (
+    <>
+      <button
+        className="btn small"
+        disabled={pending || !!blocked}
+        title={blocked || undefined}
+        aria-describedby={blocked ? 'retry-' + row.id : undefined}
+        onClick={async () => {
+          setPending(true);
+          try {
+            const result = await monitoringApi.retry(actor, row.id);
+            done(
+              result.status === 'Sent'
+                ? t('Đã gửi lại thành công.')
+                : result.status === 'Pending'
+                  ? t('Đang gửi lại; trạng thái sẽ cập nhật sau.')
+                  : t('Gửi lại vẫn thất bại: {reason}', {
+                      reason: result.failureReason || t('không rõ lý do'),
+                    }),
+            );
+          } catch (error) {
+            done(error instanceof Error ? error.message : t('Không thể thực hiện.'));
+          } finally {
+            setPending(false);
+          }
+        }}
+      >
+        {pending ? t('Đang gửi lại…') : t('Gửi lại')}
+      </button>
+      {blocked && (
+        <small id={'retry-' + row.id} className="muted">
+          {blocked}
+        </small>
+      )}
+    </>
+  );
+}
 function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
   const [filters, setFilters] = useState<MonitoringFilters>({});
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<MonitoringRecord | null>(null);
+  const [retryNotice, setRetryNotice] = useState('');
   // Person filters are picked by name/email; session/record ids only come from a record's details.
   const [person, setPerson] = useState('');
   const [action, setAction] = useState('');
@@ -195,6 +250,11 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
         {kind === 'delivery' && <DeliveryStatus actor={actor} />}
         <section className="glass card stack">
           <h2>{kind === 'delivery' ? t('Thông báo thất bại') : t('Tra cứu bản ghi')}</h2>
+          {retryNotice && (
+            <p className="notice" role="status">
+              {retryNotice}
+            </p>
+          )}
           <FilterPanel
             active={
               Object.entries(filters).filter(
@@ -374,6 +434,11 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                   'Trong cấu hình hệ thống, tìm hybrid_navigation_enabled, hybrid_navigation_engine hoặc navigation_near_threshold_ms. Số liệu AI tổng hợp dùng tên JEV, Groq và RuleBased.',
                 )}
               </p>
+              <p>
+                {t(
+                  'OnDeviceRules là quyết định điện thoại tự đưa ra khi mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.',
+                )}
+              </p>
             </div>
           )}
           {kind === 'metrics' && (
@@ -386,47 +451,53 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
           <State loading={query.isPending} error={query.error} retry={() => void query.refetch()}>
             {query.data && (
               <>
-                {!query.data.items.length ? (
-                  <p role="status">{t('Không có bản ghi phù hợp.')}</p>
-                ) : (
-                  <div
-                    className="table-scroll"
-                    role="region"
-                    aria-label={titles[kind]}
-                    tabIndex={0}
-                  >
-                    <table style={{ minWidth: 720 }}>
-                      <thead>
-                        <tr>
+                <div className="table-scroll" role="region" aria-label={titles[kind]} tabIndex={0}>
+                  <table style={{ minWidth: 720 }}>
+                    <thead>
+                      <tr>
+                        {columns[kind].map((key) => (
+                          <th key={key}>{labels[key]}</th>
+                        ))}
+                        <th>{t('Thao tác')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {query.data.items.map((row) => (
+                        <tr key={row.id}>
                           {columns[kind].map((key) => (
-                            <th key={key}>{labels[key]}</th>
+                            <td key={key}>
+                              {valueText(
+                                key,
+                                // Older BE deploys have no actorName; never show the raw actor ID.
+                                key === 'actorName' ? (row.actorName ?? null) : row[key],
+                              )}
+                            </td>
                           ))}
-                          <th>{t('Thao tác')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {query.data.items.map((row) => (
-                          <tr key={row.id}>
-                            {columns[kind].map((key) => (
-                              <td key={key}>
-                                {valueText(
-                                  key,
-                                  // Older BE deploys have no actorName; never show the raw actor ID.
-                                  key === 'actorName' ? (row.actorName ?? null) : row[key],
-                                )}
-                              </td>
-                            ))}
-                            <td>
+                          <td>
+                            <div className="row">
                               <button className="btn small" onClick={() => setSelected(row)}>
                                 {t('Chi tiết')}
                               </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                              {kind === 'delivery' && (
+                                <RetryButton
+                                  actor={actor}
+                                  row={row}
+                                  done={(message) => {
+                                    setRetryNotice(message);
+                                    void query.refetch();
+                                  }}
+                                />
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!query.data.items.length && (
+                    <p className="empty">{t('Không có bản ghi phù hợp.')}</p>
+                  )}
+                </div>
                 <div className="row pagination">
                   <span role="status">
                     {t('{totalCount} bản ghi · Trang {page}/{p4}', {

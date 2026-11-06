@@ -14,6 +14,7 @@ const transactionType = z.enum([
   'SubscriptionRenew',
   'LicensePurchase',
   'LicenseTopup',
+  'LicenseUpgrade',
   'Refund',
 ]);
 const reportSchema = z.object({
@@ -64,6 +65,7 @@ export const transactionTypeLabels: Record<z.infer<typeof transactionType>, stri
   SubscriptionRenew: msg('Gia hạn gói Personal'),
   LicensePurchase: msg('Mua gói Business'),
   LicenseTopup: msg('Mua thêm license Business'),
+  LicenseUpgrade: msg('Nâng gói Business'),
   Refund: msg('Hoàn tiền'),
 });
 export const channelLabels: Record<string, string> = labelMap({

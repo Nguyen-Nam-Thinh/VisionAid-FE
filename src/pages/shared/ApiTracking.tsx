@@ -122,82 +122,81 @@ function Fleet({ actor }: { actor: Person }) {
               </p>
               <p>{t('Thời gian hiển thị theo {timezone}.', { timezone })}</p>
               <GpsMap points={points} selected={selected} onSelect={setSelected} />
-              {!shown.length ? (
-                <p>{t('Không có người khiếm thị phù hợp bộ lọc.')}</p>
-              ) : (
-                <div
-                  className="table-scroll"
-                  tabIndex={0}
-                  role="region"
-                  aria-label={t('Dữ liệu vị trí')}
-                >
-                  <table className="tracking-table">
-                    <thead>
-                      <tr>
-                        <th>{t('Người được theo dõi')}</th>
-                        <th>{t('Cảnh báo')}</th>
-                        <th>{t('Tọa độ (vĩ độ, kinh độ)')}</th>
-                        <th>{t('Thời gian ghi nhận')}</th>
-                        <th>{t('Thao tác')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {shown.map((item) => {
-                        const located = item.latitude !== null && item.longitude !== null;
-                        return (
-                          <tr key={item.viuId}>
-                            <td>
-                              {item.fullName}
-                              {item.formattedAddress && (
-                                <>
-                                  <br />
-                                  <small>{item.formattedAddress}</small>
-                                </>
-                              )}
-                            </td>
-                            <td>
-                              <Badge tone={item.hasOpenAlert ? 'red' : 'green'}>
-                                {item.hasOpenAlert ? t('Đang có cảnh báo') : t('An toàn')}
-                              </Badge>
-                            </td>
-                            <td>
-                              {located
-                                ? `${item.latitude!.toFixed(6)}, ${item.longitude!.toFixed(6)}`
-                                : t('Chưa có vị trí')}
-                            </td>
-                            <td>
-                              {item.cachedAt ? (
-                                <>
-                                  {time(item.cachedAt)}
-                                  <br />
-                                  <Badge
-                                    tone={
-                                      now - Date.parse(item.cachedAt) > 120000 ? 'amber' : 'green'
-                                    }
-                                  >
-                                    {locationAge(item.cachedAt, now)}
-                                  </Badge>
-                                </>
-                              ) : (
-                                '—'
-                              )}
-                            </td>
-                            <td>
-                              <button
-                                className="btn"
-                                onClick={() => setSelected(item.viuId)}
-                                aria-label={t('Xem GPS của ') + item.fullName}
-                              >
-                                {t('Vị trí & lịch sử')}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div
+                className="table-scroll"
+                tabIndex={0}
+                role="region"
+                aria-label={t('Dữ liệu vị trí')}
+              >
+                <table className="tracking-table">
+                  <thead>
+                    <tr>
+                      <th>{t('Người được theo dõi')}</th>
+                      <th>{t('Cảnh báo')}</th>
+                      <th>{t('Tọa độ (vĩ độ, kinh độ)')}</th>
+                      <th>{t('Thời gian ghi nhận')}</th>
+                      <th>{t('Thao tác')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shown.map((item) => {
+                      const located = item.latitude !== null && item.longitude !== null;
+                      return (
+                        <tr key={item.viuId}>
+                          <td>
+                            {item.fullName}
+                            {item.formattedAddress && (
+                              <>
+                                <br />
+                                <small>{item.formattedAddress}</small>
+                              </>
+                            )}
+                          </td>
+                          <td>
+                            <Badge tone={item.hasOpenAlert ? 'red' : 'green'}>
+                              {item.hasOpenAlert ? t('Đang có cảnh báo') : t('An toàn')}
+                            </Badge>
+                          </td>
+                          <td>
+                            {located
+                              ? `${item.latitude!.toFixed(6)}, ${item.longitude!.toFixed(6)}`
+                              : t('Chưa có vị trí')}
+                          </td>
+                          <td>
+                            {item.cachedAt ? (
+                              <>
+                                {time(item.cachedAt)}
+                                <br />
+                                <Badge
+                                  tone={
+                                    now - Date.parse(item.cachedAt) > 120000 ? 'amber' : 'green'
+                                  }
+                                >
+                                  {locationAge(item.cachedAt, now)}
+                                </Badge>
+                              </>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td>
+                            <button
+                              className="btn"
+                              onClick={() => setSelected(item.viuId)}
+                              aria-label={t('Xem GPS của ') + item.fullName}
+                            >
+                              {t('Vị trí & lịch sử')}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {!shown.length && (
+                  <p className="empty">{t('Không có người khiếm thị phù hợp bộ lọc.')}</p>
+                )}
+              </div>
             </>
           )}
         </State>
@@ -536,7 +535,6 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {query.data && (
           <>
-            {!query.data.items.length && <p>{t('Không có lịch sử trong khoảng thời gian này.')}</p>}
             <div
               className="table-scroll"
               tabIndex={0}
@@ -582,6 +580,9 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
                   ))}
                 </tbody>
               </table>
+              {!query.data.items.length && (
+                <p className="empty">{t('Không có lịch sử trong khoảng thời gian này.')}</p>
+              )}
             </div>
             <div className="row">
               <span>

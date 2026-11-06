@@ -179,7 +179,6 @@ function Links({ actor }: { actor: Person }) {
         <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
           {list.data && (
             <>
-              {!list.data.items.length && <p>{t('Không có liên kết phù hợp.')}</p>}
               <div
                 className="table-scroll"
                 tabIndex={0}
@@ -224,6 +223,9 @@ function Links({ actor }: { actor: Person }) {
                     ))}
                   </tbody>
                 </table>
+                {!list.data.items.length && (
+                  <p className="empty">{t('Không có liên kết phù hợp.')}</p>
+                )}
               </div>
               <div className="row pagination">
                 <span>

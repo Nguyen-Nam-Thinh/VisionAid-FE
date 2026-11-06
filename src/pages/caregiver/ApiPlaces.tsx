@@ -222,7 +222,6 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                 })}
               </p>
             )}
-            {!query.data.items.length && <p>{t('Chưa có địa điểm phù hợp.')}</p>}
             <div
               className="table-scroll"
               tabIndex={0}
@@ -285,6 +284,9 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                   ))}
                 </tbody>
               </table>
+              {!query.data.items.length && (
+                <p className="empty">{t('Chưa có địa điểm phù hợp.')}</p>
+              )}
             </div>
             <div className="row pagination">
               <span>

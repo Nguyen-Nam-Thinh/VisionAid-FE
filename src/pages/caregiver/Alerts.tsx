@@ -45,7 +45,10 @@ export function Alerts() {
             <section className="glass card" key={s}>
               <div className="row between">
                 <span className="muted">{statuses[s]}</span>
-                <TriangleAlert size={18} color={s === 'SENT' ? '#b21532' : '#1856ff'} />
+                <TriangleAlert
+                  size={18}
+                  color={s === 'SENT' ? 'var(--signal)' : 'var(--ink-muted)'}
+                />
               </div>
               <strong className="stat">
                 {db?.alerts.filter((a) => a.status === s).length ?? 0}
@@ -129,7 +132,7 @@ export function Alerts() {
             <p className="mono">
               {alert.lat.toFixed(5)}, {alert.lng.toFixed(5)} · {formatTime(alert.at)}
             </p>
-            <div className="empty" style={{ background: '#f1f4f9', borderRadius: 14 }}>
+            <div className="empty" style={{ background: 'var(--panel-sunk)', borderRadius: 14 }}>
               {t('Không có ảnh chụp sự kiện trong dữ liệu demo.')}
             </div>
             {alert.status === 'SENT' && now - new Date(alert.at).getTime() > 300000 && (

@@ -1,4 +1,4 @@
-import { t, msg } from '../../i18n';
+import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
 import { apiGet } from './adapter';
 import { createCaregivingApi } from './caregiving';
@@ -85,6 +85,8 @@ const voice = z.object({
   isOffline: z.boolean(),
   executedAt: time,
   ...position,
+  // What the app said back (BE 4cea9d1); optional so older deploys still parse.
+  responseText: z.string().nullable().optional(),
 });
 const event = z.object({
   ...owner,
@@ -96,8 +98,83 @@ const event = z.object({
   inferenceTimeMs: count.nullable(),
   detectedAt: time,
   ...position,
+  // The warning the app spoke for this obstacle (BE 4cea9d1).
+  spokenText: z.string().nullable().optional(),
 });
 
+/** One row of the merged activity timeline (view viu_activity_timeline). */
+export const timelineTypes = [
+  'ObstacleDetection',
+  'NavigationGuidance',
+  'Ocr',
+  'QrScan',
+  'FaceRecognition',
+  'VoiceCommand',
+  'Emergency',
+  'BoundaryEvent',
+] as const;
+export const timelineTypeLabels: Record<string, string> = labelMap({
+  ObstacleDetection: msg('Phát hiện vật cản'),
+  NavigationGuidance: msg('Hướng dẫn dẫn đường'),
+  Ocr: msg('Đọc chữ'),
+  QrScan: msg('Quét QR'),
+  FaceRecognition: msg('Nhận diện'),
+  VoiceCommand: msg('Lệnh giọng nói'),
+  Emergency: msg('Cảnh báo khẩn cấp'),
+  BoundaryEvent: msg('Ra/vào vùng an toàn'),
+});
+const timelineItem = z.object({
+  occurredAt: time,
+  activityType: z.string(),
+  activityLabel: z.string(),
+  sourceId: uuid,
+  detail: z.string().nullable(),
+  result: z.string().nullable(),
+  score: z.number().nullable(),
+  spokenText: z.string().nullable(),
+  ...position,
+  actorId: uuid.nullable(),
+  actorName: z.string().nullable(),
+});
+export type TimelineItem = z.infer<typeof timelineItem>;
+const guidanceLog = z.object({
+  id: uuid,
+  sessionId: uuid,
+  userId: uuid,
+  frameId: z.number().int(),
+  decision: z.string(),
+  ttsText: z.string(),
+  engineUsed: z.string(),
+  isOfflineFallback: z.boolean(),
+  latencyMs: count.nullable(),
+  createdAt: time,
+  spokenText: z.string().nullable().optional(),
+  spokenAt: time.nullable().optional(),
+  ...position,
+});
+export type GuidanceLog = z.infer<typeof guidanceLog>;
+export const engineLabels: Record<string, string> = labelMap({
+  Jev: msg('Máy chủ · JEV'),
+  Groq: msg('Máy chủ · Groq'),
+  RuleBased: msg('Máy chủ · quy tắc'),
+  OnDeviceRules: msg('Điện thoại tự quyết định'),
+});
+const pagedOf = <T extends z.ZodType>(item: T) =>
+  z.object({
+    items: z.array(item),
+    page: count.positive(),
+    pageSize: count.positive(),
+    totalCount: count,
+    totalPages: count,
+    hasNextPage: z.boolean(),
+    hasPreviousPage: z.boolean(),
+  });
+/** Google Maps link for a recorded position; null when the pair is incomplete. */
+export function mapLink(latitude?: number | null, longitude?: number | null) {
+  return latitude == null || longitude == null
+    ? null
+    : 'https://www.google.com/maps/search/?api=1&query=' + latitude + ',' + longitude;
+}
 export const activityKinds = {
   navigation: {
     label: msg('Di chuyển'),
@@ -270,6 +347,44 @@ export function createActivityApi(get = apiGet) {
       };
     },
     detail,
+    /** Every kind of activity on one timeline, newest first. */
+    async timeline(
+      actor: Person,
+      viuId: string,
+      page: number,
+      range: HistoryRange,
+      types: string[],
+      signal?: AbortSignal,
+    ) {
+      const query = queryParams(page, range, 20);
+      await authorize(actor, viuId, signal);
+      query.set('viuId', viuId);
+      const wanted = types.filter((type) => (timelineTypes as readonly string[]).includes(type));
+      if (wanted.length) query.set('types', wanted.join(','));
+      return parse(
+        pagedOf(timelineItem),
+        await get('/api/activity-history/timeline?' + query, signal),
+      );
+    },
+    /** Every guidance sentence for this person: server decisions and on-device ones. */
+    async guidance(
+      actor: Person,
+      viuId: string,
+      page: number,
+      range: HistoryRange,
+      signal?: AbortSignal,
+    ) {
+      const query = queryParams(page, range, 20);
+      await authorize(actor, viuId, signal);
+      query.set('userId', viuId);
+      const data = parse(
+        pagedOf(guidanceLog),
+        await get('/api/navigation/guidance/logs?' + query, signal),
+      );
+      if (data.items.some((item) => item.userId !== viuId))
+        throw new ServiceError(t('Lịch sử không thuộc người hoặc bản ghi được chọn.'), 403);
+      return data;
+    },
     async events(
       actor: Person,
       viuId: string,

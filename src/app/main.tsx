@@ -3,6 +3,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import '../styles/theme/index.css';
 import '../styles/workspace.css';
+import '../styles/wayfinding.css';
 import { App } from './App';
 import { getLocale, loadLocale } from '../i18n';
 // A saved English choice loads its dictionary before the first paint (no Vietnamese flash);

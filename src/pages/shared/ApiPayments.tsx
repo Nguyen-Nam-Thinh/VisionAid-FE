@@ -8,6 +8,9 @@ import { useSession } from '../../hooks/useService';
 import { Dialog, Confirm, PageHead, State, CardActions, Badge } from '../../components/UI';
 import {
   getMySubscription,
+  getPoolChangeQuote,
+  poolChangeLabels,
+  schedulePoolChange,
   isPersonalCaregiver,
   isOrganizationBuyer,
   subscriptionLabels,
@@ -41,6 +44,129 @@ const paymentIcons = {
   Cancelled: Ban,
 } as const;
 
+/** Business: what switching to this package costs now and when it applies, as the BE prices it. */
+function PoolChangeSummary({
+  actor,
+  item,
+  onScheduled,
+}: {
+  actor: Person;
+  item: LicensePackage;
+  onScheduled: (message: string) => void;
+}) {
+  const cache = useQueryClient();
+  const [scheduling, setScheduling] = useState(false);
+  const query = useQuery({
+    queryKey: ['pool-change-quote', actor.id, actor.orgId, item.id],
+    queryFn: ({ signal }) => getPoolChangeQuote(actor, item.id, signal),
+    retry: false,
+  });
+  const quote = query.data;
+  return (
+    <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
+      {quote && (
+        <div className="stack">
+          <dl className="record-details">
+            <div>
+              <dt>{t('Loại thay đổi')}</dt>
+              <dd>
+                <strong>{poolChangeLabels[quote.changeType]}</strong>
+              </dd>
+            </div>
+            {quote.currentPackage && (
+              <div>
+                <dt>{t('Gói hiện tại')}</dt>
+                <dd>{quote.currentPackage.name}</dd>
+              </div>
+            )}
+            <div>
+              <dt>{t('Trả bây giờ')}</dt>
+              <dd>
+                <strong>{packagePrice(quote.amount, quote.currency)}</strong>
+              </dd>
+            </div>
+            <div>
+              <dt>{t('Áp dụng từ')}</dt>
+              <dd>{formatLocaleDateTime(quote.effectiveAt, { timeZoneName: 'short' })}</dd>
+            </div>
+            <div>
+              <dt>{t('Hết hạn kho sau khi đổi')}</dt>
+              <dd>{formatLocaleDateTime(quote.newExpiresAt, { timeZoneName: 'short' })}</dd>
+            </div>
+            <div>
+              <dt>{t('Số suất')}</dt>
+              <dd>
+                {quote.currentTotalLicenses
+                  ? t('{from} → {to} suất, đang dùng {used}', {
+                      from: quote.currentTotalLicenses,
+                      to: quote.newTotalLicenses,
+                      used: quote.usedLicenses,
+                    })
+                  : t('{to} suất', { to: quote.newTotalLicenses })}
+              </dd>
+            </div>
+          </dl>
+          <p>
+            {quote.changeType === 'Upgrade'
+              ? t(
+                  'Chỉ trả phần chênh lệch cho {days} ngày còn lại. Số suất đổi ngay sau khi thanh toán, ngày hết hạn giữ nguyên.',
+                  { days: quote.daysLeft },
+                )
+              : quote.changeType === 'ScheduledDowngrade'
+                ? t(
+                    'Gói rẻ hơn gói hiện tại: không trả tiền và không hoàn tiền. Kho đổi sang gói này khi hết kỳ đã trả.',
+                  )
+                : quote.changeType === 'Renewal'
+                  ? t('Trả trọn giá; kỳ mới nối tiếp sau ngày hết hạn hiện tại.')
+                  : t('Trả trọn giá; kỳ mới bắt đầu từ lúc thanh toán thành công.')}
+          </p>
+          {quote.seatsToRelease > 0 && (
+            <p className="notice error" role="alert">
+              {t(
+                'Đang dùng nhiều hơn số suất của gói này. Thu hồi {count} license trong kho trước khi đổi gói.',
+                { count: quote.seatsToRelease },
+              )}
+            </p>
+          )}
+          {!quote.canProceed && quote.seatsToRelease === 0 && (
+            <p className="notice error" role="alert">
+              {t('Kho hiện không đổi gói được. Tải lại kho license để kiểm tra trạng thái.')}
+            </p>
+          )}
+          {quote.changeType === 'ScheduledDowngrade' && quote.canProceed && quote.poolId && (
+            <button
+              className="btn primary"
+              disabled={scheduling}
+              onClick={async () => {
+                setScheduling(true);
+                try {
+                  await schedulePoolChange(actor, quote.poolId!, item.id);
+                  onScheduled(
+                    t('Đã hẹn đổi sang gói {name} vào {time}.', {
+                      name: item.name,
+                      time: formatLocaleDateTime(quote.effectiveAt),
+                    }),
+                  );
+                } catch (error) {
+                  onScheduled(error instanceof Error ? error.message : t('Không thể thực hiện.'));
+                } finally {
+                  await cache.invalidateQueries({
+                    predicate: (q) =>
+                      ['license-pool', 'pool-change-quote'].includes(String(q.queryKey[0])) &&
+                      q.queryKey[1] === actor.id,
+                  });
+                  setScheduling(false);
+                }
+              }}
+            >
+              {scheduling ? t('Đang xử lý…') : t('Hẹn đổi gói vào cuối kỳ')}
+            </button>
+          )}
+        </div>
+      )}
+    </State>
+  );
+}
 export function PackageCheckout({
   actor,
   item,
@@ -55,7 +181,18 @@ export function PackageCheckout({
   const [attempted, setAttempted] = useState(false);
   const [failure, setFailure] = useState<Error | null>(null);
   const [link, setLink] = useState<PaymentLink | null>(null);
+  const [scheduled, setScheduled] = useState('');
   const cache = useQueryClient();
+  const quote = useQuery({
+    queryKey: ['pool-change-quote', actor.id, actor.orgId, item.id],
+    queryFn: ({ signal }) => getPoolChangeQuote(actor, item.id, signal),
+    enabled: isOrganizationBuyer(actor),
+    retry: false,
+  });
+  // A cheaper package is not paid for: it is scheduled for the end of the period instead.
+  const payable =
+    !isOrganizationBuyer(actor) ||
+    (!!quote.data && quote.data.canProceed && quote.data.changeType !== 'ScheduledDowngrade');
   // Rejected before any order exists: Super Admin turned payos_enabled off.
   const paymentDisabled = failure instanceof ServiceError && failure.code === PAYMENT_DISABLED;
   return (
@@ -87,10 +224,17 @@ export function PackageCheckout({
           </div>
         </dl>
         {isOrganizationBuyer(actor) && (
-          <p>
-            {t(
-              'Mua mới hoặc bổ sung license do máy chủ quyết định. Khi gia hạn kho hiện có, thời hạn được tính lại từ ngày thanh toán; chưa hỗ trợ đổi sang gói khác.',
-            )}
+          <PoolChangeSummary
+            actor={actor}
+            item={item}
+            onScheduled={(message) => {
+              setScheduled(message);
+            }}
+          />
+        )}
+        {scheduled && (
+          <p className="notice" role="status">
+            {scheduled}
           </p>
         )}
         <p>
@@ -103,7 +247,7 @@ export function PackageCheckout({
             <span />
           </State>
         )}
-        {!link && (
+        {!link && payable && (
           <button
             className="btn primary"
             disabled={pending || attempted}
@@ -244,8 +388,10 @@ function PaymentHistory({ actor }: { actor: Person }) {
                 ))}
               </tbody>
             </table>
+            {query.data?.items.length === 0 && (
+              <p className="empty">{t('Chưa có giao dịch trên trang này.')}</p>
+            )}
           </div>
-          {query.data?.items.length === 0 && <p>{t('Chưa có giao dịch trên trang này.')}</p>}
           {query.data && (
             <footer className="row pagination">
               <span>

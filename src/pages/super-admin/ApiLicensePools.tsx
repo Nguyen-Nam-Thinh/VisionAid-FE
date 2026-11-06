@@ -124,7 +124,6 @@ function Pools({ actor }: { actor: Person }) {
                   })}
                 </p>
               )}
-              {!pools.items.length && <p>{t('Không có kho license phù hợp.')}</p>}
               <div
                 className="table-scroll"
                 tabIndex={0}
@@ -184,6 +183,9 @@ function Pools({ actor }: { actor: Person }) {
                     ))}
                   </tbody>
                 </table>
+                {!pools.items.length && (
+                  <p className="empty">{t('Không có kho license phù hợp.')}</p>
+                )}
               </div>
               <div className="row pagination">
                 <span>

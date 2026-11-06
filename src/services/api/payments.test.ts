@@ -9,7 +9,6 @@ import {
 } from './payments';
 import type { Person } from '../../models/domain';
 import type { LicensePackage } from './packages';
-import { ServiceError } from '../contracts';
 const id = '01900000-0000-7000-8000-000000000001';
 const actor = { id, orgId: '', role: 'Caregiver' } as Person;
 const date = '2026-10-03T00:00:00Z';
@@ -62,13 +61,37 @@ const link = {
 it('Business checkout requires a CenterAdmin organization and matching package; history/cancel reuse server scope', async () => {
   const center = { ...actor, role: 'CenterAdmin' as const, orgId: id };
   const business = { ...pkg, packageType: 'Business' as const };
+  const ref = { id, name: 'Business', code: 'BUSINESS' };
+  const quote = (changeType: string, canProceed = true) => ({
+    changeType,
+    poolId: null,
+    currentPackage: null,
+    targetPackage: ref,
+    amount: 4500000,
+    currency: 'VND',
+    daysLeft: 0,
+    currentDailyPrice: 0,
+    targetDailyPrice: 150000,
+    effectiveAt: date,
+    currentExpiresAt: null,
+    newExpiresAt: date,
+    currentTotalLicenses: 0,
+    newTotalLicenses: 50,
+    usedLicenses: 0,
+    seatsToRelease: canProceed ? 0 : 2,
+    canProceed,
+    blockedCode: canProceed ? null : 'SEATS_EXCEED_NEW_PACKAGE',
+    explanation: '',
+  });
   const get = vi.fn().mockResolvedValue(page([business]));
-  get
-    .mockResolvedValueOnce(page([business]))
-    .mockRejectedValueOnce(new ServiceError('Chưa có kho', 404));
+  get.mockResolvedValueOnce(page([business])).mockResolvedValueOnce(quote('FirstPurchase'));
   const write = vi.fn().mockResolvedValue(link);
   const api = createPaymentsApi(get, write);
   await expect(api.create(center, business, 'https://visionaid.net')).resolves.toEqual(link);
+  expect(get).toHaveBeenLastCalledWith(
+    '/api/licenses/pool/change-quote?packageId=' + id,
+    undefined,
+  );
   await expect(api.create(center, pkg, 'https://visionaid.net')).rejects.toMatchObject({
     status: 422,
   });
@@ -77,25 +100,13 @@ it('Business checkout requires a CenterAdmin organization and matching package; 
   });
   await expect(api.list({ ...center, orgId: '' }, 1)).rejects.toMatchObject({ status: 403 });
   expect(write).toHaveBeenCalledTimes(1);
-  get.mockResolvedValueOnce(page([business])).mockResolvedValueOnce({
-    id,
-    organizationId: id,
-    package: {
-      id: '01900000-0000-7000-8000-000000000002',
-      name: 'Other',
-      code: 'OTHER',
-      packageType: 'Business',
-    },
-    totalLicenses: 50,
-    usedLicenses: 0,
-    availableLicenses: 50,
-    status: 'Active',
-    purchasedAt: date,
-    expiresAt: null,
-  });
-  await expect(api.create(center, business, 'https://visionaid.net')).rejects.toMatchObject({
-    status: 409,
-  });
+  // A cheaper package is scheduled, never paid; too many seats in use blocks the change.
+  for (const blocked of [quote('ScheduledDowngrade'), quote('Upgrade', false)]) {
+    get.mockResolvedValueOnce(page([business])).mockResolvedValueOnce(blocked);
+    await expect(api.create(center, business, 'https://visionaid.net')).rejects.toMatchObject({
+      status: 422,
+    });
+  }
   expect(write).toHaveBeenCalledTimes(1);
   get.mockResolvedValueOnce(page([{ ...payment, transactionType: 'LicenseTopup' }]));
   await api.cancel(center, payment);

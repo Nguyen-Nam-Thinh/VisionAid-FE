@@ -1,9 +1,13 @@
 import { t } from '../../i18n';
 import { useState } from 'react';
+import { Camera, Trash2 } from 'lucide-react';
 import { PushSettings } from '../../components/PushSettings';
 import { Form } from '../../components/Form';
 import { Confirm, Dialog, PageHead, Toast } from '../../components/UI';
 import { useAuth, useSession } from '../../hooks/useService';
+import { useQueryClient } from '@tanstack/react-query';
+import { Avatar } from '../../components/Avatar';
+import { AVATAR_ACCEPT, avatarApi } from '../../services/api/avatar';
 export function Profile() {
   const { data: user } = useSession();
   const auth = useAuth();
@@ -11,7 +15,36 @@ export function Profile() {
   const [message, setMessage] = useState('');
   const [avatarError, setAvatarError] = useState('');
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [confirmRemoveAvatar, setConfirmRemoveAvatar] = useState(false);
+  const cache = useQueryClient();
   if (!user) return null;
+  const uploadAvatar = async (file: File) => {
+    setAvatarError('');
+    setAvatarBusy(true);
+    try {
+      if (auth.mode === 'mock') {
+        if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 2 * 1024 * 1024)
+          throw Error(t('Chọn ảnh JPG/PNG dưới 2 MB.'));
+        const avatar = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        await auth.profile({ name: user.name, phone: user.phone, avatar });
+        setMessage(t('Đã cập nhật avatar demo.'));
+      } else {
+        await avatarApi.upload(file);
+        await cache.invalidateQueries({ queryKey: ['session'] });
+        setMessage(t('Đã cập nhật ảnh đại diện.'));
+      }
+    } catch (error) {
+      setAvatarError(error instanceof Error ? error.message : t('Không thể tải ảnh lên.'));
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
   return (
     <>
       <PageHead
@@ -19,14 +52,61 @@ export function Profile() {
         description={t('Thông tin cá nhân và bảo vệ phiên đăng nhập.')}
       />
       {message && <Toast message={message} onDismiss={() => setMessage('')} />}
-      {avatarError && (
-        <p className="notice error" role="alert">
-          {avatarError}
-        </p>
-      )}
       <div className="profile-layout">
         <section className="glass card stack">
           <h2>{t('Thông tin cá nhân')}</h2>
+          <div className="profile-photo">
+            <Avatar
+              url={user.avatar}
+              name={user.name}
+              alt={user.avatar ? t('Ảnh đại diện của bạn') : ''}
+              className="avatar profile-avatar"
+              size={96}
+            />
+            <div className="profile-photo-body">
+              <strong>{t('Ảnh đại diện')}</strong>
+              <p className="muted">
+                {auth.mode === 'mock'
+                  ? t('JPG hoặc PNG, bản demo tối đa 2 MB.')
+                  : t(
+                      'JPG, PNG hoặc WebP, tối đa 10 MB. Ảnh được cắt vuông và xóa thông tin vị trí; chỉ người có liên quan đến bạn trong VisionAid xem được.',
+                    )}
+              </p>
+              <div className="row profile-photo-actions">
+                <label className={'btn small' + (avatarBusy ? ' disabled' : '')}>
+                  <Camera size={16} aria-hidden="true" />
+                  {avatarBusy ? t('Đang tải ảnh…') : user.avatar ? t('Đổi ảnh') : t('Tải ảnh lên')}
+                  <input
+                    className="sr-only"
+                    type="file"
+                    accept={auth.mode === 'mock' ? 'image/png,image/jpeg' : AVATAR_ACCEPT}
+                    disabled={avatarBusy}
+                    onChange={(e) => {
+                      const input = e.currentTarget;
+                      const file = input.files?.[0];
+                      input.value = '';
+                      if (file) void uploadAvatar(file);
+                    }}
+                  />
+                </label>
+                {user.avatar && auth.mode === 'api' && (
+                  <button
+                    className="btn small danger"
+                    disabled={avatarBusy}
+                    onClick={() => setConfirmRemoveAvatar(true)}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                    {t('Xóa ảnh')}
+                  </button>
+                )}
+              </div>
+              {avatarError && (
+                <p className="notice error" role="alert">
+                  {avatarError}
+                </p>
+              )}
+            </div>
+          </div>
           <dl className="profile-details">
             <div>
               <dt>{t('Họ và tên')}</dt>
@@ -65,46 +145,17 @@ export function Profile() {
               />
             </Dialog>
           )}
-          {auth.mode === 'mock' && (
-            <label className="field">
-              {t('Ảnh đại diện JPG/PNG · bản demo tối đa 2 MB')}
-              <input
-                type="file"
-                accept="image/png,image/jpeg"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  setAvatarError('');
-                  try {
-                    if (
-                      !['image/png', 'image/jpeg'].includes(file.type) ||
-                      file.size > 2 * 1024 * 1024
-                    )
-                      throw Error(t('Chọn ảnh JPG/PNG dưới 2 MB.'));
-                    const avatar = await new Promise<string>((resolve, reject) => {
-                      const reader = new FileReader();
-                      reader.onload = () => resolve(String(reader.result));
-                      reader.onerror = reject;
-                      reader.readAsDataURL(file);
-                    });
-                    await auth.profile({ name: user.name, phone: user.phone, avatar });
-                    setMessage(t('Đã cập nhật avatar demo.'));
-                  } catch (error) {
-                    setAvatarError(
-                      error instanceof Error ? error.message : t('Không thể đọc ảnh.'),
-                    );
-                  }
-                }}
-              />
-            </label>
-          )}
-          {auth.mode === 'api' && (
-            <p className="muted">
-              {t('Ảnh đại diện hiện tại được giữ nguyên. Chưa tích hợp tải ảnh lên.')}
-            </p>
-          )}
-          {user.avatar && (
-            <img src={user.avatar} alt={t('Ảnh đại diện của bạn')} width={80} height={80} />
+          {confirmRemoveAvatar && (
+            <Confirm
+              title={t('Xóa ảnh đại diện')}
+              description={t('Ảnh đại diện sẽ bị xóa khỏi máy chủ. Bạn có thể tải ảnh khác sau.')}
+              onClose={() => setConfirmRemoveAvatar(false)}
+              onConfirm={async () => {
+                await avatarApi.remove();
+                await cache.invalidateQueries({ queryKey: ['session'] });
+                setMessage(t('Đã xóa ảnh đại diện.'));
+              }}
+            />
           )}
         </section>
         <section className="glass card stack">

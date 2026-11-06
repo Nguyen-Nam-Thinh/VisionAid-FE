@@ -26,7 +26,7 @@ const editorFields: FieldSpec[] = [
     key: 'priceYearly',
     label: msg('Giá năm'),
     hint: msg(
-      'Có thể để trống khi tạo. Giá năm chưa dùng để thanh toán trên Web; không thể xóa giá đã lưu.',
+      'Để trống để bỏ giá năm; gói khi đó chỉ bán theo tháng. Giá năm chưa dùng để thanh toán trên Web.',
     ),
   },
   { key: 'currency', label: msg('Đơn vị tiền tệ'), required: true, max: 10 },
@@ -229,13 +229,13 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                 ))}
               </tbody>
             </table>
+            {!items.length && (
+              <p className="empty">
+                {t('Chưa có gói phù hợp trên trang này.')}
+                {query.data?.hasNextPage ? t(' Hãy xem trang tiếp theo.') : ''}
+              </p>
+            )}
           </div>
-          {!items.length && (
-            <p>
-              {t('Chưa có gói phù hợp trên trang này.')}
-              {query.data?.hasNextPage ? t(' Hãy xem trang tiếp theo.') : ''}
-            </p>
-          )}
           {query.data && (
             <footer className="pagination">
               <span>
