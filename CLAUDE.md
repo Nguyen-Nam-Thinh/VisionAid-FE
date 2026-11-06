@@ -68,8 +68,8 @@ WebRTC có CAREGIVER_INITIATED, VIU_VOICE_COMMAND, SOS_AUTO; signaling dự ki�
 | React Web | React 19, TypeScript 6, Vite 8, React Router 7 |
 | ASP.NET Core REST, SignalR, Mapbox, Firebase FCM | REST/SignalR có implementation theo PLAN.md; Mapbox/FCM chưa nghiệm thu, FCM chưa có runtime |
 | HTTP và state | Fetch transport; TanStack Query 5; store nhỏ cho selection/notice |
-| Form và giao diện | React Hook Form 7, Zod 4, Tailwind 4, CSS tokens, lucide-react; glassmorphism theo yêu cầu |
-| Typography | Be Vietnam Pro / JetBrains Mono bundle local |
+| Form và giao diện | React Hook Form 7, Zod 4, Tailwind 4, CSS tokens, lucide-react; hệ Wayfinding (DESIGN.md), không glassmorphism |
+| Typography | Inclusive Sans Variable bundle local (có tiếng Việt) |
 | Test và toolchain | Vitest, Playwright Edge headless, axe-core, ESLint, Prettier, npm/lockfile |
 
 Phiên bản chính xác theo package-lock.json. Các nhóm màn hình mục 6 đã có implementation mock, gồm QR bằng mã/ảnh, TTS và voice history theo WBS. `services/index.ts` chọn mock/api; API adapter báo 501 khi chưa có contract, không fallback mock. Model client không phải REST DTO.
@@ -275,7 +275,7 @@ Giá trị nghiệp vụ trong DB: `DETECTED`, `DISMISSED`, `SENT`, `ACKNOWLEDGE
 
 ## 12. UX, accessibility và quy ước code
 
-- UI hiện hành theo DESIGN.md: Organic/Natural, xanh rêu, nền giấy, Fraunces/Nunito và native dialog. Giữ token/component đã sửa; không đưa màu xanh dương hoặc glassmorphism cũ trở lại. Ưu tiên contrast và keyboard hơn hiệu ứng.
+- UI hiện hành theo DESIGN.md: Wayfinding, nền concrete, panel trắng, chữ ink, một màu vàng xúc giác cho bước tiếp theo, Inclusive Sans và native dialog. Token duy nhất ở `src/styles/theme/index.css`, lớp trình bày cuối `src/styles/wayfinding.css`. Không đưa lại màu viết cứng, xanh dương hoặc glassmorphism. Ưu tiên contrast và keyboard hơn hiệu ứng.
 - Mọi trang có loading, empty, error, forbidden và pending states thích hợp; không dùng màn hình trắng khi lỗi.
 - Bảng có pagination/filter, trạng thái và action rõ ràng. Không ẩn dữ liệu bằng màu đơn thuần.
 - Theo yêu cầu WCAG 2.1 trong báo cáo: semantic HTML, labels, keyboard navigation, visible focus, contrast và text thay thế phù hợp. Đây là mục tiêu, không tự tuyên bố đạt chuẩn khi chưa kiểm tra.

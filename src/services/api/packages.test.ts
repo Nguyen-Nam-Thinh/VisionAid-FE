@@ -48,7 +48,11 @@ it('validates money, integer limits and boolean flags; update excludes immutable
   ]) {
     expect(() => packageInput({ ...values, ...invalid })).toThrow();
   }
-  expect(() => packageInput(values, { ...item, priceYearly: 1000000 })).toThrow(/xóa giá năm/);
+  // An empty yearly price is sent as null so the BE clears the stored one.
+  expect(
+    packageInput({ ...values, priceYearly: '', isActive: true }, { ...item, priceYearly: 1000000 })
+      .priceYearly,
+  ).toBeNull();
 });
 it('rejects non-admin writes before transport, checks detail identity and filters package visibility', async () => {
   const get = vi.fn().mockResolvedValue(item);

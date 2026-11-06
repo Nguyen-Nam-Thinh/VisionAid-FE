@@ -2,7 +2,7 @@ import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { createPackagesApi, type LicensePackage } from './packages';
-import { isPersonalCaregiver, isOrganizationBuyer, getOrganizationPool } from './licenses';
+import { isPersonalCaregiver, isOrganizationBuyer, getPoolChangeQuote } from './licenses';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 
@@ -22,6 +22,7 @@ const transaction = z.object({
     'SubscriptionRenew',
     'LicensePurchase',
     'LicenseTopup',
+    'LicenseUpgrade',
     'Refund',
   ]),
   status: z.enum(['Pending', 'Success', 'Failed', 'Refunded', 'Cancelled']),
@@ -178,18 +179,23 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
           409,
         );
       if (isOrganizationBuyer(actor)) {
-        try {
-          const pool = await getOrganizationPool(actor, undefined, get);
-          if (pool.status !== 'Suspended' && pool.package.id !== current.id)
-            throw new ServiceError(
-              t(
-                'Kho hiện tại dùng gói khác. Chưa hỗ trợ đổi gói Business qua thanh toán; chọn đúng gói của kho hoặc liên hệ hỗ trợ.',
-              ),
-              409,
-            );
-        } catch (error) {
-          if (!(error instanceof ServiceError && error.status === 404)) throw error;
-        }
+        // BE prices a package change itself (upgrade = prorated difference) and refuses a cheaper
+        // package here (DOWNGRADE_MUST_BE_SCHEDULED); the quote shown before checkout is advisory.
+        const quote = await getPoolChangeQuote(actor, current.id, undefined, get);
+        if (quote.changeType === 'ScheduledDowngrade')
+          throw new ServiceError(
+            t('Gói rẻ hơn gói hiện tại: hẹn đổi vào cuối kỳ, không cần thanh toán.'),
+            422,
+          );
+        if (!quote.canProceed)
+          throw new ServiceError(
+            quote.seatsToRelease > 0
+              ? t('Cần thu hồi {count} license đang dùng trước khi đổi sang gói này.', {
+                  count: quote.seatsToRelease,
+                })
+              : t('Kho hiện không đổi gói được. Tải lại kho license để kiểm tra trạng thái.'),
+            422,
+          );
       }
       const result = parse(
         paymentLink,

@@ -206,7 +206,6 @@ function Organizations({ user }: { user: Person }) {
           <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
             {list.data && (
               <>
-                {!list.data.items.length && <p>{t('Không có tổ chức phù hợp.')}</p>}
                 <div className="table-scroll">
                   <table>
                     <thead>
@@ -238,6 +237,9 @@ function Organizations({ user }: { user: Person }) {
                       ))}
                     </tbody>
                   </table>
+                  {!list.data.items.length && (
+                    <p className="empty">{t('Không có tổ chức phù hợp.')}</p>
+                  )}
                 </div>
                 <Pagination
                   data={list.data}
@@ -563,7 +565,6 @@ function OrganizationDetails({
           <State loading={members.isPending} error={members.error} retry={() => members.refetch()}>
             {members.data && (
               <>
-                {!members.data.items.length && <p>{t('Chưa có thành viên phù hợp.')}</p>}
                 <div className="table-scroll">
                   <table>
                     <thead>
@@ -587,6 +588,9 @@ function OrganizationDetails({
                       ))}
                     </tbody>
                   </table>
+                  {!members.data.items.length && (
+                    <p className="empty">{t('Chưa có thành viên phù hợp.')}</p>
+                  )}
                 </div>
                 <Pagination data={members.data} busy={members.isFetching} change={setPage} />
               </>

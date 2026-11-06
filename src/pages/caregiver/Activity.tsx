@@ -85,18 +85,25 @@ export function Activity() {
                   'Đường nối các vị trí lịch sử, sơ đồ mô phỏng không phải bản đồ đường đi',
                 )}
                 viewBox="0 0 600 210"
-                style={{ width: '100%', maxHeight: 240, background: '#edf3f9', borderRadius: 14 }}
+                style={{
+                  width: '100%',
+                  maxHeight: 240,
+                  background: 'var(--panel-sunk)',
+                  borderRadius: 14,
+                }}
               >
                 <polyline
                   points={points}
                   fill="none"
-                  stroke="#1856ff"
+                  stroke="var(--ink)"
                   strokeWidth="4"
                   strokeLinejoin="round"
                 />
                 {movement.map((a, i) => {
                   const [cx, cy] = points.split(' ')[i].split(',');
-                  return <circle key={a.id} cx={cx} cy={cy} r="5" fill="#fff" stroke="#1856ff" />;
+                  return (
+                    <circle key={a.id} cx={cx} cy={cy} r="5" fill="#fff" stroke="var(--ink)" />
+                  );
                 })}
               </svg>
               <small>

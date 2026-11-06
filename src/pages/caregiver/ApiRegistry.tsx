@@ -205,7 +205,6 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
                 {t('Bạn có quyền xem. Cần quyền quản lý gương mặt để thêm, sửa hoặc xóa.')}
               </p>
             )}
-            {!items.length && <p>{t('Chưa có người thân phù hợp.')}</p>}
             <div
               className="table-scroll"
               tabIndex={0}
@@ -255,6 +254,7 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
                   ))}
                 </tbody>
               </table>
+              {!items.length && <p className="empty">{t('Chưa có người thân phù hợp.')}</p>}
             </div>
             <p>{t('{length} kết quả', { length: items.length })}</p>
             {editing && (

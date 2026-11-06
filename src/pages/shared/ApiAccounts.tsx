@@ -6,11 +6,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth, useSession } from '../../hooks/useService';
 import {
   accountsApi,
+  RESTORE_WINDOW_DAYS,
   type Account,
   type AccountFilters,
   type AccountInput,
 } from '../../services/api/accounts';
 import { Form, type FieldSpec } from '../../components/Form';
+import { useNow } from '../../hooks/useNow';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import { roles } from '../../constants/labels';
 import type { Person } from '../../models/domain';
@@ -226,7 +228,6 @@ function Accounts({
         <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
           {list.data && (
             <>
-              {!list.data.items.length && <p>{t('Không có tài khoản phù hợp.')}</p>}
               <div className="table-scroll">
                 <table>
                   <thead>
@@ -260,6 +261,9 @@ function Accounts({
                     ))}
                   </tbody>
                 </table>
+                {!list.data.items.length && (
+                  <p className="empty">{t('Không có tài khoản phù hợp.')}</p>
+                )}
               </div>
               <div className="row pagination">
                 <span>
@@ -483,6 +487,8 @@ function AccountDetails({
   const [reset, setReset] = useState(false);
   const [busy, setBusy] = useState(false);
   const [action, setAction] = useState<'activate' | 'deactivate' | 'delete' | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const now = useNow();
   const [notice, setNotice] = useState('');
   const orgName = useOwnOrgName(actor);
   // Admin may open accounts of any organization: name it from the org record, never the raw id.
@@ -558,7 +564,25 @@ function AccountDetails({
       </dl>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {account.deletedAt ? (
-        <p>{t('Tài khoản đã xóa. Chưa có API khôi phục tài khoản.')}</p>
+        <div className="stack">
+          <p>
+            {t('Tài khoản đã xóa lúc {time}.', { time: formatLocaleDateTime(account.deletedAt) })}{' '}
+            {now - Date.parse(account.deletedAt) > RESTORE_WINDOW_DAYS * 86_400_000
+              ? t('Đã quá {days} ngày nên máy chủ có thể không cho khôi phục.', {
+                  days: RESTORE_WINDOW_DAYS,
+                })
+              : t('Có thể khôi phục trong {days} ngày kể từ lúc xóa.', {
+                  days: RESTORE_WINDOW_DAYS,
+                })}
+          </p>
+          {actor.role === 'Admin' && (
+            <div className="row account-detail-actions">
+              <button className="btn" onClick={() => setRestoring(true)}>
+                {t('Khôi phục tài khoản')}
+              </button>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="row account-detail-actions">
           <button className="btn" onClick={() => setEdit(true)}>
@@ -610,7 +634,9 @@ function AccountDetails({
               ? t(': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.')
               : t(': thu hồi phiên refresh và FCM. ') +
                 (action === 'delete'
-                  ? t('Xóa mềm, hiện chưa có API khôi phục.')
+                  ? t('Xóa mềm; Admin có thể khôi phục trong {days} ngày.', {
+                      days: RESTORE_WINDOW_DAYS,
+                    })
                   : t('Người dùng sẽ bị chặn đăng nhập.')))
           }
           onClose={() => setAction(null)}
@@ -622,6 +648,27 @@ function AccountDetails({
               await accountsApi.status(actor, account.id, action === 'activate');
               setNotice(t('Đã cập nhật trạng thái.'));
             }
+            await refresh();
+          }}
+        />
+      )}
+      {restoring && account.deletedAt && (
+        <Confirm
+          title={t('Khôi phục tài khoản')}
+          description={t(
+            '{email}: mở lại tài khoản với mật khẩu cũ, giữ liên kết và dữ liệu còn lại. Dữ liệu đã bị dọn theo thời hạn lưu trữ không lấy lại được.',
+            { email: account.email },
+          )}
+          onClose={() => setRestoring(false)}
+          onConfirm={async () => {
+            const result = await accountsApi.restore(actor, account.id);
+            setNotice(
+              result.needsLicense
+                ? t(
+                    'Đã khôi phục tài khoản. Kho của tổ chức hết suất nên người dùng chưa có license; trung tâm cần cấp một suất, trước đó chỉ dùng được SOS.',
+                  )
+                : t('Đã khôi phục tài khoản.'),
+            );
             await refresh();
           }}
         />

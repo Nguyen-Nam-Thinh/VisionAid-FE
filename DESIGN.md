@@ -1,50 +1,51 @@
 ---
-version: alpha
-name: VisionAid Organic
-description: Warm, accessible care dashboard
+version: beta
+name: VisionAid Wayfinding
+description: Legible, high-contrast care dashboard drawn from accessibility infrastructure
 colors:
-  primary: "#5D7052"
-  primary-hover: "#46563D"
-  on-primary: "#F3F4F1"
-  secondary: "#C18C5D"
-  secondary-text: "#875831"
-  background: "#FDFCF8"
-  surface: "#FEFEFA"
-  foreground: "#2C2C24"
-  muted: "#646458"
-  stone: "#F0EBE5"
-  accent: "#E6DCCD"
-  border: "#DED8CF"
-  control-border: "#918D80"
-  destructive: "#A85448"
+  concrete: '#E7E8E2'
+  panel: '#FFFFFF'
+  panel-sunk: '#F3F4EF'
+  ink: '#1B1D19'
+  ink-muted: '#50544C'
+  line: '#CDD0C7'
+  line-strong: '#7E8279'
+  tactile: '#F2C200'
+  tactile-soft: '#FBEDB0'
+  signal: '#B42318'
+  signal-soft: '#FCE8E6'
+  guide: '#23684A'
+  guide-soft: '#E1EFE7'
+  caution: '#7A4A00'
+  caution-soft: '#F6E9CF'
 typography:
   display:
-    fontFamily: Fraunces Variable
-    fontSize: 64px
-    fontWeight: 650
-    lineHeight: 1.12
-    letterSpacing: -0.03em
-  heading:
-    fontFamily: Fraunces Variable
+    fontFamily: Inclusive Sans Variable
+    fontSize: 76px
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: -0.035em
+  h1:
+    fontFamily: Inclusive Sans Variable
     fontSize: 36px
-    fontWeight: 650
-    lineHeight: 1.3
+    fontWeight: 700
+    lineHeight: 1.12
     letterSpacing: -0.02em
   body:
-    fontFamily: Nunito Variable
+    fontFamily: Inclusive Sans Variable
     fontSize: 16px
     fontWeight: 400
-    lineHeight: 1.6
+    lineHeight: 1.55
   label:
-    fontFamily: Nunito Variable
+    fontFamily: Inclusive Sans Variable
     fontSize: 15px
-    fontWeight: 700
-    lineHeight: 1.5
+    fontWeight: 600
+    lineHeight: 1.4
 rounded:
-  md: 16px
-  lg: 24px
-  xl: 32px
-  full: 9999px
+  sm: 6px
+  md: 10px
+  lg: 14px
+  xl: 20px
 spacing:
   xs: 4px
   sm: 8px
@@ -54,60 +55,84 @@ spacing:
   section: 112px
 components:
   button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    rounded: "{rounded.full}"
-    height: 48px
+    backgroundColor: '{colors.tactile}'
+    borderColor: '{colors.ink}'
+    textColor: '{colors.ink}'
+    rounded: '{rounded.md}'
+    height: 44px
   input:
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.full}"
-    height: 48px
+    backgroundColor: '{colors.panel}'
+    borderColor: '{colors.line-strong}'
+    rounded: '{rounded.md}'
+    height: 46px
 ---
 
-# VisionAid — Organic / Natural
+# VisionAid — Wayfinding
 
 ## Overview
 
-Phong cách theo prompt người dùng ngày 2026-10-05: ấm, tĩnh, thân thiện và gắn kết. Áp dụng cho landing, auth, shell và các component dùng chung của Caregiver, CenterAdmin, Admin. React/Vite, CSS hiện có, Lucide và native dialog được tái sử dụng. Không đổi API, quyền hoặc nghiệp vụ. Nhánh refactor/organic-ui-ux độc lập; không merge/push dev nếu chưa được người dùng yêu cầu.
+Thiết kế lại từ đầu trên nhánh `refactor/visual-redesign` (2026-11-05), không dựa vào giao diện
+trước. Chất liệu lấy từ hạ tầng tiếp cận mà người khiếm thị dùng hằng ngày: gạch lát xúc giác
+vàng (chấm cảnh báo và thanh dẫn hướng), dải đỏ trên gậy trắng, biển chỉ dẫn nhà ga chữ đậm
+tương phản cao. Mục tiêu: người chăm sóc mệt mỏi đọc được màn hình trong một cái nhìn, kể cả trên
+điện thoại và khi đang có cảnh báo.
 
-Tài liệu tuân theo D:/FPT/Ky-9/design.md/docs/spec.md. Skill ui-ux-pro-max được dùng để rà soát phong cách Organic Biophilic, responsive và accessibility; bảng màu/font của prompt được ưu tiên hơn các gợi ý tự sinh.
+Design system nguồn (token, brand book, cover) nằm ngoài repo tại
+`D:/FPT/Ky-9/SEP409/Design/visionaid-ds`, mở bằng skill `claude-design-system`.
 
 ## Colors
 
-Xanh rêu là CTA và trạng thái điều hướng. Nền giấy, stone và sand tạo lớp nhẹ. Terracotta dùng viền/trang trí; chữ outline dùng secondary-text đậm hơn để đảm bảo độ tương phản. Muted cũng được làm đậm hơn màu #78786C trong prompt để đọc trên nền stone. Lỗi giữ sắc đỏ đất và nhãn văn bản; không chỉ dùng màu để truyền đạt trạng thái.
-
-Nguồn runtime: src/styles/theme/index.css :root. Không đưa màu xanh dương cũ trở lại các component. Màu bản đồ/biểu đồ có ý nghĩa riêng phải được đánh giá trước khi đổi.
+- Nền trang `concrete` (xám vỉa hè); nội dung trên `panel` trắng, viền 1px `line`, không đổ bóng.
+- `tactile` (vàng gạch xúc giác) là màu thương hiệu duy nhất, đánh dấu "bước tiếp theo": nút
+  chính, quầng focus, icon của trang đang mở. Vàng chỉ đạt 1,4:1 trên nền nên luôn đi kèm `ink`:
+  nút chính có viền và chữ mực (10:1).
+- `ink` là chữ và cấu trúc mạnh; mục menu đang mở là ô mực, chữ trắng, icon vàng.
+- `signal` (đỏ) chỉ cho khẩn cấp/xóa; `guide` (xanh lá) cho an toàn/hoàn tất; `caution` cho dữ
+  liệu cũ/cảnh báo. Mỗi màu trạng thái luôn kèm chữ; badge thông tin dùng viền mực.
+- Nguồn runtime duy nhất: `src/styles/theme/index.css :root`. Tên biến cũ (`--primary`,
+  `--surface`, `--text`…) được giữ làm API cho component, giá trị trỏ về bảng mới.
 
 ## Typography
 
-Fraunces Variable cho heading; Nunito Variable cho nội dung và thao tác. Font được bundle local qua Fontsource, có glyph tiếng Việt. Giữ JetBrains Mono cho mã kỹ thuật. Heading co giãn bằng clamp; không dùng letter-spacing âm mạnh làm dính dấu tiếng Việt. Body 16px; bảng/form 15px; metadata tối thiểu 12px, không áp 112px khoảng cách marketing vào dashboard.
+Inclusive Sans Variable (300–700, có dải tiếng Việt), một họ chữ cho mọi vai trò. Atkinson
+Hyperlegible Next đã được cân nhắc nhưng thiếu dải U+1EA0–1EF1 (ạ, ầ, ố, ự…). Số dùng tabular;
+số 0 có gạch là thiết kế của font để phân biệt với chữ O. Không viết hoa toàn bộ nhãn, không dùng
+eyebrow, không tô màu riêng một vế tiêu đề.
 
 ## Layout
 
-Landing tối đa 1200px, section rộng và thoáng, hero hai cột xuống một cột trên mobile. Header nổi bo tròn, mobile có menu mở/đóng rõ ràng. Dashboard giữ sidebar/grid có trật tự, bảng cuộn trong container. Nhãn và nút lọc căn theo đáy input. Page header được wrap; không ép nút vào một hàng khi hết chỗ.
+Sidebar 252px cùng nền concrete, ngăn bằng một đường line. Topbar trong suốt trên concrete. Nội
+dung tối đa 1600px, đệm 40px desktop / 24px tablet / 16px mobile. Landing tối đa 1200px.
 
 ## Elevation & Depth
 
-Shadow xanh rêu 0 4px 20px -2px ở 12% và shadow đất 0 10px 40px -10px ở 20%. Grain SVG inline 3.5%, pointer-events none, không yêu cầu tải ảnh ngoài. Modal native ở top layer, backdrop tách nội dung nền. Không áp blur nặng lên bảng dữ liệu.
+Không shadow cho panel. Chỉ lớp nổi (dialog, menu, popover, toast) dùng `--shadow-float`.
+Overlay dialog là ink 55%.
 
 ## Shapes
 
-Button/input pill, textarea 16px, card/dialog 24–32px. Blob và góc bất đối xứng dành cho hero/auth/feature. Không làm méo bảng, input hay vùng tương tác. Không cần hình raster: minh họa sản phẩm hiện có bằng SVG/CSS giữ đúng nội dung VisionAid.
+Bo góc tăng theo kích thước: badge 6, control 10, panel 14, dialog/khối lớn 20.
+
+## Pattern
+
+Hoa văn chấm cảnh báo + thanh dẫn hướng chỉ xuất hiện ở hero landing và panel đăng nhập, không
+nằm sau chữ. Trong không gian làm việc không dùng hoa văn.
 
 ## Components
 
-- Button chính xanh rêu, outline chữ đất đậm, chiều cao 48px; nút nhỏ/icon tối thiểu 44px.
-- Input có label, viền control-border đủ rõ, focus outline 3px. Giữ validation và dữ liệu form khi lỗi.
-- Card nền surface; state loading/empty/error giữ text rõ ràng.
-- Navigation active vừa có nền khác vừa dùng aria-current của NavLink.
-- Dialog căn giữa viewport bằng showModal, scroll nội dung dài, Escape và trả focus khi đóng.
-- Chuyển động nhẹ cho hover/press và vào/ra của dialog, menu tài khoản, bộ lọc, switch. prefers-reduced-motion tắt animation/transition.
-- Không thêm testimonial, giá hay số liệu giả để trang trông đầy hơn.
+- Nút chính vàng viền mực; nút thường trắng viền `line-strong`; nút xóa chữ `signal`. Tối thiểu
+  44px.
+- Input trắng viền 1,5px `line-strong`, chữ 16px; hover viền đậm hơn.
+- Bảng: header `panel-sunk` chữ thường (không viết hoa), dòng hover `panel-sunk`, không zebra.
+- Link trong văn bản (không có class) luôn gạch chân; link dạng component tự có affordance.
+- Focus: vòng mực 3px trong quầng vàng 7px, đặt cuối `wayfinding.css` với `!important` để không
+  component nào che được.
+- Chuyển động chỉ phản hồi thao tác (dialog, menu, switch); tôn trọng prefers-reduced-motion.
 
 ## Do's and Don'ts
 
-- Dùng token chung và CSS hiện có. Thành phần tương tác (Dialog/Confirm, cuộc gọi đến, menu tài khoản, Toggle, tooltip menu thu gọn) dùng primitive Radix của animate-ui; sidebar dùng `Highlight` trượt nền hover, số thống kê dashboard dùng `CountingNumber` (`@animate-ui/react`, `motion`, `radix-ui`); bộ lọc dùng `motion` trực tiếp. Nút, input, bảng giữ CSS riêng; không thêm UI framework khác.
-- Giữ tương phản và focus quan trọng hơn màu/hiệu ứng trang trí trong prompt.
-- Kiểm tra desktop, tablet, mobile 375px, modal và keyboard.
+- Dùng token; không đưa lại màu viết cứng. `wayfinding.css` là lớp trình bày cuối; sửa component
+  ở đó hoặc trong `workspace.css` bằng token.
+- Không dùng glassmorphism, gradient trang trí, viền trái dày làm điểm nhấn, chữ nghiêng nhấn.
+- Kiểm tra desktop, tablet, mobile 375px, dialog và bàn phím.
 - Không xem test mock như nghiệm thu API thật.
-- Không tự merge hoặc push dev/main trong nhiệm vụ này.

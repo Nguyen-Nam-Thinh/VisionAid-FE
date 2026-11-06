@@ -1,0 +1,883 @@
+/* VisionAid Wayfinding — the visual layer, loaded after workspace.css.
+   Concrete ground, white panels, ink text and structure, one tactile yellow for "step here next".
+   Tokens live in theme/index.css; the design system is documented in Design/visionaid-ds. */
+
+/* Base ------------------------------------------------------------------------------------ */
+html {
+  font-size: 16px;
+}
+body {
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: var(--tactile-soft);
+  color: var(--ink);
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font);
+  color: var(--ink);
+  text-wrap: balance;
+}
+h1 {
+  font-size: clamp(1.75rem, 1.2rem + 1.4vw, 2.25rem);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+h2 {
+  font-size: 1.375rem;
+  line-height: 1.3;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+h3 {
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+small,
+.muted {
+  color: var(--muted);
+}
+/* Links in running text are underlined so they never depend on colour; links with a class are
+   components (buttons, rows, cards, menu items) and draw their own affordance. */
+a {
+  color: var(--ink);
+  text-decoration: none;
+}
+a:not([class]) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+a:not([class]):hover {
+  text-decoration-color: var(--ink);
+  text-decoration-thickness: 2px;
+}
+.mono {
+  font-family: var(--font);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Surfaces -------------------------------------------------------------------------------- */
+.glass {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+.card {
+  padding: 24px;
+}
+.stack {
+  gap: 20px;
+}
+
+/* Shell ----------------------------------------------------------------------------------- */
+.shell {
+  grid-template-columns: 252px minmax(0, 1fr);
+  background: var(--background);
+}
+.sidebar {
+  padding: 24px 14px 20px;
+  background: var(--concrete);
+  border-right: 1px solid var(--line);
+  gap: 24px;
+}
+.sidebar .brand,
+.sidebar .sidebar-brand .brand {
+  color: var(--ink);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+.sidebar .sidebar-toggle {
+  border-radius: var(--radius-md);
+  color: var(--ink-muted);
+}
+.sidebar .sidebar-toggle:hover {
+  background: var(--panel);
+  color: var(--ink);
+}
+.nav,
+.nav-items {
+  gap: 2px;
+}
+.nav a {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  color: var(--ink-muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-decoration: none;
+}
+.nav a svg {
+  color: var(--ink-muted);
+}
+.nav a:hover:not(.active) {
+  background: var(--panel);
+  color: var(--ink);
+}
+.nav a:hover:not(.active) svg {
+  color: var(--ink);
+}
+/* The current page is an ink tile; its icon is the one tactile mark in the menu. */
+.nav a.active,
+.nav a.active:hover {
+  background: var(--ink);
+  color: var(--on-primary);
+  box-shadow: none;
+  font-weight: 650;
+}
+.nav a.active svg {
+  color: var(--tactile);
+}
+/* animate-ui's Highlight moves each link's fill onto its own sliding surface and clears the link
+   with an inline `background-color: transparent !important`, reading the fill again only on hover.
+   A link that turns active keeps its old (empty or white) surface, so its white text vanished.
+   The ink tile is therefore painted by a pseudo-element the library never touches; the link is a
+   stacking context so the tile sits above the surfaces and below the label. */
+.nav a {
+  position: relative;
+  z-index: 0;
+}
+.nav a.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--ink);
+}
+.nav-lock {
+  color: inherit;
+  opacity: 0.8;
+}
+.sidebar-foot {
+  border-top: 1px solid var(--line);
+}
+.topbar {
+  min-height: 68px;
+  padding: 12px 40px;
+  background: var(--concrete);
+  border-bottom: 1px solid var(--line);
+}
+.main {
+  padding: 36px 40px 64px;
+}
+.demo-strip {
+  padding: 8px 40px;
+  background: var(--panel-sunk);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-muted);
+  font-size: 0.8125rem;
+}
+.shell .demo-strip {
+  background: var(--panel-sunk);
+}
+.account-trigger {
+  border-radius: var(--radius-md);
+}
+.account-trigger:hover {
+  background: var(--panel);
+}
+.avatar,
+.shell .avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: var(--tactile);
+  color: var(--ink);
+  font-weight: 700;
+}
+.avatar {
+  overflow: hidden;
+}
+.avatar > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Profile photo: picture beside its explanation and two plain actions, no raw file input. */
+.profile-photo {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel-sunk);
+}
+.avatar.profile-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-lg);
+  font-size: 2rem;
+}
+.profile-photo-body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.profile-photo-body > p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.profile-photo-actions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.profile-photo-actions label.btn {
+  cursor: pointer;
+}
+.profile-photo-actions label.btn.disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+/* The file input is visually hidden; its label shows the keyboard focus instead. */
+.profile-photo-actions label.btn:focus-within {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 7px var(--tactile);
+}
+@media (max-width: 520px) {
+  .profile-photo {
+    flex-direction: column;
+  }
+}
+.icon-tile,
+.shell .icon-tile {
+  border-radius: var(--radius-md);
+  background: var(--panel-sunk);
+  color: var(--ink);
+}
+
+/* Page head ------------------------------------------------------------------------------- */
+.page-head {
+  margin-bottom: 32px;
+  align-items: flex-end;
+}
+/* Descriptions wrap instead of being cut off with an ellipsis. */
+.page-head > div > p {
+  white-space: normal;
+}
+.page-head p {
+  margin-top: 10px;
+  max-width: 64ch;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+/* Buttons --------------------------------------------------------------------------------- */
+.btn {
+  min-height: 44px;
+  padding: 10px 18px;
+  gap: 8px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  box-shadow: none;
+}
+.btn:hover:not(:disabled) {
+  background: var(--panel-sunk);
+  border-color: var(--ink);
+  text-decoration: none;
+}
+/* Primary: a yellow sign with an ink edge, so it holds 3:1 against any ground. */
+.btn.primary {
+  background: var(--tactile);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.btn.primary:hover:not(:disabled) {
+  background: var(--tactile-hover);
+  border-color: var(--ink);
+}
+.btn.danger {
+  background: var(--panel);
+  border-color: var(--signal-line);
+  color: var(--signal);
+}
+.btn.danger:hover:not(:disabled) {
+  background: var(--signal-soft);
+  border-color: var(--signal);
+}
+.btn.small {
+  min-height: 40px;
+  padding: 7px 14px;
+  font-size: 0.875rem;
+}
+.btn:disabled {
+  opacity: 0.5;
+}
+.btn.call-end {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: var(--on-primary);
+}
+.btn.call-end:hover:not(:disabled) {
+  background: var(--signal-hover);
+  border-color: var(--signal-hover);
+}
+
+/* Fields ---------------------------------------------------------------------------------- */
+.field {
+  gap: 6px;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.field input,
+.field select,
+.field textarea,
+.search {
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 400;
+}
+.field input:hover,
+.field select:hover,
+.field textarea:hover,
+.search:hover {
+  border-color: var(--ink-muted);
+}
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible,
+.search:focus-visible {
+  border-color: var(--ink);
+}
+.field small {
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+.field-error {
+  color: var(--signal);
+  font-size: 0.875rem;
+}
+
+/* Tables ---------------------------------------------------------------------------------- */
+.table-scroll {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+table {
+  font-size: 0.9375rem;
+}
+th,
+.shell .table-scroll th {
+  background: var(--panel-sunk);
+  color: var(--ink-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.shell .table-scroll thead {
+  background: var(--panel-sunk);
+}
+td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.shell .table-scroll tbody tr:nth-child(even) {
+  background: transparent;
+}
+tbody tr:hover,
+.shell .table-scroll tbody tr:hover {
+  background: var(--panel-sunk);
+}
+.pagination {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* Badges ---------------------------------------------------------------------------------- */
+.badge {
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  background: var(--panel-sunk);
+  color: var(--ink-muted);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.badge.green {
+  background: var(--guide-soft);
+  color: var(--guide);
+  box-shadow: inset 0 0 0 1px var(--guide-line);
+}
+.badge.red {
+  background: var(--signal-soft);
+  color: var(--signal);
+  box-shadow: inset 0 0 0 1px var(--signal-line);
+}
+.badge.amber {
+  background: var(--caution-soft);
+  color: var(--caution);
+  box-shadow: inset 0 0 0 1px var(--caution-line);
+}
+/* Informational state: an ink outline, so it never reads as the amber warning. */
+.badge.blue {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink-muted);
+}
+.badge.gray {
+  background: var(--panel-sunk);
+  color: var(--ink-muted);
+}
+
+/* Notices --------------------------------------------------------------------------------- */
+.notice,
+.shell .notice:not(.error) {
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-sunk);
+  color: var(--ink);
+  font-size: 0.9375rem;
+}
+.notice.error {
+  background: var(--signal-soft);
+  border-color: var(--signal-line);
+  color: var(--signal);
+}
+.urgent-summary,
+.escalation-banner {
+  background: var(--signal-soft);
+  color: var(--signal);
+}
+.escalation-banner {
+  border: 2px solid var(--signal);
+}
+.payment-status,
+.payment-status.green,
+.payment-status.red,
+.payment-status.amber {
+  border-left-width: 1px;
+}
+.payment-status.green {
+  background: var(--guide-soft);
+  border-color: var(--guide-line);
+  color: var(--guide);
+}
+
+/* Dialogs, menus, toasts ------------------------------------------------------------------ */
+.dialog {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: var(--shadow-float);
+}
+.dialog-header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.dialog-header h2 {
+  font-size: 1.25rem;
+}
+.dialog-overlay,
+.dialog::backdrop {
+  background: rgb(27 29 25 / 55%);
+}
+/* A badge in a grid column keeps its own width instead of stretching to the column. */
+.stack > .badge,
+.card > .badge {
+  justify-self: start;
+}
+.account-menu,
+.filter-popover,
+.picker-list {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-float);
+}
+.account-menu > [role='menuitem'] {
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+}
+.account-menu > [role='menuitem'][data-highlighted] {
+  background: var(--panel-sunk);
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+.picker-list > li.active {
+  background: var(--tactile-soft);
+}
+.feedback-toast {
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--on-primary);
+  box-shadow: var(--shadow-float);
+  font-size: 0.9375rem;
+}
+.feedback-toast > button {
+  color: var(--on-ink-muted);
+}
+.feedback-toast > button:hover {
+  background: var(--ink-raised);
+  color: var(--on-primary);
+}
+.nav-tooltip {
+  background: var(--ink);
+  color: var(--on-primary);
+}
+
+/* Controls -------------------------------------------------------------------------------- */
+.toggle {
+  border: 1.5px solid var(--line-strong);
+  background: var(--panel-sunk);
+}
+.toggle[data-state='checked'] {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.toggle[data-state='checked'] .toggle-thumb {
+  background: var(--tactile);
+}
+.checkbox {
+  border: 1.5px solid var(--line-strong);
+  border-radius: 6px;
+}
+.checkbox[data-state='checked'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--tactile);
+}
+.tabs-list {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-sunk);
+}
+.tabs-trigger {
+  border-radius: 8px;
+  color: var(--ink-muted);
+  font-size: 0.9375rem;
+}
+.tabs-trigger[data-state='active'] {
+  background: var(--ink);
+  color: var(--on-primary);
+  box-shadow: none;
+}
+.lang-switch {
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+.lang-switch button {
+  color: var(--ink-muted);
+  letter-spacing: 0;
+}
+.lang-switch button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-primary);
+}
+.filter-count {
+  background: var(--ink);
+  color: var(--tactile);
+}
+.disclosure-trigger {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+/* Data ------------------------------------------------------------------------------------ */
+.stat,
+.dashboard-stats .stat {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-stats {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+}
+.revenue-chart-bar,
+.revenue-share-track > span,
+.bar-fill {
+  background: var(--ink);
+}
+.revenue-chart-slot:hover .revenue-chart-bar {
+  background: var(--ink-raised);
+}
+.revenue-kpi.hero {
+  background: var(--tactile-soft);
+  border-color: var(--caution-line);
+}
+.revenue-kpi.hero .revenue-kpi-value {
+  color: var(--ink);
+}
+.report-tile-icon,
+.status-mark,
+.account-detail-avatar,
+.call-avatar,
+.incoming-call-avatar {
+  background: var(--panel-sunk);
+  color: var(--ink);
+}
+.alert-timeline-step.blue::before {
+  background: var(--ink);
+}
+
+/* Map markers: shape and colour both change; the table below stays the text equivalent. */
+.gps-marker {
+  border: 3px solid var(--panel);
+  background: var(--guide);
+  box-shadow: 0 2px 8px rgb(27 29 25 / 35%);
+}
+.gps-marker.stale {
+  background: var(--caution);
+}
+.gps-marker.alert {
+  background: var(--signal);
+}
+.gps-marker.selected {
+  outline: 3px solid var(--ink);
+  box-shadow: 0 0 0 7px var(--tactile);
+}
+
+/* Sign-in: the second and last place the tactile pattern appears. The yellow panel carries the
+   promise in ink; the pattern stays in its lower part so it never sits behind text. */
+.auth {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  background: var(--panel);
+}
+.auth-story {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  padding: 48px 56px;
+  justify-content: flex-start;
+  gap: 40px;
+  border-radius: 0;
+  background: var(--tactile);
+  color: var(--ink);
+  overflow: hidden;
+}
+.auth-story::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 38%;
+  z-index: -1;
+  background-color: var(--tactile);
+  background-image:
+    radial-gradient(circle at 42% 38%, rgb(255 255 255 / 45%) 0 3px, transparent 4px),
+    radial-gradient(circle, var(--tactile-hover) 0 10px, transparent 11px);
+  background-size: 36px 36px;
+  border-top: 2px solid var(--tactile-hover);
+}
+.auth-story > .row:first-child strong {
+  color: var(--ink);
+  font-size: 1.375rem;
+}
+.auth-story h1 {
+  max-width: 12em;
+  color: var(--ink);
+  font-size: clamp(2.5rem, 1.6rem + 2.6vw, 3.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+.auth-story p {
+  max-width: 26em;
+  color: var(--ink);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+.auth-story .auth-mark {
+  display: none;
+}
+.auth-story > .row:last-child {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 10px 14px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.auth-form {
+  padding: 56px;
+  background: var(--panel);
+}
+.auth-form > div {
+  max-width: 440px;
+}
+.auth-form h1 {
+  font-size: 2.25rem;
+  letter-spacing: -0.025em;
+}
+.auth-form .stack {
+  gap: 20px;
+}
+.auth-form .btn.primary {
+  min-height: 52px;
+  font-size: 1rem;
+}
+.auth-form a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+}
+
+@media (max-width: 1100px) {
+  .topbar,
+  .demo-strip {
+    padding-inline: 24px;
+  }
+  .auth-story {
+    padding: 40px;
+  }
+  .auth-form {
+    padding: 40px;
+  }
+  .main {
+    padding: 28px 24px 48px;
+  }
+}
+@media (max-width: 760px) {
+  .topbar,
+  .demo-strip {
+    padding-inline: 16px;
+  }
+  .main {
+    padding: 24px 16px 40px;
+  }
+  .card {
+    padding: 18px;
+  }
+  .page-head {
+    margin-bottom: 24px;
+    align-items: stretch;
+  }
+  .auth-story {
+    min-height: auto;
+    padding: 28px 20px 120px;
+    gap: 20px;
+  }
+  .auth-story::after {
+    height: 96px;
+  }
+  .auth-story > .row:last-child {
+    display: none;
+  }
+  .auth-form {
+    padding: 32px 20px;
+  }
+}
+
+/* Focus: an ink ring inside a tactile halo, the strongest state on any screen. Last in the file
+   and important on purpose: no component style may hide where the keyboard is. */
+:focus-visible {
+  outline: 3px solid var(--ink) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 7px var(--tactile) !important;
+}
+.landing-cta :focus-visible {
+  outline-color: var(--tactile) !important;
+}
+
+/* Inbox: topbar bell with an unread count, and the notice list. */
+.inbox-bell {
+  position: relative;
+  min-width: 44px;
+  padding: 8px;
+}
+.inbox-bell-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--tactile);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.inbox-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+.inbox-item {
+  display: grid;
+  gap: 6px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.inbox-item.unread {
+  padding-inline: 12px;
+  background: var(--panel-sunk);
+}
+.inbox-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.inbox-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.875rem;
+}
+.inbox-item-actions {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* The issued key list sits inside the "Key cho gia đình" card, below the create button. */
+.issued-keys {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}

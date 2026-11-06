@@ -192,45 +192,44 @@ function Reports({ actor }: { actor: Person }) {
           </label>
         </FilterPanel>
         <State loading={members.isPending} error={members.error} retry={() => members.refetch()}>
-          {members.data?.items.length ? (
-            <div
-              className="table-scroll"
-              role="region"
-              aria-label={t('Bảng thành viên')}
-              tabIndex={0}
-            >
-              <table style={{ minWidth: 640 }}>
-                <thead>
-                  <tr>
-                    <th>{t('Họ tên')}</th>
-                    <th>Email</th>
-                    <th>{t('Vai trò')}</th>
-                    <th>{t('Trạng thái')}</th>
+          <div
+            className="table-scroll"
+            role="region"
+            aria-label={t('Bảng thành viên')}
+            tabIndex={0}
+          >
+            <table style={{ minWidth: 640 }}>
+              <thead>
+                <tr>
+                  <th>{t('Họ tên')}</th>
+                  <th>Email</th>
+                  <th>{t('Vai trò')}</th>
+                  <th>{t('Trạng thái')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.data?.items.map((member) => (
+                  <tr key={member.id}>
+                    <td>
+                      <strong>{member.fullName}</strong>
+                    </td>
+                    <td style={{ overflowWrap: 'anywhere' }}>{member.email}</td>
+                    <td>
+                      <Badge tone="blue">{roles[member.role]}</Badge>
+                    </td>
+                    <td>
+                      <Badge tone={member.isActive ? 'green' : 'gray'}>
+                        {member.isActive ? t('Hoạt động') : t('Vô hiệu hóa')}
+                      </Badge>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {members.data.items.map((member) => (
-                    <tr key={member.id}>
-                      <td>
-                        <strong>{member.fullName}</strong>
-                      </td>
-                      <td style={{ overflowWrap: 'anywhere' }}>{member.email}</td>
-                      <td>
-                        <Badge tone="blue">{roles[member.role]}</Badge>
-                      </td>
-                      <td>
-                        <Badge tone={member.isActive ? 'green' : 'gray'}>
-                          {member.isActive ? t('Hoạt động') : t('Vô hiệu hóa')}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>{t('Chưa có thành viên phù hợp.')}</p>
-          )}
+                ))}
+              </tbody>
+            </table>
+            {!members.data?.items.length && (
+              <p className="empty">{t('Chưa có thành viên phù hợp.')}</p>
+            )}
+          </div>
           {members.data && (
             <div className="row pagination">
               <span>

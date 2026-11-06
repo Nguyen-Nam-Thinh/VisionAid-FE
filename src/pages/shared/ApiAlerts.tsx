@@ -28,6 +28,9 @@ import { searchCareRecipients } from '../../services/api/pickers';
 import { useNow } from '../../hooks/useNow';
 import { onSessionEnded } from '../../services/sessionLifecycle';
 import type { Person } from '../../models/domain';
+import { roles } from '../../constants/labels';
+import { deliveryChannelLabels, deliveryStatusLabels } from '../../services/api/inbox';
+import { useSearchParams } from 'react-router-dom';
 const time = (value: string) => formatLocaleDateTime(value);
 const methods: Record<string, string> = labelMap({
   AccelerometerCamera: msg('Cảm biến / camera'),
@@ -53,7 +56,12 @@ function Alerts({ actor }: { actor: Person }) {
     page: 1,
   });
   const cache = useQueryClient();
-  const [selected, setSelected] = useState('');
+  // The inbox links here with ?event=<id> (open that alert) or ?tab=boundary.
+  const [search] = useSearchParams();
+  const [selected, setSelected] = useState(() => {
+    const id = search.get('event') ?? '';
+    return /^[0-9a-f-]{36}$/i.test(id) ? id : '';
+  });
   const [error, setError] = useState('');
   const [viu, setViu] = useState('');
   // Alerts only carry the VIU id; show the care recipient's name when it is in the first page.
@@ -83,7 +91,10 @@ function Alerts({ actor }: { actor: Person }) {
       {/* Emergency and safe-zone alerts are separate lists in one card (the tabs sit inside it, so the
           card starts where other pages' cards do). Both stay
           mounted so filters and pages survive switching. */}
-      <AnimatedTabs.Root defaultValue="emergency" className="glass card stack alert-tabs">
+      <AnimatedTabs.Root
+        defaultValue={search.get('tab') === 'boundary' ? 'boundary' : 'emergency'}
+        className="glass card stack alert-tabs"
+      >
         <AnimatedTabs.List className="tabs-list" aria-label={t('Loại cảnh báo')}>
           <AnimatedTabs.Trigger value="emergency" className="tabs-trigger">
             <Siren size={16} aria-hidden="true" />
@@ -181,7 +192,6 @@ function Alerts({ actor }: { actor: Person }) {
             <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
               {query.data && (
                 <>
-                  {!query.data.items.length && <p>{t('Không có cảnh báo phù hợp.')}</p>}
                   <div
                     className="table-scroll"
                     tabIndex={0}
@@ -218,6 +228,9 @@ function Alerts({ actor }: { actor: Person }) {
                         ))}
                       </tbody>
                     </table>
+                    {!query.data.items.length && (
+                      <p className="empty">{t('Không có cảnh báo phù hợp.')}</p>
+                    )}
                   </div>
                   <div className="row pagination">
                     <span>
@@ -353,8 +366,7 @@ function BoundaryAlerts({ actor }: { actor: Person }) {
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           {query.data && (
             <>
-              {!query.data.items.length && <p>{t('Không có sự kiện vùng an toàn phù hợp.')}</p>}
-              {query.data.items.length > 0 && (
+              {
                 <div
                   className="table-scroll"
                   tabIndex={0}
@@ -391,8 +403,11 @@ function BoundaryAlerts({ actor }: { actor: Person }) {
                       ))}
                     </tbody>
                   </table>
+                  {!query.data.items.length && (
+                    <p className="empty">{t('Không có sự kiện vùng an toàn phù hợp.')}</p>
+                  )}
                 </div>
-              )}
+              }
               <div className="row pagination">
                 <span>
                   {t('{totalCount} sự kiện · Trang {page}/{p4}', {
@@ -662,12 +677,92 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                             ? t('Hệ thống')
                             : h.changedBy === actor.id
                               ? t('Bạn')
-                              : (names.data?.[h.changedBy] ?? t('Người dùng khác'))}
+                              : (h.changedByName ??
+                                names.data?.[h.changedBy] ??
+                                t('Người dùng khác'))}
                         </p>
                         {h.reason && <p className="alert-timeline-note">{h.reason}</p>}
                       </li>
                     ))}
                   </ol>
+                )}
+                {(event.acknowledgedByName || event.resolvedByName) && (
+                  <p>
+                    {event.acknowledgedByName &&
+                      t('Tiếp nhận bởi {name}.', { name: event.acknowledgedByName })}{' '}
+                    {event.resolvedByName &&
+                      t('Giải quyết bởi {name}.', { name: event.resolvedByName })}
+                  </p>
+                )}
+                {event.notifications && (
+                  <>
+                    <h3>{t('Đã thông báo cho')}</h3>
+                    <div className="table-scroll">
+                      <table>
+                        <caption className="sr-only">{t('Đã thông báo cho')}</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">{t('Người nhận')}</th>
+                            <th scope="col">{t('Kênh')}</th>
+                            <th scope="col">{t('Trạng thái')}</th>
+                            <th scope="col">{t('Đã xem')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {event.notifications.map((n) => (
+                            <tr key={n.id}>
+                              <td>
+                                {n.recipientId === actor.id
+                                  ? t('Bạn')
+                                  : n.recipientName || t('Người dùng khác')}
+                                {n.recipientRole && (
+                                  <>
+                                    <br />
+                                    <small>
+                                      {roles[n.recipientRole as keyof typeof roles] ??
+                                        n.recipientRole}
+                                    </small>
+                                  </>
+                                )}
+                              </td>
+                              <td>{deliveryChannelLabels[n.channel] ?? n.channel}</td>
+                              <td>
+                                <Badge
+                                  tone={
+                                    n.status === 'Sent'
+                                      ? 'green'
+                                      : n.status === 'Failed'
+                                        ? 'red'
+                                        : 'amber'
+                                  }
+                                >
+                                  {deliveryStatusLabels[n.status] ?? n.status}
+                                </Badge>
+                                {n.sentAt && (
+                                  <>
+                                    <br />
+                                    <small>{time(n.sentAt)}</small>
+                                  </>
+                                )}
+                                {n.status === 'Failed' && n.failureReason && (
+                                  <>
+                                    <br />
+                                    <small>{n.failureReason}</small>
+                                  </>
+                                )}
+                              </td>
+                              <td>{n.readAt ? time(n.readAt) : t('Chưa xem')}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {!event.notifications.length && (
+                        <p className="empty">
+                          {t('Chưa có thông báo nào được ghi nhận cho cảnh báo này.')}
+                        </p>
+                      )}
+                    </div>
+                  </>
                 )}
               </>
             )}

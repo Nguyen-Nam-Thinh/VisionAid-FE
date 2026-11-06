@@ -1,10 +1,3 @@
-@import '@fontsource/be-vietnam-pro/vietnamese-400.css';
-@import '@fontsource/be-vietnam-pro/vietnamese-600.css';
-@import '@fontsource/be-vietnam-pro/vietnamese-700.css';
-@import '@fontsource/be-vietnam-pro/latin-400.css';
-@import '@fontsource/be-vietnam-pro/latin-600.css';
-@import '@fontsource/be-vietnam-pro/latin-700.css';
-
 /* One visual system for public pages, authentication and daily operations. */
 /* Reserve the scrollbar so pages do not shift sideways when one page scrolls and the next does not. */
 html {
@@ -63,16 +56,16 @@ html {
   gap: 8px;
 }
 .filter-anchor > .btn.is-active {
-  border-color: var(--primary, #08736f);
-  color: var(--primary, #08736f);
+  border-color: var(--primary, var(--primary));
+  color: var(--primary, var(--primary));
 }
 .filter-count {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  background: var(--primary, #08736f);
-  color: #fff;
+  background: var(--primary, var(--primary));
+  color: var(--on-primary);
   font-size: 0.75rem;
   line-height: 20px;
   text-align: center;
@@ -86,10 +79,10 @@ html {
   display: grid;
   gap: 16px;
   padding: 20px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 12px 32px #15274822;
+  box-shadow: 0 12px 32px rgb(27 29 25 / 13%);
 }
 .filter-popover h3 {
   margin: 0;
@@ -176,8 +169,8 @@ html {
   align-items: center;
   gap: 14px;
   padding: 16px 20px;
-  background: #fff0f1;
-  color: #a22931;
+  background: var(--danger-soft);
+  color: var(--danger-text);
   border-radius: 10px;
   font-size: 0.875rem;
 }
@@ -185,7 +178,7 @@ html {
   flex: 1;
 }
 .urgent-summary:hover {
-  background: #ffe5e7;
+  background: var(--signal-soft-hover);
   text-decoration: none;
 }
 @media (max-width: 760px) {
@@ -194,38 +187,12 @@ html {
   }
 }
 :root {
-  font-family: 'Be Vietnam Pro', sans-serif;
-  --background: #f3f4f4;
-  --surface: #fff;
-  --glass: #fff;
-  --text: #172d3b;
-  --muted: #536775;
-  --primary: #08736f;
-  --primary-hover: #075e5a;
-  --primary-soft: #e9f2ef;
-  --on-primary: #fff;
-  --secondary: #284653;
-  --stone: #edf2f5;
-  --accent: #fff2d6;
-  --clay: #c2d2d9;
-  --border: #dce2e1;
-  --input-border: #9dabb7;
-  --success: #087d78;
-  --success-text: #08665c;
-  --warning-text: #85500a;
-  --danger: #c43f46;
-  --danger-text: #a22931;
-  --danger-soft: #fff0f1;
-  --radius: 14px;
-  --shadow: 0 4px 20px rgb(23 45 59 / 6%);
-  --shadow-float: 0 16px 48px rgb(23 45 59 / 12%);
-  line-height: 1.6;
-  scrollbar-color: #a3b5bf transparent;
+  scrollbar-color: var(--line-strong) transparent;
   scrollbar-width: thin;
 }
 ::selection {
-  background: #bce8de;
-  color: #172d3b;
+  background: var(--tactile-soft);
+  color: var(--text);
 }
 input,
 textarea {
@@ -277,7 +244,7 @@ a {
 .btn.primary {
   background: var(--primary);
   border-color: var(--primary);
-  color: white;
+  color: var(--on-primary);
   box-shadow: none;
 }
 .btn.primary:hover {
@@ -292,7 +259,7 @@ a {
   min-height: 40px;
 }
 .btn.danger {
-  border-color: #edbec2;
+  border-color: var(--signal-line);
   color: var(--danger-text);
 }
 .badge {
@@ -451,7 +418,7 @@ table {
   font-variant-numeric: tabular-nums;
 }
 th {
-  background: #f6f8fa;
+  background: var(--stone);
   font-size: 0.6875rem;
   letter-spacing: 0.05em;
   padding: 13px 16px;
@@ -460,7 +427,7 @@ td {
   padding: 16px;
 }
 tbody tr:hover {
-  background: #f6faf9;
+  background: var(--stone);
 }
 .pagination {
   border: 0;
@@ -472,14 +439,7 @@ tbody tr:hover {
   margin-right: auto;
 }
 .shell {
-  --text: #253247;
-  --muted: #586579;
-  --primary: #08736f;
-  --primary-hover: #075e5a;
-  --primary-soft: #e9f2ef;
-  --stone: #edf0f5;
-  --border: #dce1e8;
-  background: #f6f7f9;
+  background: var(--background);
   grid-template-columns: 232px minmax(0, 1fr);
   gap: 0;
   padding: 0;
@@ -491,7 +451,7 @@ tbody tr:hover {
   border: 0;
   border-right: 1px solid var(--border);
   border-radius: 0;
-  background: #e9edf2;
+  background: var(--stone);
   box-shadow: none;
   backdrop-filter: none;
   gap: 28px;
@@ -522,7 +482,7 @@ tbody tr:hover {
   background: transparent;
 }
 .sidebar .sidebar-toggle:hover {
-  background: #dce2eb;
+  background: var(--line);
 }
 .sidebar .nav svg {
   flex-shrink: 0;
@@ -604,18 +564,18 @@ tbody tr:hover {
   padding: 10px 12px;
   font-size: 0.8125rem;
   line-height: 1.4;
-  color: #46546a;
+  color: var(--muted);
 }
 /* Only the current page is marked: tinted fill plus a bar. Hover just lightens, so a pointed-at
    item never looks selected next to the real one. */
 .nav a.active {
-  background: #d3e9e3;
+  background: var(--tactile-soft);
   color: var(--primary-hover);
   box-shadow: inset 3px 0 0 var(--primary);
   font-weight: 700;
 }
 .nav a.active:hover {
-  background: #c8e3dc;
+  background: var(--tactile-soft);
   color: var(--primary-hover);
 }
 .nav a:hover:not(.active) {
@@ -630,17 +590,17 @@ tbody tr:hover {
   outline-color: var(--primary);
 }
 .shell .table-scroll thead {
-  background: #edf0f5;
+  background: var(--stone);
 }
 .shell .table-scroll th {
-  background: #edf0f5;
-  color: #46546a;
+  background: var(--stone);
+  color: var(--muted);
 }
 .shell .table-scroll tbody tr:nth-child(even) {
-  background: #f8f9f9;
+  background: var(--stone);
 }
 .shell .table-scroll tbody tr:hover {
-  background: #edf6f4;
+  background: var(--stone);
 }
 .shell .avatar,
 .shell .icon-tile {
@@ -648,11 +608,11 @@ tbody tr:hover {
   color: var(--primary);
 }
 .shell .notice:not(.error) {
-  background: #edf2f1;
-  color: #46546a;
+  background: var(--stone);
+  color: var(--muted);
 }
 .shell .demo-strip {
-  background: #edf0f4;
+  background: var(--stone);
 }
 .sidebar-foot {
   gap: 12px;
@@ -665,7 +625,7 @@ tbody tr:hover {
 .topbar {
   min-height: 76px;
   padding: 12px 32px;
-  background: #fff;
+  background: var(--surface);
 }
 .avatar {
   width: 36px;
@@ -693,9 +653,9 @@ tbody tr:hover {
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
-  box-shadow: 0 8px 32px rgb(23 45 59 / 16%);
+  box-shadow: 0 8px 32px rgb(27 29 25 / 16%);
   font-size: 0.875rem;
 }
 .feedback-toast:popover-open {
@@ -735,7 +695,7 @@ tbody tr:hover {
   padding: 8px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: white;
+  background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow-float);
   transform-origin: var(--radix-dropdown-menu-content-transform-origin);
@@ -777,7 +737,7 @@ tbody tr:hover {
 .demo-strip {
   padding: 8px 32px;
   font-size: 0.75rem;
-  background: #e8edec;
+  background: var(--stone);
 }
 .overview-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -898,20 +858,20 @@ tbody tr:hover {
   font-size: 1.125rem;
 }
 .payment-status.green {
-  border-color: #b9dcd2;
+  border-color: var(--border);
   border-left-color: var(--success);
   background: var(--primary-soft);
   color: var(--success-text);
 }
 .payment-status.red {
-  border-color: #f2c4c8;
+  border-color: var(--signal-line);
   border-left-color: var(--danger);
   background: var(--danger-soft);
   color: var(--danger-text);
 }
 .payment-status.amber {
-  border-color: #f0dcae;
-  border-left-color: #d49a2a;
+  border-color: var(--caution-line);
+  border-left-color: var(--caution);
   background: var(--accent);
   color: var(--warning-text);
 }
@@ -1016,13 +976,13 @@ tbody tr:hover {
 .stat-card:hover {
   transform: none;
   box-shadow: none;
-  background: #f5faf9;
+  background: var(--stone);
 }
 .dashboard-hero {
   min-height: auto;
   padding: 22px 26px;
   border-radius: 14px;
-  background: #153e49;
+  background: var(--ink);
   box-shadow: none;
 }
 .dashboard-hero h2 {
@@ -1040,7 +1000,7 @@ tbody tr:hover {
 }
 .dashboard-stats {
   gap: 0;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
@@ -1102,7 +1062,7 @@ tbody tr:hover {
   border-radius: 16px;
   border: 0;
   max-height: calc(100dvh - 64px);
-  box-shadow: 0 24px 80px rgb(15 35 49 / 24%);
+  box-shadow: 0 24px 80px rgb(27 29 25 / 24%);
 }
 /* animate-ui (Radix) modal: a fixed layer above the shell; margin:auto centres it, so the
    enter/exit transform from Motion never fights the centring. */
@@ -1144,8 +1104,8 @@ tbody tr:hover {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgb(15 35 49 / 30%);
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgb(27 29 25 / 30%);
 }
 /* Same layer as .dialog: each dialog's overlay comes after the dialogs already open, so a
    nested dialog dims the one beneath it instead of sliding under it. */
@@ -1153,7 +1113,7 @@ tbody tr:hover {
   position: fixed;
   inset: 0;
   z-index: 70;
-  background: rgb(15 35 49 / 48%);
+  background: rgb(27 29 25 / 48%);
 }
 .dialog-header {
   padding: 20px 24px;
@@ -1172,7 +1132,7 @@ tbody tr:hover {
   overflow-y: auto;
   background: var(--surface);
   border-radius: 16px;
-  box-shadow: 0 18px 64px rgb(15 35 49 / 24%);
+  box-shadow: 0 18px 64px rgb(27 29 25 / 24%);
 }
 .call-workspace-header {
   display: flex;
@@ -1215,7 +1175,7 @@ tbody tr:hover {
 }
 .call-video-stage {
   position: relative;
-  background: #142c35;
+  background: var(--ink);
   min-height: 300px;
   display: grid;
 }
@@ -1233,25 +1193,25 @@ tbody tr:hover {
   justify-content: center;
   gap: 12px;
   padding: 24px;
-  color: #e9f3f5;
+  color: var(--panel-sunk);
   text-align: center;
 }
 .call-video-empty small {
-  color: #c0d2d8;
+  color: var(--on-ink-muted);
 }
 .call-video-caption {
   position: absolute;
   bottom: 12px;
   left: 16px;
-  color: #e9f3f5;
-  background: #142c35;
+  color: var(--panel-sunk);
+  background: var(--ink);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
 }
 .call-information {
   padding: 24px;
-  background: #fbfcfd;
+  background: var(--stone);
   font-size: 0.875rem;
 }
 .call-information dl {
@@ -1289,12 +1249,12 @@ tbody tr:hover {
   font-size: 0.75rem;
 }
 .btn.call-end {
-  background: #b93640;
-  border-color: #b93640;
-  color: white;
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--on-primary);
 }
 .btn.call-end:hover {
-  background: #9d2832;
+  background: var(--signal-hover);
 }
 .call-pending {
   margin: 0 16px 12px;
@@ -1446,13 +1406,13 @@ tbody tr:hover {
   padding: 0;
   gap: 0;
   grid-template-columns: 0.9fr 1.1fr;
-  background: #fff;
+  background: var(--surface);
 }
 .auth-story {
   min-height: 100dvh;
   padding: 56px;
   border-radius: 0;
-  background: #153e49;
+  background: var(--ink);
   box-shadow: none;
 }
 .auth-story h1 {
@@ -1469,7 +1429,7 @@ tbody tr:hover {
   align-self: flex-start;
   border: 0;
   border-radius: 18px;
-  background: #245762;
+  background: var(--ink-raised);
   box-shadow: none;
 }
 .auth-mark svg {
@@ -1495,56 +1455,6 @@ tbody tr:hover {
 }
 .auth-form input {
   min-height: 48px;
-}
-:root .landing {
-  background: #fff;
-  padding-top: 0;
-}
-:root .landing-header {
-  top: 0;
-  border-radius: 0;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  background: #fff;
-  box-shadow: none;
-  backdrop-filter: none;
-  padding-inline: 0;
-}
-:root .landing-hero {
-  padding-block: 64px;
-  gap: 64px;
-  min-height: 650px;
-}
-:root .landing-intro h1 {
-  font-size: clamp(2.8rem, 4.5vw, 4rem);
-  line-height: 1.15;
-  letter-spacing: -0.04em;
-}
-:root .landing-visual {
-  background: #eef6f5;
-  border-radius: 24px;
-}
-:root .landing-phone {
-  transform: none;
-  background: white;
-  box-shadow: 0 20px 40px rgb(23 45 59 / 12%);
-}
-:root .landing-float {
-  border: 1px solid var(--border);
-  box-shadow: none;
-  border-radius: 12px;
-}
-:root .landing-section {
-  padding-top: 80px;
-}
-:root .landing-how {
-  border-radius: 16px;
-  background: #f2f7f7;
-}
-:root .landing-cta {
-  border-radius: 16px;
-  background: #153e49;
-  box-shadow: none;
 }
 @media (max-width: 1100px) {
   .shell {
@@ -1599,18 +1509,6 @@ tbody tr:hover {
   .auth-form h1 {
     font-size: 1.75rem;
   }
-  :root .landing-hero {
-    min-height: 0;
-    gap: 36px;
-    padding-block: 40px;
-  }
-  :root .landing-header {
-    position: relative;
-    padding: 16px 0;
-  }
-  :root .landing-section {
-    padding-top: 56px;
-  }
   .dialog {
     max-height: calc(100dvh - 32px);
   }
@@ -1645,8 +1543,8 @@ tbody tr:hover {
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.04em;
-  /* Quiet but still 3:1 on white for large text. */
-  color: #7b8e99;
+  /* Quiet but still 3:1 on the panel for large text. */
+  color: var(--line-strong);
   font-variant-numeric: tabular-nums;
 }
 .status-page h1 {
@@ -1747,7 +1645,7 @@ tbody tr:hover {
   padding: 3px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   color: var(--muted);
 }
 .lang-switch > svg {
@@ -1761,7 +1659,7 @@ tbody tr:hover {
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: #46546a;
+  color: var(--muted);
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -1773,7 +1671,7 @@ tbody tr:hover {
   color: var(--text);
 }
 .lang-switch button[aria-pressed='true'] {
-  background: #dcece8;
+  background: var(--tactile-soft);
   color: var(--primary-hover);
   font-weight: 700;
 }
@@ -1881,9 +1779,9 @@ tbody tr:hover {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 3px solid #fff;
+  border: 3px solid var(--surface);
   background: var(--success);
-  box-shadow: 0 2px 8px rgb(23 45 59 / 35%);
+  box-shadow: 0 2px 8px rgb(27 29 25 / 35%);
   cursor: pointer;
   padding: 0;
 }
@@ -1911,9 +1809,7 @@ tbody tr:hover {
 .gps-popup {
   display: grid;
   gap: 2px;
-  font:
-    0.8125rem/1.45 'Be Vietnam Pro',
-    sans-serif;
+  font: 0.8125rem/1.45 var(--font);
   color: var(--text);
 }
 .gps-popup p {
@@ -1949,9 +1845,9 @@ tbody tr:hover {
 }
 /* BR-29: overdue Sent alerts; same urgent palette as .urgent-summary. */
 .escalation-banner {
-  background: #fff0f1;
-  color: #a22931;
-  border: 2px solid #a22931;
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  border: 2px solid var(--danger-text);
 }
 .escalation-banner h2 {
   color: inherit;
@@ -1971,9 +1867,9 @@ tbody tr:hover {
   padding: 6px 10px;
   border-radius: 7px;
   background: var(--text);
-  color: #fff;
+  color: var(--on-primary);
   font-size: 0.8125rem;
-  box-shadow: 0 6px 18px rgb(23 45 59 / 18%);
+  box-shadow: 0 6px 18px rgb(27 29 25 / 18%);
   transform-origin: var(--radix-tooltip-content-transform-origin);
 }
 /* animate-ui Collapsible used in place of <details>. */
@@ -2009,10 +1905,10 @@ tbody tr:hover {
   width: 20px;
   height: 20px;
   padding: 0;
-  border: 1.5px solid var(--border-strong, #8a978f);
+  border: 1.5px solid var(--border-strong, var(--line-strong));
   border-radius: 5px;
-  background: #fff;
-  color: #fff;
+  background: var(--surface);
+  color: var(--on-primary);
   cursor: pointer;
   transition:
     background-color 0.15s ease,
@@ -2068,7 +1964,7 @@ tbody tr:hover {
 .revenue-kpi.hero {
   grid-column: span 2;
   background: var(--primary-soft);
-  border-color: #cfe3dd;
+  border-color: var(--border);
 }
 .revenue-kpi-label {
   display: inline-flex;
@@ -2166,7 +2062,7 @@ tbody tr:hover {
   cursor: default;
 }
 .revenue-chart-slot:hover {
-  background: rgb(8 115 111 / 6%);
+  background: rgb(27 29 25 / 5%);
   border-radius: 4px 4px 0 0;
 }
 .revenue-chart-bar {
@@ -2188,7 +2084,7 @@ tbody tr:hover {
   padding: 8px 10px;
   border-radius: 8px;
   background: var(--text);
-  color: #fff;
+  color: var(--on-primary);
   font-size: 0.75rem;
   white-space: nowrap;
   box-shadow: var(--shadow-float);
@@ -2505,7 +2401,7 @@ tbody tr:hover {
   background: var(--danger);
 }
 .alert-timeline-step.amber::before {
-  background: #d49a2a;
+  background: var(--caution);
 }
 .alert-timeline-step.blue::before {
   background: var(--primary);
@@ -2576,7 +2472,7 @@ tbody tr:hover {
 .tabs-trigger[data-state='active'] {
   background: var(--surface);
   color: var(--primary-hover);
-  box-shadow: 0 1px 3px rgb(23 45 59 / 12%);
+  box-shadow: 0 1px 3px rgb(27 29 25 / 12%);
 }
 .tabs-count {
   min-width: 22px;

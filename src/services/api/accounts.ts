@@ -21,6 +21,13 @@ const accountSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
+const restoreSchema = z.object({
+  user: accountSchema,
+  needsLicense: z.boolean(),
+  notes: z.array(z.string()),
+});
+/** BE keeps deleted accounts restorable for this many days. */
+export const RESTORE_WINDOW_DAYS = 30;
 const pageSchema = z.object({
   items: z.array(accountSchema),
   page: z.number().int().positive(),
@@ -234,6 +241,20 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
       if (id === actor.id) throw new ServiceError(t('Không thể tự xóa tài khoản.'), 422);
       await writable(actor, id);
       await write('/api/users/' + id, { method: 'DELETE' });
+    },
+    /** Admin: undo a soft delete within the BE window (30 days). The old password still works. */
+    async restore(actor: Scope, id: string) {
+      if (actor.role !== 'Admin')
+        throw new ServiceError(t('Chỉ Admin được khôi phục tài khoản.'), 403);
+      if (!z.string().uuid().safeParse(id).success)
+        throw new ServiceError(t('Tài khoản không hợp lệ.'), 400);
+      const result = parse(
+        restoreSchema,
+        await write('/api/users/' + id + '/restore', { method: 'PATCH' }),
+      );
+      if (result.user.id !== id)
+        throw new ServiceError(t('Máy chủ trả về tài khoản khác với tài khoản đã chọn.'), 502);
+      return result;
     },
   };
 }

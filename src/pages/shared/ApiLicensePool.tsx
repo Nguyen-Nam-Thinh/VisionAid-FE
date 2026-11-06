@@ -3,8 +3,10 @@ import { t, formatLocaleDateTime } from '../../i18n';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useSession } from '../../hooks/useService';
-import { PageHead, State } from '../../components/UI';
+import { Confirm, PageHead, State } from '../../components/UI';
+import { useState } from 'react';
 import {
+  cancelPoolChange,
   getOrganizationPool,
   isOrganizationBuyer,
   subscriptionLabels,
@@ -23,6 +25,7 @@ export function OrganizationPool({
   /** Shown inside the payment result page, which already links to the payment history. */
   embedded?: boolean;
 }) {
+  const [cancelling, setCancelling] = useState(false);
   const query = useQuery({
     queryKey: ['license-pool', actor.id, actor.orgId],
     queryFn: ({ signal }) => getOrganizationPool(actor, signal),
@@ -89,6 +92,38 @@ export function OrganizationPool({
                   </dd>
                 </div>
               </dl>
+              {item.pendingChange && (
+                <div className="notice stack" role="status">
+                  <p>
+                    {t(
+                      'Đã hẹn đổi sang gói {name} ({seats} suất) vào {time}. Trước thời điểm đó, cấp license mới bị giới hạn ở số suất của gói mới.',
+                      {
+                        name: item.pendingChange.package.name,
+                        seats: item.pendingChange.newTotalLicenses,
+                        time: formatLocaleDateTime(item.pendingChange.effectiveAt, {
+                          timeZoneName: 'short',
+                        }),
+                      },
+                    )}
+                  </p>
+                  <button className="btn small" onClick={() => setCancelling(true)}>
+                    {t('Giữ gói hiện tại')}
+                  </button>
+                </div>
+              )}
+              {cancelling && (
+                <Confirm
+                  title={t('Hủy hẹn đổi gói')}
+                  description={t('Kho tiếp tục dùng gói {name} sau khi hết kỳ.', {
+                    name: item.package.name,
+                  })}
+                  onClose={() => setCancelling(false)}
+                  onConfirm={async () => {
+                    await cancelPoolChange(actor, item.id);
+                    await query.refetch();
+                  }}
+                />
+              )}
               <PoolAutoRenew actor={actor} pool={item} reload={() => query.refetch()} />
               <p>
                 {t(

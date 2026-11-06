@@ -75,64 +75,63 @@ function Servers({ actor }: { actor: Person }) {
         <State loading={query.isPending} error={query.error} retry={() => void query.refetch()}>
           {query.data && (
             <>
-              {!query.data.items.length ? (
-                <p>{t('Không có máy chủ phù hợp.')}</p>
-              ) : (
-                <div
-                  className="table-scroll"
-                  role="region"
-                  aria-label={t('Máy chủ ICE')}
-                  tabIndex={0}
-                >
-                  <table style={{ minWidth: 720 }}>
-                    <thead>
-                      <tr>
-                        <th>{t('Loại')}</th>
-                        <th>{t('Địa chỉ')}</th>
-                        <th>{t('Ưu tiên')}</th>
-                        <th>{t('Trạng thái')}</th>
-                        <th>{t('Thao tác')}</th>
+              <div
+                className="table-scroll"
+                role="region"
+                aria-label={t('Máy chủ ICE')}
+                tabIndex={0}
+              >
+                <table style={{ minWidth: 720 }}>
+                  <thead>
+                    <tr>
+                      <th>{t('Loại')}</th>
+                      <th>{t('Địa chỉ')}</th>
+                      <th>{t('Ưu tiên')}</th>
+                      <th>{t('Trạng thái')}</th>
+                      <th>{t('Thao tác')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {query.data.items.map((server) => (
+                      <tr key={server.id}>
+                        <td>{server.serverType.toUpperCase()}</td>
+                        <td style={{ overflowWrap: 'anywhere' }}>{server.url}</td>
+                        <td>{server.priority}</td>
+                        <td>
+                          <Badge tone={server.isActive ? 'green' : 'amber'}>
+                            {server.isActive ? t('Đang bật') : t('Đang tắt')}
+                          </Badge>
+                        </td>
+                        <td>
+                          <div className="row">
+                            <button
+                              className="btn small"
+                              onClick={() => {
+                                setNotice('');
+                                setChange({ server });
+                              }}
+                            >
+                              {t('Chỉnh sửa')}
+                            </button>
+                            <button
+                              className="btn small danger"
+                              onClick={() => {
+                                setNotice('');
+                                setChange({ server, remove: true });
+                              }}
+                            >
+                              {t('Xóa')}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {query.data.items.map((server) => (
-                        <tr key={server.id}>
-                          <td>{server.serverType.toUpperCase()}</td>
-                          <td style={{ overflowWrap: 'anywhere' }}>{server.url}</td>
-                          <td>{server.priority}</td>
-                          <td>
-                            <Badge tone={server.isActive ? 'green' : 'amber'}>
-                              {server.isActive ? t('Đang bật') : t('Đang tắt')}
-                            </Badge>
-                          </td>
-                          <td>
-                            <div className="row">
-                              <button
-                                className="btn small"
-                                onClick={() => {
-                                  setNotice('');
-                                  setChange({ server });
-                                }}
-                              >
-                                {t('Chỉnh sửa')}
-                              </button>
-                              <button
-                                className="btn small danger"
-                                onClick={() => {
-                                  setNotice('');
-                                  setChange({ server, remove: true });
-                                }}
-                              >
-                                {t('Xóa')}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ))}
+                  </tbody>
+                </table>
+                {!query.data.items.length && (
+                  <p className="empty">{t('Không có máy chủ phù hợp.')}</p>
+                )}
+              </div>
               <div className="row pagination">
                 <span>
                   {t('{totalCount} máy chủ · Trang {page}/{p4}', {

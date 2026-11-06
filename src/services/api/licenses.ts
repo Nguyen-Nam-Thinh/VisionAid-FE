@@ -62,8 +62,103 @@ const pool = z.object({
   suspendedAt: date.nullable().optional(),
   // BR-57: optional so older deploys without the field still parse.
   autoRenew: z.boolean().optional(),
+  // A cheaper package scheduled for the end of the paid period (BE 4ed129c).
+  pendingChange: z
+    .object({
+      package: z.object({ id: z.string().uuid(), name: z.string(), code: z.string() }),
+      newTotalLicenses: z.number().int().nonnegative(),
+      effectiveAt: date,
+    })
+    .nullable()
+    .optional(),
 });
 export type OrganizationPool = z.infer<typeof pool>;
+
+export const poolChangeTypes = [
+  'FirstPurchase',
+  'Renewal',
+  'NewPeriod',
+  'Upgrade',
+  'ScheduledDowngrade',
+] as const;
+export const poolChangeLabels = labelMap({
+  FirstPurchase: msg('Mua kho lần đầu'),
+  Renewal: msg('Gia hạn cùng gói'),
+  NewPeriod: msg('Kỳ mới sau khi kho hết hạn'),
+  Upgrade: msg('Nâng gói'),
+  ScheduledDowngrade: msg('Hạ gói vào cuối kỳ'),
+});
+const packageRef = z.object({ id: z.string().uuid(), name: z.string(), code: z.string() });
+const changeQuote = z.object({
+  changeType: z.enum(poolChangeTypes),
+  poolId: z.string().uuid().nullable(),
+  currentPackage: packageRef.nullable(),
+  targetPackage: packageRef,
+  amount: z.number().finite().nonnegative(),
+  currency: z.string(),
+  daysLeft: z.number().int(),
+  currentDailyPrice: z.number().finite(),
+  targetDailyPrice: z.number().finite(),
+  effectiveAt: date,
+  currentExpiresAt: date.nullable(),
+  newExpiresAt: date,
+  currentTotalLicenses: z.number().int().nonnegative(),
+  newTotalLicenses: z.number().int().nonnegative(),
+  usedLicenses: z.number().int().nonnegative(),
+  seatsToRelease: z.number().int().nonnegative(),
+  canProceed: z.boolean(),
+  blockedCode: z.string().nullable(),
+  explanation: z.string(),
+});
+export type PoolChangeQuote = z.infer<typeof changeQuote>;
+/** What buying this Business package costs now and when it applies; checkout charges this amount. */
+export async function getPoolChangeQuote(
+  user: Person,
+  packageId: string,
+  signal?: AbortSignal,
+  get = apiGet,
+) {
+  if (!isOrganizationBuyer(user))
+    throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được đổi gói Business.'), 403);
+  if (!z.string().uuid().safeParse(packageId).success)
+    throw new ServiceError(t('Mã gói không hợp lệ.'), 400);
+  const parsed = changeQuote.safeParse(
+    await get('/api/licenses/pool/change-quote?' + new URLSearchParams({ packageId }), signal),
+  );
+  if (!parsed.success || parsed.data.targetPackage.id !== packageId)
+    throw new ServiceError(t('Chưa đọc được báo giá đổi gói. Hãy tải lại.'), 502);
+  return parsed.data;
+}
+/** Cheaper package: no payment now, the switch happens at the current expiry (no refund). */
+export async function schedulePoolChange(
+  user: Person,
+  poolId: string,
+  packageId: string,
+  write = apiWrite,
+) {
+  if (!isOrganizationBuyer(user))
+    throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được đổi gói Business.'), 403);
+  if (![poolId, packageId].every((id) => z.string().uuid().safeParse(id).success))
+    throw new ServiceError(t('Kho hoặc gói không hợp lệ. Hãy tải lại.'), 400);
+  const parsed = pool.safeParse(
+    await write(`/api/licenses/pool/${poolId}/scheduled-change`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packageId }),
+    }),
+  );
+  return parsed.success ? parsed.data : undefined;
+}
+export async function cancelPoolChange(user: Person, poolId: string, write = apiWrite) {
+  if (!isOrganizationBuyer(user))
+    throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được đổi gói Business.'), 403);
+  if (!z.string().uuid().safeParse(poolId).success)
+    throw new ServiceError(t('Kho license không hợp lệ. Hãy tải lại.'), 400);
+  const parsed = pool.safeParse(
+    await write(`/api/licenses/pool/${poolId}/scheduled-change`, { method: 'DELETE' }),
+  );
+  return parsed.success ? parsed.data : undefined;
+}
 export async function getOrganizationPool(user: Person, signal?: AbortSignal, get = apiGet) {
   if (!isOrganizationBuyer(user))
     throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được xem kho license.'), 403);

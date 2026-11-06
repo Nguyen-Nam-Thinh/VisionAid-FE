@@ -181,7 +181,6 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
             {t('Tải lại liên hệ')}
           </button>
         </div>
-        {!query.data?.length && <p>{t('Chưa có liên hệ khẩn cấp.')}</p>}
         <div className="table-scroll" tabIndex={0} role="region" aria-label={t('Danh bạ khẩn cấp')}>
           <table className="care-contacts-table">
             <thead>
@@ -246,6 +245,7 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
               ))}
             </tbody>
           </table>
+          {!query.data?.length && <p className="empty">{t('Chưa có liên hệ khẩn cấp.')}</p>}
         </div>
         {editing && (
           <Dialog
