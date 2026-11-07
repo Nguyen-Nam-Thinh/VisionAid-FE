@@ -84,7 +84,7 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
         <Confirm
           title={t('Bắt đầu key mới')}
           description={t(
-            'Key vừa tạo vẫn còn trong danh sách Key đã phát. Tiếp tục không thu hồi key và không hoàn lại suất đã sử dụng.',
+            'Key vừa tạo vẫn còn trong danh sách Key đã phát. Tạo key mới không thu hồi key cũ và không hoàn lại suất đã dùng.',
           )}
           onClose={() => setAnother(false)}
           onConfirm={async () => {

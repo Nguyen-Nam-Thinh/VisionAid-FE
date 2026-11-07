@@ -138,7 +138,7 @@ export function ActivityTimeline({
           {error}
         </p>
       )}
-      <AnimatedTabs.Root defaultValue="timeline" className="stack">
+      <AnimatedTabs.Root defaultValue="timeline" className="stack trace-tabs">
         <AnimatedTabs.List className="tabs-list" aria-label={t('Cách xem')}>
           <AnimatedTabs.Trigger value="timeline" className="tabs-trigger">
             {t('Dòng thời gian')}
@@ -283,7 +283,7 @@ function Guidance({ actor, viuId, range }: { actor: Person; viuId: string; range
                       {engineLabels[item.engineUsed] ?? item.engineUsed}
                     </Badge>
                   </td>
-                  <td>{item.spokenText || t('Không đọc')}</td>
+                  <td>{item.spokenText || t('Không nói gì')}</td>
                   <td>
                     <Place latitude={item.latitude} longitude={item.longitude} />
                   </td>

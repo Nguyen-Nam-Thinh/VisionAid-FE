@@ -193,7 +193,9 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
               ? t('Cần thu hồi {count} license đang dùng trước khi đổi sang gói này.', {
                   count: quote.seatsToRelease,
                 })
-              : t('Kho hiện không đổi gói được. Tải lại kho license để kiểm tra trạng thái.'),
+              : t(
+                  'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho license để kiểm tra trạng thái.',
+                ),
             422,
           );
       }

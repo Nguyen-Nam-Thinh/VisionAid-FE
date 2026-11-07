@@ -82,7 +82,7 @@ export const poolChangeTypes = [
   'ScheduledDowngrade',
 ] as const;
 export const poolChangeLabels = labelMap({
-  FirstPurchase: msg('Mua kho lần đầu'),
+  FirstPurchase: msg('Mua lần đầu'),
   Renewal: msg('Gia hạn cùng gói'),
   NewPeriod: msg('Kỳ mới sau khi kho hết hạn'),
   Upgrade: msg('Nâng gói'),
@@ -119,7 +119,7 @@ export async function getPoolChangeQuote(
   get = apiGet,
 ) {
   if (!isOrganizationBuyer(user))
-    throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được đổi gói Business.'), 403);
+    throw new ServiceError(t('Chỉ quản trị viên trung tâm được đổi gói Business.'), 403);
   if (!z.string().uuid().safeParse(packageId).success)
     throw new ServiceError(t('Mã gói không hợp lệ.'), 400);
   const parsed = changeQuote.safeParse(
@@ -137,7 +137,7 @@ export async function schedulePoolChange(
   write = apiWrite,
 ) {
   if (!isOrganizationBuyer(user))
-    throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được đổi gói Business.'), 403);
+    throw new ServiceError(t('Chỉ quản trị viên trung tâm được đổi gói Business.'), 403);
   if (![poolId, packageId].every((id) => z.string().uuid().safeParse(id).success))
     throw new ServiceError(t('Kho hoặc gói không hợp lệ. Hãy tải lại.'), 400);
   const parsed = pool.safeParse(
@@ -151,7 +151,7 @@ export async function schedulePoolChange(
 }
 export async function cancelPoolChange(user: Person, poolId: string, write = apiWrite) {
   if (!isOrganizationBuyer(user))
-    throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được đổi gói Business.'), 403);
+    throw new ServiceError(t('Chỉ quản trị viên trung tâm được đổi gói Business.'), 403);
   if (!z.string().uuid().safeParse(poolId).success)
     throw new ServiceError(t('Kho license không hợp lệ. Hãy tải lại.'), 400);
   const parsed = pool.safeParse(

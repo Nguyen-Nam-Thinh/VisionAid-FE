@@ -49,7 +49,7 @@ test('sidebar collapses to icons and preserves navigation', async ({ page }) => 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('button', { name: 'Mở rộng sidebar' }).focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('.sidebar')).toHaveCSS('width', '232px');
+  await expect(page.locator('.sidebar')).toHaveCSS('width', '252px');
 });
 
 test('account dropdown: keyboard, dismiss, profile and logout', async ({ page }) => {

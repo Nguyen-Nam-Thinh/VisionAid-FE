@@ -44,7 +44,7 @@ function Lookup({ actor }: { actor: Person }) {
         description={
           actor.role === 'Admin'
             ? t(
-                'Từng lần gửi thông báo: người nhận, người được chăm sóc, kênh, trạng thái và đã xem.',
+                'Mỗi lần gửi thông báo: người nhận, người được chăm sóc, kênh gửi, trạng thái và thời điểm đã xem.',
               )
             : t('Thông báo gửi cho người nhận hoặc về người được chăm sóc trong trung tâm của bạn.')
         }

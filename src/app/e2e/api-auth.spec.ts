@@ -1082,8 +1082,8 @@ test('12a: scoped activity history, dates, pagination, all details and revoked a
     .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
     .selectOption(viuId);
   await expect(page.getByText('21 kết quả · Trang 1/2')).toBeVisible();
-  // Panel 0 searches care recipients; panel 1 holds the date range.
-  await openFilters(page, 1);
+  // Panel 0 searches care recipients, panel 1 filters the activity trace, panel 2 holds this list's dates.
+  await openFilters(page, 2);
   await page.getByLabel('Từ ngày', { exact: true }).fill('2026-10-11');
   await page.getByLabel('Đến ngày', { exact: true }).fill('2026-10-11');
   await page.getByRole('button', { name: 'Lọc lịch sử' }).click();
@@ -2036,6 +2036,69 @@ async function stubApi(page: Page, role = 'Caregiver', organizationId: string | 
         },
       });
     if (path === '/api/auth/logout') return route.fulfill({ json: { success: true, data: null } });
+    // Shell-wide reads added later (topbar bell, issued key list, Business change quote); tests
+    // that care about them register their own routes, which take precedence.
+    if (path === '/api/notifications/inbox/unread-count')
+      return route.fulfill({ json: { success: true, data: 0 } });
+    if (path === '/api/activity-history/timeline' || path === '/api/navigation/guidance/logs')
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            items: [],
+            page: 1,
+            pageSize: 20,
+            totalCount: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        },
+      });
+    if (path === '/api/licenses/keys')
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            items: [],
+            page: 1,
+            pageSize: 10,
+            totalCount: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        },
+      });
+    if (path === '/api/licenses/pool/change-quote') {
+      const packageId = new URL(route.request().url()).searchParams.get('packageId');
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            changeType: 'Renewal',
+            poolId: null,
+            currentPackage: null,
+            targetPackage: { id: packageId, name: 'Business', code: 'BUSINESS' },
+            amount: 4500000,
+            currency: 'VND',
+            daysLeft: 0,
+            currentDailyPrice: 0,
+            targetDailyPrice: 150000,
+            effectiveAt: '2099-01-01T00:00:00Z',
+            currentExpiresAt: null,
+            newExpiresAt: '2099-02-01T00:00:00Z',
+            currentTotalLicenses: 0,
+            newTotalLicenses: 50,
+            usedLicenses: 0,
+            seatsToRelease: 0,
+            canProceed: true,
+            blockedCode: null,
+            explanation: '',
+          },
+        },
+      });
+    }
     return route.fulfill({ status: 500, json: { detail: 'Unexpected endpoint' } });
   });
   return calls;
@@ -2080,6 +2143,8 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
           '/api/users/me',
           '/api/auth/refresh',
           '/api/ai-metrics',
+          // The topbar bell polls the inbox unread count for every role.
+          '/api/notifications/inbox/unread-count',
           ...(role === 'Caregiver'
             ? ['/api/licenses/subscription', '/api/payments/history', '/api/emergency-events']
             : role === 'Admin'
@@ -2171,7 +2236,12 @@ test('profile save, reload, password rejection and successful change', async ({ 
     await page.screenshot({ path: `test-results/redesign-profile-${width}.png`, fullPage: true });
   }
   await page.setViewportSize({ width: 1440, height: 900 });
-  await expect(page.locator('input[type=file]')).toHaveCount(0);
+  // BE 4ed129c: profile picture upload (JPEG/PNG/WebP) behind a plain button-like label.
+  await expect(page.locator('input[type=file]')).toHaveAttribute(
+    'accept',
+    'image/jpeg,image/png,image/webp',
+  );
+  await expect(page.locator('.profile-photo label.btn')).toContainText('Tải ảnh lên');
   await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
   await expect(page.getByLabel('Nhập lại mật khẩu mới')).toHaveAttribute(
     'autocomplete',
@@ -5138,7 +5208,7 @@ const u3Pool = (status = 'Active', total = 50) => ({
   availableLicenses: total - 3,
   status,
   purchasedAt: '2026-10-06T00:00:00Z',
-  expiresAt: '2026-11-05T00:00:00Z',
+  expiresAt: '2099-11-05T00:00:00Z',
 });
 test('BR-57: CenterAdmin toggles pool auto-renew, failure keeps the server value', async ({
   page,
@@ -5355,7 +5425,7 @@ test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates an
   await login(page);
   await page.goto('/center-admin/licenses');
   await page.getByRole('button', { name: 'Tạo key cho gia đình', exact: true }).click();
-  await page.getByLabel('Ghi chú').fill('Gia đình test');
+  await page.getByLabel('Ghi chú', { exact: true }).fill('Gia đình test');
   await page.getByRole('button', { name: 'Xác nhận tạo key' }).click();
   await expect(page.getByLabel('Key vừa tạo')).toHaveValue('••••-••••-••••-••••');
   expect(writes).toBe(1);

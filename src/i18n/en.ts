@@ -2578,7 +2578,7 @@ export const en = {
     'A visually impaired person walks along a sidewalk with a tactile guiding strip, holding a white cane, a phone strapped to their chest.',
   'Một người bước đi với gậy trắng và điện thoại đeo trước ngực.':
     'One person walks with a white cane and a phone strapped to their chest.',
-  'Một người ở xa, muốn biết họ có an toàn.': 'Someone far away wants to know they are safe.',
+  'Một người ở xa muốn biết họ có an toàn không.': 'Someone far away wants to know they are safe.',
   'VisionAid nối hai đầu của cùng một hành trình.':
     'VisionAid connects both ends of the same journey.',
   'Minh họa: vật cản tiến lại gần qua ba vùng nhận biết.':
@@ -2592,9 +2592,9 @@ export const en = {
   'Có thể khôi phục trong {days} ngày kể từ lúc xóa.':
     'It can be restored within {days} days of deletion.',
   'Khôi phục tài khoản': 'Restore account',
-  'Xóa mềm; Admin có thể khôi phục trong {days} ngày.':
+  'Tài khoản vẫn được giữ lại; Admin có thể khôi phục trong {days} ngày.':
     'Soft delete; an Admin can restore it within {days} days.',
-  '{email}: mở lại tài khoản với mật khẩu cũ, giữ liên kết và dữ liệu còn lại. Dữ liệu đã bị dọn theo thời hạn lưu trữ không lấy lại được.':
+  '{email}: mở lại tài khoản, đăng nhập bằng mật khẩu cũ, giữ nguyên liên kết và dữ liệu còn lưu. Dữ liệu đã bị xóa theo thời hạn lưu trữ sẽ không lấy lại được.':
     '{email}: reopen the account with its old password, keeping its links and remaining data. Data already removed by retention cannot be recovered.',
   'Đã khôi phục tài khoản. Kho của tổ chức hết suất nên người dùng chưa có license; trung tâm cần cấp một suất, trước đó chỉ dùng được SOS.':
     'Account restored. The organization pool has no free seat, so the user has no license; the center must assign one, and until then only SOS works.',
@@ -2608,9 +2608,9 @@ export const en = {
     'Leave empty to remove the yearly price; the package is then sold monthly only. The yearly price is not used for web checkout yet.',
   'Loại thay đổi': 'Change type',
   'Gói hiện tại': 'Current package',
-  'Trả bây giờ': 'Pay now',
+  'Cần trả ngay': 'Pay now',
   'Áp dụng từ': 'Applies from',
-  'Hết hạn kho sau khi đổi': 'Pool expiry after the change',
+  'Kho hết hạn vào': 'Pool expiry after the change',
   'Số suất': 'Seats',
   '{from} → {to} suất, đang dùng {used}': '{from} → {to} seats, {used} in use',
   '{to} suất': '{to} seats',
@@ -2622,9 +2622,9 @@ export const en = {
     'Full price; the new period follows the current expiry date.',
   'Trả trọn giá; kỳ mới bắt đầu từ lúc thanh toán thành công.':
     'Full price; the new period starts when the payment succeeds.',
-  'Đang dùng nhiều hơn số suất của gói này. Thu hồi {count} license trong kho trước khi đổi gói.':
+  'Số license đang dùng nhiều hơn số suất của gói này. Hãy thu hồi {count} license trước khi đổi gói.':
     'More seats are in use than this package has. Revoke {count} licenses in the pool before switching.',
-  'Kho hiện không đổi gói được. Tải lại kho license để kiểm tra trạng thái.':
+  'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho license để kiểm tra trạng thái.':
     'The pool cannot change package right now. Reload the license pool to check its status.',
   'Đã hẹn đổi sang gói {name} vào {time}.': 'Switch to {name} scheduled for {time}.',
   'Hẹn đổi gói vào cuối kỳ': 'Schedule for end of period',
@@ -2644,7 +2644,7 @@ export const en = {
     'Revoke the key noted "{note}", created at {time}. The family can no longer activate it and one seat returns to the pool.',
   'không có ghi chú': 'no note',
   'Đã thu hồi key và trả một suất về kho.': 'Key revoked and one seat returned to the pool.',
-  'Key vừa tạo vẫn còn trong danh sách Key đã phát. Tiếp tục không thu hồi key và không hoàn lại suất đã sử dụng.':
+  'Key vừa tạo vẫn còn trong danh sách Key đã phát. Tạo key mới không thu hồi key cũ và không hoàn lại suất đã dùng.':
     'The new key stays in the Issued keys list. Continuing does not revoke it or return the seat it used.',
   'Có thể xem lại key này bất cứ lúc nào trong danh sách Key đã phát.':
     'You can look this key up again any time in the Issued keys list.',
@@ -2657,7 +2657,7 @@ export const en = {
   'Máy chủ không cho gửi lại thông báo này.':
     'The server does not allow resending this notification.',
   'Đã gửi lại thành công.': 'Resent successfully.',
-  'Đang gửi lại; trạng thái sẽ cập nhật sau.': 'Resending; the status will update shortly.',
+  'Đang gửi lại; trạng thái sẽ được cập nhật sau.': 'Resending; the status will update shortly.',
   'Gửi lại vẫn thất bại: {reason}': 'Resend failed again: {reason}',
   'không rõ lý do': 'unknown reason',
   'Đang gửi lại…': 'Resending…',
@@ -2667,41 +2667,41 @@ export const en = {
   'Máy chủ trả về tài khoản khác với tài khoản đã chọn.':
     'The server returned a different account from the one selected.',
   'Ảnh đại diện tối đa 10 MB.': 'Profile pictures are limited to 10 MB.',
-  'Đã gửi ảnh nhưng chưa đọc được kết quả. Hãy tải lại trang.':
+  'Đã gửi ảnh nhưng chưa nhận được kết quả từ máy chủ. Hãy tải lại trang.':
     'The picture was sent but the result could not be read. Reload the page.',
   'Địa chỉ ảnh không hợp lệ.': 'Invalid picture address.',
   'Chưa dùng': 'Unused',
   'Đã kích hoạt': 'Activated',
-  'Chỉ quản trị trung tâm có tổ chức được xem key đã phát.':
+  'Chỉ quản trị viên trung tâm được xem key đã phát.':
     'Only a center admin with an organization can view issued keys.',
   'Dữ liệu key đã phát không hợp lệ. Hãy tải lại.': 'Issued key data is invalid. Please reload.',
-  'Chỉ quản trị trung tâm có tổ chức được thu hồi key.':
+  'Chỉ quản trị viên trung tâm được thu hồi key.':
     'Only a center admin with an organization can revoke keys.',
   'Chỉ thu hồi được key chưa dùng và còn hạn.':
     'Only unused keys that are still valid can be revoked.',
   'Key không hợp lệ. Hãy tải lại.': 'Invalid key. Please reload.',
-  'Mua kho lần đầu': 'First pool purchase',
+  'Mua lần đầu': 'First pool purchase',
   'Gia hạn cùng gói': 'Renew same package',
   'Kỳ mới sau khi kho hết hạn': 'New period after expiry',
   'Nâng gói': 'Upgrade',
   'Hạ gói vào cuối kỳ': 'Downgrade at end of period',
-  'Chỉ quản trị trung tâm có tổ chức được đổi gói Business.':
+  'Chỉ quản trị viên trung tâm được đổi gói Business.':
     'Only a center admin with an organization can change the Business package.',
   'Chưa đọc được báo giá đổi gói. Hãy tải lại.':
     'Could not read the package change quote. Please reload.',
   'Kho hoặc gói không hợp lệ. Hãy tải lại.': 'Invalid pool or package. Please reload.',
   'Chỉ gửi lại được thông báo đang thất bại.': 'Only failed notifications can be resent.',
-  'Đã gửi lại tối đa 3 lần.': 'Already resent the maximum of 3 times.',
+  'Thông báo này đã được gửi lại đủ 3 lần.': 'Already resent the maximum of 3 times.',
   'Tài khoản người nhận đã bị khóa hoặc xóa.': 'The recipient account is deactivated or deleted.',
-  'Kênh gửi này không hỗ trợ gửi lại.': 'This channel does not support resending.',
-  'Thông báo đến nơi chỉ có ý nghĩa lúc đến; gửi muộn sẽ sai.':
+  'Kênh này không hỗ trợ gửi lại.': 'This channel does not support resending.',
+  'Thông báo đã đến nơi chỉ có ích ngay lúc đến; gửi lại muộn sẽ gây hiểu nhầm.':
     'Arrival notices only make sense on arrival; a late resend would be wrong.',
   'Người nhận chưa đăng nhập thiết bị nào. Gửi lại sau khi họ đăng nhập ứng dụng.':
     'The recipient has no signed-in device. Resend after they sign in to the app.',
-  'Sự cố khẩn cấp đã được xử lý, bỏ qua hoặc đã gọi.':
+  'Sự cố khẩn cấp đã được giải quyết, đã bỏ qua hoặc đã gọi hỗ trợ.':
     'The emergency was already resolved, dismissed or called.',
   'Thông báo đã quá cũ để gửi lại.': 'The notification is too old to resend.',
-  'License đã được gia hạn nên nhắc nhở không còn đúng.':
+  'License đã được gia hạn nên lời nhắc không còn cần thiết.':
     'The license has been renewed, so the reminder no longer applies.',
   'Người nhận không còn nhận cảnh báo của người này.':
     'The recipient no longer receives alerts for this person.',
@@ -2726,10 +2726,10 @@ export const en = {
     'Each row is one guidance decision. "Decided on the phone" means the server was slow, offline or had no session; an empty spoken text means the app stayed silent.',
   'Chưa có hướng dẫn dẫn đường được ghi nhận.': 'No navigation guidance recorded yet.',
   'Nơi quyết định': 'Decided by',
-  'Không đọc': 'Not spoken',
+  'Không nói gì': 'Not spoken',
   'Phản hồi': 'Response',
-  'Tiếp nhận bởi {name}.': 'Acknowledged by {name}.',
-  'Giải quyết bởi {name}.': 'Resolved by {name}.',
+  '{name} đã tiếp nhận.': 'Acknowledged by {name}.',
+  '{name} đã giải quyết.': 'Resolved by {name}.',
   'Đã thông báo cho': 'Notified',
   'Chưa có thông báo nào được ghi nhận cho cảnh báo này.':
     'No notifications recorded for this alert.',
@@ -2737,7 +2737,7 @@ export const en = {
   'Chưa xem': 'Unread',
   'Thông báo, {count} chưa đọc': 'Notifications, {count} unread',
   'Thông báo': 'Notifications',
-  'Mọi thông báo đã gửi cho bạn, gộp các kênh Push, Email và Realtime vào một mục.':
+  'Mọi thông báo đã gửi cho bạn. Mỗi thông báo là một mục, gộp chung các kênh Push, Email và Realtime.':
     'Every notification sent to you, with Push, Email and Realtime grouped into one item.',
   'Lọc thông báo': 'Filter notifications',
   'Đã đánh dấu {count} thông báo là đã xem.': 'Marked {count} notifications as read.',
@@ -2748,7 +2748,7 @@ export const en = {
   'Đã xem lúc {time}': 'Read at {time}',
   'Mở chi tiết': 'Open details',
   'Đánh dấu đã xem': 'Mark as read',
-  'Từng lần gửi thông báo: người nhận, người được chăm sóc, kênh, trạng thái và đã xem.':
+  'Mỗi lần gửi thông báo: người nhận, người được chăm sóc, kênh gửi, trạng thái và thời điểm đã xem.':
     'Each notification delivery: recipient, care recipient, channel, status and read state.',
   'Thông báo gửi cho người nhận hoặc về người được chăm sóc trong trung tâm của bạn.':
     'Notifications sent to recipients or about care recipients in your center.',
@@ -2768,11 +2768,66 @@ export const en = {
   'Gợi ý gọi hỗ trợ khẩn cấp': 'Emergency call suggestion',
   'Không liên hệ được ai': 'Nobody reachable',
   'Nhắc gia hạn license': 'License renewal reminder',
-  'Gửi lỗi': 'Failed',
+  'Gửi thất bại': 'Failed',
   'Chỉ quản trị viên được tra cứu thông báo.': 'Only administrators can look up notifications.',
   'JPG hoặc PNG, bản demo tối đa 2 MB.': 'JPG or PNG, up to 2 MB in the demo.',
-  'JPG, PNG hoặc WebP, tối đa 10 MB. Ảnh được cắt vuông và xóa thông tin vị trí; chỉ người có liên quan đến bạn trong VisionAid xem được.': 'JPG, PNG or WebP, up to 10 MB. The picture is cropped square and its location data removed; only people connected to you in VisionAid can see it.',
+  'JPG, PNG hoặc WebP, tối đa 10 MB. Ảnh được cắt vuông và xóa thông tin vị trí; chỉ người có liên quan đến bạn trong VisionAid xem được.':
+    'JPG, PNG or WebP, up to 10 MB. The picture is cropped square and its location data removed; only people connected to you in VisionAid can see it.',
   'Đổi ảnh': 'Change picture',
+  'Truy vết hoạt động': 'Activity trace',
+  'Dòng thời gian hoạt động và hướng dẫn dẫn đường của người được chăm sóc trong trung tâm.':
+    'Activity timeline and navigation guidance of care recipients in your center.',
+  'Chọn một người để xem hoạt động đã được ghi nhận.':
+    'Pick a person to see their recorded activity.',
+  'Quản lý gương mặt thân quen': 'Manage familiar faces',
+  'Quản lý địa điểm và vùng an toàn': 'Manage places and safe zones',
+  'Mời bằng mã QR': 'Invite with a QR code',
+  'Người chăm sóc chính tạo mã QR dùng một lần cho người chăm sóc phụ. Người được mời quét hoặc nhập mã, xem trước rồi chấp nhận để được liên kết với các quyền đã chọn.':
+    'The primary caregiver creates a single-use QR code for a secondary caregiver. The invitee scans or enters the code, previews it and accepts to be linked with the chosen permissions.',
+  'Tạo lời mời': 'Create invitation',
+  'Nhận lời mời': 'Accept invitation',
+  'Đã chấp nhận lời mời. Bạn là người chăm sóc phụ của {name}.':
+    'Invitation accepted. You are now a secondary caregiver of {name}.',
+  'Tạo lời mời người chăm sóc phụ': 'Invite a secondary caregiver',
+  'Chỉ hiện những người mà bạn là người chăm sóc chính.':
+    'Only people you are the primary caregiver of are listed.',
+  'Đang tạo…': 'Creating…',
+  'Tạo mã QR': 'Create QR code',
+  'Lời mời làm người chăm sóc phụ cho {name}. Quyền: {permissions}.':
+    'Invitation to be a secondary caregiver of {name}. Permissions: {permissions}.',
+  'Mã QR lời mời': 'Invitation QR code',
+  'Hết hạn lúc {time}. Mã chỉ dùng được một lần.': 'Expires at {time}. The code can be used once.',
+  'Mã lời mời (nếu không quét được QR)': 'Invitation code (if the QR cannot be scanned)',
+  'Đã sao chép mã lời mời.': 'Invitation code copied.',
+  'Không sao chép được. Hãy chọn mã và sao chép thủ công.':
+    'Could not copy. Select the code and copy it manually.',
+  'Sao chép mã': 'Copy code',
+  'Lời mời đã tạo': 'Invitations created',
+  'Người chấp nhận': 'Accepted by',
+  'Chưa có lời mời nào cho người này.': 'No invitations for this person yet.',
+  'Nhận lời mời người chăm sóc phụ': 'Accept a secondary caregiver invitation',
+  'Mã lời mời': 'Invitation code',
+  'Hoặc chọn ảnh chụp mã QR': 'Or choose a photo of the QR code',
+  'Không đọc được ảnh QR.': 'Could not read the QR image.',
+  'Đang kiểm tra…': 'Checking…',
+  'Xem lời mời': 'View invitation',
+  'Người mời': 'Invited by',
+  'Chấp nhận lời mời': 'Accept invitation',
+  'Dữ liệu lời mời không hợp lệ. Hãy tải lại.': 'Invitation data is invalid. Please reload.',
+  'Chỉ tài khoản người chăm sóc mới dùng được lời mời.':
+    'Only caregivers can use link invitations.',
+  'Mã lời mời không hợp lệ. Kiểm tra lại mã hoặc quét lại QR.':
+    'Invalid invitation code. Check the code or scan the QR again.',
+  'Chọn người được chăm sóc trước khi tạo lời mời.':
+    'Pick a care recipient before creating an invitation.',
+  'Lời mời máy chủ trả về không khớp với người đã chọn.':
+    'The returned invitation does not match the selected person.',
+  'Chọn người được chăm sóc trước khi xem lời mời.':
+    'Pick a care recipient before viewing invitations.',
+  'Bạn không có quyền xem lời mời của người này.':
+    'You are not allowed to view this person’s invitations.',
+  'Không tìm thấy mã QR trong ảnh. Hãy chụp rõ hơn hoặc nhập mã.':
+    'No QR code found in the image. Take a clearer photo or enter the code.',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',

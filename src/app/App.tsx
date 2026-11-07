@@ -26,6 +26,7 @@ import { ApiIceServers } from '../pages/super-admin/ApiIceServers';
 import { ApiMonitoring } from '../pages/super-admin/ApiMonitoring';
 import { ApiInbox, InboxBell } from '../pages/shared/ApiInbox';
 import { ApiNotificationLookup } from '../pages/shared/ApiNotificationLookup';
+import { ApiCenterActivity } from '../pages/center-admin/ApiCenterActivity';
 import { ApiConfigurations } from '../pages/super-admin/ApiConfigurations';
 import { ApiRevenue } from '../pages/super-admin/ApiRevenue';
 import { ApiLicensePools } from '../pages/super-admin/ApiLicensePools';
@@ -326,6 +327,7 @@ function Shell() {
       : []),
     ...(api && user.role === 'CenterAdmin' && user.orgId
       ? [
+          { to: '/center-admin/activity', label: t('Truy vết hoạt động'), Icon: History },
           { to: '/center-admin/licenses', label: t('Kho license'), Icon: ShieldCheck },
           { to: '/center-admin/payments', label: t('Thanh toán'), Icon: CreditCard },
         ]
@@ -656,6 +658,7 @@ export function App() {
                     <Route path="center-admin/calls" element={<ApiCalls />} />
                     <Route path="center-admin/payments" element={<ApiPayments />} />
                     <Route path="center-admin/licenses" element={<ApiLicensePool />} />
+                    <Route path="center-admin/activity" element={<ApiCenterActivity />} />
                   </Route>
                   <Route path="payments/return" element={<ApiPayments result />} />
                   <Route path="payments/cancel" element={<ApiPayments result />} />
