@@ -96,7 +96,7 @@ function Inbox({ actor }: { actor: Person }) {
       <PageHead
         title={t('Hộp thư thông báo')}
         description={t(
-          'Mọi thông báo đã gửi cho bạn, gộp các kênh Push, Email và Realtime vào một mục.',
+          'Mọi thông báo đã gửi cho bạn. Mỗi thông báo là một mục, gộp chung các kênh Push, Email và Realtime.',
         )}
       />
       <section className="glass card stack">

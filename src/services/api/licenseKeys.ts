@@ -96,7 +96,7 @@ export function createLicenseKeysApi(get = apiGet, write = apiWrite) {
       signal?: AbortSignal,
     ) {
       if (!isOrganizationBuyer(actor))
-        throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được xem key đã phát.'), 403);
+        throw new ServiceError(t('Chỉ quản trị viên trung tâm được xem key đã phát.'), 403);
       const query = new URLSearchParams({
         page: String(filter.page ?? 1),
         pageSize: String(filter.pageSize ?? 10),
@@ -112,7 +112,7 @@ export function createLicenseKeysApi(get = apiGet, write = apiWrite) {
     /** Takes back an unused key; its seat returns to the pool. Activated or expired keys → 422. */
     async revoke(actor: Person, key: IssuedKey) {
       if (!isOrganizationBuyer(actor))
-        throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được thu hồi key.'), 403);
+        throw new ServiceError(t('Chỉ quản trị viên trung tâm được thu hồi key.'), 403);
       if (key.state !== 'Unused')
         throw new ServiceError(t('Chỉ thu hồi được key chưa dùng và còn hạn.'), 422);
       if (!z.string().uuid().safeParse(key.id).success)

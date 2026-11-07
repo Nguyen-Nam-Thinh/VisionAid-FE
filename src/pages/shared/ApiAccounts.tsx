@@ -634,7 +634,7 @@ function AccountDetails({
               ? t(': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.')
               : t(': thu hồi phiên refresh và FCM. ') +
                 (action === 'delete'
-                  ? t('Xóa mềm; Admin có thể khôi phục trong {days} ngày.', {
+                  ? t('Tài khoản vẫn được giữ lại; Admin có thể khôi phục trong {days} ngày.', {
                       days: RESTORE_WINDOW_DAYS,
                     })
                   : t('Người dùng sẽ bị chặn đăng nhập.')))
@@ -656,7 +656,7 @@ function AccountDetails({
         <Confirm
           title={t('Khôi phục tài khoản')}
           description={t(
-            '{email}: mở lại tài khoản với mật khẩu cũ, giữ liên kết và dữ liệu còn lại. Dữ liệu đã bị dọn theo thời hạn lưu trữ không lấy lại được.',
+            '{email}: mở lại tài khoản, đăng nhập bằng mật khẩu cũ, giữ nguyên liên kết và dữ liệu còn lưu. Dữ liệu đã bị xóa theo thời hạn lưu trữ sẽ không lấy lại được.',
             { email: account.email },
           )}
           onClose={() => setRestoring(false)}

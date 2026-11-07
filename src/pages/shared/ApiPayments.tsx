@@ -80,7 +80,7 @@ function PoolChangeSummary({
               </div>
             )}
             <div>
-              <dt>{t('Trả bây giờ')}</dt>
+              <dt>{t('Cần trả ngay')}</dt>
               <dd>
                 <strong>{packagePrice(quote.amount, quote.currency)}</strong>
               </dd>
@@ -90,7 +90,7 @@ function PoolChangeSummary({
               <dd>{formatLocaleDateTime(quote.effectiveAt, { timeZoneName: 'short' })}</dd>
             </div>
             <div>
-              <dt>{t('Hết hạn kho sau khi đổi')}</dt>
+              <dt>{t('Kho hết hạn vào')}</dt>
               <dd>{formatLocaleDateTime(quote.newExpiresAt, { timeZoneName: 'short' })}</dd>
             </div>
             <div>
@@ -123,14 +123,16 @@ function PoolChangeSummary({
           {quote.seatsToRelease > 0 && (
             <p className="notice error" role="alert">
               {t(
-                'Đang dùng nhiều hơn số suất của gói này. Thu hồi {count} license trong kho trước khi đổi gói.',
+                'Số license đang dùng nhiều hơn số suất của gói này. Hãy thu hồi {count} license trước khi đổi gói.',
                 { count: quote.seatsToRelease },
               )}
             </p>
           )}
           {!quote.canProceed && quote.seatsToRelease === 0 && (
             <p className="notice error" role="alert">
-              {t('Kho hiện không đổi gói được. Tải lại kho license để kiểm tra trạng thái.')}
+              {t(
+                'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho license để kiểm tra trạng thái.',
+              )}
             </p>
           )}
           {quote.changeType === 'ScheduledDowngrade' && quote.canProceed && quote.poolId && (

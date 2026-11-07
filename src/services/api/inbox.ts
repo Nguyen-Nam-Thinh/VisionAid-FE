@@ -40,7 +40,7 @@ export const deliveryChannelLabels: Record<string, string> = {
 export const deliveryStatusLabels: Record<string, string> = labelMap({
   Pending: msg('Đang chờ gửi'),
   Sent: msg('Đã gửi'),
-  Failed: msg('Gửi lỗi'),
+  Failed: msg('Gửi thất bại'),
 });
 const uuid = z.string().uuid();
 const time = z.iso.datetime({ offset: true });

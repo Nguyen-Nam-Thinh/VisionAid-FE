@@ -24,7 +24,7 @@ export function createAvatarApi(write = apiWrite, blob = apiBlob) {
       const parsed = reply.safeParse(await write('/api/users/me/avatar', { method: 'POST', body }));
       if (!parsed.success)
         throw new ServiceError(
-          t('Đã gửi ảnh nhưng chưa đọc được kết quả. Hãy tải lại trang.'),
+          t('Đã gửi ảnh nhưng chưa nhận được kết quả từ máy chủ. Hãy tải lại trang.'),
           502,
         );
       return parsed.data;

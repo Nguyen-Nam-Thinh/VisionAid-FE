@@ -327,7 +327,7 @@ export function Landing() {
                 {t('Một người bước đi với gậy trắng và điện thoại đeo trước ngực.')}
               </h2>
               <p className="lp-two-line" data-sc-cue="0.32 0.7" data-sc-kinetic="words">
-                {t('Một người ở xa, muốn biết họ có an toàn.')}
+                {t('Một người ở xa muốn biết họ có an toàn không.')}
               </p>
               <p className="lp-two-line is-turn" data-sc-cue="0.62 1 0.3 0" data-sc-kinetic="words">
                 {t('VisionAid nối hai đầu của cùng một hành trình.')}

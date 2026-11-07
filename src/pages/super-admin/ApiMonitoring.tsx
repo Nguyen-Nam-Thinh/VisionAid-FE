@@ -191,7 +191,7 @@ function RetryButton({
               result.status === 'Sent'
                 ? t('Đã gửi lại thành công.')
                 : result.status === 'Pending'
-                  ? t('Đang gửi lại; trạng thái sẽ cập nhật sau.')
+                  ? t('Đang gửi lại; trạng thái sẽ được cập nhật sau.')
                   : t('Gửi lại vẫn thất bại: {reason}', {
                       reason: result.failureReason || t('không rõ lý do'),
                     }),

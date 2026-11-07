@@ -689,9 +689,9 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                 {(event.acknowledgedByName || event.resolvedByName) && (
                   <p>
                     {event.acknowledgedByName &&
-                      t('Tiếp nhận bởi {name}.', { name: event.acknowledgedByName })}{' '}
+                      t('{name} đã tiếp nhận.', { name: event.acknowledgedByName })}{' '}
                     {event.resolvedByName &&
-                      t('Giải quyết bởi {name}.', { name: event.resolvedByName })}
+                      t('{name} đã giải quyết.', { name: event.resolvedByName })}
                   </p>
                 )}
                 {event.notifications && (

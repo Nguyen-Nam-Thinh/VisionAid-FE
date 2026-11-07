@@ -1,4 +1,5 @@
 import { RefreshCw } from 'lucide-react';
+import { CaregiverInvitations } from './CaregiverInvitations';
 import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
@@ -81,6 +82,7 @@ function Links({ actor }: { actor: Person }) {
         }
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
+      <CaregiverInvitations actor={actor} onAccepted={refresh} />
       {create && (
         <LinkEditor
           actor={actor}

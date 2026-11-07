@@ -58,16 +58,18 @@ const failed = z.object({
 /** Why a failed notification cannot be resent, keyed by the BE's retryBlockedCode. */
 export const retryBlockedLabels: Record<string, string> = labelMap({
   NOT_FAILED: msg('Chỉ gửi lại được thông báo đang thất bại.'),
-  RETRY_LIMIT_REACHED: msg('Đã gửi lại tối đa 3 lần.'),
+  RETRY_LIMIT_REACHED: msg('Thông báo này đã được gửi lại đủ 3 lần.'),
   RECIPIENT_INACTIVE: msg('Tài khoản người nhận đã bị khóa hoặc xóa.'),
-  UNSUPPORTED_CHANNEL: msg('Kênh gửi này không hỗ trợ gửi lại.'),
-  TIME_SENSITIVE: msg('Thông báo đến nơi chỉ có ý nghĩa lúc đến; gửi muộn sẽ sai.'),
+  UNSUPPORTED_CHANNEL: msg('Kênh này không hỗ trợ gửi lại.'),
+  TIME_SENSITIVE: msg(
+    'Thông báo đã đến nơi chỉ có ích ngay lúc đến; gửi lại muộn sẽ gây hiểu nhầm.',
+  ),
   NO_ACTIVE_DEVICE: msg(
     'Người nhận chưa đăng nhập thiết bị nào. Gửi lại sau khi họ đăng nhập ứng dụng.',
   ),
-  EMERGENCY_CLOSED: msg('Sự cố khẩn cấp đã được xử lý, bỏ qua hoặc đã gọi.'),
+  EMERGENCY_CLOSED: msg('Sự cố khẩn cấp đã được giải quyết, đã bỏ qua hoặc đã gọi hỗ trợ.'),
   EVENT_TOO_OLD: msg('Thông báo đã quá cũ để gửi lại.'),
-  NO_LONGER_APPLIES: msg('License đã được gia hạn nên nhắc nhở không còn đúng.'),
+  NO_LONGER_APPLIES: msg('License đã được gia hạn nên lời nhắc không còn cần thiết.'),
   RECIPIENT_NO_LONGER_LINKED: msg('Người nhận không còn nhận cảnh báo của người này.'),
   NOTIFICATION_RETRY_IN_PROGRESS: msg('Thông báo này đang được gửi lại.'),
 });

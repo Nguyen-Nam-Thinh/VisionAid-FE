@@ -881,3 +881,9 @@ tbody tr:hover,
   padding-top: 20px;
   border-top: 1px solid var(--line);
 }
+
+/* Activity trace tabs sit in a grid card: let wide tables scroll inside instead of widening it. */
+.trace-tabs,
+.trace-tabs > * {
+  min-width: 0;
+}

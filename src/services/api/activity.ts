@@ -276,6 +276,11 @@ export function createActivityApi(get = apiGet) {
     if (!links.items.some((link) => !link.unlinkedAt))
       throw new ServiceError(t('Bạn không còn liên kết chăm sóc hoạt động với người này.'), 403);
   }
+  /** Timeline and guidance: also the Center Admin of the person's organization (BE checks the org). */
+  async function authorizeTrace(actor: Person, viuId: string, signal?: AbortSignal) {
+    if (actor.role === 'CenterAdmin' && actor.orgId) return validId(viuId);
+    return authorize(actor, viuId, signal);
+  }
   async function detail(
     actor: Person,
     viuId: string,
@@ -357,7 +362,7 @@ export function createActivityApi(get = apiGet) {
       signal?: AbortSignal,
     ) {
       const query = queryParams(page, range, 20);
-      await authorize(actor, viuId, signal);
+      await authorizeTrace(actor, viuId, signal);
       query.set('viuId', viuId);
       const wanted = types.filter((type) => (timelineTypes as readonly string[]).includes(type));
       if (wanted.length) query.set('types', wanted.join(','));
@@ -375,7 +380,7 @@ export function createActivityApi(get = apiGet) {
       signal?: AbortSignal,
     ) {
       const query = queryParams(page, range, 20);
-      await authorize(actor, viuId, signal);
+      await authorizeTrace(actor, viuId, signal);
       query.set('userId', viuId);
       const data = parse(
         pagedOf(guidanceLog),
