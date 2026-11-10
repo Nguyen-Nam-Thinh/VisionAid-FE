@@ -179,11 +179,6 @@ function Alerts({ actor }: { actor: Person }) {
                 </label>
               </div>
             </FilterPanel>
-            <small>
-              {t('Thời gian theo {timeZone}.', {
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-              })}
-            </small>
             {error && (
               <p role="alert" className="notice error">
                 {error}

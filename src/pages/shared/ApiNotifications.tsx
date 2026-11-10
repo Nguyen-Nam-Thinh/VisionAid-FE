@@ -107,8 +107,10 @@ function Notifications({ actor }: { actor: Person }) {
         title={personal ? t('Tùy chọn thông báo') : t('Quy tắc thông báo')}
         description={
           personal
-            ? t('Thiết lập theo loại và kênh cho tài khoản của bạn.')
-            : t('Quy tắc toàn hệ thống và quy tắc riêng của trung tâm.')
+            ? t('Chọn loại thông báo bạn muốn nhận và cách nhận (ứng dụng, email, trên web).')
+            : t(
+                'Quy định ai nhận thông báo nào: quy định chung của hệ thống và quy định riêng của trung tâm.',
+              )
         }
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}

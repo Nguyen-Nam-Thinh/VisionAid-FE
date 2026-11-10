@@ -1,5 +1,7 @@
 import { t, msg, useI18n } from '../../i18n';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
+import { ThemeSwitch } from '../../components/ThemeSwitch';
+import { useTheme } from '../../stores/theme';
 import { Link } from 'react-router-dom';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { ArrowRight, Menu, X } from 'lucide-react';
@@ -10,6 +12,12 @@ import { useSession } from '../../hooks/useService';
 import '../../vendor/scrollcraft/scrollcraft.js';
 import engineCss from '../../vendor/scrollcraft/scrollcraft.css?inline';
 import './landing.css';
+
+/** Page grounds the scroll engine fades between, per theme (the palette's concrete, ink, tactile). */
+const drift = {
+  light: { concrete: '#E7E8E2', ink: '#1B1D19', tactile: '#F2C200' },
+  dark: { concrete: '#121411', ink: '#1B1D19', tactile: '#F2C200' },
+} as const;
 
 const capabilities = [
   {
@@ -124,7 +132,7 @@ function HeroScene() {
             />
             <rect x="86" y="118" width="38" height="56" rx="7" fill="var(--panel)" />
             <circle cx="105" cy="132" r="7" fill="var(--tactile)" />
-            <path d="M44 226L-30 408" stroke="var(--panel)" strokeWidth="9" strokeLinecap="round" />
+            <path d="M44 226L-30 408" stroke="#ffffff" strokeWidth="9" strokeLinecap="round" />
             <path
               d="M-14 368L-30 408"
               stroke="var(--signal)"
@@ -191,6 +199,9 @@ export function Landing() {
   // A signed-in visitor goes straight back to their workspace instead of being offered sign-in.
   const { data: user } = useSession();
   const { locale } = useI18n();
+  // Drift colours are read when the engine mounts, so a theme change remounts the page too.
+  const theme = useTheme();
+  const ground = drift[theme];
   const root = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const engine = window.ScrollCraft;
@@ -209,7 +220,7 @@ export function Landing() {
       document.documentElement.style.removeProperty('--sc-canvas');
     };
     // Kinetic lines split text nodes, so a new language remounts the page (see key below).
-  }, [locale]);
+  }, [locale, theme]);
   const start = user ? (
     <Link className="btn primary" to="/dashboard">
       {t('Vào không gian chăm sóc')} <ArrowRight size={18} aria-hidden="true" />
@@ -220,7 +231,7 @@ export function Landing() {
     </Link>
   );
   return (
-    <div className="landing" ref={root} key={locale}>
+    <div className="landing" ref={root} key={locale + theme}>
       <a className="skip" href="#landing-main">
         {t('Đến nội dung chính')}
       </a>
@@ -239,6 +250,7 @@ export function Landing() {
             <LanguageSwitch className="landing-lang-menu" />
           </nav>
           <div className="landing-header-actions">
+            <ThemeSwitch />
             <LanguageSwitch className="landing-lang" />
             {user ? (
               <Link className="btn" to="/dashboard">
@@ -268,7 +280,7 @@ export function Landing() {
           className="lp-hero"
           data-sc-act="pin"
           data-sc-span="1.9"
-          data-sc-drift="#E7E8E2"
+          data-sc-drift={ground.concrete}
           aria-labelledby="landing-title"
         >
           <div className="sc-stage lp-hero-stage">
@@ -312,7 +324,7 @@ export function Landing() {
           className="lp-two"
           data-sc-act="pin"
           data-sc-span="2.4"
-          data-sc-drift="#1B1D19"
+          data-sc-drift={ground.ink}
           aria-labelledby="two-title"
         >
           <div className="sc-stage lp-two-stage">
@@ -341,7 +353,7 @@ export function Landing() {
           className="lp-peak"
           data-sc-act="pin"
           data-sc-span="3.6"
-          data-sc-drift="#F2C200"
+          data-sc-drift={ground.tactile}
           aria-labelledby="hybrid-title"
         >
           <div className="sc-stage lp-peak-stage">
@@ -394,7 +406,7 @@ export function Landing() {
           className="lp-features"
           data-sc-act="pan"
           data-sc-span="4.2"
-          data-sc-drift="#E7E8E2"
+          data-sc-drift={ground.concrete}
           aria-labelledby="features-title"
         >
           <div className="sc-stage lp-features-stage">
@@ -537,7 +549,7 @@ export function Landing() {
           className="lp-close"
           data-sc-act="pin"
           data-sc-span="1.5"
-          data-sc-drift="#1B1D19"
+          data-sc-drift={ground.ink}
           aria-labelledby="cta-title"
         >
           <div className="sc-stage lp-close-stage">

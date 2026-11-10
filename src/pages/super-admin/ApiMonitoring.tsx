@@ -1,5 +1,6 @@
-import { RefreshCw } from 'lucide-react';
-import { t, msg, labelMap, tText } from '../../i18n';
+import { BarChart3, CircleCheck, CircleX, Clock, ListChecks, RefreshCw } from 'lucide-react';
+import { PageTabs } from '../../components/PageTabs';
+import { t, msg, labelMap, tText, formatNumber } from '../../i18n';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -25,7 +26,7 @@ const titles = labelMap({
   metrics: msg('Hiệu năng AI'),
   audit: msg('Nhật ký thao tác'),
   delivery: msg('Theo dõi thông báo'),
-  guidance: msg('Nhật ký Hybrid'),
+  guidance: msg('Nhật ký chỉ dẫn di chuyển'),
 });
 const labels: Record<string, string> = labelMap({
   sessionId: msg('Mã phiên điều hướng'),
@@ -115,7 +116,7 @@ const entities: Record<string, string> = labelMap({
   licensesubscription: msg('Đăng ký gói'),
   paymenttransaction: msg('Giao dịch thanh toán'),
   webrtcsession: msg('Cuộc gọi'),
-  webrtciceserver: msg('Máy chủ cuộc gọi'),
+  webrtciceserver: msg('Máy chủ hỗ trợ cuộc gọi'),
   obstacledetectionsession: msg('Phiên phát hiện vật cản'),
   ocrrequest: msg('Đọc chữ (OCR)'),
   qrscanresult: msg('Quét mã QR'),
@@ -134,7 +135,7 @@ function valueText(key: string, value: string | number | boolean | null) {
   if (key === 'isOfflineFallback') return value ? t('Có') : t('Không');
   if (key === 'sourceTable' || key === 'targetTable') return entityText(String(value));
   if (key === 'decision') return tText(decisions.get(String(value)) ?? String(value));
-  if (key.endsWith('At')) return formatTime(String(value)) + ' · UTC+7';
+  if (key.endsWith('At')) return formatTime(String(value));
   if (key.endsWith('Ms')) return value + ' ms';
   if (key === 'avgConfidence') return (Number(value) * 100).toFixed(1) + '%';
   if (key === 'channel') return channelLabels[String(value)] ?? String(value);
@@ -238,302 +239,331 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
         title={titles[kind]}
         description={
           kind === 'metrics'
-            ? t('Số lần xử lý, thời gian và độ tin cậy của từng mô hình AI theo ngày.')
+            ? t('Mỗi ngày AI đã nhận diện bao nhiêu lần, mất bao lâu và chắc chắn đến mức nào.')
             : kind === 'guidance'
-              ? t('Các chỉ dẫn di chuyển AI đã đưa ra và thời gian xử lý.')
+              ? t('Các chỉ dẫn tránh vật cản đã đọc cho người khiếm thị và thời gian phản hồi.')
               : kind === 'audit'
-                ? t('Ai đã thao tác gì và khi nào trên hệ thống. Nhật ký chỉ đọc.')
-                : t('Thống kê gửi cảnh báo và tra cứu thông báo thất bại.')
+                ? t('Ai đã làm gì và vào lúc nào trên hệ thống. Chỉ xem, không sửa được.')
+                : t(
+                    'Số cảnh báo đã gửi được hoặc bị lỗi, và danh sách thông báo gửi không thành công.',
+                  )
         }
       />
-      <div className="stack">
-        {kind === 'delivery' && <DeliveryStatus actor={actor} />}
-        <section className="glass card stack">
-          <h2>{kind === 'delivery' ? t('Thông báo thất bại') : t('Tra cứu bản ghi')}</h2>
-          {retryNotice && (
-            <p className="notice" role="status">
-              {retryNotice}
-            </p>
-          )}
-          <FilterPanel
-            active={
-              Object.entries(filters).filter(
-                ([key, value]) => value && key !== 'sessionId' && key !== 'targetRecordId',
-              ).length
-            }
-            submitLabel={t('Lọc bản ghi')}
-            onReset={() => {
-              setPerson('');
-              setAction('');
-              scope({});
-            }}
-            tools={
-              <button
-                className="btn"
-                type="button"
-                disabled={query.isFetching}
-                onClick={() => void query.refetch()}
-              >
-                <RefreshCw size={16} aria-hidden="true" />
-                {t('Tải lại')}
-              </button>
-            }
-            onApply={(form) => {
-              const data = new FormData(form);
-              scope({
-                ...Object.fromEntries(
-                  Array.from(data.entries()).map(([key, value]) => [key, String(value).trim()]),
-                ),
-                ...(kind === 'audit' && {
-                  actorId: person,
-                  actionType: action,
-                  targetRecordId: filters.targetRecordId,
-                }),
-                ...(kind === 'guidance' && { userId: person, sessionId: filters.sessionId }),
-              });
-            }}
-          >
-            {kind === 'guidance' && (
-              <>
-                <SearchPicker
-                  wide
-                  label={t('Người dùng')}
-                  value={person}
-                  onChange={setPerson}
-                  search={searchAccounts(actor, 'VisuallyImpaired')}
-                  queryKey={['guidance-user', actor.id]}
-                />
-                <label className="field">
-                  Engine
-                  <select name="engineUsed">
-                    <option value="">{t('Tất cả engine')}</option>
-                    {guidanceEngines.map((engine) => (
-                      <option key={engine}>{engine}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field">
-                  Fallback
-                  <select name="isOfflineFallback">
-                    <option value="">{t('Tất cả bản ghi')}</option>
-                    <option value="true">{t('Có fallback')}</option>
-                    <option value="false">{t('Không fallback')}</option>
-                  </select>
-                </label>
-              </>
-            )}
-            {kind === 'metrics' && (
-              <label className="field wide">
-                {t('Tên mô hình')}
-                <input name="modelName" placeholder={t('Tên chính xác từ máy chủ')} />
-              </label>
-            )}
-            {kind === 'audit' && (
-              <>
-                <SearchPicker
-                  label={t('Người thực hiện')}
-                  value={person}
-                  onChange={setPerson}
-                  search={searchAccounts(actor)}
-                  queryKey={['audit-actor', actor.id]}
-                />
-                <SearchPicker
-                  label={t('Hành động')}
-                  placeholder={t('Gõ tên hành động')}
-                  value={action}
-                  onChange={setAction}
-                  search={searchActions}
-                  queryKey={['audit-action', actor.id]}
-                />
-                <label className="field wide">
-                  {t('Bảng đối tượng')}
-                  <input name="targetTable" maxLength={100} />
-                </label>
-              </>
-            )}
-            {kind === 'delivery' && (
-              <label className="field wide">
-                {t('Kênh gửi')}
-                <select name="channel">
-                  <option value="">{t('Tất cả kênh')}</option>
-                  {Object.entries(channelLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {/* The date range always sits on one row of its own. */}
-            <div className="filter-range wide">
-              <label className="field">
-                {kind === 'metrics' ? t('Từ ngày UTC') : t('Từ ngày Việt Nam')}
-                <input type="date" name="from" />
-              </label>
-              <label className="field">
-                {kind === 'metrics' ? t('Đến ngày UTC') : t('Đến ngày Việt Nam')}
-                <input type="date" name="to" />
-              </label>
-            </div>
-          </FilterPanel>
-          {(filters.sessionId || filters.targetRecordId) && (
-            <div className="row notice">
-              <span>
-                {filters.sessionId
-                  ? t('Đang xem các bản ghi của một phiên điều hướng.')
-                  : t('Đang xem các thao tác trên một bản ghi của bảng {table}.', {
-                      table: filters.targetTable || t('đã chọn'),
-                    })}
-              </span>
-              <button
-                type="button"
-                className="btn small"
-                onClick={() => scope({ ...filters, sessionId: '', targetRecordId: '' })}
-              >
-                {t('Bỏ lọc này')}
-              </button>
-            </div>
-          )}
-          {kind === 'metrics' ? (
-            <p>
-              {t(
-                'Máy chủ tổng hợp ngày trước vào 07:00 giờ Việt Nam. Ngày UTC bắt đầu lúc 07:00 và kết thúc trước 07:00 hôm sau. Giữ nguyên tên mô hình do máy chủ trả về; số thành công phụ thuộc quy tắc tổng hợp từng nguồn.',
-              )}
-            </p>
-          ) : (
-            <p>
-              {t(
-                'Bộ lọc gồm cả ngày kết thúc theo giờ Việt Nam. Để trống ngày để xem dữ liệu còn lưu.',
-              )}
-            </p>
-          )}
-          {kind === 'audit' && (
-            <p>
-              {t(
-                'Chi tiết hiển thị thông tin thao tác. Nội dung trước/sau, ghi chú và thông tin thiết bị chưa hiển thị vì có thể chứa dữ liệu nhạy cảm.',
-              )}
-            </p>
-          )}
-          {kind === 'guidance' && (
-            <div className="stack">
-              <p>
-                {t(
-                  'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Fallback là cờ do máy chủ ghi nhận, không chứng minh điện thoại đang offline hoặc ghi lại mọi lần chuyển engine. Độ trễ không phải thời gian toàn bộ yêu cầu từ điện thoại.',
+      <PageTabs
+        label={t('Phần của trang')}
+        tabs={[
+          kind === 'delivery' && {
+            value: 'overview',
+            label: t('Tổng quan'),
+            icon: BarChart3,
+            content: <DeliveryStatus actor={actor} />,
+          },
+          {
+            value: 'records',
+            label: kind === 'delivery' ? t('Thông báo thất bại') : t('Tra cứu bản ghi'),
+            icon: ListChecks,
+            content: (
+              <section className="glass card stack">
+                <h2>{kind === 'delivery' ? t('Thông báo thất bại') : t('Tra cứu bản ghi')}</h2>
+                {retryNotice && (
+                  <p className="notice" role="status">
+                    {retryNotice}
+                  </p>
                 )}
-              </p>
-              <div className="row">
-                <Link className="btn" to="/admin/metrics">
-                  {t('Xem số liệu AI')}
-                </Link>
-                <Link className="btn" to="/admin/configurations">
-                  {t('Cấu hình engine')}
-                </Link>
-              </div>
-              <p>
-                {t(
-                  'Trong cấu hình hệ thống, tìm hybrid_navigation_enabled, hybrid_navigation_engine hoặc navigation_near_threshold_ms. Số liệu AI tổng hợp dùng tên JEV, Groq và RuleBased.',
-                )}
-              </p>
-              <p>
-                {t(
-                  'OnDeviceRules là quyết định điện thoại tự đưa ra khi mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.',
-                )}
-              </p>
-            </div>
-          )}
-          {kind === 'metrics' && (
-            <p>
-              {t(
-                'Với nguồn navigation_guidance_logs, máy chủ tính bản ghi thiếu độ trễ vào nhóm thất bại, kể cả RuleBased đã trả quyết định. Các số này không đánh giá độ đúng hoặc an toàn của hướng dẫn.',
-              )}
-            </p>
-          )}
-          <State loading={query.isPending} error={query.error} retry={() => void query.refetch()}>
-            {query.data && (
-              <>
-                <div className="table-scroll" role="region" aria-label={titles[kind]} tabIndex={0}>
-                  <table style={{ minWidth: 720 }}>
-                    <thead>
-                      <tr>
-                        {columns[kind].map((key) => (
-                          <th key={key}>{labels[key]}</th>
-                        ))}
-                        <th>{t('Thao tác')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {query.data.items.map((row) => (
-                        <tr key={row.id}>
-                          {columns[kind].map((key) => (
-                            <td key={key}>
-                              {valueText(
-                                key,
-                                // Older BE deploys have no actorName; never show the raw actor ID.
-                                key === 'actorName' ? (row.actorName ?? null) : row[key],
-                              )}
-                            </td>
-                          ))}
-                          <td>
-                            <div className="row">
-                              <button className="btn small" onClick={() => setSelected(row)}>
-                                {t('Chi tiết')}
-                              </button>
-                              {kind === 'delivery' && (
-                                <RetryButton
-                                  actor={actor}
-                                  row={row}
-                                  done={(message) => {
-                                    setRetryNotice(message);
-                                    void query.refetch();
-                                  }}
-                                />
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {!query.data.items.length && (
-                    <p className="empty">{t('Không có bản ghi phù hợp.')}</p>
-                  )}
-                </div>
-                <div className="row pagination">
-                  <span role="status">
-                    {t('{totalCount} bản ghi · Trang {page}/{p4}', {
-                      totalCount: query.data.totalCount,
-                      page: query.data.page,
-                      p4: Math.max(1, query.data.totalPages),
-                    })}
-                  </span>
-                  <div className="row">
+                <FilterPanel
+                  active={
+                    Object.entries(filters).filter(
+                      ([key, value]) => value && key !== 'sessionId' && key !== 'targetRecordId',
+                    ).length
+                  }
+                  submitLabel={t('Lọc bản ghi')}
+                  onReset={() => {
+                    setPerson('');
+                    setAction('');
+                    scope({});
+                  }}
+                  tools={
                     <button
                       className="btn"
-                      disabled={!query.data.hasPreviousPage || query.isFetching}
-                      onClick={() => {
-                        setPage(page - 1);
-                        setSelected(null);
-                      }}
+                      type="button"
+                      disabled={query.isFetching}
+                      onClick={() => void query.refetch()}
                     >
-                      {t('Trang trước')}
+                      <RefreshCw size={16} aria-hidden="true" />
+                      {t('Tải lại')}
                     </button>
+                  }
+                  onApply={(form) => {
+                    const data = new FormData(form);
+                    scope({
+                      ...Object.fromEntries(
+                        Array.from(data.entries()).map(([key, value]) => [
+                          key,
+                          String(value).trim(),
+                        ]),
+                      ),
+                      ...(kind === 'audit' && {
+                        actorId: person,
+                        actionType: action,
+                        targetRecordId: filters.targetRecordId,
+                      }),
+                      ...(kind === 'guidance' && { userId: person, sessionId: filters.sessionId }),
+                    });
+                  }}
+                >
+                  {kind === 'guidance' && (
+                    <>
+                      <SearchPicker
+                        wide
+                        label={t('Người dùng')}
+                        value={person}
+                        onChange={setPerson}
+                        search={searchAccounts(actor, 'VisuallyImpaired')}
+                        queryKey={['guidance-user', actor.id]}
+                      />
+                      <label className="field">
+                        Engine
+                        <select name="engineUsed">
+                          <option value="">{t('Tất cả engine')}</option>
+                          {guidanceEngines.map((engine) => (
+                            <option key={engine}>{engine}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field">
+                        Fallback
+                        <select name="isOfflineFallback">
+                          <option value="">{t('Tất cả bản ghi')}</option>
+                          <option value="true">{t('Có fallback')}</option>
+                          <option value="false">{t('Không fallback')}</option>
+                        </select>
+                      </label>
+                    </>
+                  )}
+                  {kind === 'metrics' && (
+                    <label className="field wide">
+                      {t('Tên mô hình')}
+                      <input name="modelName" placeholder={t('Tên chính xác từ máy chủ')} />
+                    </label>
+                  )}
+                  {kind === 'audit' && (
+                    <>
+                      <SearchPicker
+                        label={t('Người thực hiện')}
+                        value={person}
+                        onChange={setPerson}
+                        search={searchAccounts(actor)}
+                        queryKey={['audit-actor', actor.id]}
+                      />
+                      <SearchPicker
+                        label={t('Hành động')}
+                        placeholder={t('Gõ tên hành động')}
+                        value={action}
+                        onChange={setAction}
+                        search={searchActions}
+                        queryKey={['audit-action', actor.id]}
+                      />
+                      <label className="field wide">
+                        {t('Bảng đối tượng')}
+                        <input name="targetTable" maxLength={100} />
+                      </label>
+                    </>
+                  )}
+                  {kind === 'delivery' && (
+                    <label className="field wide">
+                      {t('Kênh gửi')}
+                      <select name="channel">
+                        <option value="">{t('Tất cả kênh')}</option>
+                        {Object.entries(channelLabels).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  {/* The date range always sits on one row of its own. */}
+                  <div className="filter-range wide">
+                    <label className="field">
+                      {t('Từ ngày')}
+                      <input type="date" name="from" />
+                    </label>
+                    <label className="field">
+                      {t('Đến ngày')}
+                      <input type="date" name="to" />
+                    </label>
+                  </div>
+                </FilterPanel>
+                {(filters.sessionId || filters.targetRecordId) && (
+                  <div className="row notice">
+                    <span>
+                      {filters.sessionId
+                        ? t('Đang xem các bản ghi của một phiên điều hướng.')
+                        : t('Đang xem các thao tác trên một bản ghi của bảng {table}.', {
+                            table: filters.targetTable || t('đã chọn'),
+                          })}
+                    </span>
                     <button
-                      className="btn"
-                      disabled={!query.data.hasNextPage || query.isFetching}
-                      onClick={() => {
-                        setPage(page + 1);
-                        setSelected(null);
-                      }}
+                      type="button"
+                      className="btn small"
+                      onClick={() => scope({ ...filters, sessionId: '', targetRecordId: '' })}
                     >
-                      {t('Trang sau')}
+                      {t('Bỏ lọc này')}
                     </button>
                   </div>
-                </div>
-              </>
-            )}
-          </State>
-        </section>
-      </div>
+                )}
+                {kind === 'metrics' ? (
+                  <p>
+                    {t(
+                      'Số liệu của ngày hôm trước được tổng hợp lúc 07:00 sáng. Số thành công phụ thuộc quy tắc tổng hợp của từng nguồn.',
+                    )}
+                  </p>
+                ) : (
+                  <p>
+                    {t(
+                      'Bộ lọc gồm cả ngày kết thúc. Để trống ngày để xem dữ liệu còn lưu.',
+                    )}
+                  </p>
+                )}
+                {kind === 'audit' && (
+                  <p>
+                    {t(
+                      'Chi tiết hiển thị thông tin thao tác. Nội dung trước/sau, ghi chú và thông tin thiết bị chưa hiển thị vì có thể chứa dữ liệu nhạy cảm.',
+                    )}
+                  </p>
+                )}
+                {kind === 'guidance' && (
+                  <div className="stack">
+                    <p>
+                      {t(
+                        'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Fallback là cờ do máy chủ ghi nhận, không chứng minh điện thoại đang offline hoặc ghi lại mọi lần chuyển engine. Độ trễ không phải thời gian toàn bộ yêu cầu từ điện thoại.',
+                      )}
+                    </p>
+                    <div className="row">
+                      <Link className="btn" to="/admin/metrics">
+                        {t('Xem số liệu AI')}
+                      </Link>
+                      <Link className="btn" to="/admin/configurations">
+                        {t('Cấu hình engine')}
+                      </Link>
+                    </div>
+                    <p>
+                      {t(
+                        'Trong cấu hình hệ thống, tìm hybrid_navigation_enabled, hybrid_navigation_engine hoặc navigation_near_threshold_ms. Số liệu AI tổng hợp dùng tên JEV, Groq và RuleBased.',
+                      )}
+                    </p>
+                    <p>
+                      {t(
+                        'OnDeviceRules là quyết định điện thoại tự đưa ra khi mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.',
+                      )}
+                    </p>
+                  </div>
+                )}
+                {kind === 'metrics' && (
+                  <p>
+                    {t(
+                      'Với nguồn navigation_guidance_logs, máy chủ tính bản ghi thiếu độ trễ vào nhóm thất bại, kể cả RuleBased đã trả quyết định. Các số này không đánh giá độ đúng hoặc an toàn của hướng dẫn.',
+                    )}
+                  </p>
+                )}
+                <State
+                  loading={query.isPending}
+                  error={query.error}
+                  retry={() => void query.refetch()}
+                >
+                  {query.data && (
+                    <>
+                      <div
+                        className="table-scroll"
+                        role="region"
+                        aria-label={titles[kind]}
+                        tabIndex={0}
+                      >
+                        <table style={{ minWidth: 720 }}>
+                          <thead>
+                            <tr>
+                              {columns[kind].map((key) => (
+                                <th key={key}>{labels[key]}</th>
+                              ))}
+                              <th>{t('Thao tác')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {query.data.items.map((row) => (
+                              <tr key={row.id}>
+                                {columns[kind].map((key) => (
+                                  <td key={key}>
+                                    {valueText(
+                                      key,
+                                      // Older BE deploys have no actorName; never show the raw actor ID.
+                                      key === 'actorName' ? (row.actorName ?? null) : row[key],
+                                    )}
+                                  </td>
+                                ))}
+                                <td>
+                                  <div className="row">
+                                    <button className="btn small" onClick={() => setSelected(row)}>
+                                      {t('Chi tiết')}
+                                    </button>
+                                    {kind === 'delivery' && (
+                                      <RetryButton
+                                        actor={actor}
+                                        row={row}
+                                        done={(message) => {
+                                          setRetryNotice(message);
+                                          void query.refetch();
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {!query.data.items.length && (
+                          <p className="empty">{t('Không có bản ghi phù hợp.')}</p>
+                        )}
+                      </div>
+                      <div className="row pagination">
+                        <span role="status">
+                          {t('{totalCount} bản ghi · Trang {page}/{p4}', {
+                            totalCount: query.data.totalCount,
+                            page: query.data.page,
+                            p4: Math.max(1, query.data.totalPages),
+                          })}
+                        </span>
+                        <div className="row">
+                          <button
+                            className="btn"
+                            disabled={!query.data.hasPreviousPage || query.isFetching}
+                            onClick={() => {
+                              setPage(page - 1);
+                              setSelected(null);
+                            }}
+                          >
+                            {t('Trang trước')}
+                          </button>
+                          <button
+                            className="btn"
+                            disabled={!query.data.hasNextPage || query.isFetching}
+                            onClick={() => {
+                              setPage(page + 1);
+                              setSelected(null);
+                            }}
+                          >
+                            {t('Trang sau')}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </State>
+              </section>
+            ),
+          },
+        ]}
+      />
       {selected && (
         <Dialog title={t('Chi tiết bản ghi')} onClose={() => setSelected(null)}>
           <dl className="record-details">
@@ -574,79 +604,88 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
   );
 }
 function DeliveryStatus({ actor }: { actor: Person }) {
+  const [period, setPeriod] = useState<'last24Hours' | 'last7Days'>('last24Hours');
   const query = useQuery({
     queryKey: ['api-delivery-status', actor.id],
     queryFn: ({ signal }) => monitoringApi.status(actor, signal),
     retry: false,
     gcTime: 0,
   });
+  const stats = query.data?.[period];
   return (
-    <section className="glass card stack">
+    <section className="glass card stack" aria-labelledby="delivery-overview-title">
       <div className="row between">
-        <h2>{t('Tổng quan gửi cảnh báo')}</h2>
+        <h2 id="delivery-overview-title">{t('Tổng quan gửi cảnh báo')}</h2>
         <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
           <RefreshCw size={16} aria-hidden="true" />
           {t('Tải lại thống kê')}
         </button>
       </div>
-      <p>
-        {t(
-          'Chỉ tính bản ghi cảnh báo do máy chủ theo dõi. Đã gửi gồm trạng thái Sent và Delivered, không xác nhận người nhận đã đọc. Bộ lọc bên dưới chỉ áp dụng danh sách thất bại.',
-        )}
-      </p>
+      <div className="segmented" role="group" aria-label={t('Khoảng thời gian')}>
+        {(['last24Hours', 'last7Days'] as const).map((key) => (
+          <button
+            key={key}
+            type="button"
+            className={'btn small' + (period === key ? ' is-active' : '')}
+            aria-pressed={period === key}
+            onClick={() => setPeriod(key)}
+          >
+            {key === 'last24Hours' ? t('24 giờ qua') : t('7 ngày qua')}
+          </button>
+        ))}
+      </div>
       <State loading={query.isPending} error={query.error} retry={() => void query.refetch()}>
-        {query.data && (
+        {stats && (
           <>
-            <div
-              className="table-scroll"
-              role="region"
-              aria-label={t('Thống kê gửi cảnh báo')}
-              tabIndex={0}
-            >
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t('Khoảng thời gian')}</th>
-                    <th>{t('Đã gửi')}</th>
-                    <th>{t('Thất bại')}</th>
-                    <th>{t('Đang chờ')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(['last24Hours', 'last7Days'] as const).map((key) => (
-                    <tr key={key}>
-                      <th>{key === 'last24Hours' ? t('24 giờ gần nhất') : t('7 ngày gần nhất')}</th>
-                      <td>{query.data[key].totalSent}</td>
-                      <td>{query.data[key].totalFailed}</td>
-                      <td>{query.data[key].totalPending}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="report-tiles delivery-tiles">
+              {(
+                [
+                  [t('Đã gửi đi'), stats.totalSent, CircleCheck, 'success'],
+                  [t('Gửi thất bại'), stats.totalFailed, CircleX, 'danger'],
+                  [t('Đang chờ gửi'), stats.totalPending, Clock, 'warning'],
+                ] as const
+              ).map(([label, count, Icon, tone]) => (
+                <div key={label} className="report-tile" role="group" aria-label={label}>
+                  <span className={'report-tile-icon ' + tone} aria-hidden="true">
+                    <Icon size={20} />
+                  </span>
+                  <strong className="report-tile-value">{formatNumber(count)}</strong>
+                  <span className="report-tile-label">{label}</span>
+                </div>
+              ))}
             </div>
-            {(['last24Hours', 'last7Days'] as const).map((key) => (
-              <div key={key}>
-                <h3>
-                  {t('Kênh gửi ·')}{' '}
-                  {key === 'last24Hours' ? t('24 giờ gần nhất') : t('7 ngày gần nhất')}
-                </h3>
-                {query.data[key].byChannel.length ? (
-                  <ul>
-                    {query.data[key].byChannel.map((row) => (
-                      <li key={row.channel}>
-                        {t('{p0}: {sent} đã gửi · {failed} thất bại', {
-                          p0: channelLabels[row.channel] ?? row.channel,
-                          sent: row.sent,
-                          failed: row.failed,
+            <h3>{t('Theo cách gửi')}</h3>
+            {stats.byChannel.length ? (
+              <ul className="delivery-channels">
+                {stats.byChannel.map((row) => {
+                  const total = row.sent + row.failed;
+                  const ok = total ? (row.sent / total) * 100 : 0;
+                  return (
+                    <li key={row.channel}>
+                      <span className="delivery-channel-name">
+                        {channelLabels[row.channel] ?? row.channel}
+                      </span>
+                      <span className="delivery-channel-track" aria-hidden="true">
+                        <span style={{ width: ok + '%' }} />
+                      </span>
+                      <span className="delivery-channel-count">
+                        {t('{sent} đã gửi · {failed} thất bại', {
+                          sent: formatNumber(row.sent),
+                          failed: formatNumber(row.failed),
                         })}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>{t('Chưa ghi nhận gửi thành công hoặc thất bại theo kênh.')}</p>
-                )}
-              </div>
-            ))}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="muted">{t('Chưa có cảnh báo nào được gửi trong khoảng này.')}</p>
+            )}
+            <p className="report-note">
+              {t(
+                '"Đã gửi đi" nghĩa là máy chủ đã chuyển cảnh báo đi, chưa chắc người nhận đã mở xem. Bộ lọc bên dưới chỉ áp dụng cho danh sách thông báo thất bại.',
+              )}
+            </p>
           </>
         )}
       </State>

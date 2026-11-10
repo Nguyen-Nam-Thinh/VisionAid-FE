@@ -207,15 +207,15 @@ test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ pag
     });
   });
   await login(page);
-  await page.getByRole('link', { name: 'Nhật ký Hybrid', exact: true }).click();
+  await page.getByRole('link', { name: 'Nhật ký chỉ dẫn di chuyển', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Dừng lại', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Chưa có dữ liệu', exact: true })).toBeVisible();
   await openFilters(page);
   await pick(page, 'Người dùng', 'VIU', /VIU mẫu/);
   await page.getByRole('combobox', { name: 'Engine', exact: true }).selectOption('RuleBased');
   await page.getByRole('combobox', { name: 'Fallback', exact: true }).selectOption('true');
-  await page.getByLabel('Từ ngày Việt Nam').fill('2026-10-11');
-  await page.getByLabel('Đến ngày Việt Nam').fill('2026-10-11');
+  await page.getByLabel('Từ ngày').fill('2026-10-11');
+  await page.getByLabel('Đến ngày').fill('2026-10-11');
   await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
   await expect.poll(() => requests.at(-1)?.searchParams.get('userId')).toBe(id);
   expect(requests.at(-1)?.searchParams.get('engineUsed')).toBe('RuleBased');
@@ -262,7 +262,7 @@ test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ pag
 test('U7b: non-admin cannot open Hybrid administration', async ({ page }) => {
   const calls = await stubApi(page, 'CenterAdmin', '01900000-0000-7000-8000-000000000002');
   await login(page);
-  await expect(page.getByRole('link', { name: 'Nhật ký Hybrid' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Nhật ký chỉ dẫn di chuyển' })).toHaveCount(0);
   await page.goto('/admin/hybrid');
   await expect(page).toHaveURL(/forbidden$/);
   expect(calls.some((path) => path.includes('/navigation/guidance'))).toBe(false);
@@ -326,7 +326,7 @@ test('U7a: ICE CRUD, credential exclusion and uncertain writes', async ({ page }
     return route.fulfill({ json: { success: true, data: updated } });
   });
   await login(page);
-  await page.getByRole('link', { name: 'Máy chủ cuộc gọi' }).click();
+  await page.getByRole('link', { name: 'Máy chủ hỗ trợ cuộc gọi' }).click();
   await expect(page.getByRole('cell', { name: 'turn:relay.test:3478', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
   const dialog = page.getByRole('dialog');
@@ -391,7 +391,7 @@ test('U7a: ICE CRUD, credential exclusion and uncertain writes', async ({ page }
 test('U7a: ICE admin route denies CenterAdmin', async ({ page }) => {
   const calls = await stubApi(page, 'CenterAdmin', '01900000-0000-7000-8000-000000000002');
   await login(page);
-  await expect(page.getByRole('link', { name: 'Máy chủ cuộc gọi' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Máy chủ hỗ trợ cuộc gọi' })).toHaveCount(0);
   await page.goto('/admin/ice-servers');
   await expect(page).toHaveURL(/forbidden$/);
   expect(calls.some((path) => path.includes('ice-servers'))).toBe(false);
@@ -502,7 +502,7 @@ test('13b: metrics, audit and delivery filters, details and independent errors',
   await expect(page.getByText('Không có bản ghi phù hợp.')).toBeVisible();
   await openFilters(page);
   await page.getByLabel('Tên mô hình').fill('Tesseract');
-  await page.getByLabel('Từ ngày UTC').fill('2026-10-10');
+  await page.getByLabel('Từ ngày').fill('2026-10-10');
   await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
   await expect(page.getByRole('cell', { name: 'Tesseract', exact: true })).toBeVisible();
   expect(calls.at(-1)?.searchParams.get('page')).toBe('1');
@@ -519,7 +519,7 @@ test('13b: metrics, audit and delivery filters, details and independent errors',
   await openFilters(page);
   await pick(page, 'Người thực hiện', 'quản', /Quản trị mẫu/);
   expect(people.at(-1)?.searchParams.get('search')).toBe('quản');
-  await page.getByLabel('Đến ngày Việt Nam').fill('2026-10-11');
+  await page.getByLabel('Đến ngày').fill('2026-10-11');
   await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
   await expect(
     page.getByRole('cell', { name: 'Đổi cấu hình hệ thống', exact: true }),
@@ -637,7 +637,7 @@ test('13a: config edit, rollback old value, unknown key hidden and ambiguous wri
   ).toBeDisabled();
   await page
     .getByRole('row')
-    .filter({ hasText: 'license_grace_period_days' })
+    .filter({ hasText: 'Số ngày gia hạn sau khi gói hết hạn' })
     .getByRole('button', { name: 'Chi tiết' })
     .click();
   const detail = page.getByRole('dialog', { name: 'Chi tiết cấu hình', exact: true });
@@ -747,8 +747,8 @@ test('12b: organization report totals, UTC days, member pagination and scope err
   await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
   await expect(page.getByText('Thành viên trang hai')).toBeVisible();
   await openFilters(page);
-  await page.getByLabel('Từ ngày UTC').fill('2026-10-01');
-  await page.getByLabel('Đến ngày UTC').fill('2026-10-11');
+  await page.getByLabel('Từ ngày').fill('2026-10-01');
+  await page.getByLabel('Đến ngày').fill('2026-10-11');
   await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('2026-10-01 → 2026-10-11');
   expect(
@@ -781,13 +781,13 @@ test('12b: organization report totals, UTC days, member pagination and scope err
   await page.setViewportSize({ width: 1440, height: 1000 });
   const previous = requests.length;
   await openFilters(page);
-  await page.getByLabel('Từ ngày UTC').fill('2026-10-12');
+  await page.getByLabel('Từ ngày').fill('2026-10-12');
   await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('ngày kết thúc');
   expect(requests).toHaveLength(previous);
   wrongOrg = true;
   await openFilters(page);
-  await page.getByLabel('Từ ngày UTC').fill('2026-10-01');
+  await page.getByLabel('Từ ngày').fill('2026-10-01');
   await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('không thuộc tổ chức');
   await expect(page.getByRole('group', { name: 'Sự kiện khẩn cấp' })).toHaveCount(0);
@@ -876,8 +876,8 @@ test('TC-FE59-02 · Center Admin reads caregiver alert handling with caregiver a
   // The caregiver is picked by name from /members?role=Caregiver; no id is typed.
   await openFilters(page, 2);
   await pick(page, 'Người chăm sóc', 'Lan', /Nhân viên Lan/);
-  await page.getByLabel('Thao tác từ ngày (UTC)').fill('2026-10-01');
-  await page.getByLabel('Thao tác đến ngày (UTC)').fill('2026-10-31');
+  await page.getByLabel('Thao tác từ ngày').fill('2026-10-01');
+  await page.getByLabel('Thao tác đến ngày').fill('2026-10-31');
   await page.getByRole('button', { name: 'Lọc hoạt động', exact: true }).click();
   await expect(page.getByText('Đang lọc theo: Nhân viên Lan')).toBeVisible();
   await expect

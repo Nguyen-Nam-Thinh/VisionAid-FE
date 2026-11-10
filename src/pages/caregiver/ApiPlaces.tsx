@@ -36,7 +36,9 @@ function Places({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Địa điểm và vùng an toàn')}
-        description={t('Lưu nơi thường đến và cấu hình vùng tròn cho người được chăm sóc.')}
+        description={t(
+          'Lưu những nơi người được chăm sóc hay đến và đặt vùng an toàn quanh các nơi đó.',
+        )}
       />
       <section className="glass card stack viu-picker">
         <FilterPanel

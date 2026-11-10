@@ -1,4 +1,4 @@
-import { msg, labelMap, intlLocale } from '../i18n';
+import { msg, labelMap, formatLocaleDateTime } from '../i18n';
 import type { AlertStatus, Role } from '../models/domain';
 export const roles: Record<Role, string> = labelMap({
   Caregiver: msg('Người chăm sóc'),
@@ -38,9 +38,4 @@ export function normalizeRole(raw: string): Role | null {
     )[raw] ?? null
   );
 }
-export const formatTime = (at: string) =>
-  new Intl.DateTimeFormat(intlLocale(), {
-    dateStyle: 'short',
-    timeStyle: 'short',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  }).format(new Date(at));
+export const formatTime = (at: string) => formatLocaleDateTime(at);

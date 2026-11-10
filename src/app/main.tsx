@@ -6,6 +6,9 @@ import '../styles/workspace.css';
 import '../styles/wayfinding.css';
 import { App } from './App';
 import { getLocale, loadLocale } from '../i18n';
+import { applyTheme } from '../stores/theme';
+// Set the saved light/dark theme before anything paints.
+applyTheme();
 // A saved English choice loads its dictionary before the first paint (no Vietnamese flash);
 // if the chunk fails, the app still renders in Vietnamese.
 await loadLocale(getLocale()).catch(() => {});

@@ -15,8 +15,8 @@ export const en = {
   '(cần gói dịch vụ)': '(requires a service plan)',
   'Lịch sử cuộc gọi': 'Call history',
   'Thanh toán': 'Payments',
-  'Nhật ký Hybrid': 'Hybrid logs',
-  'Máy chủ cuộc gọi': 'Call servers',
+  'Nhật ký chỉ dẫn di chuyển': 'Navigation guidance log',
+  'Máy chủ hỗ trợ cuộc gọi': 'Call relay servers',
   'Gói dịch vụ': 'Service plans',
   'Mở điều hướng': 'Open navigation',
   'Menu tài khoản': 'Account menu',
@@ -44,7 +44,6 @@ export const en = {
   'Báo cáo hoạt động': 'Activity reports',
   'Bản đồ toàn trung tâm': 'Center-wide map',
   'Phân công chăm sóc': 'Care assignments',
-  'Người dùng VIU': 'VIU users',
   'Nhân viên chăm sóc': 'Care staff',
   'Giọng đọc hỗ trợ': 'Voice assistant',
   'Tùy chọn thông báo': 'Notification preferences',
@@ -261,7 +260,6 @@ export const en = {
   'Mô phỏng ngắt kết nối': 'Simulate disconnect',
   'Kết nối lại': 'Reconnect',
   'Mô phỏng vị trí cũ': 'Simulate stale location',
-  'Lần ghi nhận: {p1} · UTC+7': 'Recorded at: {p1} · UTC+7',
   'Vị trí cũ, không phải trực tiếp': 'Stale location, not live',
   'Cập nhật gần đây · dữ liệu mô phỏng': 'Recently updated · simulated data',
   'Danh sách vị trí': 'Location list',
@@ -351,8 +349,8 @@ export const en = {
   'Hệ thống hỗ trợ người khiếm thị · FA26SE013':
     'Assistive system for visually impaired people · FA26SE013',
   'Khẩn cấp': 'Emergency',
-  'Lịch sử di chuyển, đọc văn bản, QR, nhận diện, lệnh thoại và khẩn cấp. Thời gian UTC+7.':
-    'History of movement, text reading, QR, recognition, voice commands and emergencies. Times in UTC+7.',
+  'Lịch sử di chuyển, đọc chữ, quét mã QR, nhận diện gương mặt, lệnh giọng nói và cảnh báo khẩn cấp.':
+    'History of movement, text reading, QR, recognition, voice commands and emergencies.',
   'Loại hoạt động': 'Activity type',
   'Từ ngày': 'From date',
   'Đến ngày': 'To date',
@@ -376,7 +374,6 @@ export const en = {
   'Trạng thái cảnh báo': 'Alert status',
   'Người cần hỗ trợ': 'Person needing help',
   Loại: 'Type',
-  'Thời gian · UTC+7': 'Time · UTC+7',
   'Xem chi tiết': 'View details',
   'Cảnh báo · {name}': 'Alert · {name}',
   'Không có ảnh chụp sự kiện trong dữ liệu demo.': 'No event snapshot in the demo data.',
@@ -453,11 +450,8 @@ export const en = {
   'Khoảng cách': 'Distance',
   'Đã cảnh báo': 'Alerted',
   'Chưa có phát hiện được lưu trong phiên này.': 'No detections saved in this session.',
-  'Thời gian hiển thị theo giờ Việt Nam.': 'Times are shown in Vietnam time.',
   'Lịch sử của {name}': 'History of {name}',
   'Tải lại lịch sử': 'Reload history',
-  'Ngày lọc và thời gian hiển thị theo giờ Việt Nam. Để trống ngày để xem toàn bộ thời gian còn lưu.':
-    'Filter dates and displayed times use Vietnam time. Leave dates empty to see all retained history.',
   'Chi tiết': 'Details',
   'Chưa có lịch sử phù hợp với bộ lọc.': 'No history matches the filters.',
   'Lịch sử hoạt động': 'Activity history',
@@ -582,7 +576,7 @@ export const en = {
     'The link has been removed. Please reload the list.',
   'Quyền liên kết': 'Link permissions',
   'Địa điểm và vùng an toàn': 'Places and safe zones',
-  'Lưu nơi thường đến và cấu hình vùng tròn cho người được chăm sóc.':
+  'Lưu những nơi người được chăm sóc hay đến và đặt vùng an toàn quanh các nơi đó.':
     'Save frequently visited places and configure circular zones for the care recipient.',
   'Địa điểm của {name}': 'Places of {name}',
   'Loại địa điểm': 'Place type',
@@ -773,11 +767,8 @@ export const en = {
   'Tổng hợp hoạt động của người khiếm thị thuộc trung tâm và tra cứu thành viên.':
     'Activity summary of visually impaired members of the center and member lookup.',
   'Hoạt động của trung tâm': 'Center activity',
-  'Từ ngày UTC': 'From UTC date',
-  'Đến ngày UTC': 'To UTC date',
   'Xem báo cáo': 'View report',
   'Tải lại báo cáo': 'Reload report',
-  'Kỳ báo cáo UTC:': 'UTC reporting period:',
   'Không giới hạn đầu kỳ': 'No start limit',
   'Không giới hạn cuối kỳ': 'No end limit',
   'Sự kiện khẩn cấp': 'Emergency events',
@@ -801,7 +792,7 @@ export const en = {
   'Hồ sơ trung tâm': 'Center profile',
   'Thông tin liên hệ và địa chỉ của tổ chức bạn đang quản lý.':
     'Contact details and address of the organization you manage.',
-  'Cảnh báo và thời gian phản hồi của nhân viên trong trung tâm. Không bao gồm audit toàn hệ thống.':
+  'Cảnh báo và thời gian phản hồi của nhân viên trong trung tâm. Không gồm nhật ký thao tác của toàn hệ thống.':
     'Alerts and staff response times in the center. Does not include the system-wide audit.',
   'Số sự kiện': 'Events',
   'Phản hồi trung bình': 'Average response',
@@ -937,7 +928,6 @@ export const en = {
   'Đến thời gian': 'To time',
   'Lọc cảnh báo': 'Filter alerts',
   'Tải lại cảnh báo': 'Reload alerts',
-  'Thời gian theo {timeZone}.': 'Times in {timeZone}.',
   'Không có cảnh báo phù hợp.': 'No matching alerts.',
   'Danh sách cảnh báo': 'Alert list',
   'Phát hiện': 'Detected',
@@ -1063,9 +1053,9 @@ export const en = {
     'Saved on the server. Delivery still depends on the rules and the delivery service.',
   'Tài khoản cần thuộc một trung tâm để quản lý quy tắc.':
     'The account must belong to a center to manage rules.',
-  'Thiết lập theo loại và kênh cho tài khoản của bạn.':
+  'Chọn loại thông báo bạn muốn nhận và cách nhận (ứng dụng, email, trên web).':
     'Settings by type and channel for your account.',
-  'Quy tắc toàn hệ thống và quy tắc riêng của trung tâm.':
+  'Quy định ai nhận thông báo nào: quy định chung của hệ thống và quy định riêng của trung tâm.':
     "System-wide rules and the center's own rules.",
   'Thiết lập tùy chọn': 'Set a preference',
   'Thêm quy tắc': 'Add rule',
@@ -1140,9 +1130,9 @@ export const en = {
     'This account does not need a personal plan. Licenses are managed by the organization.',
   'Quản lý gói license': 'License plan management',
   'Danh mục gói': 'Plan catalog',
-  'Chọn gói Personal và tạo đơn thanh toán qua PayOS.':
+  'Chọn gói Personal dành cho gia đình và thanh toán qua PayOS.':
     'Choose a Personal plan and create a PayOS payment order.',
-  'Chọn gói Business và tạo đơn thanh toán qua PayOS.':
+  'Chọn gói Business dành cho trung tâm và thanh toán qua PayOS.':
     'Choose a Business plan and create a PayOS payment order.',
   'Thêm gói': 'Add plan',
   'Đang mở': 'Open',
@@ -1203,7 +1193,7 @@ export const en = {
   'Chưa có giao dịch trên trang này.': 'No transactions on this page.',
   '{totalCount} giao dịch · Trang {page}/{p4}': '{totalCount} transactions · Page {page}/{p4}',
   'Kiểm tra thanh toán': 'Check payment',
-  'Theo dõi trạng thái đơn và xác nhận thanh toán từ VisionAid.':
+  'Xem đơn đã thanh toán xong chưa; VisionAid xác nhận lại trước khi mở quyền sử dụng.':
     'Follow the order status and payment confirmation from VisionAid.',
   'Bạn đã quay về từ thao tác hủy trên cổng thanh toán. Trạng thái thực tế được kiểm tra bên dưới; trang này không tự hủy đơn.':
     'You returned from cancelling on the payment gateway. The actual status is checked below; this page does not cancel the order by itself.',
@@ -1245,8 +1235,6 @@ export const en = {
     'No matching users or links you may view.',
   'Trang người dùng trước': 'Previous users page',
   'Trang người dùng sau': 'Next users page',
-  'Thời gian hiển thị theo {timezone}. Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.':
-    'Times are shown in {timezone}. This list only fetches locations for up to 10 people on the current page.',
   'Tải lại vị trí': 'Reload locations',
   'Dữ liệu vị trí': 'Location data',
   'Người được theo dõi': 'Tracked person',
@@ -1270,7 +1258,6 @@ export const en = {
   'Lịch sử di chuyển': 'Movement history',
   'Thời gian không hợp lệ.': 'Invalid time.',
   'Không có lịch sử trong khoảng thời gian này.': 'No history in this time range.',
-  'Ghi nhận ({timezone})': 'Recorded ({timezone})',
   'Vĩ độ / kinh độ': 'Latitude / longitude',
   'Độ cao': 'Altitude',
   'Tốc độ': 'Speed',
@@ -1430,7 +1417,7 @@ export const en = {
   'Máy chủ đã xác nhận kích hoạt. Kiểm tra trạng thái và thời hạn vừa tải lại ở trên.':
     'The server confirmed the activation. Check the status and expiry reloaded above.',
   'Hồ sơ của bạn': 'Your profile',
-  'Thông tin cá nhân và bảo vệ phiên đăng nhập.':
+  'Thông tin cá nhân, mật khẩu và các thiết bị đang đăng nhập.':
     'Personal information and sign-in session protection.',
   'Thông tin cá nhân': 'Personal information',
   'Chỉnh sửa hồ sơ': 'Edit profile',
@@ -1484,10 +1471,6 @@ export const en = {
   'Xác nhận khôi phục': 'Confirm rollback',
   'Lưu cấu hình': 'Save configuration',
   'Chưa có mô tả.': 'No description yet.',
-  'Kiểu / nhóm': 'Type / group',
-  'Phạm vi đọc': 'Read scope',
-  'Công khai': 'Public',
-  'Quản trị': 'Admin',
   'Cập nhật lúc': 'Updated at',
   'Điều chỉnh': 'Adjust',
   'Lịch sử thay đổi': 'Change history',
@@ -1502,15 +1485,11 @@ export const en = {
     'Configuration saved on the server. Devices apply it when they sync again.',
   'Tìm cấu hình': 'Find configuration',
   'Nhóm cấu hình': 'Configuration group',
-  'Ví dụ: AI, WEBRTC': 'For example: AI, WEBRTC',
   'Danh sách cấu hình': 'Configuration list',
-  'Khóa / nhóm': 'Key / group',
   'Giá trị': 'Value',
-  'Chưa duyệt hiển thị trên Web': 'Not approved for display on the Web',
   'Chưa có cấu hình phù hợp.': 'No matching configurations.',
   'Chỉ quản trị viên hệ thống được quản lý máy chủ kết nối.':
     'Only system administrators can manage connection servers.',
-  'Máy chủ kết nối cuộc gọi': 'Call connection servers',
   'Thêm máy chủ': 'Add server',
   'Số ưu tiên nhỏ được xếp trước. Thay đổi cấu hình không xác nhận máy chủ đang hoạt động; cần kiểm tra bằng cuộc gọi thực tế.':
     'Lower priority numbers come first. Changing the configuration does not confirm the server is working; test with a real call.',
@@ -1584,7 +1563,7 @@ export const en = {
   'Hệ thống hoặc chưa ghi nhận': 'System or not recorded',
   'Chỉ quản trị viên hệ thống được xem dữ liệu này.':
     'Only system administrators can view this data.',
-  'Thống kê gửi cảnh báo và tra cứu thông báo thất bại.':
+  'Số cảnh báo đã gửi được hoặc bị lỗi, và danh sách thông báo gửi không thành công.':
     'Alert delivery statistics and failed notification lookup.',
   'Thông báo thất bại': 'Failed notifications',
   'Tra cứu bản ghi': 'Look up records',
@@ -1595,13 +1574,7 @@ export const en = {
   'Tên mô hình': 'Model name',
   'Tên chính xác từ máy chủ': 'Exact name from the server',
   'Tất cả kênh': 'All channels',
-  'Từ ngày Việt Nam': 'From date (Vietnam)',
-  'Đến ngày Việt Nam': 'To date (Vietnam)',
   'Lọc bản ghi': 'Filter records',
-  'Máy chủ tổng hợp ngày trước vào 07:00 giờ Việt Nam. Ngày UTC bắt đầu lúc 07:00 và kết thúc trước 07:00 hôm sau. Giữ nguyên tên mô hình do máy chủ trả về; số thành công phụ thuộc quy tắc tổng hợp từng nguồn.':
-    "The server aggregates the previous day at 07:00 Vietnam time. A UTC day starts at 07:00 and ends before 07:00 the next day. Model names are kept as returned by the server; success counts depend on each source's aggregation rules.",
-  'Bộ lọc gồm cả ngày kết thúc theo giờ Việt Nam. Để trống ngày để xem dữ liệu còn lưu.':
-    'The filter includes the end date in Vietnam time. Leave dates empty to see retained data.',
   'Chi tiết hiển thị thông tin thao tác. Nội dung trước/sau, ghi chú và thông tin thiết bị chưa hiển thị vì có thể chứa dữ liệu nhạy cảm.':
     'Details show action information. Before/after content, notes and device information are hidden because they may contain sensitive data.',
   'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Fallback là cờ do máy chủ ghi nhận, không chứng minh điện thoại đang offline hoặc ghi lại mọi lần chuyển engine. Độ trễ không phải thời gian toàn bộ yêu cầu từ điện thoại.':
@@ -1615,23 +1588,14 @@ export const en = {
   'Không có bản ghi phù hợp.': 'No matching records.',
   'Chi tiết bản ghi': 'Record details',
   'Tổng quan gửi cảnh báo': 'Alert delivery overview',
-  'Chỉ tính bản ghi cảnh báo do máy chủ theo dõi. Đã gửi gồm trạng thái Sent và Delivered, không xác nhận người nhận đã đọc. Bộ lọc bên dưới chỉ áp dụng danh sách thất bại.':
-    'Only alert records tracked by the server are counted. Sent includes the Sent and Delivered statuses and does not confirm the recipient has read it. The filters below apply only to the failure list.',
-  'Thống kê gửi cảnh báo': 'Alert delivery statistics',
   'Khoảng thời gian': 'Time range',
   'Đang chờ': 'Pending',
-  '24 giờ gần nhất': 'Last 24 hours',
-  '7 ngày gần nhất': 'Last 7 days',
-  'Kênh gửi ·': 'Delivery channels ·',
-  '{p0}: {sent} đã gửi · {failed} thất bại': '{p0}: {sent} sent · {failed} failed',
-  'Chưa ghi nhận gửi thành công hoặc thất bại theo kênh.':
-    'No successful or failed deliveries recorded by channel yet.',
-  'Theo dõi thao tác quản trị. Chỉ đọc; không xóa hoặc sửa bản ghi audit trên giao diện.':
+  'Theo dõi các thao tác quản trị. Chỉ xem, không xóa hoặc sửa được.':
     'Follow administrative actions. Read-only; audit records cannot be deleted or edited in the interface.',
   'Lịch sử hệ thống': 'System history',
   'Chi tiết bản ghi audit': 'Audit record details',
   'Nền tảng / cá nhân': 'Platform / personal',
-  'Thay đổi có kiểm soát, truy vết và khôi phục. Đây là thông số demo, chưa tác động thiết bị thật.':
+  'Chỉnh thiết lập chung, có lưu lịch sử và quay lại được. Đây là dữ liệu mô phỏng, chưa ảnh hưởng thiết bị thật.':
     'Controlled changes with tracing and rollback. These are demo parameters that do not affect real devices.',
   'Thông số đang áp dụng': 'Parameters in effect',
   'Thông số': 'Parameter',
@@ -1645,7 +1609,7 @@ export const en = {
   'Đã gửi · mô phỏng': 'Sent · simulated',
   'Thất bại · mô phỏng': 'Failed · simulated',
   'Đang chờ · mô phỏng': 'Pending · simulated',
-  'Giám sát trạng thái delivery theo kênh. Toàn bộ bản ghi dưới đây là dữ liệu minh họa, không phải xác nhận gửi thật.':
+  'Theo dõi thông báo đã gửi tới đâu theo từng cách gửi. Toàn bộ bản ghi dưới đây là dữ liệu minh họa, không phải xác nhận gửi thật.':
     'Monitor delivery status by channel. All records below are illustrative data, not confirmation of real delivery.',
   'Nhật ký delivery': 'Delivery log',
   'Trạng thái delivery': 'Delivery status',
@@ -1657,7 +1621,7 @@ export const en = {
     'Demo scenario: the provider is temporarily unavailable. No confirmed retry API yet.',
   'Bản ghi trạng thái minh họa từ dịch vụ mock.':
     'Illustrative status records from the mock service.',
-  'Số liệu tổng hợp mô phỏng theo model và ngày. Confidence và tỷ lệ xử lý thành công không phải độ chính xác có ground truth.':
+  'Số liệu mô phỏng theo từng mô hình AI và từng ngày. Mức độ chắc chắn và tỷ lệ xử lý thành công không có nghĩa là AI nhận diện đúng.':
     'Simulated aggregated metrics by model and date. Confidence and processing success rate are not ground-truth accuracy.',
   'Tất cả mô hình': 'All models',
   'Lượt xử lý': 'Requests processed',
@@ -2193,15 +2157,15 @@ export const en = {
     'Alerts for people you may monitor, updated in real time.',
   'Danh bạ khẩn cấp của người được chăm sóc. Lưu liên hệ không thực hiện cuộc gọi.':
     'Emergency contacts of the care recipient. Saving a contact does not place a call.',
-  'Doanh thu từ giao dịch PayOS đã thanh toán, theo kênh, gói và trung tâm.':
+  'Doanh thu từ các đơn đã thanh toán qua PayOS, chia theo gia đình hay trung tâm, theo gói và theo từng trung tâm.':
     'Revenue from paid PayOS transactions by channel, plan and center.',
   'Hồ sơ và trạng thái tài khoản trong phạm vi của bạn.':
     'Account profiles and status within your scope.',
-  'Ai đã thao tác gì và khi nào trên hệ thống. Nhật ký chỉ đọc.':
+  'Ai đã làm gì và vào lúc nào trên hệ thống. Chỉ xem, không sửa được.':
     'Who did what and when on the system. The log is read-only.',
   'Chọn giọng, tốc độ và âm lượng đọc trên điện thoại của người được chăm sóc.':
     "Choose the voice, speed and volume used on the care recipient's phone.",
-  'Các chỉ dẫn di chuyển AI đã đưa ra và thời gian xử lý.':
+  'Các chỉ dẫn tránh vật cản đã đọc cho người khiếm thị và thời gian phản hồi.':
     'Navigation guidance the AI gave and how long it took.',
   'Các cuộc gọi bạn đã thực hiện hoặc nhận.': 'Calls you made or received.',
   'Các đơn thanh toán gói dịch vụ của bạn.': 'Your plan payment orders.',
@@ -2211,18 +2175,18 @@ export const en = {
     "Assign caregivers to visually impaired users and set each link's permissions.",
   'Hai tài khoản phải đang hoạt động; liên kết tổ chức cần cùng một trung tâm. Mỗi người khiếm thị có tối đa {maxCaregivers} người chăm sóc, mỗi người chăm sóc theo dõi tối đa {maxVius} người.':
     'Both accounts must be active; an organization link needs the same center. Each visually impaired user has at most {maxCaregivers} caregivers, and each caregiver follows at most {maxVius} people.',
-  'Máy chủ STUN/TURN giúp cuộc gọi video kết nối được qua mọi mạng.':
+  'Máy chủ trung gian giúp cuộc gọi video giữa điện thoại và trang web vẫn kết nối được khi mạng hai bên khác nhau hoặc bị chặn.':
     'STUN/TURN servers help video calls connect across networks.',
   'Những người cùng chăm sóc và quyền của từng người.':
     "People who share the care and each one's permissions.",
   'Số license đã mua, đã cấp và thời hạn sử dụng của trung tâm.':
     "Licenses bought, assigned and the center's validity period.",
-  'Số lần xử lý, thời gian và độ tin cậy của từng mô hình AI theo ngày.':
+  'Mỗi ngày AI đã nhận diện bao nhiêu lần, mất bao lâu và chắc chắn đến mức nào.':
     'Daily processing count, time and confidence for each AI model.',
   'Thông tin liên hệ và thành viên của trung tâm.': "The center's contact details and members.",
   'Tạo gói, đặt giá và mở bán hoặc ngừng bán.':
     'Create plans, set prices and start or stop selling them.',
-  'Xem, điều chỉnh và khôi phục các thông số vận hành của hệ thống.':
+  'Xem và chỉnh các thiết lập chung của hệ thống; có thể quay lại giá trị trước đó.':
     "View, adjust and restore the system's operating settings.",
   'Key không hợp lệ, đã được kích hoạt hoặc đã hết hạn.':
     'The key is invalid, already activated or expired.',
@@ -2737,7 +2701,7 @@ export const en = {
   'Chưa xem': 'Unread',
   'Thông báo, {count} chưa đọc': 'Notifications, {count} unread',
   'Thông báo': 'Notifications',
-  'Mọi thông báo đã gửi cho bạn. Mỗi thông báo là một mục, gộp chung các kênh Push, Email và Realtime.':
+  'Mọi thông báo đã gửi cho bạn. Một thông báo gửi qua nhiều cách (ứng dụng, email, trên web) chỉ hiện thành một mục.':
     'Every notification sent to you, with Push, Email and Realtime grouped into one item.',
   'Lọc thông báo': 'Filter notifications',
   'Đã đánh dấu {count} thông báo là đã xem.': 'Marked {count} notifications as read.',
@@ -2748,7 +2712,7 @@ export const en = {
   'Đã xem lúc {time}': 'Read at {time}',
   'Mở chi tiết': 'Open details',
   'Đánh dấu đã xem': 'Mark as read',
-  'Mỗi lần gửi thông báo: người nhận, người được chăm sóc, kênh gửi, trạng thái và thời điểm đã xem.':
+  'Xem từng thông báo đã gửi: ai nhận, về người nào, gửi qua đâu, đã gửi được chưa và đã xem lúc nào.':
     'Each notification delivery: recipient, care recipient, channel, status and read state.',
   'Thông báo gửi cho người nhận hoặc về người được chăm sóc trong trung tâm của bạn.':
     'Notifications sent to recipients or about care recipients in your center.',
@@ -2775,7 +2739,7 @@ export const en = {
     'JPG, PNG or WebP, up to 10 MB. The picture is cropped square and its location data removed; only people connected to you in VisionAid can see it.',
   'Đổi ảnh': 'Change picture',
   'Truy vết hoạt động': 'Activity trace',
-  'Dòng thời gian hoạt động và hướng dẫn dẫn đường của người được chăm sóc trong trung tâm.':
+  'Xem lại theo thời gian những gì người khiếm thị trong trung tâm đã làm và các chỉ dẫn di chuyển ứng dụng đã đọc cho họ.':
     'Activity timeline and navigation guidance of care recipients in your center.',
   'Chọn một người để xem hoạt động đã được ghi nhận.':
     'Pick a person to see their recorded activity.',
@@ -2828,6 +2792,167 @@ export const en = {
     'You are not allowed to view this person’s invitations.',
   'Không tìm thấy mã QR trong ảnh. Hãy chụp rõ hơn hoặc nhập mã.':
     'No QR code found in the image. Take a clearer photo or enter the code.',
+  '{count} chưa xem': '{count} unread',
+  'Đã xem hết': 'All read',
+  'Không tải được thông báo.': 'Could not load notifications.',
+  'Chưa có thông báo nào.': 'No notifications yet.',
+  '{count} thông báo chưa xem của người đang lọc.':
+    '{count} unread notifications for the selected person.',
+  '{count} thông báo chưa xem.': '{count} unread notifications.',
+  'Bạn đã xem hết thông báo.': 'You have read all notifications.',
+  '24 giờ qua': 'Last 24 hours',
+  '7 ngày qua': 'Last 7 days',
+  'Đã gửi đi': 'Sent',
+  'Theo cách gửi': 'By channel',
+  '{sent} đã gửi · {failed} thất bại': '{sent} sent · {failed} failed',
+  'Chưa có cảnh báo nào được gửi trong khoảng này.': 'No alerts were sent in this period.',
+  '"Đã gửi đi" nghĩa là máy chủ đã chuyển cảnh báo đi, chưa chắc người nhận đã mở xem. Bộ lọc bên dưới chỉ áp dụng cho danh sách thông báo thất bại.':
+    '"Sent" means the server passed the alert on; the recipient may not have opened it yet. The filter below applies only to the failed notifications list.',
+  'Cách xem lịch sử': 'History view',
+  'Theo loại hoạt động': 'By activity type',
+  'Phần của báo cáo': 'Report sections',
+  'Xử lý cảnh báo của nhân viên': 'Staff alert handling',
+  'Phần của trang license': 'License page sections',
+  'Trạng thái và gói': 'Status and plan',
+  'Phần của kho license': 'License pool sections',
+  'Phần của trang liên kết': 'Link page sections',
+  'Phần của hồ sơ': 'Profile sections',
+  'Mật khẩu và đăng nhập': 'Password and sign-in',
+  'Phần của trang': 'Page sections',
+  'Giao diện tối': 'Dark theme',
+  'Chuyển sang giao diện sáng': 'Switch to light theme',
+  'Chuyển sang giao diện tối': 'Switch to dark theme',
+  'Lần ghi nhận: {p1}': 'Last recorded: {p1}',
+  'Kỳ báo cáo:': 'Report period:',
+  'Thao tác từ ngày': 'Actions from',
+  'Thao tác đến ngày': 'Actions to',
+  'Để trống ngày để xem toàn bộ thời gian còn lưu.':
+    'Leave the dates empty to see everything still stored.',
+  'Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.':
+    'This list only shows locations for up to 10 people on the current page.',
+  'Số liệu của ngày hôm trước được tổng hợp lúc 07:00 sáng. Số thành công phụ thuộc quy tắc tổng hợp của từng nguồn.':
+    'Figures for the previous day are compiled at 7:00 AM. Success counts depend on the aggregation rules of each source.',
+  'Bộ lọc gồm cả ngày kết thúc. Để trống ngày để xem dữ liệu còn lưu.':
+    'The filter includes the end date. Leave the dates empty to see the stored data.',
+  'Bán kính mặc định của vùng an toàn': 'Default safe zone radius',
+  'Bán kính mặc định để báo đã đến nơi': 'Default arrival radius',
+  'Bán kính được điền sẵn khi tạo vùng an toàn mới.':
+    'The radius filled in when creating a new safe zone.',
+  'Bộ xử lý dẫn đường đang dùng': 'Active navigation engine',
+  'Chăm sóc': 'Caregiving',
+  'Chưa hỗ trợ xem trên Web': 'Not available on the web yet',
+  'Chỉ máy chủ dùng': 'Server only',
+  'Chọn bộ xử lý tạo hướng dẫn đi đường: JEV, Groq hoặc theo quy tắc.':
+    'Choose the engine that creates walking directions: JEV, Groq or rule-based.',
+  'Cuộc gọi không được trả lời sau ngần này sẽ được ghi là gọi nhỡ.':
+    'A call not answered within this time is marked as missed.',
+  'Cuộc gọi tự kết thúc khi đạt thời lượng này.':
+    'A call ends automatically when it reaches this length.',
+  'Cấu hình': 'Setting',
+  'Danh bạ gương mặt': 'Face registry',
+  'Dùng khi chưa có máy chủ kết nối cuộc gọi nào đang bật.':
+    'Used when no call connection server is enabled.',
+  'Dẫn đường': 'Navigation',
+  'Dẫn đường bằng AI trên máy chủ': 'Server-side AI navigation',
+  'Gương mặt chỉ được xem là trùng khi mức giống đạt mức này (từ 0 đến 1).':
+    'A face only counts as a match when the similarity reaches this level (0 to 1).',
+  'Gọi thoại và video': 'Voice and video calls',
+  'Gửi lời nhắc kèm liên kết thanh toán trước ngày hết hạn số ngày này.':
+    'Send a reminder with a payment link this many days before expiry.',
+  'Khi bật, ứng dụng di động gửi hình ảnh lên máy chủ để nhận hướng dẫn đi đường.':
+    'When on, the mobile app sends images to the server to get walking directions.',
+  'Khi tắt, ứng dụng ẩn chức năng gọi thoại và video.':
+    'When off, the app hides voice and video calls.',
+  'Khi vào trong bán kính này của địa điểm quen thuộc, hệ thống xem là đã đến nơi.':
+    'Entering this radius around a familiar place counts as arriving.',
+  'Khoảng nghỉ giữa hai lần đọc thông báo': 'Pause between spoken announcements',
+  'Kết quả đọc chữ thấp hơn mức này được đánh dấu là chưa chắc chắn (từ 0 đến 1).':
+    'Text reading results below this level are marked as uncertain (0 to 1).',
+  'Lưu trữ dữ liệu': 'Data retention',
+  'Lịch sử nhận diện gương mặt cũ hơn số ngày này sẽ bị xóa.':
+    'Face recognition history older than this many days is deleted.',
+  'Lịch sử thông báo đã gửi hoặc gửi lỗi cũ hơn số ngày này sẽ bị xóa.':
+    'Sent or failed notification history older than this many days is deleted.',
+  'Lịch sử vị trí cũ hơn số ngày này sẽ bị xóa.':
+    'Location history older than this many days is deleted.',
+  'Máy chủ kiểm tra lại trạng thái gói của tài khoản sau khoảng thời gian này.':
+    'The server rechecks the plan status of an account after this time.',
+  'Máy chủ kết nối cuộc gọi dự phòng': 'Backup call connection server',
+  'Mã QR mời chỉ dùng được một lần và hết hạn sau khoảng thời gian này.':
+    'An invitation QR code works once and expires after this time.',
+  'Mã kỹ thuật': 'Technical key',
+  'Mức giống tối thiểu khi nhận diện gương mặt': 'Minimum face match similarity',
+  'Người trong danh bạ gương mặt chỉ được nhận diện khi có đủ số ảnh này.':
+    'A person in the face registry is only recognised once they have this many photos.',
+  'Ngừng gửi thông báo cho thiết bị không hoạt động': 'Stop notifying inactive devices',
+  Nhóm: 'Group',
+  'Nhật ký vật cản, dẫn đường và lệnh giọng nói cũ hơn số ngày này sẽ bị xóa.':
+    'Obstacle, navigation and voice command logs older than this many days are deleted.',
+  'Nhắc gia hạn trước khi gói hết hạn': 'Renewal reminder before expiry',
+  'Nơi sử dụng': 'Used by',
+  'Nếu máy chủ trả lời chậm hơn mức này, ứng dụng chuyển sang dẫn đường theo quy tắc.':
+    'If the server answers slower than this, the app switches to rule-based navigation.',
+  'Sau khi gói hết hạn, tài khoản vẫn dùng được thêm số ngày này rồi mới bị giới hạn.':
+    'After a plan expires, the account keeps working for this many days before being limited.',
+  'Số liên hệ khẩn cấp mỗi người khiếm thị được lưu.':
+    'Emergency contacts each visually impaired user can save.',
+  'Số liên hệ khẩn cấp tối đa': 'Maximum emergency contacts',
+  'Số ngày gia hạn sau khi gói hết hạn': 'Grace days after a plan expires',
+  'Số người chăm sóc tối đa cho một người khiếm thị':
+    'Maximum caregivers per visually impaired user',
+  'Số người chăm sóc đang liên kết cùng lúc với một người khiếm thị.':
+    'Caregivers linked to one visually impaired user at the same time.',
+  'Số người khiếm thị một người chăm sóc được liên kết cùng lúc.':
+    'Visually impaired users one caregiver can be linked to at the same time.',
+  'Số người khiếm thị tối đa cho một người chăm sóc':
+    'Maximum visually impaired users per caregiver',
+  'Số người mỗi người khiếm thị được lưu trong danh bạ gương mặt.':
+    'People each visually impaired user can save in the face registry.',
+  'Số người tối đa trong danh bạ gương mặt': 'Maximum people in the face registry',
+  'Số địa điểm mỗi người khiếm thị được lưu.': 'Places each visually impaired user can save.',
+  'Số địa điểm quen thuộc tối đa': 'Maximum familiar places',
+  'Số ảnh tối thiểu để nhận diện một người': 'Minimum photos to recognise a person',
+  'Thanh toán trực tuyến': 'Online payment',
+  'Theo quy tắc': 'Rule-based',
+  'Thiết bị không mở ứng dụng quá số ngày này sẽ thôi nhận thông báo đẩy.':
+    'Devices that have not opened the app for this many days stop receiving push notifications.',
+  'Thời gian chờ tối đa khi dẫn đường': 'Maximum navigation wait time',
+  'Thời gian ghi nhớ trạng thái gói dịch vụ': 'Plan status cache time',
+  'Thời gian lưu lịch sử gửi thông báo': 'Notification history retention',
+  'Thời gian lưu lịch sử nhận diện gương mặt': 'Face recognition history retention',
+  'Thời gian lưu lịch sử vị trí': 'Location history retention',
+  'Thời gian lưu nhật ký hoạt động': 'Activity log retention',
+  'Thời gian lưu ảnh cảnh báo khẩn cấp': 'Emergency photo retention',
+  'Thời gian lưu ảnh đọc chữ': 'Text reading photo retention',
+  'Thời gian đổ chuông': 'Ringing time',
+  'Thời hạn mã QR mời người chăm sóc': 'Caregiver invitation QR lifetime',
+  'Thời lượng tối đa của một cuộc gọi': 'Maximum call length',
+  'Trí tuệ nhân tạo': 'Artificial intelligence',
+  'Tất cả nhóm': 'All groups',
+  'Từ {min} đến {max}': 'From {min} to {max}',
+  'Vật cản chỉ được báo khi điểm tin cậy đạt mức này (từ 0 đến 1).':
+    'Obstacles are only reported when the confidence reaches this level (0 to 1).',
+  giây: 'seconds',
+  'liên hệ': 'contacts',
+  'mili giây': 'milliseconds',
+  mét: 'meters',
+  ngày: 'days',
+  người: 'people',
+  phút: 'minutes',
+  tháng: 'months',
+  ảnh: 'photos',
+  'Đọc thông báo': 'Spoken announcements',
+  'Độ tin cậy tối thiểu khi nhận diện vật cản': 'Minimum obstacle detection confidence',
+  'Độ tin cậy tối thiểu khi đọc chữ': 'Minimum text reading confidence',
+  'Ảnh chụp khi đọc chữ bị xóa sau số ngày này; kết quả chữ vẫn được giữ.':
+    'Photos taken for text reading are deleted after this many days; the text is kept.',
+  'Ảnh chụp kèm cảnh báo bị xóa sau số tháng này; thông tin cảnh báo vẫn được giữ.':
+    'Photos attached to alerts are deleted after this many months; the alert is kept.',
+  'Ứng dụng di động chờ ít nhất ngần này giữa hai lần đọc to thông báo.':
+    'The mobile app waits at least this long between two spoken announcements.',
+  'Ứng dụng di động đọc được': 'Readable by the mobile app',
+  'Khi tắt, không tạo được liên kết thanh toán mới; giao dịch đang chờ vẫn được xử lý.':
+    'When off, no new payment links can be created; pending payments are still processed.',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',
@@ -2855,8 +2980,6 @@ export const en = {
   'Các lần người chăm sóc của trung tâm đổi trạng thái cảnh báo. Thao tác của quản trị trung tâm không nằm trong danh sách này.':
     'Alert status changes made by the center’s caregivers. Center admin actions are not included.',
   'Tải lại hoạt động': 'Reload activity',
-  'Thao tác từ ngày (UTC)': 'Actions from (UTC)',
-  'Thao tác đến ngày (UTC)': 'Actions to (UTC)',
   'Đang lọc theo: {name}': 'Filtered by: {name}',
   'Bảng hoạt động xử lý cảnh báo': 'Alert handling table',
   'Thời điểm': 'Time',
@@ -2876,7 +2999,6 @@ export const en = {
   'Lọc theo tình trạng cảnh báo': 'Filter by alert status',
   '{total} người khiếm thị · {alerts} đang có cảnh báo · Đang hiện {shown}':
     '{total} visually impaired users · {alerts} with an open alert · Showing {shown}',
-  'Thời gian hiển thị theo {timezone}.': 'Times are shown in {timezone}.',
   'Không có người khiếm thị phù hợp bộ lọc.': 'No visually impaired user matches this filter.',
   'Đang có cảnh báo': 'Open alert',
   'Chưa có vị trí': 'No position yet',

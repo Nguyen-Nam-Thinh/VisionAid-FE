@@ -111,8 +111,8 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
           admin
             ? t('Tạo gói, đặt giá và mở bán hoặc ngừng bán.')
             : personal
-              ? t('Chọn gói Personal và tạo đơn thanh toán qua PayOS.')
-              : t('Chọn gói Business và tạo đơn thanh toán qua PayOS.')
+              ? t('Chọn gói Personal dành cho gia đình và thanh toán qua PayOS.')
+              : t('Chọn gói Business dành cho trung tâm và thanh toán qua PayOS.')
         }
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}

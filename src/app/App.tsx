@@ -1,6 +1,7 @@
 import { t, useI18n } from '../i18n';
 import { Avatar } from '../components/Avatar';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { ThemeSwitch } from '../components/ThemeSwitch';
 import { ApiNotifications } from '../pages/shared/ApiNotifications';
 import { ApiPackages } from '../pages/shared/ApiPackages';
 import { ApiPayments } from '../pages/shared/ApiPayments';
@@ -336,11 +337,14 @@ function Shell() {
       ? [
           { to: '/admin/license-pools', label: t('Kho license các trung tâm'), Icon: ShieldCheck },
           { to: '/admin/revenue', label: t('Báo cáo doanh thu'), Icon: BarChart3 },
-          { to: '/admin/hybrid', label: t('Nhật ký Hybrid'), Icon: Activity },
-          { to: '/admin/ice-servers', label: t('Máy chủ cuộc gọi'), Icon: Settings },
+          { to: '/admin/hybrid', label: t('Nhật ký chỉ dẫn di chuyển'), Icon: Activity },
+          { to: '/admin/ice-servers', label: t('Máy chủ hỗ trợ cuộc gọi'), Icon: Settings },
         ]
       : []),
-    ...(api ? [{ to: '/license', label: 'License', Icon: ShieldCheck }] : []),
+    // Only a family caregiver has a personal license to look at; other roles get no entry.
+    ...(api && user.role === 'Caregiver' && !user.orgId
+      ? [{ to: '/license', label: 'License', Icon: ShieldCheck }]
+      : []),
     ...(api && user.role === 'Caregiver' && !user.orgId
       ? [{ to: '/caregiver/payments', label: t('Thanh toán'), Icon: CreditCard }]
       : []),
@@ -465,6 +469,7 @@ function Shell() {
           </div>
           <div className="topbar-actions">
             {api && <InboxBell actor={user} />}
+            <ThemeSwitch />
             <LanguageSwitch />
             {/* animate-ui (Radix) menu: arrow keys move, Escape closes and returns focus. */}
             <AccountMenu.Root modal={false}>

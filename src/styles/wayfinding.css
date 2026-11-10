@@ -870,9 +870,118 @@ tbody tr:hover,
   gap: 4px 14px;
   font-size: 0.875rem;
 }
+.inbox-item-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+.inbox-item-channels,
 .inbox-item-actions {
   flex-wrap: wrap;
   align-items: center;
+  gap: 8px;
+}
+/* Unread total and the one bulk action, above the list. */
+.inbox-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-sunk);
+}
+.inbox-summary > p {
+  margin: 0;
+  font-weight: 600;
+}
+/* Bell dropdown: latest notices, then mark-all and see-all. */
+.account-menu.inbox-menu {
+  width: 360px;
+  padding: 6px;
+}
+.inbox-menu-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+.inbox-menu-head .muted {
+  font-size: 0.8125rem;
+}
+.inbox-menu-empty {
+  margin: 0;
+  padding: 20px 12px;
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+.account-menu > .inbox-menu-item {
+  align-items: flex-start;
+  min-height: 56px;
+}
+.inbox-menu-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+}
+.inbox-menu-item.unread .inbox-menu-dot {
+  border-color: var(--ink);
+  background: var(--tactile);
+}
+.inbox-menu-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.inbox-menu-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inbox-menu-item.unread .inbox-menu-title {
+  font-weight: 700;
+}
+.inbox-menu-foot {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.inbox-menu-foot > [role='menuitem'] {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+.inbox-menu-foot > [role='menuitem'][data-highlighted] {
+  background: var(--panel-sunk);
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+.inbox-menu-foot > [role='menuitem'][data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* The issued key list sits inside the "Key cho gia đình" card, below the create button. */
@@ -886,4 +995,226 @@ tbody tr:hover,
 .trace-tabs,
 .trace-tabs > * {
   min-width: 0;
+}
+
+/* Delivery overview: period switch, three number tiles, one bar per sending channel. */
+.segmented {
+  display: inline-flex;
+  gap: 4px;
+  justify-self: start;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-sunk);
+}
+.segmented > .btn {
+  border-color: transparent;
+  background: transparent;
+}
+.segmented > .btn.is-active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--panel);
+}
+.report-tiles.delivery-tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.report-tile-icon.success {
+  background: var(--guide-soft);
+  color: var(--guide);
+}
+.delivery-channels {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.delivery-channels > li {
+  display: grid;
+  grid-template-columns: minmax(7rem, 10rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.delivery-channel-name {
+  font-weight: 600;
+}
+.delivery-channel-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--signal-soft);
+  overflow: hidden;
+}
+.delivery-channel-track > span {
+  display: block;
+  height: 100%;
+  background: var(--guide);
+}
+.delivery-channel-count {
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .report-tiles.delivery-tiles {
+    grid-template-columns: 1fr;
+  }
+  .delivery-channels > li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+/* Page sections as tabs instead of stacked cards; the bar sits under the page title. */
+/* The tab bar lives inside one white card, like the alerts page. A section that was its own
+   card becomes plain content of the panel, so cards never nest. */
+.page-tabs {
+  gap: 20px;
+  min-width: 0;
+}
+.page-tabs-panel > .glass,
+.page-tabs-panel > .card,
+.page-tabs-panel > .profile-layout > .glass,
+.page-tabs-panel > * > .glass.card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.page-tabs-panel > .profile-layout {
+  gap: 32px;
+}
+.page-tabs-panel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.page-tabs-panel[hidden] {
+  display: none;
+}
+.page-tabs-panel .card.stack > .btn {
+  justify-self: start;
+}
+
+/* Light/dark toggle beside the language switch. */
+.theme-switch {
+  min-width: 44px;
+  padding: 8px;
+}
+
+/* Light/dark toggle beside the language switch. */
+.theme-switch {
+  min-width: 44px;
+  padding: 8px;
+}
+/* Dark theme: the active item is a light pill, so its icon turns dark instead of yellow. */
+[data-theme='dark'] .nav a.active svg {
+  color: var(--on-primary);
+}
+/* Dark theme: the schematic map's water band would glare on the dark ground. */
+[data-theme='dark'] .map::before {
+  background: #2c3a40;
+}
+
+/* Sign-in story motion. The copy steps in one line after another, the dome field drifts toward
+   the reader like paving under walking feet, a cane-sweep light passes over it, and the badge's
+   check draws itself. Everything stays still under prefers-reduced-motion. */
+@keyframes auth-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes auth-domes-walk {
+  to {
+    background-position:
+      0 -36px,
+      0 -36px;
+  }
+}
+@keyframes auth-cane-sweep {
+  0%,
+  15% {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  65%,
+  100% {
+    transform: translateX(260%) skewX(-18deg);
+  }
+}
+@keyframes auth-check-draw {
+  from {
+    stroke-dashoffset: 12;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes auth-badge-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes auth-logo-signal {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .auth-story > .row:first-child,
+  .auth-story h1,
+  .auth-story p {
+    animation: auth-step-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .auth-story h1 {
+    animation-delay: 90ms;
+  }
+  .auth-story p {
+    animation-delay: 200ms;
+  }
+  .auth-story > .row:first-child .brand-icon {
+    animation: auth-logo-signal 2.4s ease-in-out 700ms 2;
+  }
+  .auth-story::after {
+    z-index: -2;
+    animation: auth-domes-walk 2.6s linear infinite;
+  }
+  /* The cane-sweep light: a soft band crossing the dome field every few seconds. */
+  .auth-story::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 30%;
+    height: 38%;
+    z-index: -1;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 38%) 50%, transparent);
+    animation: auth-cane-sweep 5.5s ease-in-out 900ms infinite;
+    pointer-events: none;
+  }
+  .auth-story > .row:last-child {
+    animation: auth-badge-pop 560ms cubic-bezier(0.22, 1, 0.36, 1) 380ms both;
+  }
+  .auth-story > .row:last-child svg path:last-child {
+    stroke-dasharray: 12;
+    animation: auth-check-draw 500ms ease-out 900ms both;
+  }
 }

@@ -49,7 +49,7 @@ export function Activity() {
       <PageHead
         title={t('Nhật ký hoạt động')}
         description={t(
-          'Lịch sử di chuyển, đọc văn bản, QR, nhận diện, lệnh thoại và khẩn cấp. Thời gian UTC+7.',
+          'Lịch sử di chuyển, đọc chữ, quét mã QR, nhận diện gương mặt, lệnh giọng nói và cảnh báo khẩn cấp.',
         )}
         actions={<ViuSelect />}
       />

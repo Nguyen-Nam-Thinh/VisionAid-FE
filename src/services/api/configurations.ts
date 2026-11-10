@@ -33,6 +33,10 @@ const reviewedKeys = new Set([
   'webrtc_ring_timeout_seconds',
   'payos_enabled',
   'ocr_confidence_threshold',
+  'caregiving.invitation_ttl_minutes',
+  'retention.activity_log_days',
+  'retention.notification_days',
+  'license.auto_renew.reminder_days_before_expiry',
 ]);
 const uuid = z.string().uuid();
 const configSchema = z

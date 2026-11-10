@@ -75,6 +75,103 @@
   font-weight: 400;
   line-height: 1.55;
 }
+/* Themes. The palette above is the light theme; [data-theme] re-declares the component API on
+   the themed element so every alias resolves against that element's palette (the public home
+   pins itself to light). The dark theme keeps the same roles: ink is the strong colour (light on
+   dark), tactile stays yellow, and anything drawn on yellow keeps dark ink. */
+[data-theme='light'],
+[data-theme='dark'] {
+  /* Component API */
+  --background: var(--concrete);
+  --surface: var(--panel);
+  --glass: var(--panel);
+  --stone: var(--panel-sunk);
+  --text: var(--ink);
+  --muted: var(--ink-muted);
+  --primary: var(--ink);
+  --primary-hover: var(--ink-raised);
+  --primary-soft: var(--tactile-soft);
+  --on-primary: #ffffff;
+  --secondary: var(--ink-muted);
+  --clay: var(--line);
+  --accent: var(--caution-soft);
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --input-border: var(--line-strong);
+  --success: var(--guide);
+  --success-text: var(--guide);
+  --warning: var(--caution);
+  --warning-text: var(--caution);
+  --danger: var(--signal);
+  --danger-text: var(--signal);
+  --danger-soft: var(--signal-soft);
+  font-family: var(--font);
+  color: var(--text);
+}
+[data-theme='light'] {
+  color-scheme: light;
+  --concrete: #e7e8e2;
+  --panel: #ffffff;
+  --panel-sunk: #f3f4ef;
+  --ink: #1b1d19;
+  --ink-raised: #34372f;
+  --ink-muted: #50544c;
+  --on-ink-muted: #c9ccc4;
+  --line: #cdd0c7;
+  --line-strong: #7e8279;
+  --tactile-text: #6e5600;
+  --tactile-soft: #fbedb0;
+  --signal: #b42318;
+  --signal-soft: #fce8e6;
+  --signal-soft-hover: #f9d9d5;
+  --signal-line: #edb8b1;
+  --guide: #23684a;
+  --guide-soft: #e1efe7;
+  --guide-line: #b3d3c1;
+  --caution: #7a4a00;
+  --caution-soft: #f6e9cf;
+  --caution-line: #e5cf9f;
+  --shadow-float: 0 18px 48px rgb(27 29 25 / 16%);
+}
+[data-theme='dark'] {
+  color-scheme: dark;
+  --concrete: #121411;
+  --panel: #1c1f1a;
+  --panel-sunk: #252922;
+  --ink: #ecede7;
+  --ink-raised: #d4d6ce;
+  --ink-muted: #a8aca1;
+  --on-ink-muted: #4d5147;
+  --line: #363a31;
+  --line-strong: #74796e;
+  --tactile: #f2c200;
+  --tactile-hover: #ffd21f;
+  --tactile-soft: #3a3212;
+  --tactile-text: #f2c200;
+  --signal: #ff8f80;
+  --signal-hover: #ffb0a5;
+  --signal-soft: #3a1a16;
+  --signal-soft-hover: #4a211c;
+  --signal-line: #7a3329;
+  --guide: #74d3a3;
+  --guide-soft: #16291f;
+  --guide-line: #2e5642;
+  --caution: #f2b955;
+  --caution-soft: #33280f;
+  --caution-line: #5e4819;
+  --on-primary: #121411;
+  --shadow-float: 0 18px 48px rgb(0 0 0 / 55%);
+}
+/* On yellow the text stays dark in both themes. */
+/* The sign-in story is a light island in both themes: its badge keeps a white plate. */
+[data-theme='dark'] .auth-story {
+  --panel: #ffffff;
+}
+[data-theme='dark'] :is(.btn.primary, .avatar, .inbox-bell-count, .auth-story, .lp-step-dome) {
+  --ink: #1b1d19;
+  --ink-muted: #3d4037;
+  --on-primary: #ffffff;
+}
 * {
   box-sizing: border-box;
 }
@@ -144,7 +241,7 @@ small,
 }
 .glass {
   background: var(--glass);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+  border: 1px solid color-mix(in oklab, var(--panel) 95%, transparent);
   box-shadow: var(--shadow);
   border-radius: 24px;
 }
@@ -176,14 +273,14 @@ small,
   gap: 8px;
   border: 1px solid var(--border);
   padding: 10px 16px;
-  background: white;
+  background: var(--panel);
   text-decoration: none;
 }
 .btn:hover {
   text-decoration: none;
 }
 .btn.primary {
-  color: #fff;
+  color: var(--on-primary);
   background: var(--primary);
   border-color: var(--primary);
 }
@@ -237,7 +334,7 @@ small,
   width: 100%;
   border: 1px solid var(--input-border);
   border-radius: var(--pill);
-  background: #fff;
+  background: var(--panel);
   min-height: 44px;
   padding: 10px 12px;
   color: var(--text);
@@ -318,7 +415,7 @@ tbody tr:hover {
   top: -100px;
   left: 20px;
   z-index: 100;
-  background: white;
+  background: var(--panel);
   padding: 12px;
 }
 .skip:focus {
@@ -382,7 +479,7 @@ tbody tr:hover {
   top: 16px;
   height: calc(100dvh - 32px);
   overflow-y: auto;
-  border: 1px solid #ffffff;
+  border: 1px solid var(--panel);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
@@ -417,7 +514,7 @@ tbody tr:hover {
   text-decoration: none;
 }
 .nav a.active {
-  color: #fff;
+  color: var(--on-primary);
   background: var(--primary);
 }
 .sidebar-foot {
@@ -444,7 +541,7 @@ tbody tr:hover {
   font-size: 0.73rem;
   color: var(--muted);
   padding: 10px 32px;
-  background: #ffffff50;
+  background: color-mix(in oklab, var(--panel) 31%, transparent);
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -462,7 +559,7 @@ tbody tr:hover {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  color: white;
+  color: var(--on-primary);
   overflow: hidden;
 }
 .auth-story h1 {
@@ -482,21 +579,21 @@ tbody tr:hover {
   width: 100%;
   max-width: 500px;
   padding: 32px;
-  border: 1px solid #ffffff;
+  border: 1px solid var(--panel);
   border-radius: 28px;
-  background: #ffffffb8;
+  background: color-mix(in oklab, var(--panel) 72%, transparent);
   box-shadow: var(--shadow);
 }
 .auth-mark {
   width: 240px;
   height: 240px;
-  border: 1px solid #ffffff50;
+  border: 1px solid color-mix(in oklab, var(--panel) 31%, transparent);
   display: grid;
   place-items: center;
   align-self: center;
   box-shadow:
-    0 0 0 40px #ffffff09,
-    0 0 0 80px #ffffff05;
+    0 0 0 40px color-mix(in oklab, var(--panel) 4%, transparent),
+    0 0 0 80px color-mix(in oklab, var(--panel) 2%, transparent);
   margin: 40px;
 }
 .dialog {
@@ -527,7 +624,7 @@ tbody tr:hover {
   z-index: 100;
   max-width: 400px;
   background: var(--ink);
-  color: white;
+  color: var(--on-primary);
   padding: 16px 24px;
   border-radius: 14px;
   box-shadow: 0 10px 30px rgb(27 29 25 / 20%);
@@ -540,8 +637,8 @@ tbody tr:hover {
   border-radius: 16px;
   border: 1px solid var(--line);
   background-image:
-    linear-gradient(29deg, transparent 46%, #fff 47%, #fff 50%, transparent 51%),
-    linear-gradient(95deg, transparent 44%, #fff 45%, #fff 48%, transparent 49%);
+    linear-gradient(29deg, transparent 46%, var(--panel) 47%, var(--panel) 50%, transparent 51%),
+    linear-gradient(95deg, transparent 44%, var(--panel) 45%, var(--panel) 48%, transparent 49%);
   background-size:
     100% 130px,
     210px 100%;
@@ -556,9 +653,9 @@ tbody tr:hover {
 .map-pin {
   position: absolute;
   transform: translate(-50%, -50%);
-  border: 3px solid white;
+  border: 3px solid var(--panel);
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
   border-radius: 18px;
   min-width: 40px;
   height: 40px;
@@ -571,7 +668,7 @@ tbody tr:hover {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: #fffffff0;
+  background: color-mix(in oklab, var(--panel) 94%, transparent);
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 0.73rem;
@@ -725,8 +822,8 @@ tbody tr:hover {
   }
 }
 .dashboard-hero {
-  border: 1px solid #ffffff80;
-  color: white;
+  border: 1px solid color-mix(in oklab, var(--panel) 50%, transparent);
+  color: var(--on-primary);
   padding: 32px 40px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 240px;
@@ -744,7 +841,7 @@ tbody tr:hover {
 }
 .dashboard-hero .btn {
   justify-self: start;
-  background: #ffffff;
+  background: var(--panel);
   color: var(--primary);
   border: 0;
 }
@@ -755,14 +852,14 @@ tbody tr:hover {
   position: relative;
   display: grid;
   place-items: center;
-  border: 1px solid #ffffff50;
+  border: 1px solid color-mix(in oklab, var(--panel) 31%, transparent);
   border-radius: 50%;
   width: 200px;
   height: 200px;
   justify-self: center;
   box-shadow:
-    0 0 0 25px #ffffff08,
-    0 0 0 55px #ffffff05;
+    0 0 0 25px color-mix(in oklab, var(--panel) 3%, transparent),
+    0 0 0 55px color-mix(in oklab, var(--panel) 2%, transparent);
 }
 .hero-orbit > div {
   display: grid;
@@ -770,8 +867,8 @@ tbody tr:hover {
   width: 125px;
   height: 125px;
   border-radius: 36px;
-  background: #ffffff22;
-  border: 1px solid #ffffff60;
+  background: color-mix(in oklab, var(--panel) 13%, transparent);
+  border: 1px solid color-mix(in oklab, var(--panel) 38%, transparent);
   transform: rotate(-8deg);
 }
 .orbit-dot {
@@ -779,7 +876,7 @@ tbody tr:hover {
   width: 20px;
   height: 20px;
   background: #b9e9de;
-  border: 4px solid #ffffff;
+  border: 4px solid var(--panel);
   border-radius: 50%;
 }
 .orbit-dot.one {
@@ -828,7 +925,7 @@ tbody tr:hover {
   padding: 14px;
   color: var(--text);
   font-size: 0.8rem;
-  background: #ffffff80;
+  background: color-mix(in oklab, var(--panel) 50%, transparent);
 }
 .dashboard-person:hover {
   text-decoration: none;
@@ -965,14 +1062,14 @@ tbody tr:hover {
   text-transform: uppercase;
 }
 .topbar-profile {
-  border: 1px solid #ffffff;
-  background: #ffffff80;
+  border: 1px solid var(--panel);
+  background: color-mix(in oklab, var(--panel) 50%, transparent);
   border-radius: 16px;
   padding: 6px 12px 6px 6px;
 }
 .topbar-profile:hover {
   text-decoration: none;
-  background: #fff;
+  background: var(--panel);
 }
 .workspace > .notice,
 .workspace > .demo-strip {
@@ -1025,7 +1122,7 @@ tbody tr:hover {
 .overview-hero {
   padding: 32px;
   border-radius: 26px;
-  border: 1px solid white;
+  border: 1px solid var(--panel);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1049,8 +1146,8 @@ tbody tr:hover {
   display: grid;
   place-items: center;
   color: var(--primary);
-  background: #ffffffa8;
-  border: 1px solid #fff;
+  background: color-mix(in oklab, var(--panel) 66%, transparent);
+  border: 1px solid var(--panel);
   box-shadow: 0 10px 30px rgb(27 29 25 / 7%);
 }
 .overview-grid {
@@ -1069,12 +1166,12 @@ tbody tr:hover {
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: #ffffffb8;
+  background: color-mix(in oklab, var(--panel) 72%, transparent);
   color: var(--text);
 }
 .quick-link:hover {
   text-decoration: none;
-  background: white;
+  background: var(--panel);
   border-color: var(--border);
   box-shadow: 0 8px 24px rgb(27 29 25 / 5%);
 }

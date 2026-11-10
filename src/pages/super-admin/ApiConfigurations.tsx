@@ -11,6 +11,13 @@ import {
 import { PageHead, State, Dialog, Toast } from '../../components/UI';
 import { Form } from '../../components/Form';
 import { formatTime } from '../../constants/labels';
+import {
+  configCategory,
+  configCategoryValues,
+  configHint,
+  configName,
+  configValue,
+} from '../../constants/configLabels';
 import type { Person } from '../../models/domain';
 
 type PageInfo = {
@@ -77,7 +84,7 @@ function Change({
       onClose={close}
     >
       <div className="stack">
-        <strong>{config.configKey}</strong>
+        <strong>{configName(config.configKey)}</strong>
         <dl className="record-details">
           <div>
             <dt>{t('Giá trị hiện tại')}</dt>
@@ -90,7 +97,18 @@ function Change({
           <div>
             <dt>{t('Giới hạn')}</dt>
             <dd>
-              {config.minValue ?? t('Không có')} – {config.maxValue ?? t('Không có')}
+              {config.minValue === null && config.maxValue === null
+                ? t('Không giới hạn')
+                : t('Từ {min} đến {max}', {
+                    min:
+                      config.minValue === null
+                        ? '…'
+                        : configValue({ ...config, configValue: config.minValue }),
+                    max:
+                      config.maxValue === null
+                        ? '…'
+                        : configValue({ ...config, configValue: config.maxValue }),
+                  })}
             </dd>
           </div>
         </dl>
@@ -99,7 +117,7 @@ function Change({
             {t('Khôi phục về giá trị trước lần thay đổi lúc {p1}:', {
               p1: formatTime(history.changedAt),
             })}{' '}
-            <strong>{history.oldValue}</strong>
+            <strong>{configValue({ ...config, configValue: history.oldValue ?? '' })}</strong>
             {t('. Một bản ghi lịch sử mới sẽ được tạo.')}
           </p>
         )}
@@ -188,30 +206,47 @@ function ConfigPanel({
   });
   return (
     <div className="stack">
-      <h3>{config.configKey}</h3>
+      <h3>{configName(config.configKey)}</h3>
       <p style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
-        {config.description || t('Chưa có mô tả.')}
+        {configHint(config.configKey) || config.description || t('Chưa có mô tả.')}
       </p>
       <dl className="record-details">
         <div>
           <dt>{t('Giá trị hiện tại')}</dt>
-          <dd style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>{config.configValue}</dd>
+          <dd style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
+            {configValue(config)}
+          </dd>
         </div>
         <div>
-          <dt>{t('Kiểu / nhóm')}</dt>
-          <dd>
-            {config.valueType} / {config.category}
-          </dd>
+          <dt>{t('Nhóm')}</dt>
+          <dd>{configCategory(config.category)}</dd>
         </div>
         <div>
           <dt>{t('Giới hạn')}</dt>
           <dd>
-            {config.minValue ?? t('Không có')} – {config.maxValue ?? t('Không có')}
+            {config.minValue === null && config.maxValue === null
+              ? t('Không giới hạn')
+              : t('Từ {min} đến {max}', {
+                  min:
+                    config.minValue === null
+                      ? '…'
+                      : configValue({ ...config, configValue: config.minValue }),
+                  max:
+                    config.maxValue === null
+                      ? '…'
+                      : configValue({ ...config, configValue: config.maxValue }),
+                })}
           </dd>
         </div>
         <div>
-          <dt>{t('Phạm vi đọc')}</dt>
-          <dd>{config.isPublic ? t('Công khai') : t('Quản trị')}</dd>
+          <dt>{t('Nơi sử dụng')}</dt>
+          <dd>{config.isPublic ? t('Ứng dụng di động đọc được') : t('Chỉ máy chủ dùng')}</dd>
+        </div>
+        <div>
+          <dt>{t('Mã kỹ thuật')}</dt>
+          <dd style={{ overflowWrap: 'anywhere' }}>
+            <code>{config.configKey}</code>
+          </dd>
         </div>
         <div>
           <dt>{t('Cập nhật lúc')}</dt>
@@ -238,7 +273,10 @@ function ConfigPanel({
                 <tr key={entry.id}>
                   <td>{formatTime(entry.changedAt)}</td>
                   <td style={{ overflowWrap: 'anywhere' }}>
-                    {entry.oldValue ?? t('Chưa có')} → {entry.newValue}
+                    {entry.oldValue === null
+                      ? t('Chưa có')
+                      : configValue({ ...config, configValue: entry.oldValue })}{' '}
+                    → {configValue({ ...config, configValue: entry.newValue })}
                   </td>
                   <td style={{ overflowWrap: 'anywhere' }}>
                     {entry.reason || t('Không ghi lý do')}
@@ -330,7 +368,9 @@ function Configurations({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Cấu hình hệ thống')}
-        description={t('Xem, điều chỉnh và khôi phục các thông số vận hành của hệ thống.')}
+        description={t(
+          'Xem và chỉnh các thiết lập chung của hệ thống; có thể quay lại giá trị trước đó.',
+        )}
       />
       <section className="glass card stack">
         <form
@@ -352,7 +392,14 @@ function Configurations({ actor }: { actor: Person }) {
           </label>
           <label className="field">
             {t('Nhóm cấu hình')}
-            <input name="category" placeholder={t('Ví dụ: AI, WEBRTC')} />
+            <select name="category" defaultValue="">
+              <option value="">{t('Tất cả nhóm')}</option>
+              {configCategoryValues.map((value) => (
+                <option key={value} value={value}>
+                  {configCategory(value)}
+                </option>
+              ))}
+            </select>
           </label>
           <button className="btn primary">{t('Tìm kiếm')}</button>
           <button
@@ -375,7 +422,7 @@ function Configurations({ actor }: { actor: Person }) {
             <table style={{ minWidth: 650 }}>
               <thead>
                 <tr>
-                  <th>{t('Khóa / nhóm')}</th>
+                  <th>{t('Cấu hình')}</th>
                   <th>{t('Giá trị')}</th>
                   <th>{t('Thao tác')}</th>
                 </tr>
@@ -384,11 +431,11 @@ function Configurations({ actor }: { actor: Person }) {
                 {query.data?.items.map((item) => (
                   <tr key={item.id}>
                     <td style={{ overflowWrap: 'anywhere' }}>
-                      <strong>{item.configKey}</strong>
-                      <p>{item.category}</p>
+                      <strong>{configName(item.configKey)}</strong>
+                      <p className="muted">{configCategory(item.category)}</p>
                     </td>
                     <td style={{ overflowWrap: 'anywhere' }}>
-                      {item.reviewed ? item.configValue : t('Chưa duyệt hiển thị trên Web')}
+                      {item.reviewed ? configValue(item) : t('Chưa hỗ trợ xem trên Web')}
                     </td>
                     <td>
                       <button

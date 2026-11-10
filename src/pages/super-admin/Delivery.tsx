@@ -19,7 +19,7 @@ export function Delivery() {
       <PageHead
         title={t('Theo dõi thông báo')}
         description={t(
-          'Giám sát trạng thái delivery theo kênh. Toàn bộ bản ghi dưới đây là dữ liệu minh họa, không phải xác nhận gửi thật.',
+          'Theo dõi thông báo đã gửi tới đâu theo từng cách gửi. Toàn bộ bản ghi dưới đây là dữ liệu minh họa, không phải xác nhận gửi thật.',
         )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
@@ -97,7 +97,7 @@ export function Delivery() {
                   )
                 : t('Bản ghi trạng thái minh họa từ dịch vụ mock.')}
             </p>
-            <small>{formatTime(delivery.at)} · UTC+7</small>
+            <small>{formatTime(delivery.at)}</small>
           </div>
         </Dialog>
       )}

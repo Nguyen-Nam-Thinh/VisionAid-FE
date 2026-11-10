@@ -18,8 +18,7 @@ import { GpsMap } from '../../components/GpsMap';
 import { FilterPanel } from '../../components/FilterPanel';
 import type { Person } from '../../models/domain';
 
-const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-const time = (value: string) => formatLocaleDateTime(value, { timeZone: timezone, hour12: false });
+const time = (value: string) => formatLocaleDateTime(value);
 const optional = (value: number | null, unit: string) =>
   value === null ? t('Không có dữ liệu') : `${value} ${unit}`;
 type Viu = { id: string; fullName: string; email: string; isActive: boolean };
@@ -120,7 +119,6 @@ function Fleet({ actor }: { actor: Person }) {
                   shown: shown.length,
                 })}
               </p>
-              <p>{t('Thời gian hiển thị theo {timezone}.', { timezone })}</p>
               <GpsMap points={points} selected={selected} onSelect={setSelected} />
               <div
                 className="table-scroll"
@@ -338,10 +336,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
   return (
     <div className="stack">
       <p>
-        {t(
-          'Thời gian hiển thị theo {timezone}. Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.',
-          { timezone },
-        )}
+        {t('Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.')}
       </p>
       <GpsMap points={points} selected={selected} onSelect={setSelected} />
       <button
@@ -544,7 +539,7 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
               <table className="tracking-table">
                 <thead>
                   <tr>
-                    <th>{t('Ghi nhận ({timezone})', { timezone })}</th>
+                    <th>{t('Ghi nhận')}</th>
                     <th>{t('Vĩ độ / kinh độ')}</th>
                     <th>{t('Độ chính xác')}</th>
                     <th>{t('Độ cao')}</th>

@@ -579,7 +579,7 @@ tbody tr:hover {
   color: var(--primary-hover);
 }
 .nav a:hover:not(.active) {
-  background: rgb(255 255 255 / 65%);
+  background: color-mix(in oklab, var(--panel) 65%, transparent);
   color: var(--text);
 }
 .sidebar .btn {

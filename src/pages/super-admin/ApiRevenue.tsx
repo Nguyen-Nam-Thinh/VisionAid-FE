@@ -34,7 +34,9 @@ function Revenue({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Báo cáo doanh thu')}
-        description={t('Doanh thu từ giao dịch PayOS đã thanh toán, theo kênh, gói và trung tâm.')}
+        description={t(
+          'Doanh thu từ các đơn đã thanh toán qua PayOS, chia theo gia đình hay trung tâm, theo gói và theo từng trung tâm.',
+        )}
       />
       <section className="glass card stack">
         <FilterPanel

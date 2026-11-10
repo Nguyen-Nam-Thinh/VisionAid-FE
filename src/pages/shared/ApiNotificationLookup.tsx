@@ -44,7 +44,7 @@ function Lookup({ actor }: { actor: Person }) {
         description={
           actor.role === 'Admin'
             ? t(
-                'Mỗi lần gửi thông báo: người nhận, người được chăm sóc, kênh gửi, trạng thái và thời điểm đã xem.',
+                'Xem từng thông báo đã gửi: ai nhận, về người nào, gửi qua đâu, đã gửi được chưa và đã xem lúc nào.',
               )
             : t('Thông báo gửi cho người nhận hoặc về người được chăm sóc trong trung tâm của bạn.')
         }
@@ -133,11 +133,11 @@ function Lookup({ actor }: { actor: Person }) {
           </label>
           <div className="filter-range wide">
             <label className="field">
-              {t('Từ ngày Việt Nam')}
+              {t('Từ ngày')}
               <input type="date" name="from" />
             </label>
             <label className="field">
-              {t('Đến ngày Việt Nam')}
+              {t('Đến ngày')}
               <input type="date" name="to" />
             </label>
           </div>

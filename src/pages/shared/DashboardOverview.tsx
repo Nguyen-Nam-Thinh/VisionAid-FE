@@ -35,7 +35,7 @@ import { CountingNumber } from '@animate-ui/react/primitives/texts/counting-numb
 
 const refresh = { retry: false, gcTime: 0, refetchInterval: 60000 } as const;
 const time = (value: string | null) =>
-  value ? formatTime(value) + ' · UTC+7' : t('Chưa có dữ liệu thời hạn');
+  value ? formatTime(value) : t('Chưa có dữ liệu thời hạn');
 
 export function DashboardOverview({ actor }: { actor: Person }) {
   return (
@@ -125,7 +125,7 @@ function shortcuts(actor: Person): Shortcut[] {
       {
         to: '/center-admin/users',
         icon: Users,
-        title: t('Người dùng VIU'),
+        title: t('Người khiếm thị'),
         detail: t('Tài khoản người khiếm thị của trung tâm.'),
       },
       {

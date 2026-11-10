@@ -1,4 +1,5 @@
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, LayoutList, ListOrdered, RefreshCw } from 'lucide-react';
+import { PageTabs } from '../../components/PageTabs';
 import { t, msg, labelMap, tText, getLocale } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -216,7 +217,6 @@ function Detail({
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {query.data && (
           <div className="stack">
-            <p>{t('Thời gian hiển thị theo giờ Việt Nam.')}</p>
             <dl className="record-details">
               {Object.entries(query.data)
                 .filter(([key]) => labels[key])
@@ -362,7 +362,7 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
       </FilterPanel>
       <p>
         {t(
-          'Ngày lọc và thời gian hiển thị theo giờ Việt Nam. Để trống ngày để xem toàn bộ thời gian còn lưu.',
+          'Để trống ngày để xem toàn bộ thời gian còn lưu.',
         )}
       </p>
       {error && (
@@ -526,19 +526,37 @@ function Activity({ actor }: { actor: Person }) {
         </State>
       </section>
       {!users.error && person && (
-        <ActivityTimeline
-          key={'timeline-' + actor.id + person.id}
-          actor={actor}
-          viuId={person.id}
-          name={person.fullName}
-        />
-      )}
-      {!users.error && person && (
-        <ActivityHistory
+        <PageTabs
           key={actor.id + person.id}
-          actor={actor}
-          viuId={person.id}
-          name={person.fullName}
+          label={t('Cách xem lịch sử')}
+          tabs={[
+            {
+              value: 'timeline',
+              label: t('Truy vết hoạt động'),
+              icon: ListOrdered,
+              content: (
+                <ActivityTimeline
+                  key={'timeline-' + actor.id + person.id}
+                  actor={actor}
+                  viuId={person.id}
+                  name={person.fullName}
+                />
+              ),
+            },
+            {
+              value: 'kinds',
+              label: t('Theo loại hoạt động'),
+              icon: LayoutList,
+              content: (
+                <ActivityHistory
+                  key={actor.id + person.id}
+                  actor={actor}
+                  viuId={person.id}
+                  name={person.fullName}
+                />
+              ),
+            },
+          ]}
         />
       )}
     </>
