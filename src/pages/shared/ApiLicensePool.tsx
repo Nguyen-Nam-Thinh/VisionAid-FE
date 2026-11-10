@@ -1,4 +1,5 @@
-import { RefreshCw } from 'lucide-react';
+import { KeyRound, Package, RefreshCw, UserCheck } from 'lucide-react';
+import { PageTabs } from '../../components/PageTabs';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -81,13 +82,13 @@ export function OrganizationPool({
                 </div>
                 <div>
                   <dt>{t('Ngày mua')}</dt>
-                  <dd>{formatLocaleDateTime(item.purchasedAt, { timeZoneName: 'short' })}</dd>
+                  <dd>{formatLocaleDateTime(item.purchasedAt)}</dd>
                 </div>
                 <div>
                   <dt>{t('Hết hạn')}</dt>
                   <dd>
                     {item.expiresAt
-                      ? formatLocaleDateTime(item.expiresAt, { timeZoneName: 'short' })
+                      ? formatLocaleDateTime(item.expiresAt)
                       : t('Không có thời hạn từ máy chủ')}
                   </dd>
                 </div>
@@ -100,9 +101,7 @@ export function OrganizationPool({
                       {
                         name: item.pendingChange.package.name,
                         seats: item.pendingChange.newTotalLicenses,
-                        time: formatLocaleDateTime(item.pendingChange.effectiveAt, {
-                          timeZoneName: 'short',
-                        }),
+                        time: formatLocaleDateTime(item.pendingChange.effectiveAt),
                       },
                     )}
                   </p>
@@ -146,11 +145,33 @@ export function ApiLicensePool() {
         title={t('Kho license tổ chức')}
         description={t('Số license đã mua, đã cấp và thời hạn sử dụng của trung tâm.')}
       />
-      <OrganizationPool key={'pool-' + actor.id + actor.orgId} actor={actor} />
-      {isOrganizationBuyer(actor) && (
-        <LicenseAssignments key={'assignments-' + actor.id + actor.orgId} actor={actor} />
-      )}
-      <LicenseKeys key={'keys-' + actor.id + actor.orgId} actor={actor} mode="distribute" />
+      <PageTabs
+        label={t('Phần của kho license')}
+        tabs={[
+          {
+            value: 'pool',
+            label: t('Kho license'),
+            icon: Package,
+            content: <OrganizationPool key={'pool-' + actor.id + actor.orgId} actor={actor} />,
+          },
+          isOrganizationBuyer(actor) && {
+            value: 'assignments',
+            label: t('License đã cấp'),
+            icon: UserCheck,
+            content: (
+              <LicenseAssignments key={'assignments-' + actor.id + actor.orgId} actor={actor} />
+            ),
+          },
+          isOrganizationBuyer(actor) && {
+            value: 'keys',
+            label: t('Key cho gia đình'),
+            icon: KeyRound,
+            content: (
+              <LicenseKeys key={'keys-' + actor.id + actor.orgId} actor={actor} mode="distribute" />
+            ),
+          },
+        ]}
+      />
     </>
   );
 }

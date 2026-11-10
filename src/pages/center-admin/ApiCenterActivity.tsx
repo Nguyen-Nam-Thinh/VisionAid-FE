@@ -23,7 +23,7 @@ function CenterActivity({ actor }: { actor: Person }) {
       <PageHead
         title={t('Truy vết hoạt động')}
         description={t(
-          'Dòng thời gian hoạt động và hướng dẫn dẫn đường của người được chăm sóc trong trung tâm.',
+          'Xem lại theo thời gian những gì người khiếm thị trong trung tâm đã làm và các chỉ dẫn di chuyển ứng dụng đã đọc cho họ.',
         )}
       />
       <section className="glass card stack">

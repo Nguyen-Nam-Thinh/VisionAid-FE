@@ -135,10 +135,19 @@ export function useI18n() {
   return { locale, setLocale, t };
 }
 const toDate = (value: string | number | Date) => (value instanceof Date ? value : new Date(value));
-/** Date + time in the locale's default layout; replaces `toLocaleString('vi-VN', options)`. */
+/** The one date-time layout shown across the app: "17:23 10/11/2026" in Vietnam time. */
+export const DATE_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: 'Asia/Ho_Chi_Minh',
+};
+/** Date + time; without options it uses the shared layout, with options it behaves like `toLocaleString`. */
 export const formatLocaleDateTime = (
   value: string | number | Date,
-  options?: Intl.DateTimeFormatOptions,
+  options: Intl.DateTimeFormatOptions = DATE_TIME_OPTIONS,
 ) => toDate(value).toLocaleString(intlLocale(), options);
 export const formatNumber = (value: number, options: Intl.NumberFormatOptions = {}) =>
   new Intl.NumberFormat(intlLocale(), options).format(value);

@@ -106,7 +106,7 @@ function Accounts({
           fixedRole === 'Caregiver'
             ? t('Nhân viên chăm sóc')
             : fixedRole
-              ? t('Người dùng VIU')
+              ? t('Người khiếm thị')
               : t('Quản lý tài khoản')
         }
         description={t('Hồ sơ và trạng thái tài khoản trong phạm vi của bạn.')}

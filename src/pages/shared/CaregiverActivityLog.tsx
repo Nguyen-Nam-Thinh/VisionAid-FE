@@ -101,11 +101,11 @@ export function CaregiverActivityLog({
         />
         <div className="filter-range wide">
           <label className="field">
-            {t('Thao tác từ ngày (UTC)')}
+            {t('Thao tác từ ngày')}
             <input type="date" name="dateFrom" defaultValue={filters.dateFrom} />
           </label>
           <label className="field">
-            {t('Thao tác đến ngày (UTC)')}
+            {t('Thao tác đến ngày')}
             <input type="date" name="dateTo" defaultValue={filters.dateTo} />
           </label>
         </div>

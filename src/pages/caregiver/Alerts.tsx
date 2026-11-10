@@ -108,7 +108,7 @@ export function Alerts() {
                 </Badge>
               ),
             },
-            { label: t('Thời gian · UTC+7'), render: (a) => formatTime(a.at) },
+            { label: t('Thời gian'), render: (a) => formatTime(a.at) },
             {
               label: t('Thao tác'),
               render: (a) => (

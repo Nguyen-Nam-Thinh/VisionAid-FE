@@ -115,7 +115,7 @@ export const features: Feature[] = [
     label: msg('Phân công chăm sóc'),
     component: Assignments,
   },
-  { role: 'CenterAdmin', path: 'users', label: msg('Người dùng VIU'), component: Vius },
+  { role: 'CenterAdmin', path: 'users', label: msg('Người khiếm thị'), component: Vius },
   { role: 'CenterAdmin', path: 'staff', label: msg('Nhân viên chăm sóc'), component: Staff },
   {
     role: 'CenterAdmin',

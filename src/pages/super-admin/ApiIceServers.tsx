@@ -34,8 +34,10 @@ function Servers({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title={t('Máy chủ kết nối cuộc gọi')}
-        description={t('Máy chủ STUN/TURN giúp cuộc gọi video kết nối được qua mọi mạng.')}
+        title={t('Máy chủ hỗ trợ cuộc gọi')}
+        description={t(
+          'Máy chủ trung gian giúp cuộc gọi video giữa điện thoại và trang web vẫn kết nối được khi mạng hai bên khác nhau hoặc bị chặn.',
+        )}
       />
       <section className="glass card stack">
         <CardActions>

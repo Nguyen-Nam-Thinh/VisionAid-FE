@@ -21,7 +21,7 @@ export function Metrics() {
       <PageHead
         title={t('Hiệu năng AI')}
         description={t(
-          'Số liệu tổng hợp mô phỏng theo model và ngày. Confidence và tỷ lệ xử lý thành công không phải độ chính xác có ground truth.',
+          'Số liệu mô phỏng theo từng mô hình AI và từng ngày. Mức độ chắc chắn và tỷ lệ xử lý thành công không có nghĩa là AI nhận diện đúng.',
         )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>

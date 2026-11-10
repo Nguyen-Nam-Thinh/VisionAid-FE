@@ -87,11 +87,11 @@ function PoolChangeSummary({
             </div>
             <div>
               <dt>{t('Áp dụng từ')}</dt>
-              <dd>{formatLocaleDateTime(quote.effectiveAt, { timeZoneName: 'short' })}</dd>
+              <dd>{formatLocaleDateTime(quote.effectiveAt)}</dd>
             </div>
             <div>
               <dt>{t('Kho hết hạn vào')}</dt>
-              <dd>{formatLocaleDateTime(quote.newExpiresAt, { timeZoneName: 'short' })}</dd>
+              <dd>{formatLocaleDateTime(quote.newExpiresAt)}</dd>
             </div>
             <div>
               <dt>{t('Số suất')}</dt>
@@ -477,7 +477,9 @@ function PaymentResult({
     <>
       <PageHead
         title={t('Kiểm tra thanh toán')}
-        description={t('Theo dõi trạng thái đơn và xác nhận thanh toán từ VisionAid.')}
+        description={t(
+          'Xem đơn đã thanh toán xong chưa; VisionAid xác nhận lại trước khi mở quyền sử dụng.',
+        )}
       />
       <section className="glass card stack">
         {cancelled && (

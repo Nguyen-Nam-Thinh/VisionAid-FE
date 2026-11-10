@@ -92,7 +92,7 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
                 <div>
                   <h2>{selected?.name}</h2>
                   <p className="muted">
-                    {t('Lần ghi nhận: {p1} · UTC+7', { p1: formatTime(current.at) })}
+                    {t('Lần ghi nhận: {p1}', { p1: formatTime(current.at) })}
                   </p>
                 </div>
               </div>

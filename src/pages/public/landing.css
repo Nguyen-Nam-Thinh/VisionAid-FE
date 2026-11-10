@@ -844,3 +844,30 @@
     width: auto;
   }
 }
+
+/* Dark theme: the street at night. The two dark acts and the yellow peak keep their light-theme
+   colours (they are islands with their own ground), so their text stays readable. */
+[data-theme='dark'] {
+  --sc-canvas: #121411;
+}
+[data-theme='dark'] .landing {
+  --lp-far: #262a22;
+  --lp-mid: #31362c;
+  --lp-walk: #1f231b;
+  --lp-bar: #b38f00;
+}
+[data-theme='dark'] :is(.lp-two-stage, .lp-close-stage) {
+  --ink: #1b1d19;
+  --panel: #ecede7;
+}
+[data-theme='dark'] .lp-peak-stage {
+  color: #1b1d19;
+  --ink: #1b1d19;
+  --ink-muted: #3d4037;
+  --panel: #ffffff;
+  --line: #cdd0c7;
+}
+/* The rail sits on its own ground in dark mode, so it never shows light text on the yellow fade. */
+[data-theme='dark'] .lp-features-stage {
+  background: var(--concrete);
+}

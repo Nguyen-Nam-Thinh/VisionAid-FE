@@ -1,4 +1,5 @@
-import { RefreshCw } from 'lucide-react';
+import { Link2, QrCode, RefreshCw } from 'lucide-react';
+import { PageTabs } from '../../components/PageTabs';
 import { CaregiverInvitations } from './CaregiverInvitations';
 import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
@@ -82,7 +83,7 @@ function Links({ actor }: { actor: Person }) {
         }
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
-      <CaregiverInvitations actor={actor} onAccepted={refresh} />
+
       {create && (
         <LinkEditor
           actor={actor}
@@ -95,167 +96,191 @@ function Links({ actor }: { actor: Person }) {
           }}
         />
       )}
-      <section className="glass card stack">
-        <FilterPanel
-          active={
-            [
-              filters.caregiverId,
-              filters.viuId,
-              actor.role !== 'CenterAdmin' && filters.linkType,
-              filters.active !== 'true',
-            ].filter(Boolean).length
-          }
-          submitLabel={t('Lọc liên kết')}
-          onApply={(form) => {
-            const data = new FormData(form);
-            filter({
-              caregiverId: draftCg,
-              viuId: draftViu,
-              ...(actor.role !== 'CenterAdmin' && { linkType: String(data.get('linkType') || '') }),
-              active: String(data.get('active') ?? 'true'),
-            });
-          }}
-          onReset={() => {
-            setDraftCg('');
-            setDraftViu('');
-            filter({ caregiverId: '', viuId: '', linkType: '', active: 'true' });
-          }}
-          tools={
-            <button
-              className="btn"
-              type="button"
-              disabled={list.isFetching}
-              onClick={() => void refresh()}
-            >
-              <RefreshCw size={16} aria-hidden="true" />
-              {t('Tải lại')}
-            </button>
-          }
-          extra={
-            <button className="btn primary" onClick={() => setCreate(true)}>
-              {actor.role === 'Caregiver' ? t('Thêm người chăm sóc phụ') : t('Tạo liên kết')}
-            </button>
-          }
-        >
-          {actor.role !== 'Caregiver' && (
-            <SearchPicker
-              label={t('Người chăm sóc')}
-              placeholder={t('Gõ tên hoặc email')}
-              value={draftCg}
-              onChange={setDraftCg}
-              search={searchAccounts(actor, 'Caregiver')}
-              queryKey={['link-filter-caregiver', actor.id, actor.orgId]}
-            />
-          )}
-          <SearchPicker
-            label={t('Người được chăm sóc')}
-            placeholder={t('Gõ tên hoặc email')}
-            value={draftViu}
-            onChange={setDraftViu}
-            search={
-              actor.role === 'Caregiver'
-                ? searchCareRecipients()
-                : searchAccounts(actor, 'VisuallyImpaired')
-            }
-            queryKey={['link-filter-viu', actor.id, actor.orgId]}
-          />
-          {actor.role !== 'CenterAdmin' && (
-            <label className="field">
-              {t('Loại liên kết')}
-              <select name="linkType" defaultValue={filters.linkType}>
-                <option value="">{t('Tất cả loại')}</option>
-                <option value="Personal">{t('Cá nhân')}</option>
-                <option value="Organization">{t('Tổ chức')}</option>
-              </select>
-            </label>
-          )}
-          <label className="field">
-            {t('Trạng thái liên kết')}
-            <select name="active" defaultValue={filters.active}>
-              <option value="true">{t('Đang liên kết')}</option>
-              <option value="false">{t('Đã gỡ')}</option>
-              <option value="">{t('Tất cả')}</option>
-            </select>
-          </label>
-        </FilterPanel>
-        <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
-          {list.data && (
-            <>
-              <div
-                className="table-scroll"
-                tabIndex={0}
-                role="region"
-                aria-label={t('Danh sách liên kết chăm sóc')}
-              >
-                <table className="care-links-table">
-                  <thead>
-                    <tr>
-                      <th>Caregiver</th>
-                      <th>{t('Người được chăm sóc')}</th>
-                      <th>{t('Loại')}</th>
-                      <th>{t('Trạng thái')}</th>
-                      <th>{t('Thao tác')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {list.data.items.map((link) => (
-                      <tr key={link.id}>
-                        <td>
-                          <strong>{link.caregiverFullName}</strong>
-                          <p className="care-secondary">{link.caregiverEmail}</p>
-                        </td>
-                        <td>
-                          <strong>{link.viuFullName}</strong>
-                          <p className="care-secondary">{link.viuEmail}</p>
-                        </td>
-                        <td>{link.linkType === 'Personal' ? t('Cá nhân') : t('Tổ chức')}</td>
-                        <td>
-                          <LinkStatus link={link} />
-                        </td>
-                        <td>
-                          <button
-                            className="btn"
-                            aria-label={t('Xem liên kết ') + link.id}
-                            onClick={() => setSelected(link.id)}
-                          >
-                            {t('Chi tiết')}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {!list.data.items.length && (
-                  <p className="empty">{t('Không có liên kết phù hợp.')}</p>
-                )}
-              </div>
-              <div className="row pagination">
-                <span>
-                  {t('{totalCount} kết quả · Trang {page}/{p4}', {
-                    totalCount: list.data.totalCount,
-                    page: list.data.page,
-                    p4: Math.max(1, list.data.totalPages),
-                  })}
-                </span>
-                <button
-                  className="btn"
-                  disabled={list.isFetching || !list.data.hasPreviousPage}
-                  onClick={() => filter({ page: filters.page - 1 })}
+      <PageTabs
+        label={t('Phần của trang liên kết')}
+        tabs={[
+          {
+            value: 'links',
+            label: actor.role === 'Caregiver' ? t('Danh sách liên kết') : t('Liên kết chăm sóc'),
+            icon: Link2,
+            content: (
+              <section className="glass card stack">
+                <FilterPanel
+                  active={
+                    [
+                      filters.caregiverId,
+                      filters.viuId,
+                      actor.role !== 'CenterAdmin' && filters.linkType,
+                      filters.active !== 'true',
+                    ].filter(Boolean).length
+                  }
+                  submitLabel={t('Lọc liên kết')}
+                  onApply={(form) => {
+                    const data = new FormData(form);
+                    filter({
+                      caregiverId: draftCg,
+                      viuId: draftViu,
+                      ...(actor.role !== 'CenterAdmin' && {
+                        linkType: String(data.get('linkType') || ''),
+                      }),
+                      active: String(data.get('active') ?? 'true'),
+                    });
+                  }}
+                  onReset={() => {
+                    setDraftCg('');
+                    setDraftViu('');
+                    filter({ caregiverId: '', viuId: '', linkType: '', active: 'true' });
+                  }}
+                  tools={
+                    <button
+                      className="btn"
+                      type="button"
+                      disabled={list.isFetching}
+                      onClick={() => void refresh()}
+                    >
+                      <RefreshCw size={16} aria-hidden="true" />
+                      {t('Tải lại')}
+                    </button>
+                  }
+                  extra={
+                    <button className="btn primary" onClick={() => setCreate(true)}>
+                      {actor.role === 'Caregiver'
+                        ? t('Thêm người chăm sóc phụ')
+                        : t('Tạo liên kết')}
+                    </button>
+                  }
                 >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={list.isFetching || !list.data.hasNextPage}
-                  onClick={() => filter({ page: filters.page + 1 })}
-                >
-                  {t('Trang sau')}
-                </button>
-              </div>
-            </>
-          )}
-        </State>
-      </section>
+                  {actor.role !== 'Caregiver' && (
+                    <SearchPicker
+                      label={t('Người chăm sóc')}
+                      placeholder={t('Gõ tên hoặc email')}
+                      value={draftCg}
+                      onChange={setDraftCg}
+                      search={searchAccounts(actor, 'Caregiver')}
+                      queryKey={['link-filter-caregiver', actor.id, actor.orgId]}
+                    />
+                  )}
+                  <SearchPicker
+                    label={t('Người được chăm sóc')}
+                    placeholder={t('Gõ tên hoặc email')}
+                    value={draftViu}
+                    onChange={setDraftViu}
+                    search={
+                      actor.role === 'Caregiver'
+                        ? searchCareRecipients()
+                        : searchAccounts(actor, 'VisuallyImpaired')
+                    }
+                    queryKey={['link-filter-viu', actor.id, actor.orgId]}
+                  />
+                  {actor.role !== 'CenterAdmin' && (
+                    <label className="field">
+                      {t('Loại liên kết')}
+                      <select name="linkType" defaultValue={filters.linkType}>
+                        <option value="">{t('Tất cả loại')}</option>
+                        <option value="Personal">{t('Cá nhân')}</option>
+                        <option value="Organization">{t('Tổ chức')}</option>
+                      </select>
+                    </label>
+                  )}
+                  <label className="field">
+                    {t('Trạng thái liên kết')}
+                    <select name="active" defaultValue={filters.active}>
+                      <option value="true">{t('Đang liên kết')}</option>
+                      <option value="false">{t('Đã gỡ')}</option>
+                      <option value="">{t('Tất cả')}</option>
+                    </select>
+                  </label>
+                </FilterPanel>
+                <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
+                  {list.data && (
+                    <>
+                      <div
+                        className="table-scroll"
+                        tabIndex={0}
+                        role="region"
+                        aria-label={t('Danh sách liên kết chăm sóc')}
+                      >
+                        <table className="care-links-table">
+                          <thead>
+                            <tr>
+                              <th>Caregiver</th>
+                              <th>{t('Người được chăm sóc')}</th>
+                              <th>{t('Loại')}</th>
+                              <th>{t('Trạng thái')}</th>
+                              <th>{t('Thao tác')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {list.data.items.map((link) => (
+                              <tr key={link.id}>
+                                <td>
+                                  <strong>{link.caregiverFullName}</strong>
+                                  <p className="care-secondary">{link.caregiverEmail}</p>
+                                </td>
+                                <td>
+                                  <strong>{link.viuFullName}</strong>
+                                  <p className="care-secondary">{link.viuEmail}</p>
+                                </td>
+                                <td>
+                                  {link.linkType === 'Personal' ? t('Cá nhân') : t('Tổ chức')}
+                                </td>
+                                <td>
+                                  <LinkStatus link={link} />
+                                </td>
+                                <td>
+                                  <button
+                                    className="btn"
+                                    aria-label={t('Xem liên kết ') + link.id}
+                                    onClick={() => setSelected(link.id)}
+                                  >
+                                    {t('Chi tiết')}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {!list.data.items.length && (
+                          <p className="empty">{t('Không có liên kết phù hợp.')}</p>
+                        )}
+                      </div>
+                      <div className="row pagination">
+                        <span>
+                          {t('{totalCount} kết quả · Trang {page}/{p4}', {
+                            totalCount: list.data.totalCount,
+                            page: list.data.page,
+                            p4: Math.max(1, list.data.totalPages),
+                          })}
+                        </span>
+                        <button
+                          className="btn"
+                          disabled={list.isFetching || !list.data.hasPreviousPage}
+                          onClick={() => filter({ page: filters.page - 1 })}
+                        >
+                          {t('Trang trước')}
+                        </button>
+                        <button
+                          className="btn"
+                          disabled={list.isFetching || !list.data.hasNextPage}
+                          onClick={() => filter({ page: filters.page + 1 })}
+                        >
+                          {t('Trang sau')}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </State>
+              </section>
+            ),
+          },
+          actor.role === 'Caregiver' && {
+            value: 'invite',
+            label: t('Mời bằng mã QR'),
+            icon: QrCode,
+            content: <CaregiverInvitations actor={actor} onAccepted={refresh} />,
+          },
+        ]}
+      />
       {selected && (
         <Dialog title={t('Thông tin liên kết')} onClose={() => setSelected('')}>
           <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>

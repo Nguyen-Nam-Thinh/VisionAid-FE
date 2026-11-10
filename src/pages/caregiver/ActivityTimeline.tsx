@@ -124,11 +124,11 @@ export function ActivityTimeline({
         </label>
         <div className="filter-range wide">
           <label className="field">
-            {t('Từ ngày Việt Nam')}
+            {t('Từ ngày')}
             <input type="date" name="from" />
           </label>
           <label className="field">
-            {t('Đến ngày Việt Nam')}
+            {t('Đến ngày')}
             <input type="date" name="to" />
           </label>
         </div>
