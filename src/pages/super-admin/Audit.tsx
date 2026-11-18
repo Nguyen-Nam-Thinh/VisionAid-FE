@@ -73,7 +73,7 @@ export function Audit() {
         </div>
       </State>
       {entry && (
-        <Dialog title={t('Chi tiết bản ghi audit')} onClose={() => setSelected('')}>
+        <Dialog title={t('Chi tiết bản ghi nhật ký')} onClose={() => setSelected('')}>
           <dl>
             <dt>{t('Hành động')}</dt>
             <dd>{entry.action}</dd>

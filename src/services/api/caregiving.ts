@@ -115,7 +115,7 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
       },
     ) {
       if (!z.string().uuid().safeParse(viuId).success)
-        throw new ServiceError(t('Mã VIU phải là UUID hợp lệ.'), 400);
+        throw new ServiceError(t('Mã người khiếm thị không hợp lệ.'), 400);
       try {
         return checkLink(
           parse(

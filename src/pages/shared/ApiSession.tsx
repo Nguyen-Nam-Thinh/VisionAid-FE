@@ -1,4 +1,4 @@
-import { t } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 import { Link } from 'react-router-dom';
 import { PageHead } from '../../components/UI';
 import { useSession } from '../../hooks/useService';
@@ -10,7 +10,23 @@ export function ApiSession() {
     <>
       <PageHead
         title={t('Xin chào{p0}.', { p0: user ? ', ' + user.name.split(' ').at(-1) : '' })}
-        description={t('Một nơi để kết nối, chăm sóc và cùng nhau an tâm hơn.')}
+        description={
+          user?.role === 'Admin'
+            ? t('Tình hình toàn hệ thống hôm nay.')
+            : user?.role === 'CenterAdmin'
+              ? t('Tình hình trung tâm của bạn hôm nay.')
+              : t('Tình hình những người bạn đang chăm sóc.')
+        }
+        actions={
+          <span className="badge">
+            {new Intl.DateTimeFormat(intlLocale(), {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              timeZone: 'Asia/Ho_Chi_Minh',
+            }).format(new Date())}
+          </span>
+        }
       />
       {user && <DashboardOverview key={user.id + user.orgId + user.role} actor={user} />}
     </>

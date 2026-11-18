@@ -51,7 +51,7 @@ test('caregiver CRUD, validation, alert history and map reconnect', async ({ pag
   await expect(page.getByText('Vị trí cũ, không phải trực tiếp')).toBeVisible();
   await page.getByRole('button', { name: 'Kết nối lại', exact: true }).click();
   await expect(page.getByText('Đang kết nối lại…', { exact: true })).toBeVisible();
-  await expect(page.getByText('Realtime mô phỏng', { exact: true })).toBeVisible();
+  await expect(page.getByText('Cập nhật trực tiếp (mô phỏng)', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 test('TC-FE20-01 · face upload activation, primary image and delete confirmation', async ({
@@ -261,7 +261,7 @@ test('narrow view navigation and reset demo', async ({ page }) => {
     page.getByRole('heading', { name: 'Người được chăm sóc', exact: true }).first(),
   ).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Reset dữ liệu demo' }).click();
+  await page.getByRole('button', { name: 'Khôi phục dữ liệu demo' }).click();
   await dialog(page).getByRole('button', { name: 'Xác nhận', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Chào mừng trở lại.' })).toBeVisible();
 });

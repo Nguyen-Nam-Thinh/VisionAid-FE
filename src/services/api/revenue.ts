@@ -64,7 +64,7 @@ export const transactionTypeLabels: Record<z.infer<typeof transactionType>, stri
   SubscriptionNew: msg('Mua gói Personal'),
   SubscriptionRenew: msg('Gia hạn gói Personal'),
   LicensePurchase: msg('Mua gói Business'),
-  LicenseTopup: msg('Mua thêm license Business'),
+  LicenseTopup: msg('Mua thêm suất sử dụng Business'),
   LicenseUpgrade: msg('Nâng gói Business'),
   Refund: msg('Hoàn tiền'),
 });

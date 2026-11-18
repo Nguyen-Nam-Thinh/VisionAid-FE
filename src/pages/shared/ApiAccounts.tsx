@@ -122,7 +122,7 @@ function Accounts({
             setSelected(account.id);
             setNotice(
               t(
-                'Đã tạo tài khoản. Kiểm tra thông tin license và phân công chăm sóc cho người dùng.',
+                'Đã tạo tài khoản. Kiểm tra thông tin gói dịch vụ và phân công chăm sóc cho người dùng.',
               ),
             );
             await refresh();
@@ -366,7 +366,9 @@ function AccountEditor({
                 type: 'search' as const,
                 search: searchOrganizations(actor),
                 searchKey: ['account-org', actor.id],
-                hint: t('Bắt buộc với vai trò không phải Admin; tổ chức phải hoạt động.'),
+                hint: t(
+                  'Bắt buộc với vai trò không phải quản trị viên hệ thống; tổ chức phải hoạt động.',
+                ),
               },
             ]
           : []),
@@ -396,9 +398,9 @@ function AccountEditor({
           </p>
           <p>
             {t(
-              'Nhân viên không dùng suất license. Để tạo người được chăm sóc, tổ chức cần gói license đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.',
+              'Nhân viên không tính vào số suất. Để tạo người được chăm sóc, tổ chức cần gói dịch vụ đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.',
             )}{' '}
-            <Link to="/center-admin/licenses">{t('Xem kho license')}</Link>.
+            <Link to="/center-admin/licenses">{t('Xem kho suất sử dụng')}</Link>.
           </p>
         </div>
       )}
@@ -443,7 +445,7 @@ function AccountEditor({
             )
               throw new Error(
                 t(
-                  '{p0} Kiểm tra dữ liệu và kho license; nếu hết suất, mua thêm gói Business rồi thử lại.',
+                  '{p0} Kiểm tra dữ liệu và kho suất sử dụng; nếu hết suất, mua thêm gói Business rồi thử lại.',
                   { p0: error instanceof Error ? error.message : t('Không thể tạo tài khoản.') },
                 ),
                 { cause: error },
@@ -542,7 +544,7 @@ function AccountDetails({
         </div>
         {account.role === 'VisuallyImpaired' && (
           <div>
-            <dt>License</dt>
+            <dt>{t('Gói dịch vụ')}</dt>
             <dd className="stack account-detail-license">
               <span>
                 <Badge tone={account.licenseStatus === 'Active' ? 'green' : 'amber'}>
@@ -632,11 +634,14 @@ function AccountDetails({
             account.email +
             (action === 'activate'
               ? t(': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.')
-              : t(': thu hồi phiên refresh và FCM. ') +
+              : t(': đăng xuất khỏi mọi thiết bị và ngừng gửi thông báo. ') +
                 (action === 'delete'
-                  ? t('Tài khoản vẫn được giữ lại; Admin có thể khôi phục trong {days} ngày.', {
-                      days: RESTORE_WINDOW_DAYS,
-                    })
+                  ? t(
+                      'Tài khoản vẫn được giữ lại; Quản trị viên hệ thống có thể khôi phục trong {days} ngày.',
+                      {
+                        days: RESTORE_WINDOW_DAYS,
+                      },
+                    )
                   : t('Người dùng sẽ bị chặn đăng nhập.')))
           }
           onClose={() => setAction(null)}
@@ -665,7 +670,7 @@ function AccountDetails({
             setNotice(
               result.needsLicense
                 ? t(
-                    'Đã khôi phục tài khoản. Kho của tổ chức hết suất nên người dùng chưa có license; trung tâm cần cấp một suất, trước đó chỉ dùng được SOS.',
+                    'Đã khôi phục tài khoản. Kho của tổ chức hết suất nên người dùng chưa có gói dịch vụ; trung tâm cần cấp một suất, trước đó chỉ dùng được SOS.',
                   )
                 : t('Đã khôi phục tài khoản.'),
             );
@@ -682,7 +687,7 @@ function AccountDetails({
         >
           <p>
             {t(
-              'Tài khoản: {email}. Đặt lại mật khẩu sẽ thu hồi các phiên refresh; người dùng cần đăng nhập lại.',
+              'Tài khoản: {email}. Đặt lại mật khẩu sẽ đăng xuất người dùng khỏi mọi thiết bị; họ cần đăng nhập lại.',
               { email: account.email },
             )}
           </p>

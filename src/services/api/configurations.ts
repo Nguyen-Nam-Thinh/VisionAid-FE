@@ -137,7 +137,7 @@ export function validateConfigValue(config: SystemConfig, value: string) {
     try {
       JSON.parse(value);
     } catch {
-      throw new ServiceError(t('JSON không hợp lệ.'), 400);
+      throw new ServiceError(t('Dữ liệu không đúng định dạng.'), 400);
     }
   }
   const choices: Record<string, string[]> = {

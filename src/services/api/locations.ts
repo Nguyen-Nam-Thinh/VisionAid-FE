@@ -94,7 +94,7 @@ function authorize(actor: Actor, viuId: string) {
   )
     throw new ServiceError(t('Không có quyền xem vị trí.'), 403);
   if (!z.string().uuid().safeParse(viuId).success)
-    throw new ServiceError(t('Mã VIU không hợp lệ.'), 400);
+    throw new ServiceError(t('Mã người khiếm thị không hợp lệ.'), 400);
 }
 export function historyRange(from: string, to: string): HistoryRange {
   const convert = (value: string) => {
@@ -129,7 +129,7 @@ export function createLocationsApi(get = apiGet) {
         await get('/api/locations/live?' + new URLSearchParams({ viuId }), signal),
       );
       if (data.userId !== viuId)
-        throw new ServiceError(t('Vị trí không thuộc VIU được chọn.'), 403);
+        throw new ServiceError(t('Vị trí không thuộc người khiếm thị được chọn.'), 403);
       return data;
     },
     async history(
@@ -170,7 +170,7 @@ export function createLocationsApi(get = apiGet) {
         await get('/api/locations/boundary-events?' + query, signal),
       );
       if (data.items.some((item) => item.visuallyImpairedUserId !== viuId))
-        throw new ServiceError(t('Sự kiện không thuộc VIU được chọn.'), 403);
+        throw new ServiceError(t('Sự kiện không thuộc người khiếm thị được chọn.'), 403);
       return data;
     },
   };

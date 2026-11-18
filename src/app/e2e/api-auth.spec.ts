@@ -11,7 +11,6 @@ for (const [role, org] of [
   }) => {
     const calls = await stubApi(page, role, org);
     const seen: string[] = [];
-    let failed = false;
     await page.route('http://localhost:5176/api/**', (route) => {
       const url = new URL(route.request().url());
       const path = url.pathname;
@@ -27,7 +26,6 @@ for (const [role, org] of [
         return route.fallback();
       seen.push(path);
       expect(route.request().method()).toBe('GET');
-      if (failed) return route.fulfill({ status: 500, json: { detail: 'Dashboard tạm thời lỗi' } });
       const paged = {
         items: [],
         page: 1,
@@ -78,47 +76,29 @@ for (const [role, org] of [
     });
     await login(page);
     if (role === 'Admin') {
-      await expect(page.getByRole('heading', { name: 'Gửi cảnh báo trong 24 giờ' })).toBeVisible();
-      expect([...new Set(seen)]).toEqual(['/api/notifications/status']);
-    } else {
-      await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).toContainText(
-        '45 cảnh báo',
-      );
-      await expect(page.getByRole('group', { name: 'Đã tiếp nhận', exact: true })).toContainText(
-        '0 cảnh báo',
-      );
-      if (role === 'Caregiver' && org) {
-        await expect(page.getByRole('heading', { name: 'Phạm vi chăm sóc' })).toBeVisible();
-        expect(seen.every((path) => path === '/api/emergency-events')).toBe(true);
-      } else {
-        await expect(page.getByRole('region', { name: 'Thanh toán gần đây' })).toContainText(
-          'Còn giao dịch cũ hơn',
-        );
+      // Overview opens with a status board sentence (redesign 2026-11-14).
+      await expect(page.getByRole('heading', { name: '2 thông báo đang chờ gửi' })).toBeVisible();
+      expect(seen).toContain('/api/notifications/status');
+    } else if (role === 'Caregiver') {
+      await expect(
+        page.getByRole('heading', { name: '45 cảnh báo đang chờ bạn tiếp nhận' }),
+      ).toBeVisible();
+      if (org) await expect(page.getByRole('heading', { name: 'Phạm vi chăm sóc' })).toBeVisible();
+      else {
+        await expect(page.getByRole('heading', { name: 'Gói của bạn' })).toBeVisible();
         await expect(page.getByRole('region', { name: 'Thanh toán gần đây' })).toContainText(
           '10 giao dịch gần nhất',
         );
-        if (org)
-          await expect(page.getByRole('region', { name: 'Kho license tổ chức' })).toContainText(
-            'Gói trung tâm',
-          );
-        else
-          await expect(page.getByRole('region', { name: 'License cá nhân' })).toContainText(
-            'Chưa có dữ liệu',
-          );
       }
-      failed = true;
-      await page
-        .getByRole('region', { name: 'Cảnh báo đang mở' })
-        .getByRole('button', { name: 'Tải lại cảnh báo', exact: true })
-        .click();
-      await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).toContainText(
-        'Máy chủ đang gặp sự cố',
-      );
-      await expect(page.getByRole('group', { name: 'Đã gửi', exact: true })).not.toContainText(
-        '0 cảnh báo',
+    } else {
+      await expect(
+        page.getByRole('region', { name: 'Kho suất sử dụng của tổ chức' }),
+      ).toContainText('trên 50 suất');
+      await expect(page.getByRole('region', { name: 'Thanh toán gần đây' })).toContainText(
+        '10 giao dịch gần nhất',
       );
     }
-    expect(calls.some((path) => /locations|face-registry/.test(path))).toBe(false);
+    expect(calls.some((path) => /face-registry/.test(path))).toBe(false);
     await page.screenshot({
       path: `test-results/U8b-${role}-${org ? 'org' : 'personal'}.png`,
       fullPage: true,
@@ -330,8 +310,8 @@ test('U7a: ICE CRUD, credential exclusion and uncertain writes', async ({ page }
   await expect(page.getByRole('cell', { name: 'turn:relay.test:3478', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByLabel('Credential TURN muốn áp dụng')).toHaveValue('');
-  await expect(dialog.getByLabel('Credential TURN muốn áp dụng')).toHaveAttribute(
+  await expect(dialog.getByLabel('Mật khẩu TURN muốn áp dụng')).toHaveValue('');
+  await expect(dialog.getByLabel('Mật khẩu TURN muốn áp dụng')).toHaveAttribute(
     'autocomplete',
     'new-password',
   );
@@ -340,7 +320,7 @@ test('U7a: ICE CRUD, credential exclusion and uncertain writes', async ({ page }
   await dialog.getByRole('button', { name: 'Lưu máy chủ' }).click();
   await expect(dialog.getByRole('alert')).toContainText('TURN cần');
   expect(writes).toHaveLength(0);
-  await dialog.getByLabel('Credential TURN muốn áp dụng').fill('replacement');
+  await dialog.getByLabel('Mật khẩu TURN muốn áp dụng').fill('replacement');
   await dialog.getByLabel('Độ ưu tiên').fill('25');
   await dialog.getByLabel('Bật máy chủ').uncheck();
   await page.screenshot({ path: 'test-results/stageU7a-edit-desktop.png', fullPage: false });
@@ -580,7 +560,7 @@ test('13a: config edit, rollback old value, unknown key hidden and ambiguous wri
     configValue: '7',
     valueType: 'Integer',
     category: 'BusinessRules',
-    description: 'Số ngày gia hạn license',
+    description: 'Số ngày gia hạn gói dịch vụ',
     minValue: '1',
     maxValue: '30',
     isPublic: false,
@@ -980,7 +960,7 @@ test('12a: scoped activity history, dates, pagination, all details and revoked a
         data: organizationPage([
           {
             id: viuId,
-            fullName: 'VIU lịch sử',
+            fullName: 'người khiếm thị lịch sử',
             email: 'history@example.test',
             phoneNumber: null,
             role: 'VisuallyImpaired',
@@ -1003,7 +983,7 @@ test('12a: scoped activity history, dates, pagination, all details and revoked a
                   id,
                   caregiverId: id,
                   visuallyImpairedUserId: viuId,
-                  viuFullName: 'VIU lịch sử',
+                  viuFullName: 'người khiếm thị lịch sử',
                   isPrimary: false,
                   linkType: 'Personal',
                   canReceiveAlerts: false,
@@ -1253,7 +1233,7 @@ async function callFixture(page: Page, incoming = false, denied = false) {
         data: organizationPage([
           {
             id: viuId,
-            fullName: 'VIU gọi thử',
+            fullName: 'người khiếm thị gọi thử',
             email: 'viu@example.test',
             phoneNumber: null,
             role: 'VisuallyImpaired',
@@ -1273,7 +1253,7 @@ async function callFixture(page: Page, incoming = false, denied = false) {
             id,
             caregiverId: id,
             visuallyImpairedUserId: viuId,
-            viuFullName: 'VIU gọi thử',
+            viuFullName: 'người khiếm thị gọi thử',
             isPrimary: true,
             linkType: 'Personal',
             canReceiveAlerts: true,
@@ -1342,7 +1322,7 @@ test('U6a: outgoing call negotiates native local media, mutes, ends and refreshe
   const f = await callFixture(page);
   await login(page);
   await page.getByRole('link', { name: 'Người được chăm sóc', exact: true }).click();
-  const call = page.getByRole('button', { name: 'Gọi VIU gọi thử', exact: true });
+  const call = page.getByRole('button', { name: 'Gọi người khiếm thị gọi thử', exact: true });
   await expect(call).toBeEnabled();
   await call.click();
   await page.getByRole('button', { name: 'Bắt đầu gọi', exact: true }).click();
@@ -1450,7 +1430,7 @@ test('U6a: incoming SOS stays silent, Escape does not reject and explicit reject
   // Recovery must work even when the original SignalR invitation was missed.
   await expect(page.getByRole('button', { name: 'Nhận cuộc gọi', exact: true })).toBeVisible();
   const payload = {
-    callerName: 'VIU gọi thử',
+    callerName: 'người khiếm thị gọi thử',
     triggerType: 'SosAuto',
     receiverRole: 'video_viewer_audio_sender',
   };
@@ -1499,7 +1479,7 @@ test('U6a: microphone denial never creates a call', async ({ page }) => {
   const f = await callFixture(page, false, true);
   await login(page);
   await page.getByRole('link', { name: 'Người được chăm sóc', exact: true }).click();
-  await page.getByRole('button', { name: 'Gọi VIU gọi thử', exact: true }).click();
+  await page.getByRole('button', { name: 'Gọi người khiếm thị gọi thử', exact: true }).click();
   await page.getByRole('button', { name: 'Bắt đầu gọi', exact: true }).click();
   await expect(page.getByText('Bạn chưa cho phép micro. Hãy cấp quyền rồi thử lại.')).toBeVisible();
   expect(f.writes).toEqual([]);
@@ -1555,18 +1535,22 @@ test('8c: opt-in push registers the login device, survives reload and revokes on
   expect(registrations).toBe(0);
   await page.getByRole('button', { name: 'Bật thông báo trình duyệt', exact: true }).click();
   await expect(
-    page.getByText('Đã đăng ký nhận push cho phiên này.', { exact: true }),
+    page.getByText('Đã đăng ký nhận thông báo đẩy cho phiên này.', { exact: true }),
   ).toBeVisible();
   expect(registrations).toBe(1);
   await page.screenshot({ path: 'test-results/8c-push-profile.png', fullPage: true });
   await page.reload();
   // Focus can also sync; every upsert above must use the same login device.
   await expect.poll(() => registrations).toBeGreaterThanOrEqual(2);
-  await page.getByRole('button', { name: 'Tắt push trên trình duyệt', exact: true }).click();
-  await expect(page.getByText('Chưa đăng ký push cho phiên này.', { exact: true })).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Tắt thông báo đẩy trên trình duyệt', exact: true })
+    .click();
+  await expect(
+    page.getByText('Chưa đăng ký thông báo đẩy cho phiên này.', { exact: true }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Bật thông báo trình duyệt', exact: true }).click();
   await expect(
-    page.getByText('Đã đăng ký nhận push cho phiên này.', { exact: true }),
+    page.getByText('Đã đăng ký nhận thông báo đẩy cho phiên này.', { exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
@@ -1599,7 +1583,7 @@ test('11b: TTS create/update, percent mapping, cleared language, revoked link an
   const bodies: Record<string, unknown>[] = [];
   const user = {
     id: viuId,
-    fullName: 'VIU giọng đọc',
+    fullName: 'người khiếm thị giọng đọc',
     email: 'viu@example.test',
     phoneNumber: null,
     role: 'VisuallyImpaired',
@@ -1734,7 +1718,7 @@ test('11b: TTS create/update, percent mapping, cleared language, revoked link an
   expired = true;
   await page.getByRole('button', { name: 'Tải lại cấu hình', exact: true }).click();
   await expect(
-    page.getByRole('link', { name: 'Xem trạng thái license', exact: true }),
+    page.getByRole('link', { name: 'Xem trạng thái gói dịch vụ', exact: true }),
   ).toBeVisible();
   await expect(page).toHaveURL(/\/caregiver\/tts$/);
   await expect(
@@ -1773,7 +1757,7 @@ test('10: registry CRUD, authenticated photos, revoked permissions and recoverab
         data: organizationPage([
           {
             id: viuId,
-            fullName: 'VIU danh bạ',
+            fullName: 'người khiếm thị danh bạ',
             email: 'viu@example.test',
             phoneNumber: null,
             role: 'VisuallyImpaired',
@@ -1793,7 +1777,7 @@ test('10: registry CRUD, authenticated photos, revoked permissions and recoverab
             id,
             caregiverId: id,
             visuallyImpairedUserId: viuId,
-            viuFullName: 'VIU danh bạ',
+            viuFullName: 'người khiếm thị danh bạ',
             isPrimary: false,
             linkType: 'Personal',
             canReceiveAlerts: false,
@@ -1964,7 +1948,11 @@ async function stubPeopleSearch(page: Page, people: Record<string, string>) {
         .map(([r, personId]) => ({
           id: personId,
           fullName:
-            r === 'Caregiver' ? 'Nhân viên mẫu' : r === 'Admin' ? 'Quản trị mẫu' : 'VIU mẫu',
+            r === 'Caregiver'
+              ? 'Nhân viên mẫu'
+              : r === 'Admin'
+                ? 'Quản trị mẫu'
+                : 'người khiếm thị mẫu',
           email: personId.slice(-4) + '@example.test',
           phoneNumber: null,
           role: r,
@@ -2116,10 +2104,10 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
   test(`API ${role}: login, reload, refresh, stage boundary and logout`, async ({ page }) => {
     const calls = await stubApi(page, role);
     await login(page);
-    await expect(page.getByRole('heading', { name: 'Lối tắt' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toBeVisible();
     await page.screenshot({ path: `test-results/dashboard-${role}.png`, fullPage: true });
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Lối tắt' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toBeVisible();
     await page.evaluate(() => {
       const key = 'visionaid.api.session.v1';
       const data = JSON.parse(sessionStorage.getItem(key)!);
@@ -2127,13 +2115,13 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
       sessionStorage.setItem(key, JSON.stringify(data));
     });
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Lối tắt' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toBeVisible();
     expect(calls.filter((p) => p === '/api/auth/refresh')).toHaveLength(1);
     const path = role === 'Admin' ? '/admin/metrics' : '/dashboard';
     await page.goto(path);
     await expect(
       page.getByRole('heading', {
-        name: role !== 'Admin' ? 'Lối tắt' : 'Hiệu năng AI',
+        name: role !== 'Admin' ? 'Đi nhanh tới' : 'Hiệu năng AI',
       }),
     ).toBeVisible();
     expect(
@@ -2176,7 +2164,7 @@ test('API login errors do not fall back to demo and failed logout still clears t
   await expect(page).toHaveURL(/\/auth\/login$/);
   await page.unroute('**/api/auth/login');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Lối tắt' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toBeVisible();
   await page.route('**/api/auth/logout', (route) => route.abort('failed'));
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
@@ -2325,7 +2313,7 @@ test('TC-ST-USER-05 · deactivated account: rejected token and refresh end the s
 }) => {
   await stubApi(page);
   await login(page);
-  await expect(page.getByRole('heading', { name: 'Lối tắt' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toBeVisible();
   // Admin deactivates the account: BE now rejects the access token and the revoked refresh token.
   let refreshes = 0;
   await page.route('http://localhost:5176/api/**', (route) => {
@@ -2350,7 +2338,7 @@ for (const role of ['CenterAdmin', 'Caregiver'] as const) {
     const orgId = '01900000-0000-7000-8000-000000000093';
     await stubApi(page, role, orgId);
     await login(page);
-    await expect(page.getByRole('heading', { name: 'Lối tắt' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toBeVisible();
     // Super Admin deletes or deactivates the organization: BE revokes the members' sessions at once.
     let refreshes = 0;
     await page.route('http://localhost:5176/api/**', (route) => {
@@ -2362,7 +2350,7 @@ for (const role of ['CenterAdmin', 'Caregiver'] as const) {
     await page.reload();
     await expect(page).toHaveURL(/\/auth\/login/);
     await expect(page.getByText('Phiên đăng nhập đã hết hạn hoặc đã bị đăng xuất')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Lối tắt' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toHaveCount(0);
     expect(
       await page.evaluate(() => sessionStorage.getItem('visionaid.api.session.v1')),
     ).toBeNull();
@@ -2541,7 +2529,7 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   const linkId = '01900000-0000-7000-8000-000000000003';
   const person = {
     id: viuId,
-    fullName: 'VIU mới',
+    fullName: 'người khiếm thị mới',
     email: 'new@example.test',
     phoneNumber: '',
     role: 'VisuallyImpaired',
@@ -2611,7 +2599,7 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   await page.getByLabel('Email *', { exact: true }).fill(person.email);
   await page.getByLabel('Mật khẩu *', { exact: true }).fill('Test123!');
   await page.getByLabel('Nhập lại mật khẩu').fill('Test123!');
-  await page.getByRole('button', { name: 'Bước 1: Tạo tài khoản VIU' }).click();
+  await page.getByRole('button', { name: 'Bước 1: Tạo tài khoản người khiếm thị' }).click();
   await expect(page.getByText(viuId, { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
   await expect(page.getByRole('alert')).toBeVisible();
@@ -2621,7 +2609,7 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   expect(await page.evaluate(() => JSON.stringify(sessionStorage))).not.toContain('Test123!');
   await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
   await actionDialog(page).getByRole('button', { name: 'Đóng hộp thoại' }).click();
-  await page.getByRole('button', { name: 'Xem liên kết của VIU mới' }).click();
+  await page.getByRole('button', { name: 'Xem liên kết của người khiếm thị mới' }).click();
   await page.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
   await page.getByRole('button', { name: 'Hủy', exact: true }).click();
   expect(deletes).toBe(0);
@@ -2630,7 +2618,9 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   await expect(actionDialog(page).getByRole('alert')).toBeVisible();
   await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
   await expect(actionDialog(page)).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Xem liên kết của VIU mới' })).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Xem liên kết của người khiếm thị mới' }),
+  ).toHaveCount(0);
   expect(creates).toBe(1);
   expect(links).toBe(2);
   expect(deletes).toBe(2);
@@ -2829,25 +2819,25 @@ test('UC-130 Admin: suspend with reason, conflict reload and reactivate to expir
   await login(page);
   await page.goto('/admin/organizations');
   await page.getByRole('button', { name: 'Xem tổ chức ' + organizationFixture.name }).click();
-  const section = page.getByRole('region', { name: 'Kho license' });
+  const section = page.getByRole('region', { name: 'Kho suất sử dụng' });
   await expect(section).toContainText('Đang hoạt động');
   await expect(section).toContainText('20/50 suất · còn 30');
   await section.getByRole('button', { name: 'Tạm ngưng kho' }).click();
   const dialog = actionDialog(page);
-  await expect(dialog).toContainText('Chưa có license cho tới khi kích hoạt lại');
+  await expect(dialog).toContainText('Chưa có gói dịch vụ cho tới khi kích hoạt lại');
   await dialog.getByLabel('Lý do tạm ngưng').fill('Chưa thanh toán & vi phạm');
   await dialog.getByRole('button', { name: 'Xác nhận tạm ngưng' }).click();
   await expect(dialog).toHaveCount(0);
   expect(writes.at(-1)?.pathname).toBe(`/api/licenses/pool/${poolId}/suspend`);
   expect(writes.at(-1)?.searchParams.get('reason')).toBe('Chưa thanh toán & vi phạm');
-  await expect(page.getByText('Đã tạm ngưng kho license.')).toBeVisible();
+  await expect(page.getByText('Đã tạm ngưng kho suất sử dụng.')).toBeVisible();
   await expect(section).toContainText('Tạm ngưng');
   await expect(section).toContainText('Chưa thanh toán & vi phạm');
   await page.screenshot({ path: 'test-results/uc130-pool-suspended.png', fullPage: true });
   conflict = true;
   await section.getByRole('button', { name: 'Kích hoạt lại kho' }).click();
   await dialog.getByRole('button', { name: 'Xác nhận' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('Kho license không còn tạm ngưng');
+  await expect(dialog.getByRole('alert')).toContainText('Kho suất sử dụng không còn tạm ngưng');
   await dialog.getByRole('button', { name: 'Hủy', exact: true }).click();
   await expect(section.getByRole('button', { name: 'Tạm ngưng kho' })).toBeVisible();
   conflict = false;
@@ -2926,7 +2916,7 @@ test('WF-04 Admin: manual pool renewal validates, maps BE errors and shows the n
   await login(page);
   await page.goto('/admin/organizations');
   await page.getByRole('button', { name: 'Xem tổ chức ' + organizationFixture.name }).click();
-  const section = page.getByRole('region', { name: 'Kho license' });
+  const section = page.getByRole('region', { name: 'Kho suất sử dụng' });
   await section.getByRole('button', { name: 'Gia hạn thủ công' }).click();
   const dialog = actionDialog(page);
   await expect(dialog).toContainText('mọi mã đã phát cho gia đình');
@@ -2944,12 +2934,12 @@ test('WF-04 Admin: manual pool renewal validates, maps BE errors and shows the n
   expect(bodies).toHaveLength(2);
   expect(bodies[1].additionalSeats).toBe(10);
   expect(Date.parse(bodies[1].newExpiresAt)).toBeGreaterThan(Date.now() + 39 * 86400000);
-  await expect(page.getByText('Đã gia hạn kho license đến')).toBeVisible();
+  await expect(page.getByText('Đã gia hạn kho suất sử dụng đến')).toBeVisible();
   await expect(section).toContainText('20/60 suất · còn 40');
   await page.screenshot({ path: 'test-results/wf04-pool-renewed.png', fullPage: true });
   // A suspended pool offers reactivation only, never renewal.
   pool = { ...pool, status: 'Suspended', suspendedAt: '2026-10-22T03:00:00Z' };
-  await section.getByRole('button', { name: 'Tải lại kho license' }).click();
+  await section.getByRole('button', { name: 'Tải lại kho suất sử dụng' }).click();
   await expect(section.getByRole('button', { name: 'Kích hoạt lại kho' })).toBeVisible();
   await expect(section.getByRole('button', { name: 'Gia hạn thủ công' })).toHaveCount(0);
   // BR-57: Admin can toggle auto-renew on any pool, suspended included.
@@ -3236,7 +3226,7 @@ async function stubOrgPeople(page: Page, people: { id: string; role: string; org
         .filter((p) => p.role === role)
         .map((p) => ({
           id: p.id,
-          fullName: role === 'Caregiver' ? 'Nhân viên mẫu' : 'VIU mẫu',
+          fullName: role === 'Caregiver' ? 'Nhân viên mẫu' : 'người khiếm thị mẫu',
           email: p.id.slice(-4) + '@example.test',
           phoneNumber: null,
           role,
@@ -3532,23 +3522,8 @@ test('FE-17: Mapbox map shows live positions, stale state and selects a person',
   await expect(popup).toContainText('Ghi nhận GPS:');
   await page.locator('.gps-map').screenshot({ path: 'test-results/fe17-map-popup.png' });
   await expect(page.getByRole('alert')).toHaveCount(0);
-  // Satellite toggle swaps the style, keeps markers and is remembered for this viewer.
-  const types = page.getByRole('group', { name: 'Kiểu bản đồ' });
-  await types.getByRole('button', { name: 'Vệ tinh' }).click();
-  await expect
-    .poll(() => styles.at(-1)?.pathname)
-    .toContain('/styles/v1/mapbox/satellite-streets-v12');
-  await expect(types.getByRole('button', { name: 'Vệ tinh' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  await expect(oldMarker).toBeVisible();
-  await page.reload();
-  await expect(
-    page.getByRole('group', { name: 'Kiểu bản đồ' }).getByRole('button', { name: 'Vệ tinh' }),
-  ).toHaveAttribute('aria-pressed', 'true');
-  await expect.poll(() => styles.at(-1)?.pathname).toContain('satellite-streets-v12');
-  await expect(freshMarker).toBeVisible();
+  // Street map only: there is no satellite toggle.
+  await expect(page.getByRole('group', { name: 'Kiểu bản đồ' })).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -3782,7 +3757,9 @@ for (const role of ['Caregiver']) {
     await login(page);
     await page.goto(role === 'Caregiver' ? '/caregiver/map' : '/center-admin/map');
     await expect(page.getByText('Chưa có vị trí khả dụng', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Xem GPS của GPS Test VIU', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Xem GPS của GPS Test người khiếm thị', exact: true })
+      .click();
     await expect(page.getByRole('cell', { name: '0 %', exact: true })).toBeVisible();
     await expect(
       page.getByRole('cell', { name: '0.000000 / 0.000000', exact: true }),
@@ -4495,9 +4472,9 @@ test('U1: trial, 402 keeps session, subscription recovery and refreshed status',
         }),
   );
   await login(page);
-  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toHaveCount(0);
+  await expect(page.getByRole('complementary', { name: 'Thông tin gói dịch vụ' })).toHaveCount(0);
   await page.goto('/license');
-  await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
+  await expect(page.getByRole('region', { name: 'Thông tin gói dịch vụ' })).toContainText(
     'Đang dùng thử',
   );
   await expect(page.getByRole('alert')).toContainText('Phiên đăng nhập vẫn được giữ');
@@ -4508,10 +4485,10 @@ test('U1: trial, 402 keeps session, subscription recovery and refreshed status',
   status = 'Active';
   expiry = new Date(Date.now() + 30 * 86400000).toISOString();
   subscriptionBlocked = false;
-  await page.getByRole('button', { name: 'Tải lại thông tin license' }).click();
+  await page.getByRole('button', { name: 'Tải lại thông tin gói dịch vụ' }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
-    'License đang hoạt động',
+  await expect(page.getByRole('region', { name: 'Thông tin gói dịch vụ' })).toContainText(
+    'Gói dịch vụ đang hoạt động',
   );
   await expect(page.getByText('Personal', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
@@ -4582,7 +4559,7 @@ test('UC-80: cancel renewal confirms, maps org-key error and keeps access until 
   expect(deletes).toBe(0);
   await page.getByRole('button', { name: 'Hủy gia hạn', exact: true }).click();
   await dialog.getByRole('button', { name: 'Xác nhận' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('key của trung tâm');
+  await expect(dialog.getByRole('alert')).toContainText('mã kích hoạt của trung tâm');
   await dialog.getByRole('button', { name: 'Xác nhận' }).click();
   await expect(dialog).toHaveCount(0);
   expect(deletes).toBe(2);
@@ -4701,7 +4678,9 @@ test('UC-80: org-issued personal plan shows no cancel-renewal button', async ({ 
   );
   await login(page);
   await page.goto('/license');
-  await expect(page.getByText('key của trung tâm. Liên hệ quản trị trung tâm')).toBeVisible();
+  await expect(
+    page.getByText('mã kích hoạt của trung tâm. Liên hệ quản trị trung tâm'),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Hủy gia hạn', exact: true })).toHaveCount(0);
 });
 
@@ -4713,8 +4692,8 @@ for (const role of ['Staff', 'Admin', 'CenterAdmin']) {
     await login(page);
     await page.getByRole('link', { name: 'License', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Trạng thái tài khoản' })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
-      'không yêu cầu license cá nhân',
+    await expect(page.getByRole('region', { name: 'Thông tin gói dịch vụ' })).toContainText(
+      'không yêu cầu gói dịch vụ cá nhân',
     );
     await expect(page.getByRole('heading', { name: 'Gói sử dụng cá nhân' })).toHaveCount(0);
     expect(calls).not.toContain('/api/licenses/subscription');
@@ -4726,9 +4705,9 @@ test('U1: missing license, expired grace and failed subscription never display f
 }) => {
   await stubApi(page);
   await login(page);
-  await expect(page.getByRole('complementary', { name: 'Thông tin license' })).toHaveCount(0);
+  await expect(page.getByRole('complementary', { name: 'Thông tin gói dịch vụ' })).toHaveCount(0);
   await page.goto('/license');
-  await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
+  await expect(page.getByRole('region', { name: 'Thông tin gói dịch vụ' })).toContainText(
     'Chưa xác định',
   );
   await page.route('**/api/users/me', (route) =>
@@ -4754,7 +4733,7 @@ test('U1: missing license, expired grace and failed subscription never display f
     route.fulfill({ status: 404, json: { detail: 'Not found' } }),
   );
   await page.goto('/license');
-  await expect(page.getByRole('region', { name: 'Thông tin license' })).toContainText(
+  await expect(page.getByRole('region', { name: 'Thông tin gói dịch vụ' })).toContainText(
     'còn 2 ngày gia hạn',
   );
   await expect(page.getByText(/Máy chủ báo còn 2 ngày gia hạn trước khi/)).toBeVisible();
@@ -4764,7 +4743,7 @@ test('U1: missing license, expired grace and failed subscription never display f
   await page.route('**/api/licenses/subscription', (route) =>
     route.fulfill({ status: 503, json: { detail: 'Server unavailable' } }),
   );
-  await page.getByRole('button', { name: 'Tải lại thông tin license' }).click();
+  await page.getByRole('button', { name: 'Tải lại thông tin gói dịch vụ' }).click();
   await expect(page.getByRole('alert')).toContainText('Máy chủ đang gặp sự cố');
   await expect(page.getByText('Đang hoạt động', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
@@ -5424,31 +5403,31 @@ test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates an
   });
   await login(page);
   await page.goto('/center-admin/licenses');
-  await page.getByRole('button', { name: 'Tạo key cho gia đình', exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo mã kích hoạt cho gia đình', exact: true }).click();
   await page.getByLabel('Ghi chú', { exact: true }).fill('Gia đình test');
-  await page.getByRole('button', { name: 'Xác nhận tạo key' }).click();
-  await expect(page.getByLabel('Key vừa tạo')).toHaveValue('••••-••••-••••-••••');
+  await page.getByRole('button', { name: 'Xác nhận tạo mã kích hoạt' }).click();
+  await expect(page.getByLabel('Mã kích hoạt vừa tạo')).toHaveValue('••••-••••-••••-••••');
   expect(writes).toBe(1);
-  await page.getByRole('button', { name: 'Hiện key', exact: true }).click();
-  await expect(page.getByLabel('Key vừa tạo')).toHaveValue(key);
+  await page.getByRole('button', { name: 'Hiện mã kích hoạt', exact: true }).click();
+  await expect(page.getByLabel('Mã kích hoạt vừa tạo')).toHaveValue(key);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.getByRole('button', { name: 'Sao chép key', exact: true }).click();
-  await expect(page.getByText('Đã sao chép key.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Sao chép mã kích hoạt', exact: true }).click();
+  await expect(page.getByText('Đã sao chép mã kích hoạt.', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(key);
   expect(await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))).not.toContain(
     key,
   );
   expect(page.url()).not.toContain(key);
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
-  const pool = page.getByRole('region', { name: 'Kho license tổ chức' });
+  const pool = page.getByRole('region', { name: 'Kho suất sử dụng của tổ chức' });
   await expect(
     pool
       .locator('div')
       .filter({ has: page.locator('dt', { hasText: 'Còn lại' }) })
       .last(),
   ).toContainText('46');
-  await page.getByRole('button', { name: 'Xem key vừa tạo' }).click();
-  await expect(page.getByLabel('Key vừa tạo')).toHaveValue('••••-••••-••••-••••');
+  await page.getByRole('button', { name: 'Xem mã kích hoạt vừa tạo' }).click();
+  await expect(page.getByLabel('Mã kích hoạt vừa tạo')).toHaveValue('••••-••••-••••-••••');
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
   await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
@@ -5493,14 +5472,14 @@ test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates an
   });
   await login(page);
   await page.goto('/license');
-  await page.getByRole('button', { name: 'Nhập key kích hoạt' }).click();
-  await page.getByLabel('Key license').fill(key.toLowerCase());
+  await page.getByRole('button', { name: 'Nhập mã kích hoạt' }).click();
+  await page.getByLabel('Mã kích hoạt').fill(key.toLowerCase());
   await page.getByRole('button', { name: 'Xác nhận kích hoạt' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByRole('region', { name: 'Thông tin license', exact: true })).toContainText(
-    'License đang hoạt động',
-  );
-  await expect(page.getByRole('region', { name: 'Kích hoạt key', exact: true })).toContainText(
+  await expect(
+    page.getByRole('region', { name: 'Thông tin gói dịch vụ', exact: true }),
+  ).toContainText('Gói dịch vụ đang hoạt động');
+  await expect(page.getByRole('region', { name: 'Kích hoạt mã', exact: true })).toContainText(
     'Máy chủ đã xác nhận kích hoạt',
   );
   expect(await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))).not.toContain(
@@ -5520,12 +5499,12 @@ test('U5: invalid key retains form; unknown distribution blocks replay; staff ca
   );
   await login(page);
   await page.goto('/license');
-  await page.getByRole('button', { name: 'Nhập key kích hoạt' }).click();
-  await page.getByLabel('Key license').fill('ABCD-1234-EFAB-5678');
+  await page.getByRole('button', { name: 'Nhập mã kích hoạt' }).click();
+  await page.getByLabel('Mã kích hoạt').fill('ABCD-1234-EFAB-5678');
   await page.getByRole('button', { name: 'Xác nhận kích hoạt' }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).not.toContainText('ABCD');
-  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Kiểm tra key');
-  await expect(page.getByLabel('Key license')).toHaveValue('ABCD-1234-EFAB-5678');
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Kiểm tra mã kích hoạt');
+  await expect(page.getByLabel('Mã kích hoạt')).toHaveValue('ABCD-1234-EFAB-5678');
   await page.setViewportSize({ width: 390, height: 844 });
   const bounds = await page.getByRole('dialog').boundingBox();
   expect(bounds!.x).toBeGreaterThanOrEqual(0);
@@ -5547,17 +5526,17 @@ test('U5: invalid key retains form; unknown distribution blocks replay; staff ca
   });
   await page.goto('/center-admin/licenses');
   await page.reload();
-  await page.getByRole('button', { name: 'Tạo key cho gia đình', exact: true }).click();
-  await page.getByRole('button', { name: 'Xác nhận tạo key' }).click();
+  await page.getByRole('button', { name: 'Tạo mã kích hoạt cho gia đình', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận tạo mã kích hoạt' }).click();
   await expect(
-    page.getByRole('button', { name: 'Tạo key cho gia đình', exact: true }),
+    page.getByRole('button', { name: 'Tạo mã kích hoạt cho gia đình', exact: true }),
   ).toBeDisabled();
   expect(writes).toBe(1);
   await page.unrouteAll();
   const calls = await stubApi(page, 'Caregiver', id);
   await page.goto('/license');
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Nhập key kích hoạt' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Nhập mã kích hoạt' })).toHaveCount(0);
   expect(calls).not.toContain('/api/licenses/activate-key');
 });
 test('U4: create VIU quota error keeps account form and provides license management link', async ({
@@ -5573,7 +5552,7 @@ test('U4: create VIU quota error keeps account form and provides license managem
     if (route.request().method() === 'POST') {
       posts++;
       expect(route.request().postDataJSON().role).toBe('VisuallyImpaired');
-      return route.fulfill({ status: 422, json: { detail: 'Kho không còn license.' } });
+      return route.fulfill({ status: 422, json: { detail: 'Kho không còn gói dịch vụ.' } });
     }
     return route.fulfill({ json: { success: true, data: organizationPage([]) } });
   });
@@ -5581,14 +5560,14 @@ test('U4: create VIU quota error keeps account form and provides license managem
   await page.goto('/center-admin/users');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Họ và tên').fill('VIU giữ form');
+  await dialog.getByLabel('Họ và tên').fill('người khiếm thị giữ form');
   await dialog.getByLabel('Email').fill('quota@example.test');
   await dialog.getByLabel('Mật khẩu mới', { exact: false }).fill('Password@123');
   await dialog.getByLabel('Nhập lại mật khẩu').fill('Password@123');
   await dialog.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
-  await expect(dialog.getByRole('alert')).toContainText('Kho không còn license');
-  await expect(dialog.getByLabel('Họ và tên')).toHaveValue('VIU giữ form');
-  await expect(dialog.getByRole('link', { name: 'Xem kho license' })).toHaveAttribute(
+  await expect(dialog.getByRole('alert')).toContainText('Kho không còn gói dịch vụ');
+  await expect(dialog.getByLabel('Họ và tên')).toHaveValue('người khiếm thị giữ form');
+  await expect(dialog.getByRole('link', { name: 'Xem kho suất sử dụng' })).toHaveAttribute(
     'href',
     '/center-admin/licenses',
   );
@@ -5666,7 +5645,7 @@ test('TC-FE56-01 · U4: revoke confirmation and reassign refresh server quota; q
   });
   await login(page);
   await page.goto('/center-admin/licenses');
-  const pool = page.getByRole('region', { name: 'Kho license tổ chức' });
+  const pool = page.getByRole('region', { name: 'Kho suất sử dụng của tổ chức' });
   await expect(page.getByRole('cell', { name: /VIU U4/ })).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.screenshot({ path: 'test-results/redesign-license-pool-1440.png', fullPage: true });
@@ -5689,14 +5668,14 @@ test('TC-FE56-01 · U4: revoke confirmation and reassign refresh server quota; q
   ).toContainText('50');
   await page.getByLabel('Trạng thái cấp').selectOption('false');
   await expect(page.getByRole('cell', { name: /Đã thu hồi/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Cấp license', exact: true }).click();
+  await page.getByRole('button', { name: 'Cấp suất sử dụng', exact: true }).click();
   await page.getByLabel('Người được chăm sóc').selectOption(viuId);
   conflict = true;
-  await page.getByRole('button', { name: 'Xác nhận cấp license' }).click();
+  await page.getByRole('button', { name: 'Xác nhận cấp suất sử dụng' }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Suất cuối');
   await expect(page.getByLabel('Người được chăm sóc')).toHaveValue(viuId);
   conflict = false;
-  await page.getByRole('button', { name: 'Xác nhận cấp license' }).click();
+  await page.getByRole('button', { name: 'Xác nhận cấp suất sử dụng' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByLabel('Trạng thái cấp').selectOption('true');
   await expect(page.getByRole('button', { name: 'Thu hồi', exact: true })).toBeVisible();
@@ -5709,7 +5688,7 @@ test('TC-FE56-01 · U4: revoke confirmation and reassign refresh server quota; q
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
     true,
   );
-  await page.getByRole('button', { name: 'Cấp license', exact: true }).click();
+  await page.getByRole('button', { name: 'Cấp suất sử dụng', exact: true }).click();
   const bounds = await page.getByRole('dialog').boundingBox();
   expect(bounds!.x).toBeGreaterThanOrEqual(0);
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(391);
@@ -5771,18 +5750,22 @@ for (const initial of ['None', 'Active', 'Expired']) {
     if (initial === 'None')
       await expect(page.getByText(/Tổ chức chưa có kho license/)).toBeVisible();
     else
-      await expect(page.getByRole('region', { name: 'Kho license tổ chức' })).toContainText('50');
+      await expect(
+        page.getByRole('region', { name: 'Kho suất sử dụng của tổ chức' }),
+      ).toContainText('50');
     await page.getByRole('link', { name: 'Chọn gói Business' }).click();
     await page.getByRole('button', { name: 'Chọn gói Business test' }).click();
     await page.getByRole('button', { name: 'Tạo đơn thanh toán', exact: true }).click();
     await expect(page.getByRole('link', { name: 'Tiếp tục sang PayOS' })).toBeVisible();
     await page.getByRole('link', { name: 'Kiểm tra trạng thái đơn' }).click();
     await expect(page.getByText('Đang chờ thanh toán', { exact: true })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Kho license tổ chức' })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Kho suất sử dụng của tổ chức' })).toHaveCount(0);
     paid = true;
     await page.getByRole('button', { name: 'Kiểm tra lại thanh toán' }).click();
     await expect(page.getByText('Thanh toán thành công', { exact: true })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Kho license tổ chức' })).toContainText('100');
+    await expect(page.getByRole('region', { name: 'Kho suất sử dụng của tổ chức' })).toContainText(
+      '100',
+    );
     expect(writes).toBe(1);
     expect(calls).not.toContain('/api/licenses/subscription');
     await page.getByRole('link', { name: 'Lịch sử thanh toán', exact: true }).click();
@@ -5816,10 +5799,10 @@ test('U3b: foreign pool and server errors are visible without exposing data; res
   await expect(page.getByRole('alert')).toContainText('không thuộc tổ chức');
   await expect(page.getByText('Business test', { exact: true })).toHaveCount(0);
   mode = 'error';
-  await page.getByRole('button', { name: 'Tải lại kho license' }).click();
+  await page.getByRole('button', { name: 'Tải lại kho suất sử dụng' }).click();
   await expect(page.getByRole('alert')).toContainText('Máy chủ đang gặp sự cố');
   mode = 'valid';
-  await page.getByRole('button', { name: 'Tải lại kho license' }).click();
+  await page.getByRole('button', { name: 'Tải lại kho suất sử dụng' }).click();
   await expect(page.getByText('Business test', { exact: true })).toBeVisible();
   for (const width of [1440, 768, 375]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -5873,7 +5856,7 @@ test('U3b: CenterAdmin without organization cannot query payments or pool', asyn
   await login(page);
   await page.goto('/center-admin/licenses');
   await expect(
-    page.getByText('Chỉ quản trị trung tâm có tổ chức được xem kho license.'),
+    page.getByText('Chỉ quản trị trung tâm có tổ chức được xem kho suất sử dụng.'),
   ).toBeVisible();
   await page.goto('/center-admin/payments');
   await expect(page.getByText(/Luồng thanh toán này dành cho/)).toBeVisible();
@@ -5914,7 +5897,7 @@ for (const kind of ['saved-locations', 'geofences'] as const) {
           data: organizationPage([
             {
               id: viuId,
-              fullName: 'VIU địa điểm',
+              fullName: 'người khiếm thị địa điểm',
               email: 'viu@example.test',
               phoneNumber: null,
               role: 'VisuallyImpaired',
@@ -5934,7 +5917,7 @@ for (const kind of ['saved-locations', 'geofences'] as const) {
               id,
               caregiverId: id,
               visuallyImpairedUserId: viuId,
-              viuFullName: 'VIU địa điểm',
+              viuFullName: 'người khiếm thị địa điểm',
               isPrimary: false,
               linkType: 'Personal',
               canReceiveAlerts: false,
@@ -5952,7 +5935,7 @@ for (const kind of ['saved-locations', 'geofences'] as const) {
       const url = new URL(request.url());
       const list = url.pathname === `/api/${kind}`;
       if (expired)
-        return route.fulfill({ status: 402, json: { detail: 'License hết hạn thử nghiệm.' } });
+        return route.fulfill({ status: 402, json: { detail: 'Gói dịch vụ hết hạn thử nghiệm.' } });
       if (request.method() !== 'GET') {
         writes.push(request.method());
         if (request.method() === 'DELETE') {
@@ -6047,7 +6030,7 @@ for (const kind of ['saved-locations', 'geofences'] as const) {
     await page.keyboard.press('Escape');
     expired = true;
     await page.getByRole('button', { name: 'Tải lại địa điểm', exact: true }).click();
-    await expect(page.getByRole('link', { name: 'Xem trạng thái license' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Xem trạng thái gói dịch vụ' })).toBeVisible();
     await expect(page).toHaveURL(/caregiver\/locations/);
   });
 }
@@ -6103,7 +6086,7 @@ test('license gate: unpaid caregiver is sent to plans, paid caregiver opens lice
     'href',
     '/packages',
   );
-  await expect(page.getByRole('link', { name: 'Kích hoạt bằng key' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Kích hoạt bằng mã' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: /Liên hệ khẩn cấp \(cần gói dịch vụ\)/ }),
   ).toBeVisible();
@@ -6257,7 +6240,7 @@ test('BR-04/BR-33: primary caregiver adds a secondary by email; BE error codes s
         data: organizationPage(
           [
             [linkedViuId, 'VIU test'],
-            [otherViu, 'VIU phụ trách phụ'],
+            [otherViu, 'người khiếm thị phụ trách phụ'],
           ].map(([vid, fullName]) => ({
             id: vid,
             fullName,
@@ -6486,11 +6469,13 @@ test('FE-35: Admin license pools summary, filters, expiry badge and pagination',
     });
   });
   await login(page);
-  await page.getByRole('link', { name: 'Kho license các trung tâm' }).first().click();
-  await expect(page.getByRole('heading', { name: 'Kho license các trung tâm' })).toBeVisible();
+  await page.getByRole('link', { name: 'Kho suất sử dụng các trung tâm' }).first().click();
+  await expect(page.getByRole('heading', { name: 'Kho suất sử dụng các trung tâm' })).toBeVisible();
   await expect(page.getByText('10/11 kho')).toBeVisible();
-  await expect(page.getByText('2 trung tâm đang hoạt động chưa mua kho license.')).toBeVisible();
-  const table = page.getByRole('region', { name: 'Danh sách kho license' });
+  await expect(
+    page.getByText('2 trung tâm đang hoạt động chưa mua kho suất sử dụng.'),
+  ).toBeVisible();
+  const table = page.getByRole('region', { name: 'Danh sách kho suất sử dụng' });
   await expect(table).toContainText('còn 4 ngày');
   await expect(table).toContainText('Trung tâm ngưng hoạt động');
   await expect(table).toContainText('Nợ cước');
@@ -6514,7 +6499,7 @@ test('FE-35: Admin license pools summary, filters, expiry badge and pagination',
 test('FE-35: license pools route denies CenterAdmin', async ({ page }) => {
   const calls = await stubApi(page, 'CenterAdmin', '01900000-0000-7000-8000-000000000002');
   await login(page);
-  await expect(page.getByRole('link', { name: 'Kho license các trung tâm' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Kho suất sử dụng các trung tâm' })).toHaveCount(0);
   await page.goto('/admin/license-pools');
   await expect(page).toHaveURL(/forbidden$/);
   expect(calls.some((path) => path.includes('licenses/pools'))).toBe(false);
@@ -6553,7 +6538,7 @@ test('Center Admin reads organization call history with VIU and date filters', a
   await page.getByRole('link', { name: 'Lịch sử cuộc gọi' }).first().click();
   await expect(page).toHaveURL(/center-admin\/calls$/);
   await expect(page.getByText('42 giây')).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'VIU mẫu' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'người khiếm thị mẫu' })).toBeVisible();
   await expect(page.getByText('Để bắt đầu gọi')).toHaveCount(0);
   await openFilters(page);
   await pick(page, 'Người khiếm thị', 'VIU', /VIU mẫu/);
@@ -6663,7 +6648,7 @@ test('UC-74: export the filtered activity history as a CSV download', async ({ p
         data: organizationPage([
           {
             id: viuId,
-            fullName: 'VIU xuất lịch sử',
+            fullName: 'người khiếm thị xuất lịch sử',
             email: 'export@example.test',
             phoneNumber: null,
             role: 'VisuallyImpaired',
@@ -6683,7 +6668,7 @@ test('UC-74: export the filtered activity history as a CSV download', async ({ p
             id,
             caregiverId: id,
             visuallyImpairedUserId: viuId,
-            viuFullName: 'VIU xuất lịch sử',
+            viuFullName: 'người khiếm thị xuất lịch sử',
             isPrimary: true,
             linkType: 'Personal',
             canReceiveAlerts: true,

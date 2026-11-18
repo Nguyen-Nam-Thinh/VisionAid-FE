@@ -234,7 +234,7 @@ function Tts({ actor }: { actor: Person }) {
               ))}
             </select>
           </label>
-          {users.data && (
+          {users.data && users.data.totalPages > 1 && (
             <div className="row pagination">
               <span>
                 {t('{totalCount} người · Trang {page}/{p4}', {

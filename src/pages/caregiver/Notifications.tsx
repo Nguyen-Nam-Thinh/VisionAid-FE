@@ -25,7 +25,7 @@ export function Notifications() {
         }
       />
       <p className="notice" style={{ marginBottom: 20 }}>
-        {t('Email và push trong phiên bản này chỉ được mô phỏng. Chưa gửi hoặc đăng ký FCM thật.')}
+        {t('Email và thông báo trong bản demo chỉ là mô phỏng, chưa gửi thật.')}
       </p>
       {notifications.message && (
         <p className="notice" role="status">

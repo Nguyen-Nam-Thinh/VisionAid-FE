@@ -25,7 +25,7 @@ export const apiDeviceId = auth.deviceId;
 const unavailable = async (): Promise<never> => {
   throw new ServiceError(
     t(
-      'Chức năng này chưa tích hợp API. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
+      'Chức năng này chưa sẵn sàng. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
     ),
     501,
   );

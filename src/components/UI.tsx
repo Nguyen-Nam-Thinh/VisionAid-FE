@@ -87,7 +87,7 @@ function LicenseActions() {
       {user && !canBrowsePackages(user) && (
         <p>
           {t(
-            'License của tài khoản do trung tâm quản lý. Hãy liên hệ quản trị trung tâm để gia hạn.',
+            'Gói dịch vụ của tài khoản do trung tâm quản lý. Hãy liên hệ quản trị trung tâm để gia hạn.',
           )}
         </p>
       )}
@@ -98,7 +98,7 @@ function LicenseActions() {
           </Link>
         )}
         <Link className="btn" to="/license">
-          {t('Xem trạng thái license')}
+          {t('Xem trạng thái gói dịch vụ')}
         </Link>
       </div>
     </>

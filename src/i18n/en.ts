@@ -22,11 +22,11 @@ export const en = {
   'Menu tài khoản': 'Account menu',
   'Hồ sơ của tôi': 'My profile',
   'Đang đăng xuất…': 'Signing out…',
-  '● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối backend':
+  '● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối máy chủ':
     '● Demo mode · Simulated data, not connected to the backend',
-  'Reset dữ liệu demo': 'Reset demo data',
+  'Khôi phục dữ liệu demo': 'Reset demo data',
   'Đang tải màn hình…': 'Loading screen…',
-  'Reset dữ liệu demo?': 'Reset demo data?',
+  'Khôi phục dữ liệu demo?': 'Reset demo data?',
   'Xóa toàn bộ thay đổi, ảnh demo và phiên đăng nhập trên trình duyệt này để trở về dữ liệu mẫu.':
     'Clears all changes, demo photos and the sign-in session in this browser and restores the sample data.',
   'Về tổng quan': 'Back to overview',
@@ -105,7 +105,7 @@ export const en = {
   'Mật khẩu cần ít nhất 8 ký tự.': 'Password must be at least 8 characters.',
   'Vui lòng nhập thông tin.': 'Please fill in this field.',
   'Cần ít nhất {min} ký tự.': 'Enter at least {min} characters.',
-  'License của tài khoản do trung tâm quản lý. Hãy liên hệ quản trị trung tâm để gia hạn.':
+  'Gói dịch vụ của tài khoản do trung tâm quản lý. Hãy liên hệ quản trị trung tâm để gia hạn.':
     "This account's license is managed by your center. Contact your center admin to renew it.",
   'Email không hợp lệ.': 'Invalid email.',
   'Không thể lưu thay đổi.': 'Could not save changes.',
@@ -135,7 +135,7 @@ export const en = {
   'Đặt làm chính': 'Make primary',
   Gỡ: 'Remove',
   'Thêm liên kết chăm sóc': 'Add care link',
-  'Email Caregiver đã đăng ký': 'Registered caregiver email',
+  'Email người chăm sóc đã đăng ký': 'Registered caregiver email',
   'Người khiếm thị': 'Visually impaired user',
   'Người chăm sóc chính (khi chưa có)': 'Primary caregiver (if none yet)',
   'Quyền trên người dùng được liên kết': 'Permissions on the linked user',
@@ -154,7 +154,7 @@ export const en = {
     'Simulated diagram · Not a route map · Mapbox not connected',
   'Họ và tên': 'Full name',
   'Số điện thoại': 'Phone number',
-  'Tổ chức (bắt buộc khi tạo Staff/VIU/Center Admin)':
+  'Tổ chức (bắt buộc khi tạo nhân viên, người khiếm thị hoặc quản trị trung tâm)':
     'Organization (required for Staff/VIU/Center Admin)',
   'Tạo và cập nhật tài khoản trong phạm vi được cấp quyền. Vô hiệu hóa sẽ thu hồi quyền đăng nhập.':
     'Create and update accounts within your granted scope. Deactivating revokes sign-in access.',
@@ -178,7 +178,7 @@ export const en = {
   'Kích hoạt': 'Activate',
   'Chỉnh sửa tài khoản': 'Edit account',
   'Tạo tài khoản demo': 'Create demo account',
-  'Tài khoản demo mới dùng mật khẩu Demo@123. Không có email thật được gửi. VIU chỉ đăng nhập ứng dụng Mobile.':
+  'Tài khoản demo mới dùng mật khẩu Demo@123. Không có email thật được gửi. Người khiếm thị chỉ đăng nhập trên ứng dụng điện thoại.':
     'New demo accounts use the password Demo@123. No real email is sent. VIUs sign in only on the Mobile app.',
   'Tài khoản sẽ không đăng nhập được. Liên kết vẫn được giữ để quản trị viên phân công lại; không tự chuyển người chăm sóc chính.':
     'The account will not be able to sign in. Links are kept so an administrator can reassign them; the primary caregiver is not transferred automatically.',
@@ -191,22 +191,22 @@ export const en = {
   'Dùng mã ở trang khôi phục mật khẩu. Chưa gửi email thật.':
     'Use the code on the password recovery page. No real email has been sent.',
   'Thông báo trên trình duyệt': 'Browser notifications',
-  'Đã đăng ký nhận push cho phiên này.': 'Push is registered for this session.',
-  'Chưa đăng ký push cho phiên này.': 'Push is not registered for this session.',
-  'Thông báo chỉ hiển thị lời nhắc chung. Mở Dashboard để xem dữ liệu theo quyền của bạn. Mỗi trình duyệt nhận push cho một phiên; bật ở tab khác sẽ thay phiên nhận. Đăng xuất hoặc tắt ở một tab sẽ tắt push trên trình duyệt này.':
+  'Đã đăng ký nhận thông báo đẩy cho phiên này.': 'Push is registered for this session.',
+  'Chưa đăng ký thông báo đẩy cho phiên này.': 'Push is not registered for this session.',
+  'Thông báo chỉ hiển thị lời nhắc chung. Mở trang quản lý để xem dữ liệu theo quyền của bạn. Mỗi trình duyệt nhận thông báo đẩy cho một phiên; bật ở tab khác sẽ thay phiên nhận. Đăng xuất hoặc tắt ở một tab sẽ tắt thông báo đẩy trên trình duyệt này.':
     'Notifications show only a generic reminder. Open the Dashboard to see data according to your permissions. Each browser receives push for one session; enabling it in another tab moves delivery there. Signing out or turning it off in one tab disables push in this browser.',
   'Trình duyệt chưa hỗ trợ hoặc trang chưa dùng HTTPS.':
     'The browser does not support it or the page is not served over HTTPS.',
-  'Đã đăng ký trên máy chủ. Việc nhận push còn phụ thuộc dịch vụ gửi thông báo.':
+  'Đã đăng ký trên máy chủ. Việc nhận thông báo đẩy còn phụ thuộc dịch vụ gửi thông báo.':
     'Registered on the server. Push delivery still depends on the notification service.',
-  'Không đăng ký được push. Kiểm tra quyền thông báo, kết nối rồi thử lại.':
+  'Không đăng ký được thông báo đẩy. Kiểm tra quyền thông báo, kết nối rồi thử lại.':
     'Could not register push. Check notification permission and connection, then try again.',
-  'Đồng bộ đăng ký push': 'Sync push registration',
+  'Đồng bộ đăng ký thông báo đẩy': 'Sync push registration',
   'Bật thông báo trình duyệt': 'Enable browser notifications',
-  'Tắt push trên trình duyệt': 'Turn off push in this browser',
-  'Đã tắt push trên trình duyệt này. Tùy chọn kênh trên máy chủ không thay đổi.':
+  'Tắt thông báo đẩy trên trình duyệt': 'Turn off push in this browser',
+  'Đã tắt thông báo đẩy trên trình duyệt này. Tùy chọn kênh trên máy chủ không thay đổi.':
     'Push is off in this browser. Channel preferences on the server are unchanged.',
-  'Chưa xác nhận tắt push. Hãy chặn thông báo trong cài đặt trình duyệt.':
+  'Chưa xác nhận tắt thông báo đẩy. Hãy chặn thông báo trong cài đặt trình duyệt.':
     'Turning off push was not confirmed. Block notifications in the browser settings.',
   'Thêm mới': 'Add new',
   'Chưa có người được liên kết.': 'No linked users yet.',
@@ -238,7 +238,7 @@ export const en = {
   'Té ngã': 'Fall',
   'Vùng an toàn': 'Safe zone',
   'Pin yếu': 'Low battery',
-  'Kênh push': 'Push channel',
+  'Kênh thông báo đẩy': 'Push channel',
   'Kênh email': 'Email channel',
   'Thông báo bắt buộc': 'Mandatory notification',
   'Email bàn trực (tùy chọn)': 'Duty desk email (optional)',
@@ -249,10 +249,10 @@ export const en = {
   'Người nhận theo liên kết': 'Recipients by link',
   'Vị trí gần nhất và tình trạng kết nối của người được chăm sóc.':
     'Latest location and connection status of the care recipient.',
-  'Realtime mô phỏng': 'Simulated realtime',
+  'Cập nhật trực tiếp (mô phỏng)': 'Simulated realtime',
   'Đã ngắt kết nối': 'Disconnected',
   'Đang kết nối lại…': 'Reconnecting…',
-  'Chưa cấu hình SignalR': 'SignalR not configured',
+  'Chưa cấu hình cập nhật trực tiếp': 'SignalR not configured',
   'Trạng thái vị trí': 'Location status',
   'Cập nhật gần đây': 'Recently updated',
   'Dữ liệu cũ': 'Stale data',
@@ -271,7 +271,7 @@ export const en = {
   'Đóng thông báo': 'Dismiss notification',
   'Đang tải dữ liệu…': 'Loading data…',
   'Chọn gói dịch vụ': 'Choose a service plan',
-  'Xem trạng thái license': 'View license status',
+  'Xem trạng thái gói dịch vụ': 'View license status',
   'Thử lại': 'Retry',
   'Đóng hộp thoại': 'Close dialog',
   Hủy: 'Cancel',
@@ -431,11 +431,7 @@ export const en = {
   'Thành công': 'Success',
   'Thất bại': 'Failed',
   'Đã thử lại': 'Retried',
-  'Độ tin cậy thấp': 'Low confidence',
-  'Nhận diện được': 'Recognized',
-  'Chưa nhận diện được': 'Not recognized',
   Lỗi: 'Error',
-  'Không nhận dạng được': 'Not recognized',
   'Đã xác nhận': 'Confirmed',
   Gần: 'Near',
   'Trung bình': 'Medium',
@@ -508,12 +504,12 @@ export const en = {
   '{p0} liên hệ {contactName}? Thao tác ảnh hưởng danh bạ khẩn cấp của {name}.':
     '{p0} contact {contactName}? This affects the emergency contacts of {name}.',
   'Đã cập nhật danh bạ.': 'Contacts updated.',
-  'Không lưu được tiến độ trong tab. Hãy ghi lại mã VIU trước khi tải lại trang.':
+  'Không lưu được tiến độ trong tab. Hãy ghi lại mã người khiếm thị trước khi tải lại trang.':
     'Could not save progress in this tab. Note down the VIU ID before reloading the page.',
   'Tiếp tục liên kết người được chăm sóc': 'Continue linking the care recipient',
   'Thêm người được chăm sóc': 'Add care recipient',
   'Bỏ tiến độ liên kết': 'Discard link progress',
-  'Hãy lưu mã VIU trước: ': 'Save the VIU ID first: ',
+  'Hãy lưu mã người khiếm thị trước: ': 'Save the VIU ID first: ',
   '. Thao tác này chỉ bỏ tiến độ trong tab, không xóa tài khoản trên máy chủ. Chỉ tạo lại khi quản trị viên xác nhận chưa có tài khoản.':
     '. This only discards progress in this tab and does not delete the account on the server. Only create again if an administrator confirms there is no account.',
   'Đã bỏ tiến độ trong tab.': 'Progress in this tab discarded.',
@@ -523,15 +519,15 @@ export const en = {
   'Bước 2/2: Thiết lập liên kết chăm sóc': 'Step 2/2: Set up the care link',
   'Tạo tài khoản trước, sau đó tạo liên kết chăm sóc. Hai bước được lưu riêng trên hệ thống.':
     'Create the account first, then create the care link. The two steps are saved separately in the system.',
-  'Bước 1: Tạo tài khoản VIU': 'Step 1: Create VIU account',
+  'Bước 1: Tạo tài khoản người khiếm thị': 'Step 1: Create VIU account',
   '10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.':
     '10 digits, starting with 03, 05, 07, 08 or 09.',
   'Ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.':
     'At least 8 characters with uppercase, lowercase, a number and a special character.',
   'Mật khẩu nhập lại không khớp.': 'Passwords do not match.',
-  'Chưa xác định được tài khoản đã tạo hay chưa. Nhờ quản trị viên kiểm tra email và cung cấp mã VIU trước khi tiếp tục; không gửi lại yêu cầu tạo tài khoản.':
+  'Chưa xác định được tài khoản đã tạo hay chưa. Nhờ quản trị viên kiểm tra email và cung cấp mã người khiếm thị trước khi tiếp tục; không gửi lại yêu cầu tạo tài khoản.':
     'It is unclear whether the account was created. Ask an administrator to check the email and provide the VIU ID before continuing; do not resend the account creation request.',
-  'Mã VIU đang chờ liên kết:': 'VIU ID waiting to be linked:',
+  'Mã người khiếm thị đang chờ liên kết:': 'VIU ID waiting to be linked:',
   'Nếu liên kết thất bại, thử lại bước này. Không cần tạo thêm tài khoản.':
     'If linking fails, retry this step. No need to create another account.',
   'Bước 2: Tạo liên kết': 'Step 2: Create link',
@@ -539,12 +535,12 @@ export const en = {
   'Quản lý gương mặt': 'Manage faces',
   'Quản lý địa điểm': 'Manage places',
   'Liên kết đã sẵn sàng. Danh sách đang được tải lại.': 'The link is ready. The list is reloading.',
-  'Chờ xác minh tài khoản đã tạo với quản trị viên. Nhập mã VIU đã xác minh ở bên dưới để tiếp tục.':
+  'Chờ xác minh tài khoản đã tạo với quản trị viên. Nhập mã người khiếm thị đã xác minh ở bên dưới để tiếp tục.':
     'Waiting for an administrator to verify the created account. Enter the verified VIU ID below to continue.',
-  'Tiếp tục bằng mã VIU đã có': 'Continue with an existing VIU ID',
-  'Dùng mã VIU này': 'Use this VIU ID',
-  'Mã VIU đã xác minh': 'Verified VIU ID',
-  'Mã VIU phải là UUID hợp lệ.': 'The VIU ID must be a valid UUID.',
+  'Tiếp tục bằng mã người khiếm thị đã có': 'Continue with an existing VIU ID',
+  'Dùng mã người khiếm thị này': 'Use this VIU ID',
+  'Mã người khiếm thị đã xác minh': 'Verified VIU ID',
+  'Mã người khiếm thị không hợp lệ.': 'The VIU ID must be a valid UUID.',
   'Danh sách người dùng được liên kết với tài khoản của bạn.': 'Users linked to your account.',
   'Tên, email hoặc số điện thoại': 'Name, email or phone number',
   'Không có người dùng phù hợp trong danh sách được phép xem.':
@@ -723,7 +719,7 @@ export const en = {
   'Mã VA-DEMO từ người chăm sóc chính': 'VA-DEMO code from the primary caregiver',
   'Mời người chăm sóc phụ': 'Invite a secondary caregiver',
   'Mã liên kết demo': 'Demo link code',
-  'Mã dùng một lần, hết hạn sau 10 phút. Đăng nhập tài khoản Caregiver khác trên trình duyệt này rồi nhập mã. Đây là luồng demo, không phải QR production.':
+  'Mã dùng một lần, hết hạn sau 10 phút. Đăng nhập tài khoản người chăm sóc khác trên trình duyệt này rồi nhập mã. Đây là bản demo, chưa phải mã QR thật.':
     'Single-use code that expires after 10 minutes. Sign in with another Caregiver account in this browser and enter the code. This is a demo flow, not production QR.',
   'Bán kính (m)': 'Radius (m)',
   'Địa điểm quen thuộc': 'Familiar places',
@@ -736,7 +732,7 @@ export const en = {
   'Chọn kênh nhận tin phù hợp; các thông báo bắt buộc luôn được giữ lại.':
     'Choose suitable channels; mandatory notifications are always kept.',
   'Xin quyền thông báo trình duyệt': 'Request browser notification permission',
-  'Email và push trong phiên bản này chỉ được mô phỏng. Chưa gửi hoặc đăng ký FCM thật.':
+  'Email và thông báo trong bản demo chỉ là mô phỏng, chưa gửi thật.':
     'Email and push are only simulated in this version. No real FCM sending or registration.',
   'Thông báo đẩy': 'Push notifications',
   'Danh bạ nhận diện người thân. Cần ít nhất 3 ảnh để kích hoạt mỗi người.':
@@ -745,7 +741,7 @@ export const en = {
   'Ảnh của ': 'Photos of ',
   'Đủ ảnh để nhận diện': 'Enough photos for recognition',
   'Cần ít nhất 3 ảnh': 'Needs at least 3 photos',
-  'Chỉ dùng ảnh thử nghiệm. Demo lưu ảnh cục bộ; mã hóa AES-256 và xóa MinIO thuộc backend, chưa được thực hiện ở đây. Giới hạn demo 2 MB/ảnh.':
+  'Chỉ dùng ảnh thử nghiệm. Bản demo lưu ảnh ngay trên trình duyệt; việc mã hóa và xóa ảnh do máy chủ thực hiện, bản demo không làm. Giới hạn demo 2 MB/ảnh.':
     'Use test photos only. The demo stores photos locally; AES-256 encryption and MinIO deletion belong to the backend and are not performed here. Demo limit 2 MB/photo.',
   'Thêm nhiều ảnh JPG/PNG': 'Add several JPG/PNG photos',
   'Chỉ nhận JPG/PNG dưới 2 MB.': 'Only JPG/PNG under 2 MB.',
@@ -850,7 +846,7 @@ export const en = {
   'Người chăm sóc quản lý người thân được liên kết, thông tin hỗ trợ và quyền sử dụng dành cho gia đình. Tạo tài khoản người chăm sóc để bắt đầu.':
     'Caregivers manage linked loved ones, support information and family usage rights. Create a caregiver account to get started.',
   'Business · Trung tâm': 'Business · Center',
-  'Trung tâm quản lý kho license, phân công nhân viên và theo dõi người được chăm sóc trong tổ chức. Nhân viên dùng tài khoản do trung tâm cấp.':
+  'Trung tâm quản lý kho suất sử dụng, phân công nhân viên và theo dõi người được chăm sóc trong tổ chức. Nhân viên dùng tài khoản do trung tâm cấp.':
     'Centers manage the license pool, assign staff and follow care recipients in the organization. Staff use accounts issued by the center.',
   'Standalone · Trung tâm đồng hành': 'Standalone · Center-supported',
   'Người khiếm thị thuộc tổ chức được nhân viên chăm sóc hỗ trợ qua ứng dụng di động và danh bạ khẩn cấp. Đây là mô hình sử dụng trong tổ chức, không phải một vai trò tài khoản hoặc gói mua riêng.':
@@ -878,7 +874,7 @@ export const en = {
   'URL ảnh đại diện': 'Avatar URL',
   'Ít nhất 8 ký tự, có chữ hoa/thường, số và ký tự đặc biệt.':
     'At least 8 characters with upper/lowercase letters, a number and a special character.',
-  'Đã tạo tài khoản. Kiểm tra thông tin license và phân công chăm sóc cho người dùng.':
+  'Đã tạo tài khoản. Kiểm tra thông tin gói dịch vụ và phân công chăm sóc cho người dùng.':
     'Account created. Check the license information and care assignment for the user.',
   'Tìm tài khoản': 'Find account',
   'Tên, email, điện thoại': 'Name, email, phone',
@@ -893,10 +889,10 @@ export const en = {
   'Email, vai trò và tổ chức giữ nguyên: {email} · {p3}':
     'Email, role and organization stay unchanged: {email} · {p3}',
   'Tổ chức: {p1} · Vai trò: {p3}': 'Organization: {p1} · Role: {p3}',
-  'Nhân viên không dùng suất license. Để tạo người được chăm sóc, tổ chức cần gói license đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.':
+  'Nhân viên không tính vào số suất. Để tạo người được chăm sóc, tổ chức cần gói dịch vụ đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.':
     'Staff do not use license seats. To create a care recipient, the organization needs an active license plan with free seats. If no seat can be assigned, the account is not created.',
   'Lưu hồ sơ': 'Save profile',
-  '{p0} Kiểm tra dữ liệu và kho license; nếu hết suất, mua thêm gói Business rồi thử lại.':
+  '{p0} Kiểm tra dữ liệu và kho suất sử dụng; nếu hết suất, mua thêm gói Business rồi thử lại.':
     '{p0} Check the data and the license pool; if seats are exhausted, buy another Business plan and try again.',
   'Chưa xác nhận được kết quả lưu. Đóng form và tải lại/tìm email trước khi gửi lại để tránh tạo trùng tài khoản.':
     'The save result was not confirmed. Close the form and reload/search the email before resubmitting to avoid duplicate accounts.',
@@ -909,10 +905,10 @@ export const en = {
   'Đã cập nhật hồ sơ.': 'Profile updated.',
   ': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.':
     ': reopens the account. The organization must also be active to sign in.',
-  ': thu hồi phiên refresh và FCM. ': ': revokes refresh sessions and FCM. ',
+  ': đăng xuất khỏi mọi thiết bị và ngừng gửi thông báo. ': ': revokes refresh sessions and FCM. ',
   'Người dùng sẽ bị chặn đăng nhập.': 'The user will be blocked from signing in.',
   'Đã cập nhật trạng thái.': 'Status updated.',
-  'Tài khoản: {email}. Đặt lại mật khẩu sẽ thu hồi các phiên refresh; người dùng cần đăng nhập lại.':
+  'Tài khoản: {email}. Đặt lại mật khẩu sẽ đăng xuất người dùng khỏi mọi thiết bị; họ cần đăng nhập lại.':
     'Account: {email}. Resetting the password revokes refresh sessions; the user must sign in again.',
   'Tôi xác nhận đặt lại mật khẩu cho tài khoản này':
     'I confirm resetting the password for this account',
@@ -920,9 +916,6 @@ export const en = {
   'Vui lòng xác nhận thao tác.': 'Please confirm the action.',
   'Đã đặt lại mật khẩu; người dùng cần đăng nhập lại.':
     'Password reset; the user must sign in again.',
-  'Cảm biến / camera': 'Sensor / camera',
-  'Thủ công': 'Manual',
-  'Giọng nói': 'Voice',
   'Cử chỉ': 'Gesture',
   'Từ thời gian': 'From time',
   'Đến thời gian': 'To time',
@@ -963,8 +956,8 @@ export const en = {
     ' Not confirmed as successful; check the new status before retrying.',
   'Chưa có thời hạn từ máy chủ': 'No expiry from the server yet',
   'Trạng thái và thời hạn sử dụng của tài khoản.': 'Status and validity period of the account.',
-  'Tải lại thông tin license': 'Reload license information',
-  'Thông tin license': 'License information',
+  'Tải lại thông tin gói dịch vụ': 'Reload license information',
+  'Thông tin gói dịch vụ': 'License information',
   'Xem danh mục gói': 'View plan catalog',
   'Thời hạn hồ sơ: {p1}': 'Profile validity: {p1}',
   'Gói sử dụng cá nhân': 'Personal usage plan',
@@ -973,23 +966,23 @@ export const en = {
   Gói: 'Plan',
   'Trạng thái gói': 'Plan status',
   'Hết hạn kỳ sử dụng': 'Period expires',
-  'Trial và Personal hỗ trợ tối đa {max} người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.':
+  'Dùng thử và gói Personal hỗ trợ tối đa {max} người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.':
     'Trial and Personal support up to {max} care recipients. Access to each person still follows the link.',
-  'Xem kho license tổ chức': 'View the organization license pool',
-  'Chỉ quản trị trung tâm có tổ chức được xem kho license.':
+  'Xem kho suất sử dụng của tổ chức': 'View the organization license pool',
+  'Chỉ quản trị trung tâm có tổ chức được xem kho suất sử dụng.':
     'Only center administrators with an organization can view the license pool.',
-  'Kho license tổ chức': 'Organization license pool',
-  'Tải lại kho license': 'Reload license pool',
+  'Kho suất sử dụng của tổ chức': 'Organization license pool',
+  'Tải lại kho suất sử dụng': 'Reload license pool',
   'Chọn gói Business': 'Choose a Business plan',
-  'Tổ chức chưa có kho license. Chọn gói Business để bắt đầu.':
+  'Tổ chức chưa có kho suất sử dụng. Chọn gói Business để bắt đầu.':
     'The organization has no license pool yet. Choose a Business plan to get started.',
-  'Tổng license': 'Total licenses',
+  'Tổng số suất': 'Total licenses',
   'Đã sử dụng': 'Used',
   'Còn lại': 'Remaining',
   'Ngày mua': 'Purchase date',
   'Hết hạn': 'Expires',
   'Không có thời hạn từ máy chủ': 'No expiry from the server',
-  'Nhân viên chăm sóc không sử dụng license trong kho. Việc cấp license cho người được chăm sóc do máy chủ kiểm tra.':
+  'Nhân viên chăm sóc không sử dụng suất trong kho. Việc cấp suất sử dụng cho người được chăm sóc do máy chủ kiểm tra.':
     'Care staff do not use licenses from the pool. Assigning licenses to care recipients is checked by the server.',
   'Lịch sử thanh toán': 'Payment history',
   'Tạo liên kết': 'Create link',
@@ -1008,14 +1001,14 @@ export const en = {
     'Link removed. The BE will reselect the primary caregiver if needed and active links remain.',
   'Trung tâm chưa có nhân viên đang hoạt động. Tạo nhân viên trước.':
     'The center has no active staff yet. Create staff first.',
-  'Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản VIU trước.':
+  'Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản người khiếm thị trước.':
     'The center has no active care recipients yet. Create a VIU account first.',
   'Sửa quyền liên kết': 'Edit link permissions',
   'Chỉ chọn được người bạn đang chăm sóc chính. Người được thêm là người chăm sóc phụ với các quyền bạn chọn bên dưới.':
     'Only people you are the primary caregiver for can be chosen. The added person becomes a secondary caregiver with the permissions selected below.',
   'Thêm người chăm sóc phụ': 'Add secondary caregiver',
   'Email người chăm sóc phụ': 'Secondary caregiver email',
-  'Nhập đúng email tài khoản Caregiver cá nhân của người được mời. Họ cần đăng ký tài khoản trước.':
+  'Nhập đúng email tài khoản người chăm sóc gia đình của người được mời. Họ cần đăng ký tài khoản trước.':
     'Enter the exact email of the invited person’s personal Caregiver account. They must register first.',
   'Chỉ người chăm sóc chính mới thêm được người chăm sóc khác.':
     'Only the primary caregiver can add another caregiver.',
@@ -1027,7 +1020,7 @@ export const en = {
     'You can only link yourself to an account you created that has no caregiver yet. Ask the primary caregiver to add you.',
   'Người được chăm sóc thuộc trung tâm; liên kết do quản trị trung tâm quản lý.':
     'This care recipient belongs to a center; their links are managed by the center admin.',
-  'Tài khoản thuộc trung tâm không mua gói cá nhân; license do trung tâm cấp.':
+  'Tài khoản thuộc trung tâm không mua gói cá nhân; gói dịch vụ do trung tâm cấp.':
     'Center accounts cannot buy a personal plan; the license is provided by the center.',
   'Đang tải danh sách nhân viên và người được chăm sóc…': 'Loading staff and care recipients…',
   'Lưu quyền liên kết': 'Save link permissions',
@@ -1059,7 +1052,7 @@ export const en = {
     "System-wide rules and the center's own rules.",
   'Thiết lập tùy chọn': 'Set a preference',
   'Thêm quy tắc': 'Add rule',
-  'Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và chọn Bật thông báo trình duyệt.':
+  'Lưu tùy chọn thông báo đẩy chưa bật nhận thông báo trên trình duyệt này. Để nhận thông báo đẩy, vào Hồ sơ và chọn Bật thông báo trình duyệt.':
     'Saving the Push preference does not enable notifications in this browser. To receive push, go to Profile and choose Enable browser notifications.',
   'Ngừng áp dụng': 'Not applied',
   'Chưa lưu tùy chọn nào. Máy chủ áp dụng quy tắc mặc định.':
@@ -1106,7 +1099,7 @@ export const en = {
   'Đã cập nhật tổ chức.': 'Organization updated.',
   ': khôi phục tổ chức; thành viên vẫn cần được kích hoạt riêng.':
     ': restores the organization; members still need to be activated individually.',
-  ': thành viên đang hoạt động sẽ bị vô hiệu hóa và thu hồi phiên/FCM.':
+  ': thành viên đang hoạt động sẽ bị vô hiệu hóa và đăng xuất khỏi mọi thiết bị.':
     ': active members will be deactivated and their sessions/FCM revoked.',
   ' Tổ chức được đánh dấu xóa mềm.': ' The organization is marked as soft-deleted.',
   'Đã kích hoạt tổ chức; cần kích hoạt từng thành viên riêng.':
@@ -1118,17 +1111,17 @@ export const en = {
   'Giá tháng': 'Monthly price',
   'Giá năm': 'Yearly price',
   'Đơn vị tiền tệ': 'Currency',
-  'VIU trên license (cấu hình gói)': 'VIUs per license (plan configuration)',
-  'Số VIU của B2C vẫn theo cấu hình caregiving.max_vius_per_caregiver; trường này không thay đổi giới hạn đó.':
+  'Số người khiếm thị trên mỗi suất': 'VIUs per license (plan configuration)',
+  'Số người khiếm thị của gói gia đình vẫn theo cấu hình hệ thống; ô này không thay đổi giới hạn đó.':
     'The B2C VIU count still follows the caregiving.max_vius_per_caregiver setting; this field does not change that limit.',
-  'Số license bao gồm': 'Included licenses',
+  'Số suất sử dụng đi kèm': 'Included licenses',
   'Số ngày dùng thử': 'Trial days',
   'Thời hạn gói (ngày)': 'Plan duration (days)',
   'Ví dụ {"ocr": true}. Chỉ lưu cờ true/false, không nhập khóa bí mật. Cờ không tự triển khai tính năng mới; cờ fleet_map hiện chưa áp dụng, bản đồ đội vẫn mở cho quản trị trung tâm.':
     'For example {"ocr": true}. Only true/false flags; do not enter secret keys. Flags do not deploy new features by themselves; the fleet_map flag is not applied yet, and the fleet map stays open to center admins.',
-  'Tài khoản này không cần chọn gói cá nhân. License do tổ chức quản lý.':
+  'Tài khoản này không cần chọn gói cá nhân. Gói dịch vụ do tổ chức quản lý.':
     'This account does not need a personal plan. Licenses are managed by the organization.',
-  'Quản lý gói license': 'License plan management',
+  'Quản lý gói dịch vụ': 'License plan management',
   'Danh mục gói': 'Plan catalog',
   'Chọn gói Personal dành cho gia đình và thanh toán qua PayOS.':
     'Choose a Personal plan and create a PayOS payment order.',
@@ -1138,15 +1131,16 @@ export const en = {
   'Đang mở': 'Open',
   'Ngừng mở': 'Closed',
   'Tải lại danh mục': 'Reload catalog',
-  'Danh sách gói license': 'License plan list',
+  'Danh sách gói dịch vụ': 'License plan list',
   'Thời hạn': 'Duration',
   'Giá năm tham khảo: {p1}': 'Reference yearly price: {p1}',
   '{durationDays} ngày': '{durationDays} days',
   'Dùng thử: {trialDays} ngày': 'Trial: {trialDays} days',
-  'Tối đa {max} VIU theo chính sách B2C': 'At most {max} VIUs under the B2C policy',
-  '{includedLicenses} license bao gồm': '{includedLicenses} licenses included',
+  'Tối đa {max} người khiếm thị theo chính sách gói gia đình':
+    'At most {max} VIUs under the B2C policy',
+  '{includedLicenses} suất sử dụng đi kèm': '{includedLicenses} licenses included',
   'Chọn gói {name}': 'Choose plan {name}',
-  'Gói chưa hỗ trợ thanh toán online.': 'This plan does not support online payment yet.',
+  'Gói chưa hỗ trợ thanh toán trực tuyến.': 'This plan does not support online payment yet.',
   'Chi tiết / Sửa': 'Details / Edit',
   'Chưa có gói phù hợp trên trang này.': 'No suitable plans on this page.',
   ' Hãy xem trang tiếp theo.': ' See the next page.',
@@ -1159,7 +1153,7 @@ export const en = {
     'Uppercase letters, digits and underscores. Cannot be changed after creation.',
   'Loại gói': 'Plan type',
   'Đang mở bán': 'On sale',
-  'Thêm gói license': 'Add license plan',
+  'Thêm gói dịch vụ': 'Add license plan',
   'Chi tiết / Sửa gói': 'Plan details / Edit',
   'Mã: {code} · Loại: {packageType} · không thể thay đổi':
     'Code: {code} · Type: {packageType} · cannot be changed',
@@ -1182,7 +1176,7 @@ export const en = {
   'Kiểm tra trạng thái đơn': 'Check order status',
   'Yêu cầu có thể đã tạo giao dịch trên máy chủ. Kiểm tra lịch sử trước khi tạo lại.':
     'The request may have created a transaction on the server. Check the history before creating another.',
-  'Luồng thanh toán này dành cho Caregiver cá nhân hoặc quản trị trung tâm có tổ chức.':
+  'Luồng thanh toán này dành cho người chăm sóc gia đình hoặc quản trị trung tâm có tổ chức.':
     'This payment flow is for personal Caregivers or center administrators with an organization.',
   'Chọn gói Personal': 'Choose a Personal plan',
   'Giao dịch của tôi': 'My transactions',
@@ -1221,9 +1215,6 @@ export const en = {
   '? Liên kết thanh toán sẽ không còn sử dụng được nếu máy chủ hủy thành công.':
     '? The payment link will no longer be usable if the server cancels it successfully.',
   'Xin chào{p0}.': 'Hello{p0}.',
-  'Một nơi để kết nối, chăm sóc và cùng nhau an tâm hơn.':
-    'One place to connect, care and feel more at ease together.',
-  'Quyền sử dụng': 'Usage rights',
   'Chức năng chưa sẵn sàng': 'Feature not ready yet',
   'Màn hình này chưa được kết nối với máy chủ.': 'This screen is not connected to the server yet.',
   'Về thông tin phiên': 'Back to session information',
@@ -1253,7 +1244,7 @@ export const en = {
   'Địa chỉ:': 'Address:',
   'Chưa có địa chỉ': 'No address yet',
   'Ghi nhận GPS: {p1} · Máy chủ cập nhật: {p5}': 'GPS recorded: {p1} · Server updated: {p5}',
-  'Pin, mạng và độ chính xác của vị trí hiện tại không có trong API này. Xem giá trị tại từng bản ghi lịch sử bên dưới.':
+  'Pin, mạng và độ chính xác của vị trí hiện tại chưa được máy chủ cung cấp. Xem giá trị tại từng bản ghi lịch sử bên dưới.':
     'Battery, network and accuracy of the current location are not in this API. See the values in each history record below.',
   'Lịch sử di chuyển': 'Movement history',
   'Thời gian không hợp lệ.': 'Invalid time.',
@@ -1306,55 +1297,31 @@ export const en = {
     'Demo figures do not reflect real server health.',
   'Luôn kiểm tra thời gian ghi nhận. Vị trí cũ không phản ánh vị trí trực tiếp.':
     'Always check the recorded time. A stale location does not reflect the live location.',
-  'Chưa có dữ liệu thời hạn': 'No expiry data yet',
-  'Theo dõi cảnh báo trong phạm vi chăm sóc của bạn.': 'Track alerts within your care scope.',
   'Mở trung tâm cảnh báo': 'Open alert center',
-  'Xem báo cáo trung tâm': 'View center reports',
   'Phạm vi chăm sóc': 'Care scope',
   'Người được phân công': 'Assigned people',
   'Tài khoản chưa có tổ chức. Liên hệ quản trị viên để kiểm tra phân công.':
     'The account has no organization yet. Contact an administrator to check the assignment.',
-  'License cá nhân': 'Personal license',
-  'Máy chủ chưa tìm thấy subscription cá nhân.':
-    'The server has not found a personal subscription.',
-  'Ngày còn lại theo máy chủ': 'Days remaining according to the server',
-  'Trạng thái hồ sơ và subscription có thể khác nhau. Quyền truy cập do máy chủ quyết định; xem trang License để kiểm tra hoặc gia hạn.':
-    'Profile and subscription statuses may differ. Access is decided by the server; see the License page to check or renew.',
-  'Tải lại license': 'Reload license',
-  'Xem quyền sử dụng': 'View usage rights',
-  'Máy chủ chưa tìm thấy kho license của trung tâm.':
-    "The server has not found the center's license pool.",
   'Đã cấp': 'Assigned',
-  'Còn lại theo máy chủ': 'Remaining according to the server',
-  'Quản lý kho license': 'Manage license pool',
-  'cảnh báo · cập nhật {p3}': 'alerts · updated {p3}',
   'Thanh toán gần đây': 'Recent payments',
-  'Giao dịch đang chờ trong 10 giao dịch gần nhất. Đây không phải tổng số giao dịch đang chờ của toàn bộ lịch sử.':
-    'Pending transactions among the 10 most recent. This is not the total number of pending transactions in the whole history.',
-  '{p0} · {p2} {currency} · Đang chờ thanh toán': '{p0} · {p2} {currency} · Awaiting payment',
-  'Không có giao dịch đang chờ trong nhóm vừa tải.': 'No pending transactions in the loaded group.',
-  'Còn giao dịch cũ hơn trong lịch sử; chưa kiểm tra trạng thái của các giao dịch đó.':
-    'There are older transactions in the history; their status has not been checked.',
-  'Tải lại thanh toán': 'Reload payments',
   'Mở lịch sử thanh toán': 'Open payment history',
-  'Gửi cảnh báo trong 24 giờ': 'Alerts sent in 24 hours',
   'Đã gửi': 'Sent',
   'Đang chờ gửi': 'Pending delivery',
   'Tải lại thống kê': 'Reload statistics',
-  'Danh sách cấp license': 'License assignment list',
-  'License đã cấp': 'Assigned licenses',
-  'Cấp license cho người được chăm sóc đã có tài khoản trong tổ chức. Nhân viên chăm sóc không sử dụng suất license.':
+  'Danh sách suất đã cấp': 'License assignment list',
+  'Suất đã cấp': 'Assigned licenses',
+  'Cấp suất sử dụng cho người được chăm sóc đã có tài khoản trong tổ chức. Nhân viên chăm sóc không tính vào số suất.':
     'Assign licenses to care recipients who already have accounts in the organization. Care staff do not use license seats.',
   'Trạng thái cấp': 'Assignment status',
   'Chưa thu hồi': 'Not revoked',
   'Đã thu hồi': 'Revoked',
-  'Cấp license': 'Assign license',
-  'Mua thêm license': 'Buy more licenses',
-  'License đã cấp cho người được chăm sóc': 'Licenses assigned to care recipients',
+  'Cấp suất sử dụng': 'Assign license',
+  'Mua thêm suất sử dụng': 'Buy more licenses',
+  'Suất đã cấp cho người được chăm sóc': 'Licenses assigned to care recipients',
   'Ngày cấp': 'Assigned on',
   'Đã thu hồi · {p0}': 'Revoked · {p0}',
   'Thu hồi': 'Revoke',
-  'Không có license phù hợp bộ lọc.': 'No licenses match the filter.',
+  'Không có suất sử dụng phù hợp bộ lọc.': 'No licenses match the filter.',
   'Chưa thu hồi không đồng nghĩa còn hạn sử dụng; thời hạn và quyền truy cập do máy chủ kiểm tra.':
     'Not revoked does not mean still valid; validity and access are checked by the server.',
   'Chọn người được chăm sóc của tổ chức. Thao tác sử dụng một suất trong kho hiện tại; có thể cấp lại cho người đã bị thu hồi.':
@@ -1362,57 +1329,57 @@ export const en = {
   'Đang tải danh sách người được chăm sóc…': 'Loading care recipients…',
   'Trung tâm chưa có người được chăm sóc đang hoạt động.':
     'The center has no active care recipients yet.',
-  'Xác nhận cấp license': 'Confirm license assignment',
-  'Đã cấp license. Số lượng trong kho được tải lại từ máy chủ.':
+  'Xác nhận cấp suất sử dụng': 'Confirm license assignment',
+  'Đã cấp suất sử dụng. Số lượng trong kho được tải lại từ máy chủ.':
     'License assigned. Pool quantities are reloaded from the server.',
   'Nếu báo lỗi hoặc mất kết nối, kiểm tra lại danh sách trước khi gửi lại. Hết suất hoặc hết hạn:':
     'If an error occurs or the connection drops, check the list again before resubmitting. Out of seats or expired:',
   'xem gói Business': 'see Business plans',
-  'Thu hồi license': 'Revoke license',
-  'Thu hồi license của {fullName}? Người này sẽ mất quyền sử dụng theo license tổ chức. Tài khoản và phân công chăm sóc vẫn được giữ.':
+  'Thu hồi suất sử dụng': 'Revoke license',
+  'Thu hồi suất sử dụng của {fullName}? Người này sẽ mất quyền sử dụng theo gói của tổ chức. Tài khoản và phân công chăm sóc vẫn được giữ.':
     'Revoke the license of {fullName}? They will lose usage rights under the organization license. The account and care assignment are kept.',
-  'Đã thu hồi license. Số lượng trong kho được tải lại từ máy chủ.':
+  'Đã thu hồi suất sử dụng. Số lượng trong kho được tải lại từ máy chủ.':
     'License revoked. Pool quantities are reloaded from the server.',
-  'Gói Personal của bạn đã hết hạn và quá thời gian gia hạn. Gia hạn qua PayOS hoặc kích hoạt key do trung tâm cấp để dùng lại chức năng này.':
+  'Gói Personal của bạn đã hết hạn và quá thời gian gia hạn. Gia hạn qua PayOS hoặc kích hoạt mã do trung tâm cấp để dùng lại chức năng này.':
     'Your Personal plan has expired and its grace period is over. Renew via PayOS or activate a key issued by a center to use this feature again.',
   'Gia hạn gói Personal': 'Renew Personal plan',
-  'Kích hoạt bằng key': 'Activate with a key',
+  'Kích hoạt bằng mã': 'Activate with a key',
   'Khi chưa có gói, bạn vẫn nhận và xử lý': 'Without a plan you can still receive and handle',
   'và xem': 'and view',
   '. Sau khi thanh toán thành công, trang sẽ tự mở khóa khi máy chủ xác nhận.':
     '. After a successful payment, the page unlocks automatically once the server confirms.',
   'cảnh báo khẩn cấp': 'emergency alerts',
   'lịch sử cuộc gọi': 'call history',
-  'Phân phối key': 'Key distribution',
-  'Kích hoạt key': 'Activate key',
-  'Key cho gia đình': 'Keys for families',
-  'Mỗi key sử dụng một suất ngay khi tạo, hết hạn theo kho của trung tâm. Bạn tự chuyển key cho gia đình.':
+  'Phát mã kích hoạt': 'Key distribution',
+  'Kích hoạt mã': 'Activate key',
+  'Mã kích hoạt cho gia đình': 'Keys for families',
+  'Mỗi mã kích hoạt sử dụng một suất ngay khi tạo, hết hạn theo kho của trung tâm. Bạn tự chuyển mã kích hoạt cho gia đình.':
     "Each key uses one seat as soon as it is created and expires with the center's pool. You hand the key to the family yourself.",
-  'Nhập key do trung tâm cấp. Thời hạn theo key, không tự cộng thêm thời gian trial hoặc gói đang có. Kích hoạt không thay đổi tổ chức hay liên kết chăm sóc.':
+  'Nhập mã kích hoạt do trung tâm cấp. Thời hạn theo mã kích hoạt, không tự cộng thêm thời gian dùng thử hoặc gói đang có. Kích hoạt không thay đổi tổ chức hay liên kết chăm sóc.':
     'Enter the key issued by the center. Validity follows the key and is not added to an existing trial or plan. Activation does not change the organization or care links.',
-  'Kết quả chưa rõ. Không gửi lại thao tác; hãy tải lại thông tin license và nhờ quản trị viên kiểm tra.':
+  'Kết quả chưa rõ. Không gửi lại thao tác; hãy tải lại thông tin gói dịch vụ và nhờ quản trị viên kiểm tra.':
     'The result is unclear. Do not resubmit; reload the license information and ask an administrator to check.',
-  'Xem key vừa tạo': 'View the created key',
-  'Tạo key cho gia đình': 'Create a key for a family',
-  'Nhập key kích hoạt': 'Enter activation key',
-  'Tạo key khác': 'Create another key',
-  'Bắt đầu key mới': 'Start a new key',
-  'Kích hoạt license': 'Activate license',
-  'Đã tạo key và sử dụng một suất license.': 'Key created and one license seat used.',
-  'Key vừa tạo': 'Created key',
+  'Xem mã kích hoạt vừa tạo': 'View the created key',
+  'Tạo mã kích hoạt cho gia đình': 'Create a key for a family',
+  'Nhập mã kích hoạt': 'Enter activation key',
+  'Tạo mã kích hoạt khác': 'Create another key',
+  'Bắt đầu mã kích hoạt mới': 'Start a new key',
+  'Kích hoạt gói dịch vụ': 'Activate license',
+  'Đã tạo mã kích hoạt và dùng một suất trong kho.': 'Key created and one license seat used.',
+  'Mã kích hoạt vừa tạo': 'Created key',
   'Hạn dùng:': 'Valid until:',
   'Máy chủ không cung cấp thời hạn': 'The server does not provide an expiry',
-  'Ẩn key': 'Hide key',
-  'Hiện key': 'Show key',
-  'Sao chép key': 'Copy key',
-  'Đã sao chép key.': 'Key copied.',
-  'Không sao chép được. Nhấn Hiện key để sao chép thủ công.':
+  'Ẩn mã kích hoạt': 'Hide key',
+  'Hiện mã kích hoạt': 'Show key',
+  'Sao chép mã kích hoạt': 'Copy key',
+  'Đã sao chép mã kích hoạt.': 'Key copied.',
+  'Không sao chép được. Nhấn Hiện mã kích hoạt để sao chép thủ công.':
     'Could not copy. Press Show key to copy it manually.',
-  'Xác nhận tạo một key và sử dụng một suất trong kho. Ghi chú không phải địa chỉ gửi thư.':
+  'Xác nhận tạo một mã kích hoạt và sử dụng một suất trong kho. Ghi chú không phải địa chỉ gửi thư.':
     'Confirm creating one key and using one seat from the pool. The note is not a mailing address.',
-  'Xác nhận sử dụng key một lần cho tài khoản của bạn. Hãy kiểm tra thời hạn với trung tâm trước khi kích hoạt.':
+  'Xác nhận sử dụng mã kích hoạt một lần cho tài khoản của bạn. Hãy kiểm tra thời hạn với trung tâm trước khi kích hoạt.':
     'Confirm using the key once for your account. Check its validity with the center before activating.',
-  'Xác nhận tạo key': 'Confirm key creation',
+  'Xác nhận tạo mã kích hoạt': 'Confirm key creation',
   'Xác nhận kích hoạt': 'Confirm activation',
   'Máy chủ đã xác nhận kích hoạt. Kiểm tra trạng thái và thời hạn vừa tải lại ở trên.':
     'The server confirmed the activation. Check the status and expiry reloaded above.',
@@ -1448,7 +1415,7 @@ export const en = {
   'Một lỗi bất ngờ khiến màn hình không hiển thị được. Thao tác đang gửi có thể chưa hoàn tất. Hãy tải lại và kiểm tra trước khi làm lại.':
     'An unexpected error prevented the screen from displaying. An action being sent may not have completed. Reload and check before trying again.',
   'Cần gói dịch vụ để dùng chức năng này': 'A service plan is required for this feature',
-  'Tài khoản của bạn chưa có gói Personal. Đăng ký gói qua PayOS hoặc kích hoạt key do trung tâm cấp để mở chức năng này.':
+  'Tài khoản của bạn chưa có gói Personal. Đăng ký gói qua PayOS hoặc kích hoạt mã do trung tâm cấp để mở chức năng này.':
     'Your account does not have a Personal plan yet. Subscribe via PayOS or activate a key issued by a center to unlock this feature.',
   'Tài khoản này không dùng trên Web': 'This account is not used on the Web',
   'Người khiếm thị sử dụng VisionAid qua ứng dụng di động. Web dành cho người chăm sóc, quản trị trung tâm và quản trị hệ thống.':
@@ -1459,7 +1426,6 @@ export const en = {
   'Xác nhận khôi phục cấu hình': 'Confirm configuration rollback',
   'Điều chỉnh cấu hình': 'Adjust configuration',
   'Giá trị hiện tại': 'Current value',
-  'Kiểu dữ liệu': 'Data type',
   'Giới hạn': 'Limits',
   'Khôi phục về giá trị trước lần thay đổi lúc {p1}:':
     'Restore the value from before the change at {p1}:',
@@ -1508,7 +1474,7 @@ export const en = {
     'Deleting the configuration may stop new calls from connecting. Only delete when a suitable replacement server exists.',
   'Máy chủ mới được bật ngay sau khi tạo. Thay đổi áp dụng cho cấu hình kết nối mới, không tự cài đặt hoặc đổi mật khẩu trên máy chủ TURN.':
     'New servers are enabled right after creation. Changes apply to new connection configurations; they do not install anything or change passwords on the TURN server.',
-  'TURN cần nhập tên đăng nhập và credential mỗi lần lưu. Ô credential luôn trống khi mở, không dùng lại giá trị cũ. STUN bỏ qua hai ô này.':
+  'TURN cần nhập tên đăng nhập và mật khẩu mỗi lần lưu. Ô mật khẩu luôn trống khi mở, không dùng lại giá trị cũ. STUN bỏ qua hai ô này.':
     'TURN requires a username and credential every time you save. The credential field is always empty when opened and old values are never reused. STUN ignores these two fields.',
   'Chưa xác nhận kết quả ghi. Đóng popup và tải lại danh sách trước khi gửi lại để tránh tạo hoặc ghi trùng.':
     'The write result was not confirmed. Close the popup and reload the list before resubmitting to avoid duplicate creates or writes.',
@@ -1518,7 +1484,7 @@ export const en = {
     'For example: stun:host:3478 or turns:host:5349?transport=tcp',
   'Độ ưu tiên': 'Priority',
   'Tên đăng nhập TURN': 'TURN username',
-  'Credential TURN muốn áp dụng': 'TURN credential to apply',
+  'Mật khẩu TURN muốn áp dụng': 'TURN credential to apply',
   'Bật máy chủ': 'Enable server',
   'Tôi xác nhận thay đổi cấu hình kết nối cuộc gọi':
     'I confirm changing the call connection configuration',
@@ -1593,7 +1559,7 @@ export const en = {
   'Theo dõi các thao tác quản trị. Chỉ xem, không xóa hoặc sửa được.':
     'Follow administrative actions. Read-only; audit records cannot be deleted or edited in the interface.',
   'Lịch sử hệ thống': 'System history',
-  'Chi tiết bản ghi audit': 'Audit record details',
+  'Chi tiết bản ghi nhật ký': 'Audit record details',
   'Nền tảng / cá nhân': 'Platform / personal',
   'Chỉnh thiết lập chung, có lưu lịch sử và quay lại được. Đây là dữ liệu mô phỏng, chưa ảnh hưởng thiết bị thật.':
     'Controlled changes with tracing and rollback. These are demo parameters that do not affect real devices.',
@@ -1617,10 +1583,9 @@ export const en = {
   'Kênh delivery': 'Delivery channel',
   'Mọi kênh': 'All channels',
   'Chi tiết delivery mô phỏng': 'Simulated delivery details',
-  'Kịch bản demo: nhà cung cấp tạm thời không khả dụng. Chưa có API retry được xác nhận.':
+  'Kịch bản demo: nhà cung cấp tạm thời không khả dụng. Chưa hỗ trợ gửi lại.':
     'Demo scenario: the provider is temporarily unavailable. No confirmed retry API yet.',
-  'Bản ghi trạng thái minh họa từ dịch vụ mock.':
-    'Illustrative status records from the mock service.',
+  'Bản ghi trạng thái minh họa của bản demo.': 'Illustrative status records from the mock service.',
   'Số liệu mô phỏng theo từng mô hình AI và từng ngày. Mức độ chắc chắn và tỷ lệ xử lý thành công không có nghĩa là AI nhận diện đúng.':
     'Simulated aggregated metrics by model and date. Confidence and processing success rate are not ground-truth accuracy.',
   'Tất cả mô hình': 'All models',
@@ -1636,25 +1601,26 @@ export const en = {
     "Set up organizations and manage their active status. Deactivating an organization blocks its members' sign-in sessions.",
   'Dữ liệu tài khoản từ máy chủ không hợp lệ.': 'Account data from the server is invalid.',
   'Không có quyền quản lý tài khoản này.': 'You are not allowed to manage this account.',
-  'Mã phải là UUID hợp lệ.': 'The ID must be a valid UUID.',
+  'Mã không hợp lệ.': 'The ID must be a valid UUID.',
   'Kiểm tra họ tên từ 2 đến 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.':
     'Check that the full name is 2 to 200 characters, the phone is Vietnamese and the photo URL is at most 500 characters.',
   'Tài khoản trả về không khớp lựa chọn.': 'The returned account does not match the selection.',
-  'Tài khoản đã xóa; API hiện không hỗ trợ khôi phục.':
+  'Tài khoản đã xóa; hệ thống hiện không hỗ trợ khôi phục.':
     'The account is deleted; the API does not support restoring it.',
   'Vai trò không hợp lệ.': 'Invalid role.',
   'Danh sách trả về không khớp vai trò đã chọn.':
     'The returned list does not match the selected role.',
   'Chỉ quản trị trung tâm chọn từ danh sách tổ chức.':
     'Only center administrators choose from the organization list.',
-  'Trung tâm chỉ tạo Caregiver hoặc VIU.': 'Centers can only create Caregivers or VIUs.',
-  'Cần chọn tổ chức cho tài khoản không phải Admin.':
+  'Trung tâm chỉ tạo người chăm sóc hoặc người khiếm thị.':
+    'Centers can only create Caregivers or VIUs.',
+  'Cần chọn tổ chức cho tài khoản không phải quản trị viên hệ thống.':
     'An organization is required for non-Admin accounts.',
   'Mật khẩu cần ít nhất 8 ký tự, chữ hoa/thường, số và ký tự đặc biệt.':
     'Password must be at least 8 characters with upper/lowercase letters, a number and a special character.',
   'Tổ chức không hợp lệ hoặc không hoạt động.': 'The organization is invalid or inactive.',
   'Không thể tự vô hiệu hóa.': 'You cannot deactivate yourself.',
-  'Chỉ Admin được xóa tài khoản.': 'Only Admins can delete accounts.',
+  'Chỉ quản trị viên hệ thống được xóa tài khoản.': 'Only Admins can delete accounts.',
   'Không thể tự xóa tài khoản.': 'You cannot delete your own account.',
   'Đọc chữ': 'Text reading',
   'Dữ liệu lịch sử từ máy chủ không hợp lệ.': 'History data from the server is invalid.',
@@ -1670,7 +1636,7 @@ export const en = {
   'Máy chủ trả về sai trang phát hiện.': 'The server returned the wrong detection page.',
   'Phát hiện không thuộc phiên được chọn.':
     'The detection does not belong to the selected session.',
-  'Chức năng này chưa tích hợp API. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.':
+  'Chức năng này chưa sẵn sàng. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.':
     'This feature is not integrated with the API yet. Currently supported: sign-up, sign-in, profile, change password and sign-out.',
   'Phản hồi phiên đăng nhập không hợp lệ.': 'Invalid sign-in session response.',
   'Không thể lưu phiên. Cho phép bộ nhớ trình duyệt rồi đăng nhập lại.':
@@ -1687,7 +1653,7 @@ export const en = {
   'Vui lòng đăng nhập.': 'Please sign in.',
   'Hồ sơ từ máy chủ không hợp lệ hoặc vai trò chưa được hỗ trợ.':
     'The profile from the server is invalid or the role is not supported yet.',
-  'Tài khoản này không được truy cập Web Dashboard.':
+  'Tài khoản này không được truy cập trang quản lý trên web.':
     'This account may not access the Web Dashboard.',
   'Yêu cầu đăng nhập đã bị hủy.': 'The sign-in request was cancelled.',
   'Email không hợp lệ hoặc quá dài.': 'The email is invalid or too long.',
@@ -1735,7 +1701,7 @@ export const en = {
   'Bạn không có quyền xem lịch sử cuộc gọi.': 'You do not have permission to view call history.',
   'Các cuộc gọi của người khiếm thị thuộc trung tâm. Chỉ xem, không gọi từ đây.':
     'Calls of visually impaired users in your center. View only; calls are not made from here.',
-  'Mã người được chăm sóc phải là UUID.': 'The care recipient ID must be a UUID.',
+  'Mã người được chăm sóc không hợp lệ.': 'The care recipient ID must be a UUID.',
   'Thời gian bắt đầu phải trước thời gian kết thúc.': 'The start time must be before the end time.',
   'Lịch sử cuộc gọi từ máy chủ không hợp lệ.': 'Call history from the server is invalid.',
   'Máy chủ trả cuộc gọi ngoài phạm vi yêu cầu.':
@@ -1763,7 +1729,7 @@ export const en = {
     'Enter a valid number, using a dot for decimals.',
   'Giá trị nằm ngoài giới hạn cấu hình.': 'The value is outside the configuration limits.',
   'Giá trị phải là true hoặc false.': 'The value must be true or false.',
-  'JSON không hợp lệ.': 'Invalid JSON.',
+  'Dữ liệu không đúng định dạng.': 'Invalid JSON.',
   'Giá trị không nằm trong lựa chọn được hỗ trợ.': 'The value is not one of the supported options.',
   'Nhập URL STUN hợp lệ, không chứa thông tin đăng nhập.':
     'Enter a valid STUN URL without credentials.',
@@ -1779,7 +1745,6 @@ export const en = {
     'Could not verify the rollback value. Reload the history.',
   'Nhập số điện thoại hợp lệ.': 'Enter a valid phone number.',
   'Nhập liên kết Zalo.': 'Enter a Zalo link.',
-  'Mã không hợp lệ.': 'Invalid ID.',
   'Màn hình này dành cho người chăm sóc có liên kết.': 'This screen is for caregivers with a link.',
   'Dữ liệu liên hệ từ máy chủ không hợp lệ.': 'Contact data from the server is invalid.',
   'Liên hệ không thuộc người được chọn.': 'The contact does not belong to the selected person.',
@@ -1798,7 +1763,8 @@ export const en = {
   'Mã định danh không hợp lệ.': 'Invalid identifier.',
   'Cảnh báo không khớp yêu cầu.': 'The alert does not match the request.',
   'Trạng thái không hợp lệ.': 'Invalid status.',
-  'Cảnh báo không thuộc VIU được chọn.': 'The alert does not belong to the selected VIU.',
+  'Cảnh báo không thuộc người khiếm thị được chọn.':
+    'The alert does not belong to the selected VIU.',
   'Trạng thái đã thay đổi. Hãy xem dữ liệu mới trước khi xử lý.':
     'The status has changed. Review the new data before handling.',
   'Bạn không có quyền xử lý cảnh báo này.': 'You are not allowed to handle this alert.',
@@ -1807,7 +1773,7 @@ export const en = {
   'Địa chỉ phải đúng loại STUN hoặc TURN, có host và cổng hợp lệ. TURN có thể thêm ?transport=udp hoặc ?transport=tcp.':
     'The address must be a STUN or TURN type with a valid host and port. TURN may add ?transport=udp or ?transport=tcp.',
   'Độ ưu tiên phải là số nguyên từ 1 đến 1000.': 'Priority must be an integer from 1 to 1000.',
-  'TURN cần tên đăng nhập và credential, mỗi giá trị tối đa 200 ký tự.':
+  'TURN cần tên đăng nhập và mật khẩu, mỗi giá trị tối đa 200 ký tự.':
     'TURN needs a username and credential, each at most 200 characters.',
   'Bộ lọc máy chủ không hợp lệ.': 'Invalid server filter.',
   'Mã máy chủ không hợp lệ.': 'Invalid server ID.',
@@ -1817,73 +1783,74 @@ export const en = {
     'Could not confirm the connection server action. Check permissions and data, then reload the list.',
   'Phản hồi không khớp thay đổi. Tải lại danh sách để kiểm tra kết quả.':
     'The response does not match the change. Reload the list to check the result.',
-  'Chỉ quản trị trung tâm có tổ chức được quản lý license.':
+  'Chỉ quản trị trung tâm có tổ chức được quản lý gói dịch vụ.':
     'Only center administrators with an organization can manage licenses.',
-  'Chỉ cấp hoặc thu hồi license của người được chăm sóc.':
+  'Chỉ cấp hoặc thu hồi suất sử dụng của người được chăm sóc.':
     'Licenses can only be assigned to or revoked from care recipients.',
-  'Bộ lọc license không hợp lệ.': 'Invalid license filter.',
-  'Dữ liệu cấp license không hợp lệ. Hãy tải lại.':
+  'Bộ lọc suất sử dụng không hợp lệ.': 'Invalid license filter.',
+  'Dữ liệu suất đã cấp không hợp lệ. Hãy tải lại.':
     'Invalid license assignment data. Please reload.',
-  'Không thể cấp license cho tài khoản đã khóa hoặc xóa.':
+  'Không thể cấp suất sử dụng cho tài khoản đã khóa hoặc xóa.':
     'Cannot assign a license to a locked or deleted account.',
-  'Kho license không còn hiệu lực. Hãy kiểm tra gói Business.':
+  'Kho suất sử dụng không còn hiệu lực. Hãy kiểm tra gói Business.':
     'The license pool is no longer valid. Check the Business plan.',
-  'Kho đã hết license. Hãy mua thêm gói Business rồi thử lại.':
+  'Kho đã hết suất sử dụng. Hãy mua thêm gói Business rồi thử lại.':
     'The pool is out of licenses. Buy another Business plan and try again.',
-  'Chưa xác nhận được kết quả cấp license. Tải lại danh sách trước khi thử lại.':
+  'Chưa xác nhận được kết quả cấp suất sử dụng. Tải lại danh sách trước khi thử lại.':
     'The license assignment result was not confirmed. Reload the list before retrying.',
   'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.':
     'The sign-in session has expired. Please sign in again.',
   'Bạn không có quyền thực hiện thao tác này.': 'You are not allowed to perform this action.',
   'Có quá nhiều yêu cầu. Vui lòng thử lại sau.': 'Too many requests. Please try again later.',
-  'License hiện tại không cho phép thao tác. Vui lòng kiểm tra với quản trị viên.':
+  'Gói dịch vụ hiện tại không cho phép thao tác. Vui lòng kiểm tra với quản trị viên.':
     'The current license does not allow this action. Please check with an administrator.',
-  'Không thể thực hiện. Kiểm tra key chưa dùng, thời hạn và số suất còn lại trong kho.':
+  'Không thể thực hiện. Kiểm tra mã kích hoạt chưa dùng, thời hạn và số suất còn lại trong kho.':
     'Could not complete. Check that the key is unused, its validity and the remaining seats in the pool.',
   'Chưa xác nhận được kết quả. Kiểm tra trạng thái với quản trị viên trước khi thử lại.':
     'The result was not confirmed. Check the status with an administrator before retrying.',
   'Ghi chú tối đa 500 ký tự.': 'The note can be at most 500 characters.',
-  'Kho đã hết suất hoặc không còn hiệu lực. Kiểm tra gói Business trước khi tạo key.':
+  'Kho đã hết suất hoặc không còn hiệu lực. Kiểm tra gói Business trước khi tạo mã kích hoạt.':
     'The pool is out of seats or no longer valid. Check the Business plan before creating a key.',
-  'Chưa đọc được key đã tạo. Không tạo lại; liên hệ quản trị viên để kiểm tra kết quả.':
+  'Chưa đọc được mã kích hoạt đã tạo. Không tạo lại; liên hệ quản trị viên để kiểm tra kết quả.':
     'Could not read the created key. Do not create another; contact an administrator to check the result.',
-  'Chỉ người chăm sóc gia đình được kích hoạt key tại đây.':
+  'Chỉ người chăm sóc gia đình được kích hoạt mã tại đây.':
     'Only family caregivers can activate keys here.',
-  'Nhập key hợp lệ, tối đa 100 ký tự.': 'Enter a valid key of at most 100 characters.',
-  'Chưa xác nhận được license đã kích hoạt. Tải lại thông tin trước khi thử lại.':
+  'Nhập mã kích hoạt hợp lệ, tối đa 100 ký tự.': 'Enter a valid key of at most 100 characters.',
+  'Chưa xác nhận được gói dịch vụ đã kích hoạt. Tải lại thông tin trước khi thử lại.':
     'The license activation was not confirmed. Reload the information before retrying.',
   'Dùng thử': 'Trial',
   'Đã hết hạn': 'Expired',
-  'Chưa có license': 'No license',
-  'Chưa có thông tin license từ máy chủ': 'No license information from the server yet',
-  'Dữ liệu kho license không hợp lệ. Hãy tải lại.': 'Invalid license pool data. Please reload.',
-  'Máy chủ trả về kho license không thuộc tổ chức của bạn.':
+  'Chưa có gói dịch vụ': 'No license',
+  'Chưa có thông tin gói dịch vụ từ máy chủ': 'No license information from the server yet',
+  'Dữ liệu kho suất sử dụng không hợp lệ. Hãy tải lại.':
+    'Invalid license pool data. Please reload.',
+  'Máy chủ trả về kho suất sử dụng không thuộc tổ chức của bạn.':
     'The server returned a license pool that does not belong to your organization.',
-  'Tài khoản không dùng subscription cá nhân.': 'The account does not use a personal subscription.',
-  'Dữ liệu subscription không hợp lệ. Hãy tải lại.': 'Invalid subscription data. Please reload.',
-  'Nhân viên thuộc tổ chức nên không yêu cầu license cá nhân. Quyền dữ liệu vẫn theo phân công.':
+  'Tài khoản không dùng gói dịch vụ cá nhân.': 'The account does not use a personal subscription.',
+  'Dữ liệu gói dịch vụ không hợp lệ. Hãy tải lại.': 'Invalid subscription data. Please reload.',
+  'Nhân viên thuộc tổ chức nên không yêu cầu gói dịch vụ cá nhân. Quyền dữ liệu vẫn theo phân công.':
     'Organization staff need no personal license. Data access still follows the assignment.',
-  'Tài khoản quản trị không yêu cầu license cá nhân.':
+  'Tài khoản quản trị không yêu cầu gói dịch vụ cá nhân.':
     'Administrator accounts need no personal license.',
   'Đang dùng thử{p0}.': 'On trial{p0}.',
-  'License đang hoạt động theo trạng thái máy chủ.':
+  'Gói dịch vụ đang hoạt động theo trạng thái máy chủ.':
     'The license is active according to the server status.',
-  'License đã hết hạn, máy chủ báo còn {days} ngày gia hạn. Gia hạn trước khi các chức năng bị khóa.':
+  'Gói dịch vụ đã hết hạn, máy chủ báo còn {days} ngày gia hạn. Gia hạn trước khi các chức năng bị khóa.':
     'The license has expired; the server reports {days} grace days left. Renew before features are locked.',
-  'License đã hết hạn và quá thời gian gia hạn. Gia hạn để dùng lại các chức năng.':
+  'Gói dịch vụ đã hết hạn và quá thời gian gia hạn. Gia hạn để dùng lại các chức năng.':
     'The license has expired and its grace period is over. Renew to use these features again.',
-  'License đã hết hạn. Một số chức năng có thể bị giới hạn; kiểm tra thông tin gia hạn.':
+  'Gói dịch vụ đã hết hạn. Một số chức năng có thể bị giới hạn; kiểm tra thông tin gia hạn.':
     'The license has expired. Some features may be limited; check the renewal information.',
-  'Chưa có license cá nhân. Kiểm tra subscription hoặc thông tin kích hoạt.':
+  'Chưa có gói dịch vụ cá nhân. Kiểm tra gói dịch vụ hoặc thông tin kích hoạt.':
     'No personal license yet. Check the subscription or activation information.',
-  'Chưa xác định được trạng thái license từ máy chủ. Hãy tải lại thông tin.':
+  'Chưa xác định được trạng thái gói dịch vụ từ máy chủ. Hãy tải lại thông tin.':
     'The license status from the server could not be determined. Please reload the information.',
   'Mã hoặc dữ liệu liên kết không hợp lệ.': 'Invalid link ID or data.',
   'Phản hồi liên kết không hợp lệ.': 'Invalid link response.',
   'Không có quyền quản lý liên kết.': 'You are not allowed to manage links.',
   'Màn phân công trung tâm chỉ quản lý liên kết tổ chức.':
     'The center assignment screen only manages organization links.',
-  'Sai tài khoản Caregiver hoặc VIU.': 'Wrong Caregiver or VIU account.',
+  'Sai tài khoản người chăm sóc hoặc người khiếm thị.': 'Wrong Caregiver or VIU account.',
   'Hai tài khoản phải thuộc tổ chức của bạn.': 'Both accounts must belong to your organization.',
   'Liên kết tổ chức yêu cầu hai tài khoản cùng tổ chức.':
     'Organization links require both accounts to be in the same organization.',
@@ -1899,17 +1866,16 @@ export const en = {
   'Liên kết đã là chăm sóc chính; hãy tải lại.': 'The link is already primary care; please reload.',
   'Dữ liệu GPS từ máy chủ không hợp lệ.': 'GPS data from the server is invalid.',
   'Không có quyền xem vị trí.': 'You are not allowed to view locations.',
-  'Mã VIU không hợp lệ.': 'Invalid VIU ID.',
   'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.':
     'The end time must be after or equal to the start time.',
   'Cần kiểm tra thời gian thiết bị': 'Check the device time',
   'Dữ liệu cũ hơn 2 phút': 'Data older than 2 minutes',
   'Ghi nhận trong 2 phút gần đây': 'Recorded in the last 2 minutes',
-  'Vị trí không thuộc VIU được chọn.': 'The location does not belong to the selected VIU.',
+  'Vị trí không thuộc người khiếm thị được chọn.':
+    'The location does not belong to the selected VIU.',
   'Dữ liệu giám sát từ máy chủ không hợp lệ.': 'Monitoring data from the server is invalid.',
   'Khoảng ngày không hợp lệ. Kiểm tra ngày bắt đầu và kết thúc.':
     'Invalid date range. Check the start and end dates.',
-  'Mã định danh phải là UUID hợp lệ.': 'The identifier must be a valid UUID.',
   'Bộ lọc không hợp lệ.': 'Invalid filter.',
   'Phát hiện té ngã': 'Fall detection',
   'Khẩn cấp chủ động': 'Manual emergency',
@@ -1947,7 +1913,7 @@ export const en = {
   'Bạn không có quyền quản lý gói này.': 'You are not allowed to manage this plan.',
   'Mã gói không hợp lệ.': 'Invalid plan code.',
   'Dữ liệu gói không hợp lệ. Hãy tải lại.': 'Invalid plan data. Please reload.',
-  'Feature flags cần là JSON với giá trị true/false.':
+  'Danh sách tính năng cần đúng định dạng, mỗi giá trị là true hoặc false.':
     'Feature flags must be JSON with true/false values.',
   'Kiểm tra thông tin gói: giá hợp lệ, số lượng/ngày là số nguyên và flags chỉ chứa true/false.':
     'Check the plan details: a valid price, whole numbers for quantities/days and flags containing only true/false.',
@@ -1985,7 +1951,7 @@ export const en = {
   'Danh sách địa điểm không hợp lệ.': 'Invalid place list.',
   'Kiểm tra tên, tọa độ và bán kính. Bán kính phải là số nguyên trong khoảng cho phép.':
     'Check the name, coordinates and radius. The radius must be an integer within the allowed range.',
-  'Token thông báo không hợp lệ.': 'Invalid notification token.',
+  'Mã đăng ký thông báo không hợp lệ.': 'Invalid notification token.',
   'Ảnh phải có dữ liệu và không vượt quá 10 MB.':
     'The photo must contain data and be at most 10 MB.',
   'Chỉ hỗ trợ ảnh JPEG, PNG hoặc WebP hợp lệ.':
@@ -2020,7 +1986,6 @@ export const en = {
     'Invalid upload result. Reload before resubmitting.',
   'Kết quả đổi ảnh chính không hợp lệ. Hãy tải lại.':
     'Invalid primary photo change result. Please reload.',
-  'Mã người được chăm sóc không hợp lệ.': 'Invalid care recipient ID.',
   'Cấu hình giọng đọc từ máy chủ không hợp lệ.':
     'The voice configuration from the server is invalid.',
   'Cấu hình không thuộc người được chọn.':
@@ -2074,13 +2039,13 @@ export const en = {
     'The file content does not match the selected image format.',
   'Ảnh quá nhỏ để nhận diện. Chọn ảnh có độ phân giải cao hơn.':
     'The photo is too small for recognition. Choose a higher-resolution photo.',
-  'Tài khoản của bạn chưa có license nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để chọn gói hoặc kích hoạt key.':
+  'Tài khoản của bạn chưa có gói dịch vụ nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục Gói dịch vụ để chọn gói hoặc kích hoạt mã.':
     'Your account has no license, so new calls cannot be started. Alerts and SOS calls still work. Open License to choose a plan or activate a key.',
-  'License của bạn đã hết hạn và quá thời gian gia hạn nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để gia hạn.':
+  'Gói dịch vụ của bạn đã hết hạn và quá thời gian gia hạn nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục Gói dịch vụ để gia hạn.':
     'Your license has expired and its grace period is over, so new calls cannot be started. Alerts and SOS calls still work. Open License to renew.',
-  'Người được chăm sóc chưa có license nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Kích hoạt gói để gọi.':
+  'Người được chăm sóc chưa có gói dịch vụ nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Kích hoạt gói để gọi.':
     'The care recipient has no license, so a video call cannot be started. SOS calls from them still work. Activate a plan to call.',
-  'License của người được chăm sóc đã hết hạn và quá thời gian gia hạn nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.':
+  'Gói dịch vụ của người được chăm sóc đã hết hạn và quá thời gian gia hạn nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.':
     'The care recipient’s license has expired and its grace period is over, so a video call cannot be started. SOS calls from them still work. Renew to call.',
   'Báo cáo doanh thu': 'Revenue report',
   'Báo cáo theo ngày tối đa 366 ngày. Chọn khoảng ngắn hơn hoặc xem theo tháng.':
@@ -2106,7 +2071,7 @@ export const en = {
   'Loại giao dịch': 'Transaction type',
   'Mua gói Business': 'Business plan purchase',
   'Mua gói Personal': 'Personal plan purchase',
-  'Mua thêm license Business': 'Business license top-up',
+  'Mua thêm suất sử dụng Business': 'Business license top-up',
   'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.':
     'The start date must be on or before the end date.',
   'Ngày không hợp lệ.': 'Invalid date.',
@@ -2122,18 +2087,6 @@ export const en = {
     '{caregivers} caregivers · {organizations} centers',
   '{pending} đang chờ · {failed} thất bại · {cancelled} đã hủy':
     '{pending} pending · {failed} failed · {cancelled} cancelled',
-  'Cấp, thu hồi và gia hạn license.': 'Assign, revoke and renew licenses.',
-  'Cập nhật thông tin liên hệ và mật khẩu.': 'Update contact details and password.',
-  'Doanh thu PayOS theo kênh, gói và trung tâm.': 'PayOS revenue by channel, plan and center.',
-  'Hồ sơ và liên kết chăm sóc.': 'Profiles and care links.',
-  'Lối tắt': 'Shortcuts',
-  'Số liệu nhận diện và đọc chữ theo mô hình.': 'Recognition and text-reading figures by model.',
-  'Tiếp nhận và xử lý cảnh báo.': 'Acknowledge and handle alerts.',
-  'Trạng thái gửi và thông báo lỗi.': 'Delivery status and failed notifications.',
-  'Tài khoản người khiếm thị của trung tâm.': 'The center’s visually impaired user accounts.',
-  'Vị trí ghi nhận gần nhất.': 'Latest recorded locations.',
-  'Vị trí người khiếm thị được phép theo dõi.': 'Locations of users you may monitor.',
-  'Xem trạng thái license của tài khoản.': 'View your account’s license status.',
   'Buộc đăng xuất tài khoản': 'Account forced logout',
   'Bộ lọc': 'Filters',
   'Cập nhật tổ chức': 'Organization updated',
@@ -2150,7 +2103,7 @@ export const en = {
   'Xóa dữ liệu gương mặt': 'Face data deleted',
   'Xóa điều kiện': 'Clear filters',
   '{count} điều kiện': '{count} filters',
-  'Đình chỉ kho license': 'License pool suspended',
+  'Đình chỉ kho suất sử dụng': 'License pool suspended',
   'Đổi cấu hình hệ thống': 'System configuration changed',
   'Đổi vai trò': 'Role changed',
   'Cảnh báo của người bạn được phép theo dõi, tự cập nhật theo thời gian thực.':
@@ -2169,7 +2122,7 @@ export const en = {
     'Navigation guidance the AI gave and how long it took.',
   'Các cuộc gọi bạn đã thực hiện hoặc nhận.': 'Calls you made or received.',
   'Các đơn thanh toán gói dịch vụ của bạn.': 'Your plan payment orders.',
-  'Danh sách trung tâm, thành viên và kho license của từng trung tâm.':
+  'Danh sách trung tâm, thành viên và kho suất sử dụng của từng trung tâm.':
     "Centers, their members and each center's license pool.",
   'Gán người chăm sóc cho người khiếm thị và chỉnh quyền của từng liên kết.':
     "Assign caregivers to visually impaired users and set each link's permissions.",
@@ -2179,7 +2132,7 @@ export const en = {
     'STUN/TURN servers help video calls connect across networks.',
   'Những người cùng chăm sóc và quyền của từng người.':
     "People who share the care and each one's permissions.",
-  'Số license đã mua, đã cấp và thời hạn sử dụng của trung tâm.':
+  'Số gói dịch vụ đã mua, đã cấp và thời hạn sử dụng của trung tâm.':
     "Licenses bought, assigned and the center's validity period.",
   'Mỗi ngày AI đã nhận diện bao nhiêu lần, mất bao lâu và chắc chắn đến mức nào.':
     'Daily processing count, time and confidence for each AI model.',
@@ -2188,16 +2141,16 @@ export const en = {
     'Create plans, set prices and start or stop selling them.',
   'Xem và chỉnh các thiết lập chung của hệ thống; có thể quay lại giá trị trước đó.':
     "View, adjust and restore the system's operating settings.",
-  'Key không hợp lệ, đã được kích hoạt hoặc đã hết hạn.':
+  'Mã kích hoạt không hợp lệ, đã được kích hoạt hoặc đã hết hạn.':
     'The key is invalid, already activated or expired.',
-  'Key đã hết hạn.': 'The key has expired.',
-  'Kho license đã hết suất. Mua thêm gói Business.':
+  'Mã kích hoạt đã hết hạn.': 'The key has expired.',
+  'Kho suất sử dụng đã hết suất. Mua thêm gói Business.':
     'The license pool is out of seats. Buy another Business plan.',
-  'Kho license không còn hiệu lực. Kiểm tra gói Business.':
+  'Kho suất sử dụng không còn hiệu lực. Kiểm tra gói Business.':
     'The license pool is no longer valid. Check the Business plan.',
-  'Tổ chức chưa có kho license. Mua gói Business trước.':
+  'Tổ chức chưa có kho suất sử dụng. Mua gói Business trước.':
     'The organization has no license pool yet. Buy a Business plan first.',
-  'Người này đã được cấp license.': 'This person already has a license.',
+  'Người này đã được cấp suất sử dụng.': 'This person already has a license.',
   'Đã quá thời gian gia hạn. Vui lòng mua hoặc gia hạn gói.':
     'The grace period is over. Please buy or renew a plan.',
   'Loại gói không phù hợp với tài khoản.': 'The plan type does not suit the account.',
@@ -2216,8 +2169,8 @@ export const en = {
   'Dòng lịch sử này không có giá trị trước để khôi phục.':
     'This history row has no previous value to restore.',
   'Loại máy chủ kết nối không hợp lệ.': 'Invalid connection server type.',
-  'Phản hồi JSON không hợp lệ từ máy chủ.': 'Invalid JSON response from the server.',
-  'Máy chủ yêu cầu kiểm tra license cho thao tác này. Phiên đăng nhập vẫn được giữ. Mở mục License để xem trạng thái hoặc tải lại sau khi license được cập nhật.':
+  'Máy chủ trả về dữ liệu không đúng định dạng.': 'Invalid JSON response from the server.',
+  'Máy chủ yêu cầu kiểm tra gói dịch vụ cho thao tác này. Phiên đăng nhập vẫn được giữ. Mở mục Gói dịch vụ để xem trạng thái hoặc tải lại sau khi gói dịch vụ được cập nhật.':
     'The server requires a license check for this action. Your session is kept. Open License to see the status, or reload after the license is updated.',
   'Yêu cầu thất bại. Mã lỗi: {status}.': 'Request failed. Error code: {status}.',
   'Máy chủ đang gặp sự cố. Vui lòng tải lại dữ liệu để kiểm tra kết quả trước khi thử lại.':
@@ -2227,17 +2180,17 @@ export const en = {
   'Bạn thao tác quá nhanh. Vui lòng chờ một lát rồi thử lại.':
     'You are acting too fast. Please wait a moment and try again.',
   'Trình duyệt không hỗ trợ thông báo.': 'The browser does not support notifications.',
-  'Đã cấp quyền trình duyệt. FCM/token registration chưa cấu hình; chưa nhận push thật.':
+  'Đã cấp quyền trình duyệt. Dịch vụ thông báo chưa được cấu hình nên chưa nhận được thông báo thật.':
     'Browser permission granted. FCM/token registration is not configured; no real push is received yet.',
-  'Bạn đã từ chối thông báo. Dashboard vẫn hoạt động; có thể đổi trong cài đặt trình duyệt.':
+  'Bạn đã từ chối thông báo. Trang quản lý vẫn hoạt động; có thể đổi trong cài đặt trình duyệt.':
     'You declined notifications. The Dashboard still works; you can change this in the browser settings.',
   'Chưa cấp quyền thông báo.': 'Notification permission not granted yet.',
-  'Trình duyệt chưa hỗ trợ Web Push.': 'The browser does not support Web Push yet.',
-  'Chưa tắt được push. Hãy chặn thông báo trong cài đặt trình duyệt.':
+  'Trình duyệt này chưa hỗ trợ thông báo.': 'The browser does not support Web Push yet.',
+  'Chưa tắt được thông báo đẩy. Hãy chặn thông báo trong cài đặt trình duyệt.':
     'Could not turn off push. Block notifications in the browser settings.',
-  'Web Push cần HTTPS và trình duyệt hỗ trợ thông báo.':
+  'Thông báo trên trình duyệt cần trang web bảo mật (https) và trình duyệt có hỗ trợ.':
     'Web Push requires HTTPS and a browser that supports notifications.',
-  'Chưa được cấp quyền thông báo. Bạn vẫn có thể dùng Dashboard.':
+  'Chưa được cấp quyền thông báo. Bạn vẫn có thể dùng trang quản lý.':
     'Notification permission has not been granted. You can still use the Dashboard.',
   'Phiên đã thay đổi. Vui lòng thử lại.': 'The session has changed. Please try again.',
   'Phiên đã thay đổi.': 'The session has changed.',
@@ -2301,18 +2254,14 @@ export const en = {
   'Không có ghi chú.': 'No notes.',
   ' · Còn {days} ngày theo thời hạn hồ sơ': ' · {days} days left according to the profile expiry',
   'Không thể tạo tài khoản.': 'Could not create the account.',
-  'Kho license': 'License pool',
   'Trang {page}/{total}': 'Page {page}/{total}',
   'Ra:': 'Exit:',
-  'Xem kho license': 'View license pool',
-  'Xem license': 'View license',
   Pin: 'Battery',
-  'Key license': 'License key',
   'Trang sau': 'Next page',
   'VisionAid · Đồng hành an tâm': 'VisionAid · Care with peace of mind',
-  'Chỉ quản trị hệ thống được tạm ngưng hoặc kích hoạt lại kho license.':
+  'Chỉ quản trị hệ thống được tạm ngưng hoặc kích hoạt lại kho suất sử dụng.':
     'Only system administrators can suspend or reactivate a license pool.',
-  'Kho license không hợp lệ. Hãy tải lại.': 'Invalid license pool. Please reload.',
+  'Kho suất sử dụng không hợp lệ. Hãy tải lại.': 'Invalid license pool. Please reload.',
   'Chưa ghi nhận': 'Not recorded',
   'Bản đồ vị trí; danh sách tương đương ở bảng bên dưới':
     'Location map; the equivalent list is in the table below',
@@ -2328,8 +2277,6 @@ export const en = {
   '{name} · {state}': '{name} · {state}',
   'Đang tải bản đồ…': 'Loading map…',
   'Bản đồ': 'Map',
-  'Vệ tinh': 'Satellite',
-  'Kiểu bản đồ': 'Map type',
   'Ghi nhận GPS: {time}': 'GPS recorded: {time}',
   'Bạn là người chăm sóc phụ: quyền của liên kết do người chăm sóc chính quyết định. Bạn chỉ có thể tự hủy liên kết.':
     'You are a secondary caregiver: the primary caregiver decides this link’s permissions. You can only cancel your own link.',
@@ -2341,7 +2288,7 @@ export const en = {
   'Xác nhận đã gọi hỗ trợ': 'Confirm help was called',
   'Chỉ người chăm sóc cá nhân được hủy gói của mình.':
     'Only personal caregivers can cancel their own plan.',
-  'Gói này được kích hoạt bằng key của trung tâm nên không tự hủy được. Hãy liên hệ quản trị trung tâm.':
+  'Gói này được kích hoạt bằng mã kích hoạt của trung tâm nên không tự hủy được. Hãy liên hệ quản trị trung tâm.':
     'This plan was activated with a center key, so you cannot cancel it yourself. Please contact the center administrator.',
   'Hủy gia hạn gói': 'Cancel plan renewal',
   'Hủy gia hạn gói {name}? Bạn vẫn dùng được tới hết kỳ hiện tại ({date}); sau đó gói không tự gia hạn.':
@@ -2350,7 +2297,7 @@ export const en = {
   'Đã hủy gia hạn, còn dùng đến {date}.': 'Renewal cancelled. Access remains until {date}.',
   'Đã hủy gia hạn, còn dùng đến {date}. Sau đó gói không tự gia hạn; bạn có thể mua lại từ danh mục gói.':
     'Renewal cancelled. Access remains until {date}. The plan will not renew after that; you can buy it again from the plan catalog.',
-  'Gói này được kích hoạt bằng key của trung tâm. Liên hệ quản trị trung tâm để thay đổi.':
+  'Gói này được kích hoạt bằng mã kích hoạt của trung tâm. Liên hệ quản trị trung tâm để thay đổi.':
     'This plan was activated with a center key. Contact the center administrator to change it.',
   'Tự gia hạn': 'Auto-renew',
   'Chỉ quản trị hệ thống hoặc quản trị trung tâm của tổ chức được đổi tự gia hạn kho.':
@@ -2359,11 +2306,11 @@ export const en = {
   'Đã tắt tự gia hạn kho.': 'Pool auto-renew turned off.',
   'Tự gia hạn kho': 'Pool auto-renew',
   'Chưa có từ máy chủ': 'Not provided by the server',
-  'Máy chủ chưa trả trạng thái tự gia hạn. Hãy tải lại kho license.':
+  'Máy chủ chưa trả trạng thái tự gia hạn. Hãy tải lại kho suất sử dụng.':
     'The server did not return the auto-renew state. Reload the license pool.',
-  'Khi bật, trước ngày hết hạn máy chủ gửi link thanh toán PayOS cho quản trị trung tâm qua email và thông báo. Chỉ áp dụng khi kho đang hoạt động; không tự trừ tiền.':
+  'Khi bật, trước ngày hết hạn máy chủ gửi liên kết thanh toán PayOS cho quản trị trung tâm qua email và thông báo. Chỉ áp dụng khi kho đang hoạt động; không tự trừ tiền.':
     'When on, before the expiry date the server sends the center administrator a PayOS payment link by email and notification. Applies only while the pool is active; nothing is charged automatically.',
-  'Gói do trung tâm cấp được gia hạn theo kho license của tổ chức.':
+  'Gói do trung tâm cấp được gia hạn theo kho suất sử dụng của tổ chức.':
     'Center-issued plans renew with the organization license pool.',
   'Gói dùng thử không tự gia hạn. Mua gói Personal để bật tự gia hạn.':
     'Trial plans do not auto-renew. Buy a Personal plan to turn on auto-renew.',
@@ -2373,7 +2320,7 @@ export const en = {
     'Only personal caregivers can change auto-renew on their own plan.',
   'Chỉ bật tự gia hạn được khi gói đang hoạt động.':
     'Auto-renew can only be turned on while the plan is active.',
-  'Gói do trung tâm cấp được gia hạn theo kho license của tổ chức. Hãy liên hệ quản trị trung tâm.':
+  'Gói do trung tâm cấp được gia hạn theo kho suất sử dụng của tổ chức. Hãy liên hệ quản trị trung tâm.':
     'Center-issued plans renew with the organization license pool. Please contact the center administrator.',
   'Gói không còn hiệu lực. Tải lại hoặc mua gói mới.':
     'The plan is no longer valid. Reload or buy a new plan.',
@@ -2383,7 +2330,7 @@ export const en = {
   'Đã tắt tự gia hạn.': 'Auto-renew turned off.',
   'Bật lại để tiếp tục gia hạn gói đã hủy.':
     'Turn it back on to resume renewing the cancelled plan.',
-  'Khi bật, trước ngày hết hạn máy chủ gửi link thanh toán PayOS qua email và thông báo. Không tự trừ tiền.':
+  'Khi bật, trước ngày hết hạn máy chủ gửi liên kết thanh toán PayOS qua email và thông báo. Không tự trừ tiền.':
     'When on, before the expiry date the server sends a PayOS payment link by email and notification. Nothing is charged automatically.',
   'Gợi ý chuyển cấp lên 115': 'Suggested escalation to 115',
   '{count} cảnh báo chưa có ai tiếp nhận sau hơn 5 phút.':
@@ -2395,7 +2342,7 @@ export const en = {
   'Xem và chuyển cấp': 'Review and escalate',
   'Còn cảnh báo Đã gửi khác; lọc theo trạng thái Đã gửi để xem đủ.':
     'More Sent alerts exist; filter by the Sent status to see them all.',
-  'Chỉ quản trị hệ thống được gia hạn kho license thủ công.':
+  'Chỉ quản trị hệ thống được gia hạn kho suất sử dụng thủ công.':
     'Only system administrators can renew a license pool manually.',
   'Kho đang tạm ngưng. Kích hoạt lại kho trước khi gia hạn.':
     'The pool is suspended. Reactivate it before renewing.',
@@ -2406,12 +2353,12 @@ export const en = {
     'The new expiry date must be after the current expiry date.',
   'Số suất thêm phải là số nguyên từ 0 đến 10.000.':
     'Additional seats must be a whole number from 0 to 10,000.',
-  'Kho license đang tạm ngưng. Liên hệ quản trị hệ thống, hoặc kích hoạt lại kho trước khi gia hạn.':
+  'Kho suất sử dụng đang tạm ngưng. Liên hệ quản trị hệ thống, hoặc kích hoạt lại kho trước khi gia hạn.':
     'The license pool is suspended. Contact the system administrator, or reactivate the pool before renewing.',
   'Ngày hết hạn mới phải sau ngày hết hạn hiện tại. Tải lại kho để xem hạn mới nhất.':
     'The new expiry date must be after the current expiry. Reload the pool to see the latest expiry.',
   'Gia hạn thủ công': 'Renew manually',
-  'Gia hạn kho license': 'Renew license pool',
+  'Gia hạn kho suất sử dụng': 'Renew license pool',
   '{name}: kho và mọi mã đã phát cho gia đình được kéo dài đến ngày mới. Hạn hiện tại: {date}. Gia hạn thủ công không tạo giao dịch PayOS.':
     '{name}: the pool and every code issued to families are extended to the new date. Current expiry: {date}. Manual renewal does not create a PayOS transaction.',
   'Xác nhận gia hạn': 'Confirm renewal',
@@ -2419,37 +2366,37 @@ export const en = {
   'Hết ngày đã chọn theo giờ máy của bạn; tối đa 5 năm kể từ hôm nay.':
     'End of the chosen day in your device time; at most 5 years from today.',
   'Số suất thêm': 'Additional seats',
-  'Đã gia hạn kho license đến {date}.': 'License pool renewed until {date}.',
-  'Chỉ quản trị hệ thống được xem kho license của tổ chức khác.':
+  'Đã gia hạn kho suất sử dụng đến {date}.': 'License pool renewed until {date}.',
+  'Chỉ quản trị hệ thống được xem kho suất sử dụng của tổ chức khác.':
     "Only system administrators can view another organization's license pool.",
-  'Kho license trả về không thuộc tổ chức đã chọn.':
+  'Kho suất sử dụng trả về không thuộc tổ chức đã chọn.':
     'The returned license pool does not belong to the selected organization.',
   'Không bắt buộc. Quản trị trung tâm có thể đọc lý do này.':
     'Optional. The center administrator can read this reason.',
   'Không giới hạn': 'No limit',
-  'Kích hoạt lại kho license': 'Reactivate license pool',
+  'Kích hoạt lại kho suất sử dụng': 'Reactivate license pool',
   'Kích hoạt lại kho': 'Reactivate pool',
   'Lý do tạm ngưng': 'Suspension reason',
-  'Tạm ngưng kho license': 'Suspend license pool',
+  'Tạm ngưng kho suất sử dụng': 'Suspend license pool',
   'Tạm ngưng kho': 'Suspend pool',
   'Tạm ngưng lúc': 'Suspended at',
-  'Tổ chức chưa có kho license.': 'This organization has no license pool yet.',
+  'Tổ chức chưa có kho suất sử dụng.': 'This organization has no license pool yet.',
   'Tổ chức không hợp lệ.': 'Invalid organization.',
   'Xác nhận tạm ngưng': 'Confirm suspension',
-  '{name}: kho trở về Đang hoạt động, hoặc Đã hết hạn nếu đã qua ngày hết hạn. License của người được chăm sóc được khôi phục theo trạng thái đó.':
+  '{name}: kho trở về Đang hoạt động, hoặc Đã hết hạn nếu đã qua ngày hết hạn. Gói dịch vụ của người được chăm sóc được khôi phục theo trạng thái đó.':
     '{name}: the pool returns to Active, or Expired if its end date has passed. Care recipients get their licenses back according to that status.',
-  '{name}: người được chăm sóc đang dùng license của kho sẽ chuyển về Chưa có license cho tới khi kích hoạt lại. Trung tâm không cấp thêm suất hoặc tạo mã được.':
+  '{name}: người được chăm sóc đang dùng gói dịch vụ của kho sẽ chuyển về Chưa có gói dịch vụ cho tới khi kích hoạt lại. Trung tâm không cấp thêm suất hoặc tạo mã được.':
     '{name}: care recipients using licenses from this pool will have no license until it is reactivated. The center cannot assign seats or generate keys.',
   '{used}/{total} suất · còn {available}': '{used}/{total} seats · {available} left',
-  'Đã gửi yêu cầu. Tải lại kho license để xem trạng thái mới.':
+  'Đã gửi yêu cầu. Tải lại kho suất sử dụng để xem trạng thái mới.':
     'Request sent. Reload the license pool to see the new status.',
-  'Đã kích hoạt lại kho license.': 'License pool reactivated.',
+  'Đã kích hoạt lại kho suất sử dụng.': 'License pool reactivated.',
   'Đã kích hoạt lại, nhưng kho đã quá hạn nên ở trạng thái Đã hết hạn.':
     'Reactivated, but the pool is past its end date so it is Expired.',
-  'Đã tạm ngưng kho license.': 'License pool suspended.',
-  'Kho license đã ở trạng thái tạm ngưng. Tải lại để xem trạng thái mới.':
+  'Đã tạm ngưng kho suất sử dụng.': 'License pool suspended.',
+  'Kho suất sử dụng đã ở trạng thái tạm ngưng. Tải lại để xem trạng thái mới.':
     'The license pool is already suspended. Reload to see the current status.',
-  'Kho license không còn tạm ngưng. Tải lại để xem trạng thái mới.':
+  'Kho suất sử dụng không còn tạm ngưng. Tải lại để xem trạng thái mới.':
     'The license pool is no longer suspended. Reload to see the current status.',
   'Gõ tên hoặc email để tìm': 'Type a name or email to search',
   'Gõ tên hoặc email': 'Type a name or email',
@@ -2466,7 +2413,7 @@ export const en = {
   'đã chọn': 'selected',
   'Xem cùng phiên điều hướng': 'Show this navigation session',
   'Xem các thao tác trên đối tượng này': 'Show actions on this record',
-  'Bắt buộc với vai trò không phải Admin; tổ chức phải hoạt động.':
+  'Bắt buộc với vai trò không phải quản trị viên hệ thống; tổ chức phải hoạt động.':
     'Required for non-Admin roles; the organization must be active.',
   'Để trống để áp dụng toàn hệ thống.': 'Leave empty to apply system-wide.',
   'Không tải được danh sách tổ chức; tìm theo tên hoặc email.':
@@ -2474,12 +2421,12 @@ export const en = {
   'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo hai tài khoản và tải lại trước khi gửi lại.':
     'The result is not confirmed or the link already exists. Close the form, filter by both accounts and reload before sending again.',
   // FE-35: license pools of all centers.
-  'Kho license các trung tâm': 'Center license pools',
-  'Số license đã dùng, còn trống và hạn dùng của từng trung tâm.':
+  'Kho suất sử dụng các trung tâm': 'Center license pools',
+  'Số gói dịch vụ đã dùng, còn trống và hạn dùng của từng trung tâm.':
     'Used and free licenses and the expiry date of each center.',
-  'Chỉ quản trị hệ thống được xem kho license các trung tâm.':
+  'Chỉ quản trị hệ thống được xem kho suất sử dụng các trung tâm.':
     'Only system administrators can view the license pools of all centers.',
-  'Dữ liệu kho license từ máy chủ không hợp lệ.':
+  'Dữ liệu kho suất sử dụng từ máy chủ không hợp lệ.':
     'The license pool data from the server is invalid.',
   'Từ khóa tìm kiếm tối đa 200 ký tự.': 'The search term can be at most 200 characters.',
   'Số ngày sắp hết hạn phải từ 0 đến 365.': 'Days until expiry must be from 0 to 365.',
@@ -2488,15 +2435,15 @@ export const en = {
   'Hết hạn trong (ngày)': 'Expires within (days)',
   'Kho đang hoạt động': 'Active pools',
   '{active}/{total} kho': '{active}/{total} pools',
-  'License đã dùng': 'Licenses in use',
+  'Gói dịch vụ đã dùng': 'Licenses in use',
   '{used}/{total} ({percent}%)': '{used}/{total} ({percent}%)',
   'Cần chú ý': 'Needs attention',
   '{soon} sắp hết hạn · {suspended} tạm ngưng · {expired} hết hạn':
     '{soon} expiring soon · {suspended} suspended · {expired} expired',
-  '{count} trung tâm đang hoạt động chưa mua kho license.':
+  '{count} trung tâm đang hoạt động chưa mua kho suất sử dụng.':
     '{count} active centers have not bought a license pool.',
-  'Không có kho license phù hợp.': 'No matching license pools.',
-  'Danh sách kho license': 'License pool list',
+  'Không có kho suất sử dụng phù hợp.': 'No matching license pools.',
+  'Danh sách kho suất sử dụng': 'License pool list',
   'Đã dùng / tổng': 'Used / total',
   'Còn trống': 'Free',
   'Trung tâm ngưng hoạt động': 'Center inactive',
@@ -2519,7 +2466,7 @@ export const en = {
   'Không gửi': 'Not sent',
   '{totalCount} sự kiện · Trang {page}/{p4}': '{totalCount} events · Page {page}/{p4}',
   'Loại sự kiện không hợp lệ.': 'Invalid event type.',
-  'Sự kiện không thuộc VIU được chọn.': 'Event does not belong to the selected VIU.',
+  'Sự kiện không thuộc người khiếm thị được chọn.': 'Event does not belong to the selected VIU.',
   'Lọc lịch sử': 'Filter history',
   'Tải lại địa điểm': 'Reload places',
   'Mã ngôn ngữ, ví dụ vi-VN hoặc en-US. Giọng đọc khả dụng phụ thuộc thiết bị.':
@@ -2556,14 +2503,14 @@ export const en = {
   'Có thể khôi phục trong {days} ngày kể từ lúc xóa.':
     'It can be restored within {days} days of deletion.',
   'Khôi phục tài khoản': 'Restore account',
-  'Tài khoản vẫn được giữ lại; Admin có thể khôi phục trong {days} ngày.':
+  'Tài khoản vẫn được giữ lại; Quản trị viên hệ thống có thể khôi phục trong {days} ngày.':
     'Soft delete; an Admin can restore it within {days} days.',
   '{email}: mở lại tài khoản, đăng nhập bằng mật khẩu cũ, giữ nguyên liên kết và dữ liệu còn lưu. Dữ liệu đã bị xóa theo thời hạn lưu trữ sẽ không lấy lại được.':
     '{email}: reopen the account with its old password, keeping its links and remaining data. Data already removed by retention cannot be recovered.',
-  'Đã khôi phục tài khoản. Kho của tổ chức hết suất nên người dùng chưa có license; trung tâm cần cấp một suất, trước đó chỉ dùng được SOS.':
+  'Đã khôi phục tài khoản. Kho của tổ chức hết suất nên người dùng chưa có gói dịch vụ; trung tâm cần cấp một suất, trước đó chỉ dùng được SOS.':
     'Account restored. The organization pool has no free seat, so the user has no license; the center must assign one, and until then only SOS works.',
   'Đã khôi phục tài khoản.': 'Account restored.',
-  'Đã hẹn đổi sang gói {name} ({seats} suất) vào {time}. Trước thời điểm đó, cấp license mới bị giới hạn ở số suất của gói mới.':
+  'Đã hẹn đổi sang gói {name} ({seats} suất) vào {time}. Trước thời điểm đó, cấp suất sử dụng mới bị giới hạn ở số suất của gói mới.':
     'Switch to {name} ({seats} seats) scheduled for {time}. Until then, new licenses are capped at the new package seat count.',
   'Giữ gói hiện tại': 'Keep current package',
   'Hủy hẹn đổi gói': 'Cancel scheduled change',
@@ -2586,31 +2533,32 @@ export const en = {
     'Full price; the new period follows the current expiry date.',
   'Trả trọn giá; kỳ mới bắt đầu từ lúc thanh toán thành công.':
     'Full price; the new period starts when the payment succeeds.',
-  'Số license đang dùng nhiều hơn số suất của gói này. Hãy thu hồi {count} license trước khi đổi gói.':
+  'Số gói dịch vụ đang dùng nhiều hơn số suất của gói này. Hãy thu hồi {count} gói dịch vụ trước khi đổi gói.':
     'More seats are in use than this package has. Revoke {count} licenses in the pool before switching.',
-  'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho license để kiểm tra trạng thái.':
+  'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho suất sử dụng để kiểm tra trạng thái.':
     'The pool cannot change package right now. Reload the license pool to check its status.',
   'Đã hẹn đổi sang gói {name} vào {time}.': 'Switch to {name} scheduled for {time}.',
   'Hẹn đổi gói vào cuối kỳ': 'Schedule for end of period',
-  'Key đã phát': 'Issued keys',
-  'Xem lại key đã tạo và thu hồi key chưa dùng nếu phát nhầm. Thu hồi trả suất về kho; key đã kích hoạt hoặc đã hết hạn không thu hồi được.':
+  'Mã kích hoạt đã phát': 'Issued keys',
+  'Xem lại mã kích hoạt đã tạo và thu hồi mã kích hoạt chưa dùng nếu phát nhầm. Thu hồi trả suất về kho; mã đã kích hoạt hoặc đã hết hạn không thu hồi được.':
     'Look up keys you created and revoke an unused key sent by mistake. Revoking returns the seat to the pool; activated or expired keys cannot be revoked.',
-  'Tìm theo key, ghi chú hoặc người kích hoạt': 'Search by key, note or activating caregiver',
-  'Trạng thái key': 'Key status',
-  Key: 'Key',
+  'Tìm theo mã kích hoạt, ghi chú hoặc người kích hoạt':
+    'Search by key, note or activating caregiver',
+  'Trạng thái mã kích hoạt': 'Key status',
   'Hạn dùng': 'Valid until',
   'Người kích hoạt': 'Activated by',
   'Thu hồi lúc {time}': 'Revoked at {time}',
-  'Không có key phù hợp với bộ lọc.': 'No keys match the filter.',
-  'Chưa phát key nào từ kho này.': 'No keys have been issued from this pool yet.',
-  'Thu hồi key': 'Revoke key',
-  'Thu hồi key có ghi chú "{note}", tạo lúc {time}. Gia đình sẽ không kích hoạt được key này nữa và một suất được trả về kho.':
+  'Không có mã kích hoạt phù hợp với bộ lọc.': 'No keys match the filter.',
+  'Chưa phát mã kích hoạt nào từ kho này.': 'No keys have been issued from this pool yet.',
+  'Thu hồi mã kích hoạt': 'Revoke key',
+  'Thu hồi mã kích hoạt có ghi chú "{note}", tạo lúc {time}. Gia đình sẽ không kích hoạt được mã kích hoạt này nữa và một suất được trả về kho.':
     'Revoke the key noted "{note}", created at {time}. The family can no longer activate it and one seat returns to the pool.',
   'không có ghi chú': 'no note',
-  'Đã thu hồi key và trả một suất về kho.': 'Key revoked and one seat returned to the pool.',
-  'Key vừa tạo vẫn còn trong danh sách Key đã phát. Tạo key mới không thu hồi key cũ và không hoàn lại suất đã dùng.':
+  'Đã thu hồi mã kích hoạt và trả một suất về kho.':
+    'Key revoked and one seat returned to the pool.',
+  'Mã kích hoạt vừa tạo vẫn còn trong danh sách Mã kích hoạt đã phát. Tạo mã kích hoạt mới không thu hồi mã kích hoạt cũ và không hoàn lại suất đã dùng.':
     'The new key stays in the Issued keys list. Continuing does not revoke it or return the seat it used.',
-  'Có thể xem lại key này bất cứ lúc nào trong danh sách Key đã phát.':
+  'Có thể xem lại mã kích hoạt này bất cứ lúc nào trong danh sách Mã kích hoạt đã phát.':
     'You can look this key up again any time in the Issued keys list.',
   'Đã cập nhật ảnh đại diện.': 'Profile picture updated.',
   'Không thể tải ảnh lên.': 'Could not upload the picture.',
@@ -2626,7 +2574,7 @@ export const en = {
   'không rõ lý do': 'unknown reason',
   'Đang gửi lại…': 'Resending…',
   'Gửi lại': 'Resend',
-  'Chỉ Admin được khôi phục tài khoản.': 'Only an Admin can restore accounts.',
+  'Chỉ quản trị viên hệ thống được khôi phục tài khoản.': 'Only an Admin can restore accounts.',
   'Tài khoản không hợp lệ.': 'Invalid account.',
   'Máy chủ trả về tài khoản khác với tài khoản đã chọn.':
     'The server returned a different account from the one selected.',
@@ -2636,14 +2584,15 @@ export const en = {
   'Địa chỉ ảnh không hợp lệ.': 'Invalid picture address.',
   'Chưa dùng': 'Unused',
   'Đã kích hoạt': 'Activated',
-  'Chỉ quản trị viên trung tâm được xem key đã phát.':
+  'Chỉ quản trị viên trung tâm được xem mã kích hoạt đã phát.':
     'Only a center admin with an organization can view issued keys.',
-  'Dữ liệu key đã phát không hợp lệ. Hãy tải lại.': 'Issued key data is invalid. Please reload.',
-  'Chỉ quản trị viên trung tâm được thu hồi key.':
+  'Dữ liệu mã kích hoạt đã phát không hợp lệ. Hãy tải lại.':
+    'Issued key data is invalid. Please reload.',
+  'Chỉ quản trị viên trung tâm được thu hồi mã kích hoạt.':
     'Only a center admin with an organization can revoke keys.',
-  'Chỉ thu hồi được key chưa dùng và còn hạn.':
+  'Chỉ thu hồi được mã kích hoạt chưa dùng và còn hạn.':
     'Only unused keys that are still valid can be revoked.',
-  'Key không hợp lệ. Hãy tải lại.': 'Invalid key. Please reload.',
+  'Mã kích hoạt không hợp lệ. Hãy tải lại.': 'Invalid key. Please reload.',
   'Mua lần đầu': 'First pool purchase',
   'Gia hạn cùng gói': 'Renew same package',
   'Kỳ mới sau khi kho hết hạn': 'New period after expiry',
@@ -2665,7 +2614,7 @@ export const en = {
   'Sự cố khẩn cấp đã được giải quyết, đã bỏ qua hoặc đã gọi hỗ trợ.':
     'The emergency was already resolved, dismissed or called.',
   'Thông báo đã quá cũ để gửi lại.': 'The notification is too old to resend.',
-  'License đã được gia hạn nên lời nhắc không còn cần thiết.':
+  'Gói dịch vụ đã được gia hạn nên lời nhắc không còn cần thiết.':
     'The license has been renewed, so the reminder no longer applies.',
   'Người nhận không còn nhận cảnh báo của người này.':
     'The recipient no longer receives alerts for this person.',
@@ -2673,7 +2622,7 @@ export const en = {
   'Thông báo không hợp lệ.': 'Invalid notification.',
   'Gói rẻ hơn gói hiện tại: hẹn đổi vào cuối kỳ, không cần thanh toán.':
     'Cheaper than the current package: schedule the switch for the end of the period, no payment needed.',
-  'Cần thu hồi {count} license đang dùng trước khi đổi sang gói này.':
+  'Cần thu hồi {count} gói dịch vụ đang dùng trước khi đổi sang gói này.':
     'Revoke {count} licenses in use before switching to this package.',
   'Nâng gói Business': 'Business upgrade',
   'Hộp thư thông báo': 'Notification inbox',
@@ -2722,16 +2671,13 @@ export const en = {
     'OnDeviceRules are decisions the phone made itself when offline, without a session or when the server was slow; the app uploads them later for tracing. Spoken text and location are shown only to linked caregivers.',
   'Phát hiện vật cản': 'Obstacle detection',
   'Ra/vào vùng an toàn': 'Safe zone entry/exit',
-  'Máy chủ · JEV': 'Server · JEV',
-  'Máy chủ · Groq': 'Server · Groq',
-  'Máy chủ · quy tắc': 'Server · rules',
   'Điện thoại tự quyết định': 'Decided on the phone',
   'Bạn không còn quyền xem cảnh báo này (liên kết chăm sóc đã kết thúc).':
     'You can no longer view this alert (the care link has ended).',
-  'Cảnh báo license sắp hết hạn': 'License expiry warning',
+  'Cảnh báo gói dịch vụ sắp hết hạn': 'License expiry warning',
   'Gợi ý gọi hỗ trợ khẩn cấp': 'Emergency call suggestion',
   'Không liên hệ được ai': 'Nobody reachable',
-  'Nhắc gia hạn license': 'License renewal reminder',
+  'Nhắc gia hạn gói dịch vụ': 'License renewal reminder',
   'Gửi thất bại': 'Failed',
   'Chỉ quản trị viên được tra cứu thông báo.': 'Only administrators can look up notifications.',
   'JPG hoặc PNG, bản demo tối đa 2 MB.': 'JPG or PNG, up to 2 MB in the demo.',
@@ -2812,9 +2758,9 @@ export const en = {
   'Theo loại hoạt động': 'By activity type',
   'Phần của báo cáo': 'Report sections',
   'Xử lý cảnh báo của nhân viên': 'Staff alert handling',
-  'Phần của trang license': 'License page sections',
+  'Phần của trang gói dịch vụ': 'License page sections',
   'Trạng thái và gói': 'Status and plan',
-  'Phần của kho license': 'License pool sections',
+  'Phần của kho suất sử dụng': 'License pool sections',
   'Phần của trang liên kết': 'Link page sections',
   'Phần của hồ sơ': 'Profile sections',
   'Mật khẩu và đăng nhập': 'Password and sign-in',
@@ -2953,6 +2899,260 @@ export const en = {
   'Ứng dụng di động đọc được': 'Readable by the mobile app',
   'Khi tắt, không tạo được liên kết thanh toán mới; giao dịch đang chờ vẫn được xử lý.':
     'When off, no new payment links can be created; pending payments are still processed.',
+  'Gói hệ thống không thể xóa. Hãy ngừng bán nếu không dùng nữa.':
+    'System packages cannot be deleted. Stop selling it if it is no longer needed.',
+  'Gói {name} ({code}) sẽ bị xóa vĩnh viễn và không khôi phục được. Chỉ xóa được gói chưa ai mua; gói đã bán hãy ngừng bán thay vì xóa.':
+    'Package {name} ({code}) will be deleted permanently and cannot be restored. Only packages nobody has bought can be deleted; stop selling a sold package instead.',
+  'Gói đã có người mua hoặc đang được dùng. Hãy bỏ chọn “Đang mở bán” để ngừng bán thay vì xóa.':
+    'This package has been bought or is in use. Untick “On sale” to stop selling it instead of deleting it.',
+  'Nhận cuộc gọi này cũng ghi nhận bạn đã tiếp nhận cảnh báo khẩn cấp.':
+    'Answering this call also records that you acknowledged the emergency alert.',
+  'Xem cảnh báo khẩn cấp': 'View the emergency alert',
+  'Xóa gói {name}': 'Delete package {name}',
+  'Xóa gói {name}?': 'Delete package {name}?',
+  'Đã xóa gói {name}.': 'Deleted package {name}.',
+  'Ba lô': 'Backpack',
+  'Biển dừng': 'Stop sign',
+  'Bàn chải đánh răng': 'Toothbrush',
+  'Bàn phím': 'Keyboard',
+  'Bàn ăn': 'Dining table',
+  'Bánh mì kẹp': 'Sandwich',
+  'Bánh ngọt': 'Cake',
+  'Bánh vòng': 'Donut',
+  Bát: 'Bowl',
+  'Bình hoa': 'Vase',
+  Bò: 'Cow',
+  'Bông cải xanh': 'Broccoli',
+  'Bạn có thông báo mới. Mở ứng dụng VisionAid để xem chi tiết.':
+    'You have a new notification. Open the VisionAid app for details.',
+  'Bấm nút khẩn cấp': 'Emergency button pressed',
+  'Bồn cầu': 'Toilet',
+  'Bồn rửa': 'Sink',
+  Cam: 'Orange',
+  Chai: 'Bottle',
+  Chim: 'Bird',
+  Chuối: 'Banana',
+  'Chuột máy tính': 'Computer mouse',
+  Chó: 'Dog',
+  'Chưa chắc chắn': 'Not certain',
+  'Chậu cây': 'Potted plant',
+  'Chỉ ghi nhận': 'Recorded only',
+  'Cà rốt': 'Carrot',
+  'Cà vạt': 'Tie',
+  Cốc: 'Cup',
+  'Cột thu phí đỗ xe': 'Parking meter',
+  Cừu: 'Sheep',
+  Dao: 'Knife',
+  Diều: 'Kite',
+  Email: 'Email',
+  Ghế: 'Chair',
+  'Ghế dài': 'Bench',
+  'Ghế sofa': 'Sofa',
+  Giường: 'Bed',
+  'Găng bóng chày': 'Baseball glove',
+  Gấu: 'Bear',
+  'Gấu bông': 'Teddy bear',
+  'Gậy bóng chày': 'Baseball bat',
+  'Gọi bằng giọng nói': 'Called by voice',
+  'Hươu cao cổ': 'Giraffe',
+  'Không nhận ra lệnh': 'Command not recognised',
+  Kéo: 'Scissors',
+  'Ly rượu': 'Wine glass',
+  'Lò nướng': 'Oven',
+  'Lò vi sóng': 'Microwave',
+  'Máy bay': 'Airplane',
+  'Máy chủ (AI dự phòng)': 'Server (backup AI)',
+  'Máy chủ (AI)': 'Server (AI)',
+  'Máy chủ (theo quy tắc)': 'Server (rule-based)',
+  'Máy nướng bánh': 'Toaster',
+  'Máy sấy tóc': 'Hair dryer',
+  'Máy tính xách tay': 'Laptop',
+  'Mã kích hoạt': 'Activation code',
+  Mèo: 'Cat',
+  'Một tài khoản người chăm sóc đã bị khóa nên có người khiếm thị không còn người chăm sóc chính. Hãy chọn người chăm sóc chính mới.':
+    'A caregiver account was deactivated, so a visually impaired user no longer has a primary caregiver. Please choose a new primary caregiver.',
+  'Một tài khoản người chăm sóc đã bị khóa nên {who} không còn người chăm sóc chính. Hãy chọn người chăm sóc chính mới.':
+    'A caregiver account was deactivated, so {who} no longer has a primary caregiver. Please choose a new primary caregiver.',
+  Người: 'Person',
+  'Người lạ': 'Stranger',
+  Ngựa: 'Horse',
+  'Ngựa vằn': 'Zebra',
+  'Nhận ra người quen': 'Recognised a familiar person',
+  Nĩa: 'Fork',
+  'Phát hiện {who} bị té ngã. Hãy kiểm tra ngay và mở VisionAid để phản hồi.':
+    'A fall has been detected for {who}. Please check on them immediately and open VisionAid to respond.',
+  Pizza: 'Pizza',
+  'Quả bóng': 'Ball',
+  Sách: 'Book',
+  Thuyền: 'Boat',
+  Thìa: 'Spoon',
+  'Thông báo trên thiết bị': 'Device notification',
+  Tivi: 'TV',
+  'Trụ cứu hỏa': 'Fire hydrant',
+  'Trực tiếp trên web': 'Live on the web',
+  'Tàu hỏa': 'Train',
+  Táo: 'Apple',
+  'Túi xách': 'Handbag',
+  'Tủ lạnh': 'Refrigerator',
+  'Tự phát hiện té ngã': 'Fall detected automatically',
+  Vali: 'Suitcase',
+  'VisionAid — Cảnh báo khẩn cấp': 'VisionAid — Emergency alert',
+  'VisionAid — Cần chọn người chăm sóc chính mới': 'VisionAid — New primary caregiver needed',
+  'VisionAid — Phát hiện té ngã': 'VisionAid — Fall alert',
+  'VisionAid — Ra khỏi vùng an toàn': 'VisionAid — Left the safe zone',
+  'VisionAid — Thông báo mới': 'VisionAid — New notification',
+  Voi: 'Elephant',
+  'Ván lướt sóng': 'Surfboard',
+  'Ván trượt': 'Skateboard',
+  'Ván trượt tuyết': 'Skis',
+  'Vợt tennis': 'Tennis racket',
+  'Xe buýt': 'Bus',
+  'Xe máy': 'Motorbike',
+  'Xe tải': 'Truck',
+  'Xe đạp': 'Bicycle',
+  'Xúc xích kẹp': 'Hot dog',
+  '{label}: {detail}': '{label}: {detail}',
+  '{who} vừa gửi cảnh báo khẩn cấp. Hãy mở VisionAid ngay để tiếp nhận và phản hồi.':
+    '{who} triggered an emergency. Please open VisionAid now to acknowledge and respond.',
+  '{who} đã ra khỏi vùng an toàn.': '{who} has left the safe zone.',
+  '{who} đã ra khỏi vùng an toàn "{zone}".': '{who} has left the safe zone "{zone}".',
+  'Ô (dù)': 'Umbrella',
+  'Ô tô': 'Car',
+  'Đi tiếp': 'Go ahead',
+  'Điều khiển từ xa': 'Remote control',
+  'Đã bỏ qua': 'Dismissed',
+  'Đã cảnh báo bằng giọng nói': 'Warned by voice',
+  'Đã xử lý xong': 'Resolved',
+  'Đèn giao thông': 'Traffic light',
+  'Đĩa ném': 'Frisbee',
+  'Đồng hồ': 'Clock',
+  'Ảnh chụp hoặc màn hình, không phải người thật': 'A photo or screen, not a real person',
+  'ở gần': 'nearby',
+  'ở khoảng vừa': 'at a medium distance',
+  'ở xa': 'far away',
+  'Gia đình (Personal)': 'Family (Personal)',
+  'Trung tâm (Business)': 'Center (Business)',
+  'Số người dùng': 'Users',
+  'Đóng điều hướng': 'Close navigation',
+  '30 ngày qua': 'Last 30 days',
+  'Báo cáo trung tâm': 'Center reports',
+  'Bạn chưa có gói dịch vụ. Chọn gói để dùng đầy đủ chức năng.':
+    'You have no plan yet. Choose a plan to use every feature.',
+  'Chưa có người được chăm sóc. Thêm tài khoản hoặc nhận lời mời ở trang người dùng.':
+    'No one in your care yet. Add an account or accept an invitation on the users page.',
+  'Chưa có thao tác nào được ghi lại.': 'No actions recorded yet.',
+  'Chưa có thông báo nào. Cảnh báo và tin nhắn hệ thống sẽ hiện ở đây.':
+    'No notifications yet. Alerts and system messages will show here.',
+  'Chưa có vị trí từ điện thoại': 'No location from the phone yet',
+  'Chưa đọc được cảnh báo': 'Could not read alerts',
+  'Chưa đọc được tình hình trung tâm': 'Could not read the center status',
+  'Chưa đọc được tình trạng gửi thông báo': 'Could not read the notification delivery status',
+  'Còn {days} ngày': '{days} days left',
+  'Có cảnh báo': 'Has an alert',
+  'Cảnh báo và hoạt động theo khoảng ngày.': 'Alerts and activity by date range.',
+  'Cấp, thu hồi và mua thêm suất.': 'Assign, revoke and buy more seats.',
+  'Cần để mắt tới': 'Needs a look',
+  'Doanh thu theo ngày từ {from} đến {to}': 'Daily revenue from {from} to {to}',
+  'Doanh thu tháng này': 'Revenue this month',
+  'Doanh thu thực nhận': 'Net revenue',
+  'Gia hạn hoặc đổi gói': 'Renew or change plan',
+  'Gia đình trả phí': 'Paying families',
+  'Giao dịch thành công': 'Successful payments',
+  'Giá, thời hạn và tính năng của từng gói.': 'Price, duration and features of each plan.',
+  'Gói của bạn': 'Your plan',
+  'Gửi lỗi': 'Failed',
+  'Gửi thông báo trong 7 ngày': 'Notifications sent in 7 days',
+  'Hãy mở trung tâm cảnh báo để kiểm tra trực tiếp.': 'Open the alert center to check directly.',
+  'Hết hạn lúc {time}.': 'Expires at {time}.',
+  'Kho hết hạn': 'Pool expires',
+  'Kho suất sử dụng': 'Seat pool',
+  'Khóa, mở khóa và đặt lại mật khẩu.': 'Lock, unlock and reset passwords.',
+  'Không ai trong trung tâm đang có cảnh báo mở.': 'No one in the center has an open alert.',
+  'Không có cảnh báo nào đang mở trong phạm vi bạn chăm sóc.':
+    'There are no open alerts for the people in your care.',
+  'Kết quả nhận diện và đọc chữ theo ngày.': 'Recognition and text reading results by day.',
+  'Lần nhận diện gương mặt': 'Face recognitions',
+  'Lần đọc chữ': 'Text readings',
+  'Mọi người đều ổn': 'Everyone is all right',
+  'Mở bản đồ toàn trung tâm': 'Open the center map',
+  'Mở bản đồ toàn trung tâm để kiểm tra trực tiếp.': 'Open the center map to check directly.',
+  'Mở cảnh báo để xem vị trí và tiếp nhận. Sau 5 phút chưa ai tiếp nhận, hãy cân nhắc gọi 115.':
+    'Open the alert to see the location and acknowledge it. If no one acknowledges within 5 minutes, consider calling 115.',
+  'Mở hộp thư': 'Open inbox',
+  'Mở trang theo dõi thông báo để kiểm tra trực tiếp.':
+    'Open notification monitoring to check directly.',
+  'Người thân của bạn': 'People in your care',
+  'Người được gọi khi cần giúp đỡ.': 'Who gets called when help is needed.',
+  'Suất còn trống': 'Free seats',
+  'Suất đã cấp {used} trên {total}': '{used} of {total} seats assigned',
+  'Số ngày còn lại': 'Days left',
+  'Thao tác gần đây': 'Recent actions',
+  'Thêm trung tâm, kho suất và quản trị viên.': 'Add centers, seat pools and administrators.',
+  'Thông báo đang được gửi bình thường': 'Notifications are being delivered normally',
+  'Thông tin liên hệ, mật khẩu và thông báo trình duyệt.':
+    'Contact details, password and browser notifications.',
+  'Trung tâm chưa có người khiếm thị đang hoạt động.':
+    'The center has no active visually impaired users yet.',
+  'Trung tâm trả phí': 'Paying centers',
+  'Trung tâm đang yên ổn': 'All quiet at the center',
+  'Tài khoản và phân công chăm sóc.': 'Accounts and care assignments.',
+  'Tình hình những người bạn đang chăm sóc.': 'How the people in your care are doing.',
+  'Tình hình toàn hệ thống hôm nay.': 'How the whole system is doing today.',
+  'Tình hình trung tâm của bạn hôm nay.': 'How your center is doing today.',
+  'Tổ chức và trung tâm': 'Organizations and centers',
+  'Vật cản, dẫn đường, đọc chữ và nhận diện.':
+    'Obstacles, navigation, text reading and recognition.',
+  'Vị trí ghi nhận gần nhất của từng người.': 'The latest recorded location of each person.',
+  'Vị trí trong 2 phút qua': 'Located in the last 2 minutes',
+  'Vừa cập nhật': 'Just updated',
+  'Xem báo cáo doanh thu': 'View revenue report',
+  'Xem cảnh báo': 'View alert',
+  'Xem thông báo lỗi': 'View failed notifications',
+  'Xem trên bản đồ': 'View on map',
+  'Xem {name}': 'View {name}',
+  'trên {total} người': 'of {total} people',
+  'trên {total} suất': 'of {total} seats',
+  '{count} cảnh báo đang chờ bạn tiếp nhận': '{count} alerts waiting for you to acknowledge',
+  '{count} cảnh báo đang được xử lý': '{count} alerts being handled',
+  '{count} người đang có cảnh báo': '{count} people have an open alert',
+  '{count} thông báo gửi lỗi trong 24 giờ qua': '{count} notifications failed in the last 24 hours',
+  '{count} thông báo đang chờ gửi': '{count} notifications waiting to be sent',
+  '{count} đang chờ': '{count} pending',
+  'Đang hiện {shown} trên {total} người.': 'Showing {shown} of {total} people.',
+  'Đang kiểm tra cảnh báo…': 'Checking alerts…',
+  'Đang kiểm tra hệ thống…': 'Checking the system…',
+  'Đang kiểm tra trung tâm…': 'Checking the center…',
+  'Đang tìm vị trí…': 'Finding location…',
+  'Đi nhanh tới': 'Go to',
+  'Đã có người tiếp nhận. Theo dõi đến khi cảnh báo được xử lý xong.':
+    'Someone has acknowledged it. Follow it until the alert is resolved.',
+  'Đã gửi {sent} thông báo trong 24 giờ qua.': '{sent} notifications sent in the last 24 hours.',
+  'Không có giao dịch đang chờ trong 10 giao dịch gần nhất.':
+    'No pending payments among the 10 latest payments.',
+  'Xem kho suất sử dụng': 'View seat pool',
+  'Xem gói dịch vụ': 'View plan',
+  'Gói của tôi': 'My plan',
+  'Đã cấp {used} trên {total} suất': '{used} of {total} seats assigned',
+  'Người chăm sóc chính luôn có đủ quyền.': 'A primary caregiver always has every permission.',
+  'Người nhận chưa bật nhận thông báo trên thiết bị nào (trình duyệt ở trang Hồ sơ hoặc ứng dụng điện thoại).':
+    'The recipient has not turned on notifications on any device (browser on the Profile page, or the phone app).',
+  'Máy chủ chưa cấu hình dịch vụ thông báo đẩy (Firebase).':
+    'The server has not configured the push notification service (Firebase).',
+  'Thiết bị đã đăng ký không còn hợp lệ. Người nhận cần bật lại thông báo.':
+    'The registered device is no longer valid. The recipient needs to turn notifications on again.',
+  'Thiết bị đăng ký với dự án Firebase khác với máy chủ.':
+    'The device is registered with a different Firebase project than the server.',
+  'Người nhận chưa có địa chỉ email.': 'The recipient has no email address.',
+  'Thông báo chưa tới được thiết bị. Thường là do chưa bật nhận thông báo trên trình duyệt hoặc ứng dụng điện thoại.':
+    'The notification did not reach a device. Usually notifications are not turned on in the browser or the phone app.',
+  'Bật thông báo để nhận cảnh báo té ngã ngay cả khi không mở trang VisionAid.':
+    'Turn on notifications to get fall alerts even when VisionAid is not open.',
+  'Bật thông báo': 'Turn on notifications',
+  'Chưa bật được thông báo. Thử lại ở trang Hồ sơ.':
+    'Could not turn on notifications. Try again on the Profile page.',
+  'Trình duyệt đang chặn thông báo. Bấm biểu tượng bên trái thanh địa chỉ, chọn Cho phép thông báo rồi tải lại trang.':
+    'The browser is blocking notifications. Click the icon left of the address bar, allow notifications, then reload the page.',
+  'Để sau': 'Later',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',
@@ -2972,7 +3172,7 @@ export const en = {
   'Dữ liệu chỉ hiển thị theo quyền được cấp':
     'Data is shown only within the permissions you were given',
   'Quản lý tối đa 3 liên kết đang hoạt động.': 'Manage up to 3 active links.',
-  'License đã hết hạn. Máy chủ báo còn {days} ngày gia hạn trước khi các chức năng bị khóa.':
+  'Gói dịch vụ đã hết hạn. Máy chủ báo còn {days} ngày gia hạn trước khi các chức năng bị khóa.':
     'Your license has expired. The server reports {days} grace days left before features are locked.',
   'Thanh toán trực tuyến đang tạm ngưng. Chưa có giao dịch nào được tạo. Vui lòng thử lại sau hoặc liên hệ quản trị hệ thống.':
     'Online payment is paused. No transaction was created. Please try again later or contact the system administrator.',
@@ -3028,7 +3228,6 @@ export const en = {
   'Quét mã QR': 'QR scan',
   'Tổ chức của bạn': 'Your organization',
   'Đăng ký gói': 'Subscription',
-  'Đọc chữ (OCR)': 'Text reading (OCR)',
   'Ảnh khuôn mặt': 'Face photo',
   'Xác nhận thay đổi': 'Confirm changes',
   'Kiểm tra lại các quyền sẽ được lưu cho liên kết này.':

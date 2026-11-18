@@ -1,6 +1,6 @@
 import { ArrowRight, MapPinned, RefreshCw, Siren } from 'lucide-react';
 import * as AnimatedTabs from '@animate-ui/react/primitives/radix-ui/tabs';
-import { t, msg, labelMap, formatLocaleDateTime } from '../../i18n';
+import { t, formatLocaleDateTime } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -28,21 +28,16 @@ import { searchCareRecipients } from '../../services/api/pickers';
 import { useNow } from '../../hooks/useNow';
 import { onSessionEnded } from '../../services/sessionLifecycle';
 import type { Person } from '../../models/domain';
+import { boundaryLabels, detectionMethodLabels } from '../../constants/serverValues';
 import { roles } from '../../constants/labels';
-import { deliveryChannelLabels, deliveryStatusLabels } from '../../services/api/inbox';
+import {
+  deliveryChannelLabels,
+  deliveryStatusLabels,
+  failureReasonText,
+} from '../../services/api/inbox';
 import { useSearchParams } from 'react-router-dom';
 const time = (value: string) => formatLocaleDateTime(value);
-const methods: Record<string, string> = labelMap({
-  AccelerometerCamera: msg('Cảm biến / camera'),
-  Manual: msg('Thủ công'),
-  VoiceCommand: msg('Giọng nói'),
-  Gesture: msg('Cử chỉ'),
-});
-const boundaryLabels: Record<string, string> = labelMap({
-  Entered: msg('Đi vào vùng an toàn'),
-  Exited: msg('Ra khỏi vùng an toàn'),
-  Arrived: msg('Đến địa điểm đã lưu'),
-});
+const methods = detectionMethodLabels;
 export function ApiAlerts() {
   const { data: actor } = useSession();
   return actor?.role === 'Caregiver' ? <Alerts key={actor.id} actor={actor} /> : null;
@@ -742,7 +737,7 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                                 {n.status === 'Failed' && n.failureReason && (
                                   <>
                                     <br />
-                                    <small>{n.failureReason}</small>
+                                    <small>{failureReasonText(n.failureReason)}</small>
                                   </>
                                 )}
                               </td>

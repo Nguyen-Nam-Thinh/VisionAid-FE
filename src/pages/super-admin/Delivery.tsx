@@ -92,10 +92,8 @@ export function Delivery() {
             <Badge>{labels[delivery.status]}</Badge>
             <p>
               {delivery.status === 'FAILED'
-                ? t(
-                    'Kịch bản demo: nhà cung cấp tạm thời không khả dụng. Chưa có API retry được xác nhận.',
-                  )
-                : t('Bản ghi trạng thái minh họa từ dịch vụ mock.')}
+                ? t('Kịch bản demo: nhà cung cấp tạm thời không khả dụng. Chưa hỗ trợ gửi lại.')
+                : t('Bản ghi trạng thái minh họa của bản demo.')}
             </p>
             <small>{formatTime(delivery.at)}</small>
           </div>

@@ -48,7 +48,7 @@ export function Registry() {
             </Badge>
             <p className="notice">
               {t(
-                'Chỉ dùng ảnh thử nghiệm. Demo lưu ảnh cục bộ; mã hóa AES-256 và xóa MinIO thuộc backend, chưa được thực hiện ở đây. Giới hạn demo 2 MB/ảnh.',
+                'Chỉ dùng ảnh thử nghiệm. Bản demo lưu ảnh ngay trên trình duyệt; việc mã hóa và xóa ảnh do máy chủ thực hiện, bản demo không làm. Giới hạn demo 2 MB/ảnh.',
               )}
             </p>
             {canWrite('faces', face) && (

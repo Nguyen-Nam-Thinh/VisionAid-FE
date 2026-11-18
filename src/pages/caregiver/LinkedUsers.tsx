@@ -179,7 +179,7 @@ export function LinkedUsers() {
             <strong className="mono">{code}</strong>
             <p>
               {t(
-                'Mã dùng một lần, hết hạn sau 10 phút. Đăng nhập tài khoản Caregiver khác trên trình duyệt này rồi nhập mã. Đây là luồng demo, không phải QR production.',
+                'Mã dùng một lần, hết hạn sau 10 phút. Đăng nhập tài khoản người chăm sóc khác trên trình duyệt này rồi nhập mã. Đây là bản demo, chưa phải mã QR thật.',
               )}
             </p>
           </div>

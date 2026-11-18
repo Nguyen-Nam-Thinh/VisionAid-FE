@@ -73,7 +73,10 @@ export function createLicensePoolsApi(get = apiGet) {
       signal?: AbortSignal,
     ) {
       if (actor.role !== 'Admin')
-        throw new ServiceError(t('Chỉ quản trị hệ thống được xem kho license các trung tâm.'), 403);
+        throw new ServiceError(
+          t('Chỉ quản trị hệ thống được xem kho suất sử dụng các trung tâm.'),
+          403,
+        );
       if (!Number.isInteger(page) || page < 1)
         throw new ServiceError(t('Trang không hợp lệ.'), 400);
       const query = new URLSearchParams({ page: String(page), pageSize: '10' });
@@ -94,7 +97,7 @@ export function createLicensePoolsApi(get = apiGet) {
       }
       const parsed = overviewSchema.safeParse(await get('/api/licenses/pools?' + query, signal));
       if (!parsed.success)
-        throw new ServiceError(t('Dữ liệu kho license từ máy chủ không hợp lệ.'), 502);
+        throw new ServiceError(t('Dữ liệu kho suất sử dụng từ máy chủ không hợp lệ.'), 502);
       return parsed.data;
     },
   };

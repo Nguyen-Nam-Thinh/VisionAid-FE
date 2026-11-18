@@ -88,11 +88,7 @@ function Change({
         <dl className="record-details">
           <div>
             <dt>{t('Giá trị hiện tại')}</dt>
-            <dd>{config.configValue}</dd>
-          </div>
-          <div>
-            <dt>{t('Kiểu dữ liệu')}</dt>
-            <dd>{config.valueType}</dd>
+            <dd>{configValue(config)}</dd>
           </div>
           <div>
             <dt>{t('Giới hạn')}</dt>

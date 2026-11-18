@@ -13,6 +13,7 @@ const events = {
     callerName: z.string(),
     triggerType: z.enum(['CaregiverInitiated', 'ViuVoiceCommand', 'SosAuto']),
     receiverRole: z.literal('video_viewer_audio_sender'),
+    emergencyEventId: id.nullable().optional(),
   }),
   WebRtcCallAccepted: z.object({
     sessionId: id,
@@ -35,6 +36,8 @@ export type CallView = {
   name: string;
   sessionId: string;
   viuId: string;
+  /** The alert behind an SOS call; answering it acknowledges that alert on the server. */
+  alertId: string;
   message: string;
   muted: boolean;
   remote: MediaStream | null;
@@ -84,6 +87,7 @@ export function createCallClient({
     name: '',
     sessionId: '',
     viuId: '',
+    alertId: '',
     message: '',
     muted: false,
     remote: null,
@@ -189,6 +193,7 @@ export function createCallClient({
         phase: 'incoming',
         sessionId: call.sessionId,
         viuId: call.viuUserId,
+        alertId: call.emergencyEventId ?? '',
         name,
         message:
           call.triggerType === 'SosAuto'
@@ -411,7 +416,7 @@ export function createCallClient({
       name,
       message: t('Đang xin quyền micro…'),
       license: false,
-      ...(incoming ? {} : { sessionId: '' }),
+      ...(incoming ? {} : { sessionId: '', alertId: '' }),
     });
     try {
       // Incoming calls skip the link lookup: GET /api/caregiver-links is license-gated (402) while
@@ -431,6 +436,7 @@ export function createCallClient({
       confirmed = true;
       update({
         sessionId: session.sessionId,
+        ...(session.emergencyEventId ? { alertId: session.emergencyEventId } : {}),
         phase: incoming ? 'connecting' : 'ringing',
         message: incoming ? t('Đang chờ âm thanh và hình ảnh…') : t('Đang đổ chuông…'),
       });
@@ -490,6 +496,7 @@ export function createCallClient({
           sessionId: '',
           name: '',
           viuId: '',
+          alertId: '',
           message: '',
         });
       };
@@ -528,7 +535,7 @@ export function createCallClient({
     },
     dismiss() {
       if (!active()) {
-        update({ phase: 'idle', message: '', sessionId: '', name: '', viuId: '' });
+        update({ phase: 'idle', message: '', sessionId: '', name: '', viuId: '', alertId: '' });
         void recover();
       }
     },

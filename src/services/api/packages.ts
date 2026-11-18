@@ -72,9 +72,13 @@ export function packageInput(values: Fields, current?: LicensePackage) {
   try {
     featureFlags = JSON.parse(String(values.featureFlags || '{}'));
   } catch {
-    throw new ServiceError(t('Feature flags cần là JSON với giá trị true/false.'), 400, {
-      featureFlags: t('JSON không hợp lệ.'),
-    });
+    throw new ServiceError(
+      t('Danh sách tính năng cần đúng định dạng, mỗi giá trị là true hoặc false.'),
+      400,
+      {
+        featureFlags: t('Dữ liệu không đúng định dạng.'),
+      },
+    );
   }
   const annual = String(values.priceYearly ?? '').trim();
   // Empty yearly price is sent as null: BE clears it, and the package is sold monthly only.
@@ -94,6 +98,10 @@ export function packageInput(values: Fields, current?: LicensePackage) {
     );
   return result.data;
 }
+// BE keeps the trial / default packages; DbSeeder would re-create them anyway (422 PACKAGE_PROTECTED).
+const SYSTEM_PACKAGE_CODES = ['PERSONAL', 'BUSINESS'];
+export const canDeletePackage = (item: Pick<LicensePackage, 'code'>) =>
+  !SYSTEM_PACKAGE_CODES.includes(item.code.toUpperCase());
 export function createPackagesApi(get = apiGet, write = apiWrite) {
   return {
     async list(actor: Actor, page: number, active: string, signal?: AbortSignal) {
@@ -123,6 +131,36 @@ export function createPackagesApi(get = apiGet, write = apiWrite) {
       if (current && item.id !== current.id)
         throw new ServiceError(t('Máy chủ trả về sai gói. Tải lại trước khi thao tác tiếp.'), 502);
       return item;
+    },
+    /** BE 6a56712: hard-delete a package nobody ever bought; used ones must be stopped instead. */
+    async remove(actor: Actor, item: LicensePackage) {
+      check(actor, true, item.id);
+      if (!canDeletePackage(item))
+        throw new ServiceError(
+          t('Gói hệ thống không thể xóa. Hãy ngừng bán nếu không dùng nữa.'),
+          422,
+        );
+      try {
+        await write('/api/licenses/packages/' + item.id, { method: 'DELETE' });
+      } catch (error) {
+        if (error instanceof ServiceError && error.code === 'PACKAGE_IN_USE')
+          throw new ServiceError(
+            t(
+              'Gói đã có người mua hoặc đang được dùng. Hãy bỏ chọn “Đang mở bán” để ngừng bán thay vì xóa.',
+            ),
+            409,
+            undefined,
+            error.code,
+          );
+        if (error instanceof ServiceError && error.code === 'PACKAGE_PROTECTED')
+          throw new ServiceError(
+            t('Gói hệ thống không thể xóa. Hãy ngừng bán nếu không dùng nữa.'),
+            422,
+            undefined,
+            error.code,
+          );
+        throw error;
+      }
     },
   };
 }

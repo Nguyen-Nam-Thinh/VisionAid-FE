@@ -121,7 +121,7 @@ function Organizations({ user }: { user: Person }) {
         title={admin ? t('Tổ chức & trung tâm') : t('Hồ sơ trung tâm')}
         description={
           admin
-            ? t('Danh sách trung tâm, thành viên và kho license của từng trung tâm.')
+            ? t('Danh sách trung tâm, thành viên và kho suất sử dụng của từng trung tâm.')
             : t('Thông tin liên hệ và thành viên của trung tâm.')
         }
       />
@@ -493,7 +493,7 @@ function OrganizationDetails({
             org.name +
             (action === 'activate'
               ? t(': khôi phục tổ chức; thành viên vẫn cần được kích hoạt riêng.')
-              : t(': thành viên đang hoạt động sẽ bị vô hiệu hóa và thu hồi phiên/FCM.') +
+              : t(': thành viên đang hoạt động sẽ bị vô hiệu hóa và đăng xuất khỏi mọi thiết bị.') +
                 (action === 'delete' ? t(' Tổ chức được đánh dấu xóa mềm.') : ''))
           }
           onClose={() => setAction(null)}
@@ -615,26 +615,26 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
   const done = (next?: OrganizationPool) =>
     setNotice(
       !next
-        ? t('Đã gửi yêu cầu. Tải lại kho license để xem trạng thái mới.')
+        ? t('Đã gửi yêu cầu. Tải lại kho suất sử dụng để xem trạng thái mới.')
         : next.status === 'Suspended'
-          ? t('Đã tạm ngưng kho license.')
+          ? t('Đã tạm ngưng kho suất sử dụng.')
           : next.status === 'Expired'
             ? t('Đã kích hoạt lại, nhưng kho đã quá hạn nên ở trạng thái Đã hết hạn.')
-            : t('Đã kích hoạt lại kho license.'),
+            : t('Đã kích hoạt lại kho suất sử dụng.'),
     );
   const missing = pool.error instanceof ServiceError && pool.error.status === 404;
   return (
     <section className="stack" aria-labelledby={'pool-' + org.id}>
       <div className="row between">
-        <h3 id={'pool-' + org.id}>{t('Kho license')}</h3>
+        <h3 id={'pool-' + org.id}>{t('Kho suất sử dụng')}</h3>
         <button className="btn small" disabled={pool.isFetching} onClick={() => void reload()}>
           <RefreshCw size={16} aria-hidden="true" />
-          {t('Tải lại kho license')}
+          {t('Tải lại kho suất sử dụng')}
         </button>
       </div>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {missing ? (
-        <p>{t('Tổ chức chưa có kho license.')}</p>
+        <p>{t('Tổ chức chưa có kho suất sử dụng.')}</p>
       ) : (
         <State loading={pool.isPending} error={pool.error} retry={() => void reload()}>
           {pool.data && (
@@ -711,11 +711,11 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
         </State>
       )}
       {action === 'suspend' && pool.data && (
-        <Dialog title={t('Tạm ngưng kho license')} onClose={() => setAction(null)}>
+        <Dialog title={t('Tạm ngưng kho suất sử dụng')} onClose={() => setAction(null)}>
           <div className="stack">
             <p>
               {t(
-                '{name}: người được chăm sóc đang dùng license của kho sẽ chuyển về Chưa có license cho tới khi kích hoạt lại. Trung tâm không cấp thêm suất hoặc tạo mã được.',
+                '{name}: người được chăm sóc đang dùng gói dịch vụ của kho sẽ chuyển về Chưa có gói dịch vụ cho tới khi kích hoạt lại. Trung tâm không cấp thêm suất hoặc tạo mã được.',
                 { name: org.name },
               )}
             </p>
@@ -746,7 +746,7 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
         </Dialog>
       )}
       {action === 'renew' && pool.data && (
-        <Dialog title={t('Gia hạn kho license')} onClose={() => setAction(null)}>
+        <Dialog title={t('Gia hạn kho suất sử dụng')} onClose={() => setAction(null)}>
           <div className="stack">
             <p>
               {t(
@@ -795,10 +795,10 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
                 const shown = fresh ?? next;
                 setNotice(
                   shown?.expiresAt
-                    ? t('Đã gia hạn kho license đến {date}.', {
+                    ? t('Đã gia hạn kho suất sử dụng đến {date}.', {
                         date: formatLocaleDateTime(shown.expiresAt),
                       })
-                    : t('Đã gửi yêu cầu. Tải lại kho license để xem trạng thái mới.'),
+                    : t('Đã gửi yêu cầu. Tải lại kho suất sử dụng để xem trạng thái mới.'),
                 );
                 setAction(null);
               }}
@@ -808,9 +808,9 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
       )}
       {action === 'reactivate' && pool.data && (
         <Confirm
-          title={t('Kích hoạt lại kho license')}
+          title={t('Kích hoạt lại kho suất sử dụng')}
           description={t(
-            '{name}: kho trở về Đang hoạt động, hoặc Đã hết hạn nếu đã qua ngày hết hạn. License của người được chăm sóc được khôi phục theo trạng thái đó.',
+            '{name}: kho trở về Đang hoạt động, hoặc Đã hết hạn nếu đã qua ngày hết hạn. Gói dịch vụ của người được chăm sóc được khôi phục theo trạng thái đó.',
             { name: org.name },
           )}
           onClose={() => setAction(null)}

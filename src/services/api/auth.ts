@@ -224,7 +224,7 @@ export function createApiAuth(
       );
     const p = parsed.data;
     if (!p.isActive || p.role === 'VisuallyImpaired')
-      throw new ServiceError(t('Tài khoản này không được truy cập Web Dashboard.'), 403);
+      throw new ServiceError(t('Tài khoản này không được truy cập trang quản lý trên web.'), 403);
     return {
       id: p.id,
       name: p.fullName,

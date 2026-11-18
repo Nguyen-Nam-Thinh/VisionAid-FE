@@ -87,7 +87,7 @@ export function validateIceInput(input: IceInput) {
       input.credential.length > 200)
   )
     throw new ServiceError(
-      t('TURN cần tên đăng nhập và credential, mỗi giá trị tối đa 200 ký tự.'),
+      t('TURN cần tên đăng nhập và mật khẩu, mỗi giá trị tối đa 200 ký tự.'),
       400,
     );
   return {

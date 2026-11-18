@@ -36,9 +36,9 @@ export const subscriptionLabels = labelMap({
 });
 export function viuLicenseLabel(status?: string | null) {
   return status === 'None'
-    ? t('Chưa có license')
+    ? t('Chưa có gói dịch vụ')
     : subscriptionLabels[status as keyof typeof subscriptionLabels] ||
-        t('Chưa có thông tin license từ máy chủ');
+        t('Chưa có thông tin gói dịch vụ từ máy chủ');
 }
 export const isPersonalCaregiver = (user: Person) => user.role === 'Caregiver' && !user.orgId;
 export const isOrganizationBuyer = (user: Person) => user.role === 'CenterAdmin' && !!user.orgId;
@@ -153,7 +153,7 @@ export async function cancelPoolChange(user: Person, poolId: string, write = api
   if (!isOrganizationBuyer(user))
     throw new ServiceError(t('Chỉ quản trị viên trung tâm được đổi gói Business.'), 403);
   if (!z.string().uuid().safeParse(poolId).success)
-    throw new ServiceError(t('Kho license không hợp lệ. Hãy tải lại.'), 400);
+    throw new ServiceError(t('Kho suất sử dụng không hợp lệ. Hãy tải lại.'), 400);
   const parsed = pool.safeParse(
     await write(`/api/licenses/pool/${poolId}/scheduled-change`, { method: 'DELETE' }),
   );
@@ -161,12 +161,12 @@ export async function cancelPoolChange(user: Person, poolId: string, write = api
 }
 export async function getOrganizationPool(user: Person, signal?: AbortSignal, get = apiGet) {
   if (!isOrganizationBuyer(user))
-    throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được xem kho license.'), 403);
+    throw new ServiceError(t('Chỉ quản trị trung tâm có tổ chức được xem kho suất sử dụng.'), 403);
   const parsed = pool.safeParse(await get('/api/licenses/pool', signal));
   if (!parsed.success)
-    throw new ServiceError(t('Dữ liệu kho license không hợp lệ. Hãy tải lại.'), 502);
+    throw new ServiceError(t('Dữ liệu kho suất sử dụng không hợp lệ. Hãy tải lại.'), 502);
   if (parsed.data.organizationId !== user.orgId)
-    throw new ServiceError(t('Máy chủ trả về kho license không thuộc tổ chức của bạn.'), 403);
+    throw new ServiceError(t('Máy chủ trả về kho suất sử dụng không thuộc tổ chức của bạn.'), 403);
   return parsed.data;
 }
 
@@ -183,11 +183,11 @@ export async function setPoolSuspended(
 ) {
   if (user.role !== 'Admin')
     throw new ServiceError(
-      t('Chỉ quản trị hệ thống được tạm ngưng hoặc kích hoạt lại kho license.'),
+      t('Chỉ quản trị hệ thống được tạm ngưng hoặc kích hoạt lại kho suất sử dụng.'),
       403,
     );
   if (!z.string().uuid().safeParse(poolId).success)
-    throw new ServiceError(t('Kho license không hợp lệ. Hãy tải lại.'), 400);
+    throw new ServiceError(t('Kho suất sử dụng không hợp lệ. Hãy tải lại.'), 400);
   const note = reason.trim();
   if (note.length > 500) throw new ServiceError(t('Lý do tối đa 500 ký tự.'), 400);
   const query = suspended && note ? '?' + new URLSearchParams({ reason: note }) : '';
@@ -210,7 +210,7 @@ export async function renewPool(
   now = Date.now(),
 ) {
   if (user.role !== 'Admin')
-    throw new ServiceError(t('Chỉ quản trị hệ thống được gia hạn kho license thủ công.'), 403);
+    throw new ServiceError(t('Chỉ quản trị hệ thống được gia hạn kho suất sử dụng thủ công.'), 403);
   if (current.status === 'Suspended')
     throw new ServiceError(t('Kho đang tạm ngưng. Kích hoạt lại kho trước khi gia hạn.'), 422);
   const expiry = Date.parse(newExpiresAt);
@@ -251,7 +251,7 @@ export async function setPoolAutoRenew(
       403,
     );
   if (!z.string().uuid().safeParse(current.id).success)
-    throw new ServiceError(t('Kho license không hợp lệ. Hãy tải lại.'), 400);
+    throw new ServiceError(t('Kho suất sử dụng không hợp lệ. Hãy tải lại.'), 400);
   const raw = await write(`/api/licenses/pool/${current.id}/auto-renew`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -270,15 +270,18 @@ export async function getAdminOrganizationPool(
   get = apiGet,
 ) {
   if (user.role !== 'Admin')
-    throw new ServiceError(t('Chỉ quản trị hệ thống được xem kho license của tổ chức khác.'), 403);
+    throw new ServiceError(
+      t('Chỉ quản trị hệ thống được xem kho suất sử dụng của tổ chức khác.'),
+      403,
+    );
   if (!z.string().uuid().safeParse(organizationId).success)
     throw new ServiceError(t('Tổ chức không hợp lệ.'), 400);
   const query = new URLSearchParams({ organizationId });
   const parsed = pool.safeParse(await get('/api/licenses/pool?' + query, signal));
   if (!parsed.success)
-    throw new ServiceError(t('Dữ liệu kho license không hợp lệ. Hãy tải lại.'), 502);
+    throw new ServiceError(t('Dữ liệu kho suất sử dụng không hợp lệ. Hãy tải lại.'), 502);
   if (parsed.data.organizationId !== organizationId)
-    throw new ServiceError(t('Kho license trả về không thuộc tổ chức đã chọn.'), 502);
+    throw new ServiceError(t('Kho suất sử dụng trả về không thuộc tổ chức đã chọn.'), 502);
   return parsed.data;
 }
 
@@ -307,7 +310,8 @@ export const canCancelRenewal = (sub: MySubscription) =>
  * codes renew through the pool; only Active can turn it on (Trial may only turn it off).
  */
 export function autoRenewBlock(sub: MySubscription) {
-  if (sub.isOrgIssued) return t('Gói do trung tâm cấp được gia hạn theo kho license của tổ chức.');
+  if (sub.isOrgIssued)
+    return t('Gói do trung tâm cấp được gia hạn theo kho suất sử dụng của tổ chức.');
   if (sub.status === 'Active' || (sub.status === 'Trial' && sub.autoRenew)) return null;
   return sub.status === 'Trial'
     ? t('Gói dùng thử không tự gia hạn. Mua gói Personal để bật tự gia hạn.')
@@ -327,7 +331,7 @@ export async function setMyAutoRenew(
   if (!isPersonalCaregiver(user))
     throw new ServiceError(t('Chỉ người chăm sóc cá nhân được đổi tự gia hạn gói của mình.'), 403);
   if (!z.string().uuid().safeParse(sub.id).success)
-    throw new ServiceError(t('Dữ liệu subscription không hợp lệ. Hãy tải lại.'), 400);
+    throw new ServiceError(t('Dữ liệu gói dịch vụ không hợp lệ. Hãy tải lại.'), 400);
   const blocked = autoRenewBlock(sub);
   if (blocked || (autoRenew && sub.status !== 'Active'))
     throw new ServiceError(blocked ?? t('Chỉ bật tự gia hạn được khi gói đang hoạt động.'), 422);
@@ -343,10 +347,10 @@ export async function setMyAutoRenew(
 
 export async function getMySubscription(user: Person, signal?: AbortSignal, get = apiGet) {
   if (!isPersonalCaregiver(user))
-    throw new ServiceError(t('Tài khoản không dùng subscription cá nhân.'), 403);
+    throw new ServiceError(t('Tài khoản không dùng gói dịch vụ cá nhân.'), 403);
   const parsed = subscription.safeParse(await get('/api/licenses/subscription', signal));
   if (!parsed.success)
-    throw new ServiceError(t('Dữ liệu subscription không hợp lệ. Hãy tải lại.'), 502);
+    throw new ServiceError(t('Dữ liệu gói dịch vụ không hợp lệ. Hãy tải lại.'), 502);
   return parsed.data;
 }
 
@@ -390,9 +394,9 @@ export function licenseSummary(user: Person, now = Date.now(), warning: LicenseW
   if (!isPersonalCaregiver(user))
     return user.role === 'Caregiver'
       ? t(
-          'Nhân viên thuộc tổ chức nên không yêu cầu license cá nhân. Quyền dữ liệu vẫn theo phân công.',
+          'Nhân viên thuộc tổ chức nên không yêu cầu gói dịch vụ cá nhân. Quyền dữ liệu vẫn theo phân công.',
         )
-      : t('Tài khoản quản trị không yêu cầu license cá nhân.');
+      : t('Tài khoản quản trị không yêu cầu gói dịch vụ cá nhân.');
   const expiry = user.licenseExpiresAt ? Date.parse(user.licenseExpiresAt) : NaN;
   const days = Number.isFinite(expiry) ? Math.max(0, Math.ceil((expiry - now) / 86400000)) : null;
   switch (user.licenseStatus) {
@@ -401,21 +405,23 @@ export function licenseSummary(user: Person, now = Date.now(), warning: LicenseW
         p0: days === null ? '' : t(' · Còn {days} ngày theo thời hạn hồ sơ', { days }),
       });
     case 'Active':
-      return t('License đang hoạt động theo trạng thái máy chủ.');
+      return t('Gói dịch vụ đang hoạt động theo trạng thái máy chủ.');
     case 'Expired':
       if (warning?.kind === 'grace')
         return t(
-          'License đã hết hạn, máy chủ báo còn {days} ngày gia hạn. Gia hạn trước khi các chức năng bị khóa.',
+          'Gói dịch vụ đã hết hạn, máy chủ báo còn {days} ngày gia hạn. Gia hạn trước khi các chức năng bị khóa.',
           { days: warning.daysLeft },
         );
       if (warning?.kind === 'expired')
-        return t('License đã hết hạn và quá thời gian gia hạn. Gia hạn để dùng lại các chức năng.');
+        return t(
+          'Gói dịch vụ đã hết hạn và quá thời gian gia hạn. Gia hạn để dùng lại các chức năng.',
+        );
       return t(
-        'License đã hết hạn. Một số chức năng có thể bị giới hạn; kiểm tra thông tin gia hạn.',
+        'Gói dịch vụ đã hết hạn. Một số chức năng có thể bị giới hạn; kiểm tra thông tin gia hạn.',
       );
     case 'None':
-      return t('Chưa có license cá nhân. Kiểm tra subscription hoặc thông tin kích hoạt.');
+      return t('Chưa có gói dịch vụ cá nhân. Kiểm tra gói dịch vụ hoặc thông tin kích hoạt.');
     default:
-      return t('Chưa xác định được trạng thái license từ máy chủ. Hãy tải lại thông tin.');
+      return t('Chưa xác định được trạng thái gói dịch vụ từ máy chủ. Hãy tải lại thông tin.');
   }
 }

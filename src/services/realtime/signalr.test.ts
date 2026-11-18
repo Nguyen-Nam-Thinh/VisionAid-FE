@@ -70,6 +70,24 @@ it('rejects malformed, duplicate and older events without synthesizing state', (
       }),
     ).toBe(true),
   );
+  // BE 6a56712: acknowledging (button or SOS call answer) refreshes alerts once per change.
+  const changed = {
+    eventId: id,
+    viuId: id,
+    status: 'Acknowledged',
+    changedBy: id,
+    changedAt: '2026-10-01T12:05:00Z',
+    source: 'SosCall',
+  };
+  expect(accept('EmergencyAlertStatusChanged', changed)).toBe(true);
+  expect(accept('EmergencyAlertStatusChanged', changed)).toBe(false);
+  expect(
+    accept('EmergencyAlertStatusChanged', {
+      ...changed,
+      status: 'Escalated',
+      changedAt: '2026-10-01T12:09:00Z',
+    }),
+  ).toBe(true);
   expect(hubUrl('', 'https://api.visionaid.net', 'https:')).toBe(
     'https://api.visionaid.net/hubs/location',
   );

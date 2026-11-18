@@ -125,8 +125,8 @@ nằm sau chữ. Trong không gian làm việc không dùng hoa văn.
 - Input trắng viền 1,5px `line-strong`, chữ 16px; hover viền đậm hơn.
 - Bảng: header `panel-sunk` chữ thường (không viết hoa), dòng hover `panel-sunk`, không zebra.
 - Link trong văn bản (không có class) luôn gạch chân; link dạng component tự có affordance.
-- Focus: vòng mực 3px trong quầng vàng 7px, đặt cuối `wayfinding.css` với `!important` để không
-  component nào che được.
+- Focus: một vòng mực 3px liền màu cách phần tử 2px (không thêm quầng vàng vì trông thành hai lớp viền);
+  ô nhập dùng viền mực dày hơn thay cho vòng. Đặt cuối `wayfinding.css` với `!important`.
 - Chuyển động chỉ phản hồi thao tác (dialog, menu, switch); tôn trọng prefers-reduced-motion.
 
 ## Do's and Don'ts

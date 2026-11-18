@@ -226,7 +226,7 @@ function Change({
         {!remove && (
           <p>
             {t(
-              'TURN cần nhập tên đăng nhập và credential mỗi lần lưu. Ô credential luôn trống khi mở, không dùng lại giá trị cũ. STUN bỏ qua hai ô này.',
+              'TURN cần nhập tên đăng nhập và mật khẩu mỗi lần lưu. Ô mật khẩu luôn trống khi mở, không dùng lại giá trị cũ. STUN bỏ qua hai ô này.',
             )}
           </p>
         )}
@@ -283,7 +283,7 @@ function Change({
                     },
                     {
                       key: 'credential',
-                      label: t('Credential TURN muốn áp dụng'),
+                      label: t('Mật khẩu TURN muốn áp dụng'),
                       type: 'password' as const,
                       max: 200,
                       autoComplete: 'new-password',

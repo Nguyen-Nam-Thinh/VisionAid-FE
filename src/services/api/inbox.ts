@@ -26,17 +26,82 @@ export const inboxTypeLabels: Record<string, string> = labelMap({
   GeofenceBreach: msg('Vượt vùng an toàn'),
   ArrivalNotification: msg('Thông báo đến nơi'),
   SystemAlert: msg('Thông báo hệ thống'),
-  LicenseExpiryWarning: msg('Cảnh báo license sắp hết hạn'),
+  LicenseExpiryWarning: msg('Cảnh báo gói dịch vụ sắp hết hạn'),
   EscalationSuggestion: msg('Gợi ý gọi hỗ trợ khẩn cấp'),
   EmergencyUnreachable: msg('Không liên hệ được ai'),
   PaymentSuccess: msg('Thanh toán thành công'),
-  LicenseRenewalReminder: msg('Nhắc gia hạn license'),
+  LicenseRenewalReminder: msg('Nhắc gia hạn gói dịch vụ'),
 });
-export const deliveryChannelLabels: Record<string, string> = {
-  Fcm: 'Push',
-  Email: 'Email',
-  SignalR: 'Realtime',
-};
+export const deliveryChannelLabels: Record<string, string> = labelMap({
+  Fcm: msg('Thông báo trên thiết bị'),
+  Email: msg('Email'),
+  SignalR: msg('Trực tiếp trên web'),
+});
+
+// BE NotificationContent still writes a few templates in English and stores them with the row.
+// Rebuild those known templates in the reader's language; any other text is shown as sent.
+type Copy = { title: string | null; body: string | null };
+const englishTitles = new Set([
+  'VisionAid — Fall Alert',
+  'VisionAid — Emergency Alert',
+  'VisionAid — Location Alert',
+  'VisionAid — Caregiver reassignment needed',
+  'VisionAid — Alert',
+]);
+export function notificationCopy(item: {
+  notificationType: string;
+  visuallyImpairedUserName: string | null;
+  title: string | null;
+  body: string | null;
+}): Copy {
+  if (!item.title || !englishTitles.has(item.title)) return { title: item.title, body: item.body };
+  const who = item.visuallyImpairedUserName?.trim() || t('Người được chăm sóc');
+  switch (item.notificationType) {
+    case 'FallDetected':
+      return {
+        title: t('VisionAid — Phát hiện té ngã'),
+        body: t('Phát hiện {who} bị té ngã. Hãy kiểm tra ngay và mở VisionAid để phản hồi.', {
+          who,
+        }),
+      };
+    case 'EmergencyManual':
+      return {
+        title: t('VisionAid — Cảnh báo khẩn cấp'),
+        body: t(
+          '{who} vừa gửi cảnh báo khẩn cấp. Hãy mở VisionAid ngay để tiếp nhận và phản hồi.',
+          {
+            who,
+          },
+        ),
+      };
+    case 'GeofenceBreach': {
+      const zone = /safe zone "(.+)"/.exec(item.body ?? '')?.[1];
+      return {
+        title: t('VisionAid — Ra khỏi vùng an toàn'),
+        body: zone
+          ? t('{who} đã ra khỏi vùng an toàn "{zone}".', { who, zone })
+          : t('{who} đã ra khỏi vùng an toàn.', { who }),
+      };
+    }
+    case 'SystemAlert':
+      return {
+        title: t('VisionAid — Cần chọn người chăm sóc chính mới'),
+        body: item.visuallyImpairedUserName
+          ? t(
+              'Một tài khoản người chăm sóc đã bị khóa nên {who} không còn người chăm sóc chính. Hãy chọn người chăm sóc chính mới.',
+              { who },
+            )
+          : t(
+              'Một tài khoản người chăm sóc đã bị khóa nên có người khiếm thị không còn người chăm sóc chính. Hãy chọn người chăm sóc chính mới.',
+            ),
+      };
+    default:
+      return {
+        title: t('VisionAid — Thông báo mới'),
+        body: t('Bạn có thông báo mới. Mở ứng dụng VisionAid để xem chi tiết.'),
+      };
+  }
+}
 export const deliveryStatusLabels: Record<string, string> = labelMap({
   Pending: msg('Đang chờ gửi'),
   Sent: msg('Đã gửi'),
@@ -111,6 +176,22 @@ export type LookupFilters = {
   to?: string;
   page?: number;
 };
+/** BE failure_reason (NotificationFailureReasons, Firebase/SMTP errors) in plain words. */
+export function failureReasonText(reason: string | null | undefined) {
+  if (!reason) return '';
+  if (reason.startsWith('No active FCM device tokens'))
+    return t(
+      'Người nhận chưa bật nhận thông báo trên thiết bị nào (trình duyệt ở trang Hồ sơ hoặc ứng dụng điện thoại).',
+    );
+  if (reason.includes('Firebase has not been initialized'))
+    return t('Máy chủ chưa cấu hình dịch vụ thông báo đẩy (Firebase).');
+  if (/not ?found|unregistered|registration[- ]token/i.test(reason))
+    return t('Thiết bị đã đăng ký không còn hợp lệ. Người nhận cần bật lại thông báo.');
+  if (/sender ?id|mismatch/i.test(reason))
+    return t('Thiết bị đăng ký với dự án Firebase khác với máy chủ.');
+  if (reason.startsWith('Recipient email not found')) return t('Người nhận chưa có địa chỉ email.');
+  return reason;
+}
 /** "Fcm:Sent" → { channel: 'Fcm', status: 'Sent' }. */
 export function parseDelivery(value: string) {
   const [channel = '', status = ''] = value.split(':');

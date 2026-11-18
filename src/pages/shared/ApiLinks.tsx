@@ -333,6 +333,8 @@ function LinkEditor({
   const picking = !link && actor.role === 'CenterAdmin';
   const staff = useOrgPeople(actor, 'Caregiver', picking);
   const vius = useOrgPeople(actor, 'VisuallyImpaired', picking);
+  // BE always grants a primary caregiver every permission, so those boxes are fixed and ticked.
+  const primary = !!link?.isPrimary;
   const fields: FieldSpec[] = [
     ...(!link
       ? [
@@ -346,7 +348,7 @@ function LinkEditor({
                   max: 255,
                   autoComplete: 'off',
                   hint: t(
-                    'Nhập đúng email tài khoản Caregiver cá nhân của người được mời. Họ cần đăng ký tài khoản trước.',
+                    'Nhập đúng email tài khoản người chăm sóc gia đình của người được mời. Họ cần đăng ký tài khoản trước.',
                   ),
                 },
               ]
@@ -368,7 +370,9 @@ function LinkEditor({
           personField(
             { key: 'viuId', label: t('Người được chăm sóc'), required: true },
             vius,
-            t('Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản VIU trước.'),
+            t(
+              'Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản người khiếm thị trước.',
+            ),
             {
               search:
                 actor.role === 'Caregiver'
@@ -393,16 +397,25 @@ function LinkEditor({
             : []),
         ]
       : []),
-    ...permissionFields,
+    ...(primary
+      ? permissionFields.map((field, i) => ({
+          ...field,
+          disabled: true,
+          hint:
+            i === permissionFields.length - 1
+              ? msg('Người chăm sóc chính luôn có đủ quyền.')
+              : undefined,
+        }))
+      : permissionFields),
   ];
   const save = async (values: Record<string, unknown>) => {
     setBusy(true);
     setError('');
     try {
       const permissions = {
-        canReceiveAlerts: !!values.canReceiveAlerts,
-        canManageRegistry: !!values.canManageRegistry,
-        canManageLocations: !!values.canManageLocations,
+        canReceiveAlerts: primary || !!values.canReceiveAlerts,
+        canManageRegistry: primary || !!values.canManageRegistry,
+        canManageLocations: primary || !!values.canManageLocations,
       };
       const result = link
         ? await linksApi.permissions(actor, link.id, permissions)
@@ -463,9 +476,9 @@ function LinkEditor({
             <Form
               fields={fields}
               initial={{
-                canReceiveAlerts: link?.canReceiveAlerts ?? true,
-                canManageRegistry: link?.canManageRegistry ?? false,
-                canManageLocations: link?.canManageLocations ?? false,
+                canReceiveAlerts: primary || (link?.canReceiveAlerts ?? true),
+                canManageRegistry: primary || (link?.canManageRegistry ?? false),
+                canManageLocations: primary || (link?.canManageLocations ?? false),
                 linkType: 'Organization',
               }}
               submit={
@@ -490,7 +503,7 @@ function LinkEditor({
               </p>
               <dl className="record-details">
                 {permissionFields.map((field) => {
-                  const next = !!review[field.key];
+                  const next = primary || !!review[field.key];
                   const before = link?.[field.key as keyof CareLink];
                   return (
                     <div key={field.key}>
@@ -508,6 +521,7 @@ function LinkEditor({
                   );
                 })}
               </dl>
+              {primary && <p className="muted">{t('Người chăm sóc chính luôn có đủ quyền.')}</p>}
               {error && (
                 <p className="notice error" role="alert">
                   {error}

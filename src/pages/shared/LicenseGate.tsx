@@ -21,7 +21,7 @@ export function LicenseGate({ children, licensed }: { children: ReactNode; licen
       description={
         block === 'expired'
           ? t(
-              'Gói Personal của bạn đã hết hạn và quá thời gian gia hạn. Gia hạn qua PayOS hoặc kích hoạt key do trung tâm cấp để dùng lại chức năng này.',
+              'Gói Personal của bạn đã hết hạn và quá thời gian gia hạn. Gia hạn qua PayOS hoặc kích hoạt mã do trung tâm cấp để dùng lại chức năng này.',
             )
           : undefined
       }
@@ -31,7 +31,7 @@ export function LicenseGate({ children, licensed }: { children: ReactNode; licen
             {block === 'expired' ? t('Gia hạn gói Personal') : t('Chọn gói Personal')}
           </Link>
           <Link className="btn" to="/license">
-            {t('Kích hoạt bằng key')}
+            {t('Kích hoạt bằng mã')}
           </Link>
         </>
       }

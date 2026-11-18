@@ -37,7 +37,7 @@ it('preserves specific business and validation errors', async () => {
       async () =>
         new Response(
           JSON.stringify({
-            detail: 'Tổ chức chưa có gói license.',
+            detail: 'Tổ chức chưa có gói dịch vụ.',
             errors: { name: ['Tên không hợp lệ'] },
           }),
           { status: 422 },
@@ -45,7 +45,7 @@ it('preserves specific business and validation errors', async () => {
     ),
   ).rejects.toMatchObject({
     status: 422,
-    message: 'Tổ chức chưa có gói license.',
+    message: 'Tổ chức chưa có gói dịch vụ.',
     fields: { name: 'Tên không hợp lệ' },
   });
 });
@@ -117,7 +117,7 @@ it('402 shows whose license blocks the action and keeps the code', async () => {
   });
   await expect(request('/x', {}, pay('LICENSE_REQUIRED'))).rejects.toMatchObject({
     code: 'LICENSE_REQUIRED',
-    message: expect.stringContaining('chưa có license'),
+    message: expect.stringContaining('chưa có gói dịch vụ'),
   });
   await expect(request('/x', {}, pay())).rejects.toMatchObject({
     status: 402,

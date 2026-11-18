@@ -259,29 +259,31 @@ function Tracking({ actor }: { actor: Person }) {
               {!users.data.items.length && (
                 <p>{t('Chưa có người dùng phù hợp hoặc liên kết được phép xem.')}</p>
               )}
-              <div className="row">
-                <span>
-                  {t('{totalCount} người · Trang {page}/{p4}', {
-                    totalCount: users.data.totalCount,
-                    page: users.data.page,
-                    p4: Math.max(1, users.data.totalPages),
-                  })}
-                </span>
-                <button
-                  className="btn"
-                  disabled={users.isFetching || !users.data.hasPreviousPage}
-                  onClick={() => setPage(page - 1)}
-                >
-                  {t('Trang người dùng trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={users.isFetching || !users.data.hasNextPage}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {t('Trang người dùng sau')}
-                </button>
-              </div>
+              {users.data.totalPages > 1 && (
+                <div className="row pagination">
+                  <span>
+                    {t('{totalCount} người · Trang {page}/{p4}', {
+                      totalCount: users.data.totalCount,
+                      page: users.data.page,
+                      p4: Math.max(1, users.data.totalPages),
+                    })}
+                  </span>
+                  <button
+                    className="btn"
+                    disabled={users.isFetching || !users.data.hasPreviousPage}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    {t('Trang người dùng trước')}
+                  </button>
+                  <button
+                    className="btn"
+                    disabled={users.isFetching || !users.data.hasNextPage}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    {t('Trang người dùng sau')}
+                  </button>
+                </div>
+              )}
               <PageLocations key={page + ':' + search} actor={actor} people={users.data.items} />
             </>
           )}
@@ -335,9 +337,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
     current?.error instanceof ServiceError && [401, 403].includes(current.error.status);
   return (
     <div className="stack">
-      <p>
-        {t('Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.')}
-      </p>
+      <p>{t('Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.')}</p>
       <GpsMap points={points} selected={selected} onSelect={setSelected} />
       <button
         className="btn"
@@ -456,7 +456,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
                   </p>
                   <p>
                     {t(
-                      'Pin, mạng và độ chính xác của vị trí hiện tại không có trong API này. Xem giá trị tại từng bản ghi lịch sử bên dưới.',
+                      'Pin, mạng và độ chính xác của vị trí hiện tại chưa được máy chủ cung cấp. Xem giá trị tại từng bản ghi lịch sử bên dưới.',
                     )}
                   </p>
                 </>

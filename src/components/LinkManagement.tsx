@@ -101,7 +101,7 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
               fields={[
                 {
                   key: 'email',
-                  label: t('Email Caregiver đã đăng ký'),
+                  label: t('Email người chăm sóc đã đăng ký'),
                   type: 'email',
                   required: true,
                 },

@@ -9,7 +9,7 @@ import { ApiLicensePool } from '../pages/shared/ApiLicensePool';
 import { paymentResumeTarget } from '../services/api/payments';
 import { ApiLicense } from '../pages/shared/ApiLicense';
 import { ApiRealtime } from '../components/ApiRealtime';
-import { PushSync } from '../components/PushSettings';
+import { PushPrompt, PushSync } from '../components/PushSettings';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
 import { ApiTracking } from '../pages/shared/ApiTracking';
 import { ApiLinks } from '../pages/shared/ApiLinks';
@@ -62,6 +62,7 @@ import {
   Package,
   Phone,
   Menu,
+  X,
   LayoutDashboard,
   UserRound,
   ShieldCheck,
@@ -267,6 +268,15 @@ function Shell() {
     if (!still && view.current)
       animate(view.current, { opacity: [0, 1], y: [6, 0] }, { duration: 0.2, ease: 'easeOut' });
   }, [location.pathname, still, view, animate]);
+  // The phone drawer closes with Escape, like a dialog.
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [open]);
   useSessionExpiry();
   const warning = useLicenseWarning();
   if (!user) return null;
@@ -329,13 +339,17 @@ function Shell() {
     ...(api && user.role === 'CenterAdmin' && user.orgId
       ? [
           { to: '/center-admin/activity', label: t('Truy vết hoạt động'), Icon: History },
-          { to: '/center-admin/licenses', label: t('Kho license'), Icon: ShieldCheck },
+          { to: '/center-admin/licenses', label: t('Kho suất sử dụng'), Icon: ShieldCheck },
           { to: '/center-admin/payments', label: t('Thanh toán'), Icon: CreditCard },
         ]
       : []),
     ...(api && user.role === 'Admin'
       ? [
-          { to: '/admin/license-pools', label: t('Kho license các trung tâm'), Icon: ShieldCheck },
+          {
+            to: '/admin/license-pools',
+            label: t('Kho suất sử dụng các trung tâm'),
+            Icon: ShieldCheck,
+          },
           { to: '/admin/revenue', label: t('Báo cáo doanh thu'), Icon: BarChart3 },
           { to: '/admin/hybrid', label: t('Nhật ký chỉ dẫn di chuyển'), Icon: Activity },
           { to: '/admin/ice-servers', label: t('Máy chủ hỗ trợ cuộc gọi'), Icon: Settings },
@@ -343,7 +357,7 @@ function Shell() {
       : []),
     // Only a family caregiver has a personal license to look at; other roles get no entry.
     ...(api && user.role === 'Caregiver' && !user.orgId
-      ? [{ to: '/license', label: 'License', Icon: ShieldCheck }]
+      ? [{ to: '/license', label: t('Gói của tôi'), Icon: ShieldCheck }]
       : []),
     ...(api && user.role === 'Caregiver' && !user.orgId
       ? [{ to: '/caregiver/payments', label: t('Thanh toán'), Icon: CreditCard }]
@@ -384,13 +398,12 @@ function Shell() {
           <div className="sidebar-brand">
             <Brand />
             <button
-              className="btn sidebar-toggle"
-              onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
-              title={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
-              aria-expanded={!collapsed}
+              type="button"
+              className="btn sidebar-close"
+              aria-label={t('Đóng điều hướng')}
+              onClick={() => setOpen(false)}
             >
-              {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+              <X size={20} aria-hidden="true" />
             </button>
           </div>
           <div>
@@ -451,6 +464,15 @@ function Shell() {
           </div>
         </aside>
       </Tooltip.Provider>
+      {open && (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label={t('Đóng điều hướng')}
+          tabIndex={-1}
+          onClick={() => setOpen(false)}
+        />
+      )}
       <div className="workspace">
         <header className="topbar">
           <div className="row">
@@ -461,6 +483,15 @@ function Shell() {
               onClick={() => setOpen(!open)}
             >
               <Menu size={18} />
+            </button>
+            <button
+              className="btn sidebar-toggle"
+              onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
+              title={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
+              aria-expanded={!collapsed}
+            >
+              {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
             </button>
             <nav aria-label={t('Vị trí hiện tại')} className="muted" style={{ fontSize: 13 }}>
               VisionAid <span aria-hidden="true">/</span>{' '}
@@ -519,11 +550,12 @@ function Shell() {
           (user.role === 'Caregiver' || (user.role === 'CenterAdmin' && user.orgId)) && (
             <>
               <PushSync key={user.id} userId={user.id} />
+              <PushPrompt key={'prompt-' + user.id} userId={user.id} />
             </>
           )}
         {auth.mode === 'mock' && (
           <div className="demo-strip">
-            <span>{t('● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối backend')}</span>
+            <span>{t('● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối máy chủ')}</span>
             <button
               style={{
                 border: 0,
@@ -533,7 +565,7 @@ function Shell() {
               }}
               onClick={() => setReset(true)}
             >
-              {t('Reset dữ liệu demo')}
+              {t('Khôi phục dữ liệu demo')}
             </button>
           </div>
         )}
@@ -541,7 +573,7 @@ function Shell() {
           {graceDays !== null && (
             <p className="notice" role="status">
               {t(
-                'License đã hết hạn. Máy chủ báo còn {days} ngày gia hạn trước khi các chức năng bị khóa.',
+                'Gói dịch vụ đã hết hạn. Máy chủ báo còn {days} ngày gia hạn trước khi các chức năng bị khóa.',
                 {
                   days: graceDays,
                 },
@@ -567,7 +599,7 @@ function Shell() {
       {notice && <Toast message={notice} onDismiss={() => uiStore.set({ notice: '' })} />}
       {reset && (
         <Confirm
-          title={t('Reset dữ liệu demo?')}
+          title={t('Khôi phục dữ liệu demo?')}
           description={t(
             'Xóa toàn bộ thay đổi, ảnh demo và phiên đăng nhập trên trình duyệt này để trở về dữ liệu mẫu.',
           )}

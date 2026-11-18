@@ -1479,11 +1479,16 @@ td .row {
   display: none;
 }
 .main > .btn,
-.main > .row {
+.main > .row,
+.route-view > .btn,
+.route-view > .row {
   margin-bottom: 20px;
 }
+/* Pages render inside .route-view (route transition), so cards are its children, not .main's. */
 .main > .card + .card,
-.main > .card + .notice {
+.main > .card + .notice,
+.route-view > .card + .card,
+.route-view > .card + .notice {
   margin-top: 24px;
 }
 .page-head-actions > .btn.small {

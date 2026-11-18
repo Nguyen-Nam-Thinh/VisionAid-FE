@@ -39,7 +39,9 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
           },
           {
             key: 'orgId',
-            label: t('Tổ chức (bắt buộc khi tạo Staff/VIU/Center Admin)'),
+            label: t(
+              'Tổ chức (bắt buộc khi tạo nhân viên, người khiếm thị hoặc quản trị trung tâm)',
+            ),
             type: 'select' as const,
             options: db?.entities.organizations
               .filter((o) => o.active)
@@ -178,7 +180,7 @@ export function PeopleManager({ role, title }: { role?: Role; title: string }) {
           <div className="stack">
             <p className="notice">
               {t(
-                'Tài khoản demo mới dùng mật khẩu Demo@123. Không có email thật được gửi. VIU chỉ đăng nhập ứng dụng Mobile.',
+                'Tài khoản demo mới dùng mật khẩu Demo@123. Không có email thật được gửi. Người khiếm thị chỉ đăng nhập trên ứng dụng điện thoại.',
               )}
             </p>
             <Form

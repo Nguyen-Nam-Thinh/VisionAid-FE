@@ -15,6 +15,8 @@ import {
   inboxTypeLabels,
   inboxTypes,
   type LookupFilters,
+  notificationCopy,
+  failureReasonText,
 } from '../../services/api/inbox';
 import type { Person } from '../../models/domain';
 
@@ -168,10 +170,10 @@ function Lookup({ actor }: { actor: Person }) {
                       <td>{formatLocaleDateTime(item.createdAt)}</td>
                       <td>
                         {inboxTypeLabels[item.notificationType] ?? item.notificationType}
-                        {item.title && (
+                        {notificationCopy(item).title && (
                           <>
                             <br />
-                            <small>{item.title}</small>
+                            <small>{notificationCopy(item).title}</small>
                           </>
                         )}
                       </td>
@@ -205,7 +207,7 @@ function Lookup({ actor }: { actor: Person }) {
                         {item.status === 'Failed' && item.failureReason && (
                           <>
                             <br />
-                            <small>{item.failureReason}</small>
+                            <small>{failureReasonText(item.failureReason)}</small>
                           </>
                         )}
                       </td>
