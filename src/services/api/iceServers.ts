@@ -10,6 +10,8 @@ const serverSchema = z.object({
   serverType: z.enum(['Stun', 'Turn']),
   url: z.string(),
   username: z.string().nullable(),
+  // BE f9006b9: the TURN credential is never returned, only whether one is stored.
+  hasCredential: z.boolean().optional(),
   priority: z.number().int().min(1).max(1000),
   isActive: z.boolean(),
   createdAt: z.iso.datetime({ offset: true }),

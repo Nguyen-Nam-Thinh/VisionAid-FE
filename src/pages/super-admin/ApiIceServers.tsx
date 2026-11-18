@@ -97,7 +97,14 @@ function Servers({ actor }: { actor: Person }) {
                     {query.data.items.map((server) => (
                       <tr key={server.id}>
                         <td>{server.serverType.toUpperCase()}</td>
-                        <td style={{ overflowWrap: 'anywhere' }}>{server.url}</td>
+                        <td style={{ overflowWrap: 'anywhere' }}>
+                          {server.url}
+                          {server.serverType === 'Turn' && server.hasCredential !== undefined && (
+                            <small className="muted" style={{ display: 'block' }}>
+                              {server.hasCredential ? t('Đã lưu mật khẩu') : t('Chưa có mật khẩu')}
+                            </small>
+                          )}
+                        </td>
                         <td>{server.priority}</td>
                         <td>
                           <Badge tone={server.isActive ? 'green' : 'amber'}>

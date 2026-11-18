@@ -112,6 +112,13 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   PAYMENT_DISABLED: msg(
     'Thanh toán trực tuyến đang tạm ngưng. Chưa có giao dịch nào được tạo. Vui lòng thử lại sau hoặc liên hệ quản trị hệ thống.',
   ),
+  // BE f9006b9: PayOS could not be reached (REJECTED keeps the BE text, which carries PayOS's reason).
+  PAYMENT_PROVIDER_UNAVAILABLE: msg(
+    'Không kết nối được cổng thanh toán PayOS. Chưa có giao dịch nào được tạo. Vui lòng thử lại sau.',
+  ),
+  PASSWORD_RESET_UNAVAILABLE: msg(
+    'Không thể đặt lại mật khẩu lúc này. Vui lòng thử lại sau ít phút.',
+  ),
   // Cảnh báo, cuộc gọi, cấu hình, thông báo
   INVALID_EVENT_STATUS_TRANSITION: msg(
     'Cảnh báo đã đổi trạng thái. Tải lại để xem trạng thái mới.',

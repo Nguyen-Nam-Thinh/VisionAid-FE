@@ -3153,6 +3153,22 @@ export const en = {
   'Trình duyệt đang chặn thông báo. Bấm biểu tượng bên trái thanh địa chỉ, chọn Cho phép thông báo rồi tải lại trang.':
     'The browser is blocking notifications. Click the icon left of the address bar, allow notifications, then reload the page.',
   'Để sau': 'Later',
+  'Chưa có mật khẩu': 'No password stored',
+  'Đã lưu mật khẩu': 'Password stored',
+  'Chặn nhận diện bằng ảnh chụp hoặc màn hình': 'Block recognition from photos or screens',
+  'Dưới mức này (từ 0 đến 1), gương mặt bị xem là ảnh chụp hoặc màn hình.':
+    'Below this level (0 to 1), a face is treated as a photo or a screen.',
+  'Khi bật, nhận diện gương mặt từ chối khi camera đang thấy ảnh in hoặc màn hình, không phải người thật.':
+    'When on, face recognition refuses when the camera sees a printed photo or a screen instead of a real person.',
+  'Không kết nối được cổng thanh toán PayOS. Chưa có giao dịch nào được tạo. Vui lòng thử lại sau.':
+    'Could not reach the PayOS payment gateway. No payment was created. Please try again later.',
+  'Không thể đặt lại mật khẩu lúc này. Vui lòng thử lại sau ít phút.':
+    'The password cannot be reset right now. Please try again in a few minutes.',
+  'Mức tin cậy người thật khi nhận diện gương mặt': 'Real-face confidence for face recognition',
+  'Ảnh bị hỏng hoặc chưa tải đủ. Hãy chọn ảnh khác.':
+    'The image is damaged or incomplete. Choose another image.',
+  'Ảnh có độ phân giải quá lớn. Hãy chọn ảnh nhỏ hơn.':
+    'The image resolution is too large. Choose a smaller image.',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',

@@ -8,6 +8,8 @@ import type { Person } from '../../models/domain';
 const reviewedKeys = new Set([
   'ai.yolo.confidence_threshold',
   'ai.facenet.similarity_threshold',
+  'ai.facenet.liveness_enabled',
+  'ai.facenet.liveness_threshold',
   'caregiving.max_caregivers_per_viu',
   'caregiving.max_vius_per_caregiver',
   'face_registry.min_photos_to_activate',

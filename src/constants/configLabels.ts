@@ -12,6 +12,17 @@ const copy: Record<string, ConfigCopy> = {
     name: msg('Mức giống tối thiểu khi nhận diện gương mặt'),
     hint: msg('Gương mặt chỉ được xem là trùng khi mức giống đạt mức này (từ 0 đến 1).'),
   },
+  // BE 1115d85: anti-spoofing on face identification (registry uploads are not checked).
+  'ai.facenet.liveness_enabled': {
+    name: msg('Chặn nhận diện bằng ảnh chụp hoặc màn hình'),
+    hint: msg(
+      'Khi bật, nhận diện gương mặt từ chối khi camera đang thấy ảnh in hoặc màn hình, không phải người thật.',
+    ),
+  },
+  'ai.facenet.liveness_threshold': {
+    name: msg('Mức tin cậy người thật khi nhận diện gương mặt'),
+    hint: msg('Dưới mức này (từ 0 đến 1), gương mặt bị xem là ảnh chụp hoặc màn hình.'),
+  },
   ocr_confidence_threshold: {
     name: msg('Độ tin cậy tối thiểu khi đọc chữ'),
     hint: msg('Kết quả đọc chữ thấp hơn mức này được đánh dấu là chưa chắc chắn (từ 0 đến 1).'),
