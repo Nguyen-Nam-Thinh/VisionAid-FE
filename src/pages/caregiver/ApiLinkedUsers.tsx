@@ -136,7 +136,7 @@ export function ApiLinkedUsers() {
                           <th>Email</th>
                           <th>{t('Điện thoại')}</th>
                           <th>{t('Tài khoản')}</th>
-                          <th>License</th>
+                          <th>{t('Gói dịch vụ')}</th>
                           <th>{t('Thao tác')}</th>
                         </tr>
                       </thead>

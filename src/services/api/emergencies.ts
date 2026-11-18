@@ -247,7 +247,7 @@ export function createEmergenciesApi(
         if (value) q.set(key, value);
       const result = parse(pageSchema, await get('/api/emergency-events?' + q, signal));
       if (filters.viuId && result.items.some((e) => e.visuallyImpairedUserId !== filters.viuId))
-        throw new ServiceError(t('Cảnh báo không thuộc VIU được chọn.'), 403);
+        throw new ServiceError(t('Cảnh báo không thuộc người khiếm thị được chọn.'), 403);
       return result;
     },
     async act(

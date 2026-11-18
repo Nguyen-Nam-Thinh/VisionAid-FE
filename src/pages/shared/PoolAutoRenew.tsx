@@ -49,9 +49,9 @@ export function PoolAutoRenew({
       </div>
       <small id={id + '-hint'}>
         {!known
-          ? t('Máy chủ chưa trả trạng thái tự gia hạn. Hãy tải lại kho license.')
+          ? t('Máy chủ chưa trả trạng thái tự gia hạn. Hãy tải lại kho suất sử dụng.')
           : t(
-              'Khi bật, trước ngày hết hạn máy chủ gửi link thanh toán PayOS cho quản trị trung tâm qua email và thông báo. Chỉ áp dụng khi kho đang hoạt động; không tự trừ tiền.',
+              'Khi bật, trước ngày hết hạn máy chủ gửi liên kết thanh toán PayOS cho quản trị trung tâm qua email và thông báo. Chỉ áp dụng khi kho đang hoạt động; không tự trừ tiền.',
             )}
       </small>
       {message && (

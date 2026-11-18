@@ -111,14 +111,14 @@ const entities: Record<string, string> = labelMap({
   systemconfiguration: msg('Cấu hình hệ thống'),
   systemconfigurationhistory: msg('Lịch sử cấu hình'),
   globalnotificationrule: msg('Quy tắc thông báo'),
-  organizationlicensepool: msg('Kho license tổ chức'),
+  organizationlicensepool: msg('Kho suất sử dụng của tổ chức'),
   licensepackage: msg('Gói dịch vụ'),
   licensesubscription: msg('Đăng ký gói'),
   paymenttransaction: msg('Giao dịch thanh toán'),
   webrtcsession: msg('Cuộc gọi'),
   webrtciceserver: msg('Máy chủ hỗ trợ cuộc gọi'),
   obstacledetectionsession: msg('Phiên phát hiện vật cản'),
-  ocrrequest: msg('Đọc chữ (OCR)'),
+  ocrrequest: msg('Đọc chữ'),
   qrscanresult: msg('Quét mã QR'),
   voicecommandlog: msg('Lệnh giọng nói'),
   navigationguidancelog: msg('Hướng dẫn di chuyển'),
@@ -419,11 +419,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                     )}
                   </p>
                 ) : (
-                  <p>
-                    {t(
-                      'Bộ lọc gồm cả ngày kết thúc. Để trống ngày để xem dữ liệu còn lưu.',
-                    )}
-                  </p>
+                  <p>{t('Bộ lọc gồm cả ngày kết thúc. Để trống ngày để xem dữ liệu còn lưu.')}</p>
                 )}
                 {kind === 'audit' && (
                   <p>

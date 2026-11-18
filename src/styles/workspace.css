@@ -472,17 +472,22 @@ tbody tr:hover {
   font-size: 1.05rem;
   gap: 8px;
 }
-.sidebar .sidebar-toggle {
-  flex: 0 0 32px;
-  width: 32px;
+/* Collapse button at the left of the topbar: a bare icon with no box around it. */
+.topbar .sidebar-toggle {
+  flex: 0 0 auto;
+  min-width: 36px;
   min-height: 36px;
   padding: 6px;
   justify-content: center;
+  margin-left: -24px;
   border: 0;
   background: transparent;
+  box-shadow: none;
+  color: var(--ink-muted);
 }
-.sidebar .sidebar-toggle:hover {
-  background: var(--line);
+.topbar .sidebar-toggle:hover {
+  background: transparent;
+  color: var(--ink);
 }
 .sidebar .nav svg {
   flex-shrink: 0;
@@ -503,14 +508,12 @@ tbody tr:hover {
     padding: 0;
     justify-content: center;
   }
-  .sidebar-collapsed .sidebar .nav a,
-  .sidebar-collapsed .sidebar-toggle {
+  .sidebar-collapsed .sidebar .nav a {
     justify-content: center;
     padding-inline: 0;
   }
   .sidebar-collapsed .sidebar .nav a > span,
-  .sidebar-collapsed .sidebar-brand .brand > span,
-  .sidebar-collapsed .sidebar-toggle > span {
+  .sidebar-collapsed .sidebar-brand .brand > span {
     position: absolute;
     width: 1px;
     height: 1px;

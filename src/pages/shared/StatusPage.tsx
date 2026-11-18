@@ -45,7 +45,7 @@ const content: Record<
     icon: CreditCard,
     title: msg('Cần gói dịch vụ để dùng chức năng này'),
     description: msg(
-      'Tài khoản của bạn chưa có gói Personal. Đăng ký gói qua PayOS hoặc kích hoạt key do trung tâm cấp để mở chức năng này.',
+      'Tài khoản của bạn chưa có gói Personal. Đăng ký gói qua PayOS hoặc kích hoạt mã do trung tâm cấp để mở chức năng này.',
     ),
   },
   unsupported: {

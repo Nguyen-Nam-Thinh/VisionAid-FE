@@ -39,11 +39,11 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
         ].includes(String(q.queryKey[0])) && q.queryKey[1] === actor.id,
     });
   return (
-    <section className="glass card stack" aria-label={t('Danh sách cấp license')}>
-      <h2>{t('License đã cấp')}</h2>
+    <section className="glass card stack" aria-label={t('Danh sách suất đã cấp')}>
+      <h2>{t('Suất đã cấp')}</h2>
       <p>
         {t(
-          'Cấp license cho người được chăm sóc đã có tài khoản trong tổ chức. Nhân viên chăm sóc không sử dụng suất license.',
+          'Cấp suất sử dụng cho người được chăm sóc đã có tài khoản trong tổ chức. Nhân viên chăm sóc không tính vào số suất.',
         )}
       </p>
       <div className="row page-head-actions">
@@ -62,14 +62,14 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
           </select>
         </label>
         <button className="btn primary" onClick={() => setAssigning(true)}>
-          {t('Cấp license')}
+          {t('Cấp suất sử dụng')}
         </button>
         <button className="btn" disabled={query.isFetching} onClick={() => void refresh()}>
           <RefreshCw size={16} aria-hidden="true" />
           {t('Tải lại danh sách')}
         </button>
         <Link className="btn" to="/packages">
-          {t('Mua thêm license')}
+          {t('Mua thêm suất sử dụng')}
         </Link>
       </div>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
@@ -78,7 +78,7 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
           <>
             <div className="table-scroll">
               <table className="assignment-table">
-                <caption className="sr-only">{t('License đã cấp cho người được chăm sóc')}</caption>
+                <caption className="sr-only">{t('Suất đã cấp cho người được chăm sóc')}</caption>
                 <thead>
                   <tr>
                     <th>{t('Người được chăm sóc')}</th>
@@ -114,7 +114,7 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
                 </tbody>
               </table>
               {!query.data.items.length && (
-                <p className="empty">{t('Không có license phù hợp bộ lọc.')}</p>
+                <p className="empty">{t('Không có suất sử dụng phù hợp bộ lọc.')}</p>
               )}
             </div>
             <p>
@@ -149,7 +149,7 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
         )}
       </State>
       {assigning && (
-        <Dialog title={t('Cấp license')} onClose={() => setAssigning(false)}>
+        <Dialog title={t('Cấp suất sử dụng')} onClose={() => setAssigning(false)}>
           <p>
             {t(
               'Chọn người được chăm sóc của tổ chức. Thao tác sử dụng một suất trong kho hiện tại; có thể cấp lại cho người đã bị thu hồi.',
@@ -170,11 +170,11 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
                   },
                 ),
               ]}
-              submit={t('Xác nhận cấp license')}
+              submit={t('Xác nhận cấp suất sử dụng')}
               onSubmit={async (values) => {
                 try {
                   await licenseAssignmentsApi.assign(actor, String(values.viuId).trim());
-                  setNotice(t('Đã cấp license. Số lượng trong kho được tải lại từ máy chủ.'));
+                  setNotice(t('Đã cấp suất sử dụng. Số lượng trong kho được tải lại từ máy chủ.'));
                   setAssigning(false);
                 } finally {
                   await refresh();
@@ -192,16 +192,16 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
       )}
       {revoking && (
         <Confirm
-          title={t('Thu hồi license')}
+          title={t('Thu hồi suất sử dụng')}
           description={t(
-            'Thu hồi license của {fullName}? Người này sẽ mất quyền sử dụng theo license tổ chức. Tài khoản và phân công chăm sóc vẫn được giữ.',
+            'Thu hồi suất sử dụng của {fullName}? Người này sẽ mất quyền sử dụng theo gói của tổ chức. Tài khoản và phân công chăm sóc vẫn được giữ.',
             { fullName: revoking.viuUser.fullName },
           )}
           onClose={() => setRevoking(null)}
           onConfirm={async () => {
             try {
               await licenseAssignmentsApi.revoke(actor, revoking.viuUser.id);
-              setNotice(t('Đã thu hồi license. Số lượng trong kho được tải lại từ máy chủ.'));
+              setNotice(t('Đã thu hồi suất sử dụng. Số lượng trong kho được tải lại từ máy chủ.'));
             } finally {
               await refresh();
             }

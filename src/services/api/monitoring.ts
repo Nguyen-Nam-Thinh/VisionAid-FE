@@ -69,7 +69,7 @@ export const retryBlockedLabels: Record<string, string> = labelMap({
   ),
   EMERGENCY_CLOSED: msg('Sự cố khẩn cấp đã được giải quyết, đã bỏ qua hoặc đã gọi hỗ trợ.'),
   EVENT_TOO_OLD: msg('Thông báo đã quá cũ để gửi lại.'),
-  NO_LONGER_APPLIES: msg('License đã được gia hạn nên lời nhắc không còn cần thiết.'),
+  NO_LONGER_APPLIES: msg('Gói dịch vụ đã được gia hạn nên lời nhắc không còn cần thiết.'),
   RECIPIENT_NO_LONGER_LINKED: msg('Người nhận không còn nhận cảnh báo của người này.'),
   NOTIFICATION_RETRY_IN_PROGRESS: msg('Thông báo này đang được gửi lại.'),
 });
@@ -149,8 +149,8 @@ export const auditActionLabels: Record<AuditAction, string> = labelMap({
   OrganizationUpdated: msg('Cập nhật tổ chức'),
   UserAssignedToOrg: msg('Thêm người dùng vào tổ chức'),
   UserRemovedFromOrg: msg('Gỡ người dùng khỏi tổ chức'),
-  LicensePoolSuspended: msg('Đình chỉ kho license'),
-  LicensePoolReactivated: msg('Kích hoạt lại kho license'),
+  LicensePoolSuspended: msg('Đình chỉ kho suất sử dụng'),
+  LicensePoolReactivated: msg('Kích hoạt lại kho suất sử dụng'),
 });
 const kinds = {
   metrics: { path: '/api/ai-metrics', schema: metric },
@@ -228,7 +228,7 @@ export function createMonitoringApi(get = apiGet, write = apiWrite) {
           ['actorId', 'targetRecordId', 'userId', 'sessionId'].includes(key) &&
           !uuid.safeParse(value).success
         )
-          throw new ServiceError(t('Mã định danh phải là UUID hợp lệ.'), 400);
+          throw new ServiceError(t('Mã định danh không hợp lệ.'), 400);
         if (
           (key === 'targetTable' && value.length > 100) ||
           (key === 'actionType' && !auditActions.some((action) => action === value)) ||

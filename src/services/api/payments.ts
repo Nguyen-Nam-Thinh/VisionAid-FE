@@ -190,11 +190,11 @@ export function createPaymentsApi(get = apiGet, write = apiWrite) {
         if (!quote.canProceed)
           throw new ServiceError(
             quote.seatsToRelease > 0
-              ? t('Cần thu hồi {count} license đang dùng trước khi đổi sang gói này.', {
+              ? t('Cần thu hồi {count} gói dịch vụ đang dùng trước khi đổi sang gói này.', {
                   count: quote.seatsToRelease,
                 })
               : t(
-                  'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho license để kiểm tra trạng thái.',
+                  'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho suất sử dụng để kiểm tra trạng thái.',
                 ),
             422,
           );

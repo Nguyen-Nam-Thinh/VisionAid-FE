@@ -118,7 +118,7 @@ function Notifications({ actor }: { actor: Person }) {
         {personal && (
           <p className="muted">
             {t(
-              'Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và chọn Bật thông báo trình duyệt.',
+              'Lưu tùy chọn thông báo đẩy chưa bật nhận thông báo trên trình duyệt này. Để nhận thông báo đẩy, vào Hồ sơ và chọn Bật thông báo trình duyệt.',
             )}
           </p>
         )}

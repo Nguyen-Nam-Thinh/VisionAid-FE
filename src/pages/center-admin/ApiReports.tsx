@@ -118,8 +118,8 @@ function Reports({ actor }: { actor: Person }) {
                     <>
                       <p role="status" className="revenue-period">
                         <CalendarRange size={16} aria-hidden="true" />
-                        {t('Kỳ báo cáo:')} {summary.data.dateFrom || t('Không giới hạn đầu kỳ')}{' '}
-                        → {summary.data.dateTo || t('Không giới hạn cuối kỳ')}
+                        {t('Kỳ báo cáo:')} {summary.data.dateFrom || t('Không giới hạn đầu kỳ')} →{' '}
+                        {summary.data.dateTo || t('Không giới hạn cuối kỳ')}
                       </p>
                       <div className="report-tiles">
                         {(

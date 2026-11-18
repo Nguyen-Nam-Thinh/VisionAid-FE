@@ -566,7 +566,7 @@ export function createMockService(persistence?: DemoPersistence, delay = 180): V
           p.active &&
           p.orgId === a.orgId,
       );
-      if (!cg) fail('Không tìm thấy Caregiver phù hợp trong phạm vi.');
+      if (!cg) fail('Không tìm thấy người chăm sóc phù hợp trong phạm vi.');
       writeLink(a, {
         id: id(),
         viuId,

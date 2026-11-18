@@ -1,5 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { createPackagesApi, packageInput, packageForActor, type LicensePackage } from './packages';
+import { ServiceError } from '../contracts';
 const admin = { role: 'Admin' as const, orgId: '' };
 const id = '01900000-0000-7000-8000-000000000001';
 const values = {
@@ -73,4 +74,22 @@ it('rejects non-admin writes before transport, checks detail identity and filter
   expect(packageForActor({ role: 'CenterAdmin', orgId: id }, { ...item, isActive: true })).toBe(
     false,
   );
+});
+it('deletes only never-used, non-system packages and explains a package that is in use', async () => {
+  const write = vi.fn().mockResolvedValue(undefined);
+  const api = createPackagesApi(vi.fn(), write);
+  const custom = { ...item, code: 'PROMO_TET' };
+  await api.remove(admin, custom);
+  expect(write).toHaveBeenCalledWith('/api/licenses/packages/' + id, { method: 'DELETE' });
+  await expect(api.remove(admin, item)).rejects.toMatchObject({ status: 422 });
+  expect(write).toHaveBeenCalledTimes(1);
+  await expect(api.remove({ role: 'CenterAdmin', orgId: id }, custom)).rejects.toMatchObject({
+    status: 403,
+  });
+  write.mockRejectedValueOnce(new ServiceError('in use', 409, {}, 'PACKAGE_IN_USE'));
+  await expect(api.remove(admin, custom)).rejects.toMatchObject({
+    status: 409,
+    code: 'PACKAGE_IN_USE',
+    message: expect.stringContaining('ngừng bán'),
+  });
 });

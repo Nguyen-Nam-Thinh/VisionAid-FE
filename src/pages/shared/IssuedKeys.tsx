@@ -45,10 +45,10 @@ export function IssuedKeys({ actor }: { actor: Person }) {
   const data = query.data;
   const pages = Math.max(1, data?.totalPages ?? 1);
   return (
-    // Lives inside the "Key cho gia đình" card, under the create button.
+    // Lives inside the "Mã kích hoạt cho gia đình" card, under the create button.
     <div className="stack issued-keys" role="group" aria-labelledby="issued-keys-title">
       <div className="row between">
-        <h3 id="issued-keys-title">{t('Key đã phát')}</h3>
+        <h3 id="issued-keys-title">{t('Mã kích hoạt đã phát')}</h3>
         <button
           className="btn small"
           disabled={query.isFetching}
@@ -60,23 +60,25 @@ export function IssuedKeys({ actor }: { actor: Person }) {
       </div>
       <p>
         {t(
-          'Xem lại key đã tạo và thu hồi key chưa dùng nếu phát nhầm. Thu hồi trả suất về kho; key đã kích hoạt hoặc đã hết hạn không thu hồi được.',
+          'Xem lại mã kích hoạt đã tạo và thu hồi mã kích hoạt chưa dùng nếu phát nhầm. Thu hồi trả suất về kho; mã đã kích hoạt hoặc đã hết hạn không thu hồi được.',
         )}
       </p>
       <div className="row">
         <label className="table-search">
           <Search size={17} aria-hidden="true" />
-          <span className="sr-only">{t('Tìm theo key, ghi chú hoặc người kích hoạt')}</span>
+          <span className="sr-only">
+            {t('Tìm theo mã kích hoạt, ghi chú hoặc người kích hoạt')}
+          </span>
           <input
             className="search"
-            placeholder={t('Tìm theo key, ghi chú hoặc người kích hoạt')}
+            placeholder={t('Tìm theo mã kích hoạt, ghi chú hoặc người kích hoạt')}
             value={typed}
             maxLength={100}
             onChange={(e) => setTyped(e.target.value)}
           />
         </label>
         <label className="field inline">
-          <span className="sr-only">{t('Trạng thái key')}</span>
+          <span className="sr-only">{t('Trạng thái mã kích hoạt')}</span>
           <select
             value={state}
             onChange={(e) => {
@@ -102,10 +104,10 @@ export function IssuedKeys({ actor }: { actor: Person }) {
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <div className="table-scroll">
           <table>
-            <caption className="sr-only">{t('Key đã phát')}</caption>
+            <caption className="sr-only">{t('Mã kích hoạt đã phát')}</caption>
             <thead>
               <tr>
-                <th scope="col">{t('Key')}</th>
+                <th scope="col">{t('Mã kích hoạt')}</th>
                 <th scope="col">{t('Trạng thái')}</th>
                 <th scope="col">{t('Ghi chú')}</th>
                 <th scope="col">{t('Ngày tạo')}</th>
@@ -152,22 +154,24 @@ export function IssuedKeys({ actor }: { actor: Person }) {
                         aria-pressed={shown === item.id}
                         onClick={() => setShown(shown === item.id ? null : item.id)}
                       >
-                        {shown === item.id ? t('Ẩn key') : t('Hiện key')}
+                        {shown === item.id ? t('Ẩn mã kích hoạt') : t('Hiện mã kích hoạt')}
                       </button>
                       <button
                         className="btn small"
                         onClick={async () => {
                           try {
                             await navigator.clipboard.writeText(item.licenseKey);
-                            setCopied(t('Đã sao chép key.'));
+                            setCopied(t('Đã sao chép mã kích hoạt.'));
                           } catch {
                             setCopied(
-                              t('Không sao chép được. Nhấn Hiện key để sao chép thủ công.'),
+                              t(
+                                'Không sao chép được. Nhấn Hiện mã kích hoạt để sao chép thủ công.',
+                              ),
                             );
                           }
                         }}
                       >
-                        {t('Sao chép key')}
+                        {t('Sao chép mã kích hoạt')}
                       </button>
                       {item.state === 'Unused' && (
                         <button className="btn small danger" onClick={() => setRevoking(item)}>
@@ -183,8 +187,8 @@ export function IssuedKeys({ actor }: { actor: Person }) {
           {!data?.items.length && (
             <p className="empty">
               {search || state
-                ? t('Không có key phù hợp với bộ lọc.')
-                : t('Chưa phát key nào từ kho này.')}
+                ? t('Không có mã kích hoạt phù hợp với bộ lọc.')
+                : t('Chưa phát mã kích hoạt nào từ kho này.')}
             </p>
           )}
         </div>
@@ -218,9 +222,9 @@ export function IssuedKeys({ actor }: { actor: Person }) {
       </State>
       {revoking && (
         <Confirm
-          title={t('Thu hồi key')}
+          title={t('Thu hồi mã kích hoạt')}
           description={t(
-            'Thu hồi key có ghi chú "{note}", tạo lúc {time}. Gia đình sẽ không kích hoạt được key này nữa và một suất được trả về kho.',
+            'Thu hồi mã kích hoạt có ghi chú "{note}", tạo lúc {time}. Gia đình sẽ không kích hoạt được mã kích hoạt này nữa và một suất được trả về kho.',
             {
               note: revoking.note || t('không có ghi chú'),
               time: formatLocaleDateTime(revoking.createdAt),
@@ -230,7 +234,7 @@ export function IssuedKeys({ actor }: { actor: Person }) {
           onConfirm={async () => {
             try {
               await licenseKeysApi.revoke(actor, revoking);
-              setNotice(t('Đã thu hồi key và trả một suất về kho.'));
+              setNotice(t('Đã thu hồi mã kích hoạt và trả một suất về kho.'));
             } finally {
               // Refetch either way: another admin may have revoked it, or the family just activated it.
               await cache.invalidateQueries({

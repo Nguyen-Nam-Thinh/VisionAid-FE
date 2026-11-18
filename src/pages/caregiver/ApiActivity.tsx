@@ -21,6 +21,7 @@ import { toCsv, downloadCsv } from '../../services/csv';
 import { formatTime } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 import { uiStore, useUI } from '../../stores/ui';
+import { objectLabel, resultLabels } from '../../constants/serverValues';
 import { ActivityTimeline } from './ActivityTimeline';
 
 const labels: Record<string, string> = labelMap({
@@ -69,18 +70,6 @@ const labels: Record<string, string> = labelMap({
   spokenText: msg('Câu đã đọc'),
 });
 const values: Record<string, string> = labelMap({
-  Full: msg('Đầy đủ'),
-  Minimal: msg('Tối giản'),
-  Success: msg('Thành công'),
-  Failed: msg('Thất bại'),
-  Retried: msg('Đã thử lại'),
-  LowConfidence: msg('Độ tin cậy thấp'),
-  Matched: msg('Nhận diện được'),
-  NotMatched: msg('Chưa nhận diện được'),
-  Error: msg('Lỗi'),
-  Unrecognized: msg('Không nhận dạng được'),
-  Confirmed: msg('Đã xác nhận'),
-  Cancelled: msg('Đã hủy'),
   Near: msg('Gần'),
   Medium: msg('Trung bình'),
   Far: msg('Xa'),
@@ -93,7 +82,7 @@ function display(key: string, value: ActivityRecord[string]) {
   if (typeof value === 'boolean') return value ? t('Có') : t('Không');
   if (key.endsWith('At')) return formatTime(String(value));
   if (key.endsWith('Score')) return `${(Number(value) * 100).toFixed(1)}%`;
-  if (key.endsWith('Ms')) return `${value} ms`;
+  if (key.endsWith('Ms')) return `${value} ${t('mili giây')}`;
   return [
     'detectionMode',
     'resultStatus',
@@ -101,7 +90,7 @@ function display(key: string, value: ActivityRecord[string]) {
     'executionStatus',
     'distanceRange',
   ].includes(key)
-    ? values[String(value)] || String(value)
+    ? values[String(value)] || resultLabels[String(value)] || String(value)
     : String(value);
 }
 function Pager({
@@ -171,7 +160,7 @@ function Events({ actor, viuId, sessionId }: { actor: Person; viuId: string; ses
               {query.data?.items.map((item) => (
                 <tr key={item.id}>
                   <td>{display('detectedAt', item.detectedAt)}</td>
-                  <td>{item.objectClass}</td>
+                  <td>{objectLabel(String(item.objectClass))}</td>
                   <td>{display('confidenceScore', item.confidenceScore)}</td>
                   <td>{display('distanceRange', item.distanceRange)}</td>
                   <td>{display('alertIssued', item.alertIssued)}</td>
@@ -360,11 +349,7 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
           </label>
         </div>
       </FilterPanel>
-      <p>
-        {t(
-          'Để trống ngày để xem toàn bộ thời gian còn lưu.',
-        )}
-      </p>
+      <p>{t('Để trống ngày để xem toàn bộ thời gian còn lưu.')}</p>
       {error && (
         <p className="notice error" role="alert">
           {error}
@@ -491,8 +476,8 @@ function Activity({ actor }: { actor: Person }) {
               ))}
             </select>
           </label>
-          {users.data && (
-            <div className="row">
+          {users.data && users.data.totalPages > 1 && (
+            <div className="row pagination">
               <span>
                 {t('{totalCount} người · Trang {page}/{p4}', {
                   totalCount: users.data.totalCount,

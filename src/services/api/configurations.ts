@@ -8,6 +8,8 @@ import type { Person } from '../../models/domain';
 const reviewedKeys = new Set([
   'ai.yolo.confidence_threshold',
   'ai.facenet.similarity_threshold',
+  'ai.facenet.liveness_enabled',
+  'ai.facenet.liveness_threshold',
   'caregiving.max_caregivers_per_viu',
   'caregiving.max_vius_per_caregiver',
   'face_registry.min_photos_to_activate',
@@ -137,7 +139,7 @@ export function validateConfigValue(config: SystemConfig, value: string) {
     try {
       JSON.parse(value);
     } catch {
-      throw new ServiceError(t('JSON không hợp lệ.'), 400);
+      throw new ServiceError(t('Dữ liệu không đúng định dạng.'), 400);
     }
   }
   const choices: Record<string, string[]> = {

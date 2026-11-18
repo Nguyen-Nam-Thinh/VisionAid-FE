@@ -495,7 +495,7 @@ export function Landing() {
               <h3>{t('Business · Trung tâm')}</h3>
               <p>
                 {t(
-                  'Trung tâm quản lý kho license, phân công nhân viên và theo dõi người được chăm sóc trong tổ chức. Nhân viên dùng tài khoản do trung tâm cấp.',
+                  'Trung tâm quản lý kho suất sử dụng, phân công nhân viên và theo dõi người được chăm sóc trong tổ chức. Nhân viên dùng tài khoản do trung tâm cấp.',
                 )}
               </p>
             </article>

@@ -63,9 +63,12 @@ export function ApiLicense() {
     );
   return (
     <>
-      <PageHead title="License" description={t('Trạng thái và thời hạn sử dụng của tài khoản.')} />
+      <PageHead
+        title={t('Gói của tôi')}
+        description={t('Trạng thái và thời hạn sử dụng của tài khoản.')}
+      />
       <PageTabs
-        label={t('Phần của trang license')}
+        label={t('Phần của trang gói dịch vụ')}
         tabs={[
           {
             value: 'status',
@@ -75,13 +78,13 @@ export function ApiLicense() {
               <div className="profile-layout">
                 <section
                   className="glass card stack license-card"
-                  aria-label={t('Thông tin license')}
+                  aria-label={t('Thông tin gói dịch vụ')}
                 >
                   <div className="card-head">
                     <h2>{t('Trạng thái tài khoản')}</h2>
                     <button
                       className="btn small"
-                      aria-label={t('Tải lại thông tin license')}
+                      aria-label={t('Tải lại thông tin gói dịch vụ')}
                       disabled={checking || session.isFetching || detail.isFetching}
                       onClick={async () => {
                         setChecking(true);
@@ -115,7 +118,7 @@ export function ApiLicense() {
                       )}
                       {user.role === 'CenterAdmin' && user.orgId && (
                         <Link className="btn small" to="/center-admin/licenses">
-                          {t('Xem kho license tổ chức')}
+                          {t('Xem kho suất sử dụng của tổ chức')}
                         </Link>
                       )}
                     </div>
@@ -191,7 +194,7 @@ export function ApiLicense() {
                                     (cancelled
                                       ? t('Bật lại để tiếp tục gia hạn gói đã hủy.')
                                       : t(
-                                          'Khi bật, trước ngày hết hạn máy chủ gửi link thanh toán PayOS qua email và thông báo. Không tự trừ tiền.',
+                                          'Khi bật, trước ngày hết hạn máy chủ gửi liên kết thanh toán PayOS qua email và thông báo. Không tự trừ tiền.',
                                         ))}
                                 </small>
                                 {renewError && (
@@ -215,7 +218,7 @@ export function ApiLicense() {
                             ) : detail.data.isOrgIssued ? (
                               <p className="notice">
                                 {t(
-                                  'Gói này được kích hoạt bằng key của trung tâm. Liên hệ quản trị trung tâm để thay đổi.',
+                                  'Gói này được kích hoạt bằng mã kích hoạt của trung tâm. Liên hệ quản trị trung tâm để thay đổi.',
                                 )}
                               </p>
                             ) : (
@@ -234,7 +237,7 @@ export function ApiLicense() {
                     )}
                     <p>
                       {t(
-                        'Trial và Personal hỗ trợ tối đa {max} người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.',
+                        'Dùng thử và gói Personal hỗ trợ tối đa {max} người được chăm sóc. Quyền truy cập từng người vẫn theo liên kết.',
                         { max: maxVius },
                       )}
                     </p>
@@ -245,7 +248,7 @@ export function ApiLicense() {
           },
           {
             value: 'key',
-            label: t('Kích hoạt bằng key'),
+            label: t('Kích hoạt bằng mã'),
             icon: KeyRound,
             content: <LicenseKeys key={user.id + user.orgId} actor={user} mode="activate" />,
           },

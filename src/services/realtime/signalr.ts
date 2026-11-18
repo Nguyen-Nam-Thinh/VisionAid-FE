@@ -16,6 +16,13 @@ const schemas = {
     minutesElapsed: z.number().int().nonnegative(),
   }),
   GeofenceBreach: z.object({ viuId: uuid, geofenceId: uuid, occurredAt: date }),
+  // BE 6a56712: an alert changed status (Manual button or SosCall answer).
+  EmergencyAlertStatusChanged: z.object({
+    eventId: uuid,
+    viuId: uuid,
+    status: z.string(),
+    changedAt: date,
+  }),
 };
 export type HubEvent = keyof typeof schemas;
 export function hubUrl(configured: string, base: string, pageProtocol: string) {
@@ -48,12 +55,14 @@ export function createEventFilter() {
     const version =
       'recordedAt' in data
         ? Date.parse(data.recordedAt)
-        : 'occurredAt' in data
-          ? Date.parse(data.occurredAt)
-          : Date.parse(data.sentAt) +
-            ('minutesElapsed' in data && typeof data.minutesElapsed === 'number'
-              ? data.minutesElapsed * 60000
-              : 0);
+        : 'changedAt' in data
+          ? Date.parse(data.changedAt)
+          : 'occurredAt' in data
+            ? Date.parse(data.occurredAt)
+            : Date.parse(data.sentAt) +
+              ('minutesElapsed' in data && typeof data.minutesElapsed === 'number'
+                ? data.minutesElapsed * 60000
+                : 0);
     if ((seen.get(key) ?? -Infinity) >= version) return false;
     seen.delete(key);
     seen.set(key, version);

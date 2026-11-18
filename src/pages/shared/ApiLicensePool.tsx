@@ -34,10 +34,12 @@ export function OrganizationPool({
     retry: false,
   });
   if (!isOrganizationBuyer(actor))
-    return <p className="notice">{t('Chỉ quản trị trung tâm có tổ chức được xem kho license.')}</p>;
+    return (
+      <p className="notice">{t('Chỉ quản trị trung tâm có tổ chức được xem kho suất sử dụng.')}</p>
+    );
   const item = query.data;
   return (
-    <section className="glass card stack license-card" aria-label={t('Kho license tổ chức')}>
+    <section className="glass card stack license-card" aria-label={t('Kho suất sử dụng của tổ chức')}>
       <div className="row page-head-actions">
         <button
           className="btn small"
@@ -45,7 +47,7 @@ export function OrganizationPool({
           onClick={() => void query.refetch()}
         >
           <RefreshCw size={16} aria-hidden="true" />
-          {t('Tải lại kho license')}
+          {t('Tải lại kho suất sử dụng')}
         </button>
         <Link className="btn small" to="/packages">
           {t('Chọn gói Business')}
@@ -57,7 +59,9 @@ export function OrganizationPool({
         )}
       </div>
       {query.error instanceof ServiceError && query.error.status === 404 ? (
-        <p className="notice">{t('Tổ chức chưa có kho license. Chọn gói Business để bắt đầu.')}</p>
+        <p className="notice">
+          {t('Tổ chức chưa có kho suất sử dụng. Chọn gói Business để bắt đầu.')}
+        </p>
       ) : (
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           {item && (
@@ -69,7 +73,7 @@ export function OrganizationPool({
                   <dd>{subscriptionLabels[item.status]}</dd>
                 </div>
                 <div>
-                  <dt>{t('Tổng license')}</dt>
+                  <dt>{t('Tổng số suất')}</dt>
                   <dd>{item.totalLicenses}</dd>
                 </div>
                 <div>
@@ -97,7 +101,7 @@ export function OrganizationPool({
                 <div className="notice stack" role="status">
                   <p>
                     {t(
-                      'Đã hẹn đổi sang gói {name} ({seats} suất) vào {time}. Trước thời điểm đó, cấp license mới bị giới hạn ở số suất của gói mới.',
+                      'Đã hẹn đổi sang gói {name} ({seats} suất) vào {time}. Trước thời điểm đó, cấp suất sử dụng mới bị giới hạn ở số suất của gói mới.',
                       {
                         name: item.pendingChange.package.name,
                         seats: item.pendingChange.newTotalLicenses,
@@ -126,7 +130,7 @@ export function OrganizationPool({
               <PoolAutoRenew actor={actor} pool={item} reload={() => query.refetch()} />
               <p>
                 {t(
-                  'Nhân viên chăm sóc không sử dụng license trong kho. Việc cấp license cho người được chăm sóc do máy chủ kiểm tra.',
+                  'Nhân viên chăm sóc không sử dụng suất trong kho. Việc cấp suất sử dụng cho người được chăm sóc do máy chủ kiểm tra.',
                 )}
               </p>
             </>
@@ -142,21 +146,21 @@ export function ApiLicensePool() {
   return (
     <>
       <PageHead
-        title={t('Kho license tổ chức')}
-        description={t('Số license đã mua, đã cấp và thời hạn sử dụng của trung tâm.')}
+        title={t('Kho suất sử dụng của tổ chức')}
+        description={t('Số gói dịch vụ đã mua, đã cấp và thời hạn sử dụng của trung tâm.')}
       />
       <PageTabs
-        label={t('Phần của kho license')}
+        label={t('Phần của kho suất sử dụng')}
         tabs={[
           {
             value: 'pool',
-            label: t('Kho license'),
+            label: t('Kho suất sử dụng'),
             icon: Package,
             content: <OrganizationPool key={'pool-' + actor.id + actor.orgId} actor={actor} />,
           },
           isOrganizationBuyer(actor) && {
             value: 'assignments',
-            label: t('License đã cấp'),
+            label: t('Suất đã cấp'),
             icon: UserCheck,
             content: (
               <LicenseAssignments key={'assignments-' + actor.id + actor.orgId} actor={actor} />
@@ -164,7 +168,7 @@ export function ApiLicensePool() {
           },
           isOrganizationBuyer(actor) && {
             value: 'keys',
-            label: t('Key cho gia đình'),
+            label: t('Mã kích hoạt cho gia đình'),
             icon: KeyRound,
             content: (
               <LicenseKeys key={'keys-' + actor.id + actor.orgId} actor={actor} mode="distribute" />

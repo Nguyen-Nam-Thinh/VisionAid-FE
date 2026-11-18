@@ -1,4 +1,4 @@
-import { t, msg, labelMap, formatLocaleDateTime } from '../../i18n';
+import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
@@ -8,20 +8,18 @@ import { Badge, State } from '../../components/UI';
 import {
   activityApi,
   activityDateRange,
-  engineLabels,
   mapLink,
   timelineTypeLabels,
   timelineTypes,
 } from '../../services/api/activity';
 import type { HistoryRange } from '../../services/api/locations';
+import {
+  decisionLabels,
+  engineLabels,
+  timelineDetail,
+  timelineResult,
+} from '../../constants/serverValues';
 import type { Person } from '../../models/domain';
-
-const decisionLabels: Record<string, string> = labelMap({
-  STOP: msg('Dừng lại'),
-  TURN_LEFT: msg('Rẽ trái'),
-  TURN_RIGHT: msg('Rẽ phải'),
-  PROCEED: msg('Tiếp tục'),
-});
 
 function Place({ latitude, longitude }: { latitude: number | null; longitude: number | null }) {
   const href = mapLink(latitude, longitude);
@@ -211,8 +209,8 @@ function Timeline({
                 <tr key={item.activityType + item.sourceId}>
                   <td>{formatLocaleDateTime(item.occurredAt)}</td>
                   <td>{timelineTypeLabels[item.activityType] ?? item.activityLabel}</td>
-                  <td>{item.detail || '—'}</td>
-                  <td>{item.result || '—'}</td>
+                  <td>{timelineDetail(item.activityType, item.detail) || '—'}</td>
+                  <td>{timelineResult(item.activityType, item.result) || '—'}</td>
                   <td>{item.spokenText || '—'}</td>
                   <td>
                     <Place latitude={item.latitude} longitude={item.longitude} />

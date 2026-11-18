@@ -18,6 +18,7 @@ import {
   parseDelivery,
   type InboxFilters,
   type InboxItem,
+  notificationCopy,
 } from '../../services/api/inbox';
 import type { Person } from '../../models/domain';
 
@@ -29,7 +30,7 @@ function inboxTarget(actor: Person, item: InboxItem) {
   return null;
 }
 const noticeTitle = (item: InboxItem) =>
-  item.title || inboxTypeLabels[item.notificationType] || item.notificationType;
+  notificationCopy(item).title || inboxTypeLabels[item.notificationType] || item.notificationType;
 
 /** Mark-read actions shared by the bell and the inbox page; both refresh the same queries. */
 function useInboxActions(actor: Person) {
@@ -320,7 +321,7 @@ function Inbox({ actor }: { actor: Person }) {
                       <strong>{noticeTitle(item)}</strong>
                       {!item.readAt && <Badge tone="amber">{t('Chưa xem')}</Badge>}
                     </div>
-                    {item.body && <p>{item.body}</p>}
+                    {notificationCopy(item).body && <p>{notificationCopy(item).body}</p>}
                     <p className="muted inbox-item-meta">
                       <span>{inboxTypeLabels[item.notificationType] ?? item.notificationType}</span>
                       {item.visuallyImpairedUserName && (
@@ -379,6 +380,14 @@ function Inbox({ actor }: { actor: Person }) {
                         )}
                       </div>
                     </div>
+                    {item.deliveries.includes('Fcm:Failed') && (
+                      <p className="muted inbox-item-hint">
+                        {t(
+                          'Thông báo chưa tới được thiết bị. Thường là do chưa bật nhận thông báo trên trình duyệt hoặc ứng dụng điện thoại.',
+                        )}{' '}
+                        <Link to="/profile">{t('Bật thông báo trình duyệt')}</Link>
+                      </p>
+                    )}
                   </li>
                 );
               })}

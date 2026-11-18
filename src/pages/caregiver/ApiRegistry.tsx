@@ -95,8 +95,8 @@ function Registry({ actor }: { actor: Person }) {
               )}
             </p>
           )}
-          {users.data && (
-            <div className="row">
+          {users.data && users.data.totalPages > 1 && (
+            <div className="row pagination">
               <span>
                 {t('{totalCount} người · Trang {page}/{p4}', {
                   totalCount: users.data.totalCount,

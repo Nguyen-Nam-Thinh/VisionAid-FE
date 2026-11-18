@@ -123,6 +123,11 @@ function IncomingCall({ client, call }: { client: CallClient; call: CallView }) 
             {call.name}
           </AnimatedDialog.Title>
           <p role="status">{call.message}</p>
+          {call.alertId && (
+            <p className="notice">
+              {t('Nhận cuộc gọi này cũng ghi nhận bạn đã tiếp nhận cảnh báo khẩn cấp.')}
+            </p>
+          )}
           <p className="muted">
             {t('Micro chỉ bật khi bạn nhận cuộc gọi. Camera của bạn không bật.')}
           </p>
@@ -219,7 +224,12 @@ function CallWorkspace({ client, call }: { client: CallClient; call: CallView })
             <p className="call-status" role="status">
               {call.message}
             </p>
-            {ended && call.license && <Link to="/license">{t('Xem trạng thái license')}</Link>}
+            {ended && call.license && <Link to="/license">{t('Xem trạng thái gói dịch vụ')}</Link>}
+            {call.alertId && (
+              <Link to={'/caregiver/alerts?event=' + call.alertId}>
+                {t('Xem cảnh báo khẩn cấp')}
+              </Link>
+            )}
           </div>
         </div>
         {!ended && (

@@ -123,7 +123,7 @@ function PoolChangeSummary({
           {quote.seatsToRelease > 0 && (
             <p className="notice error" role="alert">
               {t(
-                'Số license đang dùng nhiều hơn số suất của gói này. Hãy thu hồi {count} license trước khi đổi gói.',
+                'Số gói dịch vụ đang dùng nhiều hơn số suất của gói này. Hãy thu hồi {count} gói dịch vụ trước khi đổi gói.',
                 { count: quote.seatsToRelease },
               )}
             </p>
@@ -131,7 +131,7 @@ function PoolChangeSummary({
           {!quote.canProceed && quote.seatsToRelease === 0 && (
             <p className="notice error" role="alert">
               {t(
-                'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho license để kiểm tra trạng thái.',
+                'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho suất sử dụng để kiểm tra trạng thái.',
               )}
             </p>
           )}
@@ -315,7 +315,9 @@ export function ApiPayments({ result = false }: { result?: boolean }) {
   if (!canPay(actor))
     return (
       <p className="notice">
-        {t('Luồng thanh toán này dành cho Caregiver cá nhân hoặc quản trị trung tâm có tổ chức.')}
+        {t(
+          'Luồng thanh toán này dành cho người chăm sóc gia đình hoặc quản trị trung tâm có tổ chức.',
+        )}
       </p>
     );
   return result ? (
@@ -594,7 +596,7 @@ function PaymentResult({
         )}
         {success && isOrganizationBuyer(actor) && <OrganizationPool actor={actor} embedded />}
         <Link to={isOrganizationBuyer(actor) ? '/center-admin/licenses' : '/license'}>
-          {t('Xem license')}
+          {t('Xem gói dịch vụ')}
         </Link>
         <Link to={paymentHistoryPath(actor)}>{t('Lịch sử thanh toán')}</Link>
       </section>

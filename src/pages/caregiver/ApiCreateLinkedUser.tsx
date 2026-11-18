@@ -30,7 +30,11 @@ export function ApiCreateLinkedUser({
       if (id) sessionStorage.setItem(key, id);
       else sessionStorage.removeItem(key);
     } catch {
-      setNotice(t('Không lưu được tiến độ trong tab. Hãy ghi lại mã VIU trước khi tải lại trang.'));
+      setNotice(
+        t(
+          'Không lưu được tiến độ trong tab. Hãy ghi lại mã người khiếm thị trước khi tải lại trang.',
+        ),
+      );
     }
   };
   return (
@@ -45,7 +49,7 @@ export function ApiCreateLinkedUser({
               <Confirm
                 title={t('Bỏ tiến độ liên kết')}
                 description={
-                  t('Hãy lưu mã VIU trước: ') +
+                  t('Hãy lưu mã người khiếm thị trước: ') +
                   pending +
                   t(
                     '. Thao tác này chỉ bỏ tiến độ trong tab, không xóa tài khoản trên máy chủ. Chỉ tạo lại khi quản trị viên xác nhận chưa có tài khoản.',
@@ -83,7 +87,7 @@ export function ApiCreateLinkedUser({
             {!pending ? (
               <Form
                 key="create"
-                submit={t('Bước 1: Tạo tài khoản VIU')}
+                submit={t('Bước 1: Tạo tài khoản người khiếm thị')}
                 fields={[
                   { key: 'fullName', label: t('Họ và tên'), required: true, min: 2, max: 200 },
                   { key: 'email', label: 'Email', type: 'email', required: true, max: 255 },
@@ -125,7 +129,7 @@ export function ApiCreateLinkedUser({
                       save('unknown');
                       setNotice(
                         t(
-                          'Chưa xác định được tài khoản đã tạo hay chưa. Nhờ quản trị viên kiểm tra email và cung cấp mã VIU trước khi tiếp tục; không gửi lại yêu cầu tạo tài khoản.',
+                          'Chưa xác định được tài khoản đã tạo hay chưa. Nhờ quản trị viên kiểm tra email và cung cấp mã người khiếm thị trước khi tiếp tục; không gửi lại yêu cầu tạo tài khoản.',
                         ),
                       );
                     } else throw error;
@@ -135,7 +139,7 @@ export function ApiCreateLinkedUser({
             ) : pending !== 'unknown' ? (
               <>
                 <p>
-                  {t('Mã VIU đang chờ liên kết:')} <strong>{pending}</strong>
+                  {t('Mã người khiếm thị đang chờ liên kết:')} <strong>{pending}</strong>
                 </p>
                 <p>{t('Nếu liên kết thất bại, thử lại bước này. Không cần tạo thêm tài khoản.')}</p>
                 <Form
@@ -166,19 +170,21 @@ export function ApiCreateLinkedUser({
             ) : (
               <p role="alert">
                 {t(
-                  'Chờ xác minh tài khoản đã tạo với quản trị viên. Nhập mã VIU đã xác minh ở bên dưới để tiếp tục.',
+                  'Chờ xác minh tài khoản đã tạo với quản trị viên. Nhập mã người khiếm thị đã xác minh ở bên dưới để tiếp tục.',
                 )}
               </p>
             )}
             {(!pending || pending === 'unknown') && (
-              <Disclosure summary={t('Tiếp tục bằng mã VIU đã có')}>
+              <Disclosure summary={t('Tiếp tục bằng mã người khiếm thị đã có')}>
                 <Form
-                  submit={t('Dùng mã VIU này')}
-                  fields={[{ key: 'id', label: t('Mã VIU đã xác minh'), required: true }]}
+                  submit={t('Dùng mã người khiếm thị này')}
+                  fields={[
+                    { key: 'id', label: t('Mã người khiếm thị đã xác minh'), required: true },
+                  ]}
                   onSubmit={async (values) => {
                     const id = String(values.id).trim();
                     if (!z.string().uuid().safeParse(id).success)
-                      throw new Error(t('Mã VIU phải là UUID hợp lệ.'));
+                      throw new Error(t('Mã người khiếm thị không hợp lệ.'));
                     save(id);
                   }}
                 />

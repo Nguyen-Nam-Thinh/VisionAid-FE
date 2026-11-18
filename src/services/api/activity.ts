@@ -153,12 +153,6 @@ const guidanceLog = z.object({
   ...position,
 });
 export type GuidanceLog = z.infer<typeof guidanceLog>;
-export const engineLabels: Record<string, string> = labelMap({
-  Jev: msg('Máy chủ · JEV'),
-  Groq: msg('Máy chủ · Groq'),
-  RuleBased: msg('Máy chủ · quy tắc'),
-  OnDeviceRules: msg('Điện thoại tự quyết định'),
-});
 const pagedOf = <T extends z.ZodType>(item: T) =>
   z.object({
     items: z.array(item),
