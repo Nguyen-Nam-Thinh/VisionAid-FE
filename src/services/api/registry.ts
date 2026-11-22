@@ -18,7 +18,7 @@ export function uploadError(error: unknown): unknown {
   // BE rejects photos where FaceNet finds no face (422 NO_FACE_DETECTED); nothing was saved.
   if (error.status === 422 && error.code === 'NO_FACE_DETECTED')
     return new ServiceError(
-      t('Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.'),
+      t('Không tìm thấy gương mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.'),
       422,
       {},
       error.code,

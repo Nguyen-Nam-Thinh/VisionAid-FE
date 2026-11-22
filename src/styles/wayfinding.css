@@ -1539,8 +1539,8 @@ tbody tr:hover,
 /* Shortcuts as a list of destinations rather than a grid of cards. */
 .shortcut-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  column-gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  column-gap: 24px;
 }
 .overview-columns > :only-child {
   grid-column: 1 / -1;
@@ -1576,7 +1576,7 @@ tbody tr:hover,
 }
 .bar-list li {
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) minmax(0, 1.4fr) 4ch;
+  grid-template-columns: max-content minmax(48px, 1fr) 4ch;
   align-items: center;
   gap: 12px;
 }
@@ -1739,4 +1739,78 @@ tbody tr:hover,
   .push-prompt {
     padding: 12px 16px;
   }
+}
+/* File picker: the native control is hidden (its text follows the browser language). */
+.file-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  cursor: pointer;
+}
+.file-input-native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.file-input-name {
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-input:focus-within .btn {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+.file-input:has(.file-input-native:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+/* License page: the plan details get the wider column, and the auto-renew switch with its
+   explanation spans the full row instead of a narrow third column. */
+.profile-layout:has(.license-card) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+}
+.license-details {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.license-details > div:has(#auto-renew-label) {
+  grid-column: 1 / -1;
+}
+/* Scene photo opens in an in-page viewer (see ApiAlerts Snapshot). */
+button.alert-snapshot {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: zoom-in;
+}
+button.alert-snapshot span {
+  text-decoration: underline;
+}
+.alert-snapshot-large {
+  display: block;
+  width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: #000;
+}
+/* Overview: panels side by side share one height, so a short list leaves no ragged gap. */
+.overview-columns {
+  align-items: stretch;
+}
+.dialog:has(.alert-snapshot-large) {
+  width: min(960px, calc(100vw - 32px));
+  max-width: none;
+}
+
+.bar-list li > span:first-child {
+  white-space: nowrap;
 }

@@ -21,7 +21,7 @@ import { toCsv, downloadCsv } from '../../services/csv';
 import { formatTime } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 import { uiStore, useUI } from '../../stores/ui';
-import { objectLabel, resultLabels } from '../../constants/serverValues';
+import { objectLabel, resultLabels, voiceCommandLabels } from '../../constants/serverValues';
 import { ActivityTimeline } from './ActivityTimeline';
 
 const labels: Record<string, string> = labelMap({
@@ -82,6 +82,21 @@ function display(key: string, value: ActivityRecord[string]) {
   if (typeof value === 'boolean') return value ? t('Có') : t('Không');
   if (key.endsWith('At')) return formatTime(String(value));
   if (key.endsWith('Score')) return `${(Number(value) * 100).toFixed(1)}%`;
+  if (key === 'matchedCommand') return voiceCommandLabels[String(value)] ?? String(value);
+  // BE 86a0424: "Nhìn giúp tôi" rows carry ocrEngine = VisionAssist/Gemini|Groq|VietOCR|None.
+  if (key === 'ocrEngine' && String(value).startsWith('VisionAssist/')) {
+    const engine = String(value).slice('VisionAssist/'.length);
+    return t('Nhìn giúp tôi · {engine}', {
+      engine:
+        engine === 'Gemini'
+          ? t('AI Gemini')
+          : engine === 'Groq'
+            ? t('AI Groq')
+            : engine === 'None'
+              ? t('không đọc được')
+              : engine,
+    });
+  }
   if (key.endsWith('Ms')) return `${value} ${t('mili giây')}`;
   return [
     'detectionMode',
@@ -111,20 +126,24 @@ function Pager({
           p4: Math.max(1, data.totalPages),
         })}
       </span>
-      <button
-        className="btn"
-        disabled={busy || !data.hasPreviousPage}
-        onClick={() => onPage(data.page - 1)}
-      >
-        {t('Trang trước')}
-      </button>
-      <button
-        className="btn"
-        disabled={busy || !data.hasNextPage}
-        onClick={() => onPage(data.page + 1)}
-      >
-        {t('Trang sau')}
-      </button>
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasPreviousPage}
+          onClick={() => onPage(data.page - 1)}
+        >
+          {t('Trang trước')}
+        </button>
+      )}
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasNextPage}
+          onClick={() => onPage(data.page + 1)}
+        >
+          {t('Trang sau')}
+        </button>
+      )}
     </div>
   );
 }
@@ -485,26 +504,30 @@ function Activity({ actor }: { actor: Person }) {
                   p4: Math.max(1, users.data.totalPages),
                 })}
               </span>
-              <button
-                className="btn"
-                disabled={!users.data.hasPreviousPage || users.isFetching}
-                onClick={() => {
-                  setPage(page - 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={!users.data.hasNextPage || users.isFetching}
-                onClick={() => {
-                  setPage(page + 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang sau')}
-              </button>
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasPreviousPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page - 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasNextPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page + 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </div>
           )}
           {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}

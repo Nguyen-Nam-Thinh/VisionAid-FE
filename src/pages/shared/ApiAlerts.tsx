@@ -28,7 +28,13 @@ import { searchCareRecipients } from '../../services/api/pickers';
 import { useNow } from '../../hooks/useNow';
 import { onSessionEnded } from '../../services/sessionLifecycle';
 import type { Person } from '../../models/domain';
-import { boundaryLabels, detectionMethodLabels } from '../../constants/serverValues';
+import {
+  boundaryLabels,
+  detectionMethodLabels,
+  elapsedText,
+  historyReason,
+} from '../../constants/serverValues';
+import { contactTypes } from '../../services/api/contacts';
 import { roles } from '../../constants/labels';
 import {
   deliveryChannelLabels,
@@ -40,7 +46,9 @@ const time = (value: string) => formatLocaleDateTime(value);
 const methods = detectionMethodLabels;
 export function ApiAlerts() {
   const { data: actor } = useSession();
-  return actor?.role === 'Caregiver' ? <Alerts key={actor.id} actor={actor} /> : null;
+  return actor?.role === 'Caregiver' || (actor?.role === 'CenterAdmin' && actor.orgId) ? (
+    <Alerts key={actor.id} actor={actor} />
+  ) : null;
 }
 function Alerts({ actor }: { actor: Person }) {
   const [filters, setFilters] = useState<AlertFilters>({
@@ -230,20 +238,24 @@ function Alerts({ actor }: { actor: Person }) {
                         p4: Math.max(1, query.data.totalPages),
                       })}
                     </span>
-                    <button
-                      className="btn"
-                      disabled={query.isFetching || !query.data.hasPreviousPage}
-                      onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-                    >
-                      {t('Trang trước')}
-                    </button>
-                    <button
-                      className="btn"
-                      disabled={query.isFetching || !query.data.hasNextPage}
-                      onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-                    >
-                      {t('Trang sau')}
-                    </button>
+                    {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                      <button
+                        className="btn"
+                        disabled={query.isFetching || !query.data.hasPreviousPage}
+                        onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+                      >
+                        {t('Trang trước')}
+                      </button>
+                    )}
+                    {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                      <button
+                        className="btn"
+                        disabled={query.isFetching || !query.data.hasNextPage}
+                        onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+                      >
+                        {t('Trang sau')}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -406,20 +418,24 @@ function BoundaryAlerts({ actor }: { actor: Person }) {
                     p4: Math.max(1, query.data.totalPages),
                   })}
                 </span>
-                <button
-                  className="btn"
-                  disabled={query.isFetching || !query.data.hasPreviousPage}
-                  onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={query.isFetching || !query.data.hasNextPage}
-                  onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={query.isFetching || !query.data.hasPreviousPage}
+                    onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={query.isFetching || !query.data.hasNextPage}
+                    onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -475,11 +491,13 @@ function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) =
         {t('{count} cảnh báo chưa có ai tiếp nhận sau hơn 5 phút.', { count: overdue.length })}
       </p>
       <ul className="stack">
-        {overdue.map(({ event, minutes }) => (
+        {overdue.slice(0, 3).map(({ event, minutes }) => (
           <li key={event.id} className="row between">
             <span>
               <strong>
-                {t('Chưa có ai tiếp nhận sau {minutes} phút. Cân nhắc gọi 115.', { minutes })}
+                {t('Chưa có ai tiếp nhận sau {elapsed}. Cân nhắc gọi 115.', {
+                  elapsed: elapsedText(minutes),
+                })}
               </strong>{' '}
               {t('{viu} · gửi lúc {time}', {
                 viu: names.data?.[event.visuallyImpairedUserId] ?? t('Một người được chăm sóc'),
@@ -492,6 +510,13 @@ function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) =
           </li>
         ))}
       </ul>
+      {overdue.length > 3 && (
+        <small>
+          {t('Còn {count} cảnh báo khác chưa có ai tiếp nhận, xem trong danh sách bên dưới.', {
+            count: overdue.length - 3,
+          })}
+        </small>
+      )}
       {sent.data?.hasNextPage && (
         <small>{t('Còn cảnh báo Đã gửi khác; lọc theo trạng thái Đã gửi để xem đủ.')}</small>
       )}
@@ -637,8 +662,10 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                         .sort((a, b) => a.priorityOrder - b.priorityOrder)
                         .map((c) => (
                           <p key={c.id}>
-                            {c.priorityOrder}. {c.contactName} · {c.contactType} ·{' '}
-                            {c.phoneNumber || t('Không có số điện thoại')}
+                            {c.priorityOrder}. {c.contactName} ·{' '}
+                            {contactTypes[c.contactType as keyof typeof contactTypes] ??
+                              c.contactType}{' '}
+                            · {c.phoneNumber || t('Không có số điện thoại')}
                             {c.zaloDeepLink && <span> · Zalo: {c.zaloDeepLink}</span>}
                           </p>
                         ))
@@ -671,7 +698,9 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                                 names.data?.[h.changedBy] ??
                                 t('Người dùng khác'))}
                         </p>
-                        {h.reason && <p className="alert-timeline-note">{h.reason}</p>}
+                        {h.reason && (
+                          <p className="alert-timeline-note">{historyReason(h.reason)}</p>
+                        )}
                       </li>
                     ))}
                   </ol>
@@ -827,6 +856,7 @@ function AlertSnapshot({
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
+  const [large, setLarge] = useState(false);
   const enabled = hasSnapshot && emergenciesApi.snapshotReady && canView === true;
   useEffect(() => {
     if (!enabled) return;
@@ -888,14 +918,26 @@ function AlertSnapshot({
     );
   else if (url)
     body = (
-      <a href={url} target="_blank" rel="noreferrer" className="alert-snapshot">
-        <img
-          src={url}
-          alt={t('Ảnh hiện trường lúc phát hiện cảnh báo')}
-          onError={() => setError(t('Ảnh không thể hiển thị.'))}
-        />
-        <span>{t('Mở ảnh cỡ lớn')}</span>
-      </a>
+      <>
+        {/* Shown in place: a blob link opened in a new tab is saved as a file by some browsers. */}
+        <button type="button" className="alert-snapshot" onClick={() => setLarge(true)}>
+          <img
+            src={url}
+            alt={t('Ảnh hiện trường lúc phát hiện cảnh báo')}
+            onError={() => setError(t('Ảnh không thể hiển thị.'))}
+          />
+          <span>{t('Mở ảnh cỡ lớn')}</span>
+        </button>
+        {large && (
+          <Dialog title={t('Ảnh hiện trường')} onClose={() => setLarge(false)}>
+            <img
+              className="alert-snapshot-large"
+              src={url}
+              alt={t('Ảnh hiện trường lúc phát hiện cảnh báo')}
+            />
+          </Dialog>
+        )}
+      </>
     );
   else body = <p role="status">{t('Đang tải ảnh…')}</p>;
   return (

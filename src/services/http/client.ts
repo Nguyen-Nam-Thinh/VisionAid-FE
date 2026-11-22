@@ -52,11 +52,11 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   MAX_SAVED_LOCATIONS_REACHED: msg('Đã đủ 20 địa điểm. Xóa bớt trước khi thêm.'),
   // Gương mặt
   NO_FACE_DETECTED: msg(
-    'Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
+    'Không tìm thấy gương mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
   ),
   FACE_REGISTRY_FULL: msg('Danh bạ gương mặt đã đủ 20 người.'),
   FACE_SERVICE_UNAVAILABLE: msg(
-    'Dịch vụ nhận diện khuôn mặt tạm thời không hoạt động. Thử lại sau.',
+    'Dịch vụ nhận diện gương mặt tạm thời không hoạt động. Thử lại sau.',
   ),
   UNSUPPORTED_IMAGE_TYPE: msg('Chỉ nhận ảnh JPEG, PNG hoặc WebP.'),
   IMAGE_CONTENT_TYPE_MISMATCH: msg('Nội dung tệp không khớp định dạng ảnh đã chọn.'),

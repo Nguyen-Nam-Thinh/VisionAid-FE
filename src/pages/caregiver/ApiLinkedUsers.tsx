@@ -183,26 +183,30 @@ export function ApiLinkedUsers() {
                 </>
               )}
               <div className="row pagination">
-                <button
-                  className="btn"
-                  disabled={!query.data.hasPreviousPage || query.isFetching}
-                  onClick={() => {
-                    setPage(page - 1);
-                    setSelected('');
-                  }}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={!query.data.hasNextPage || query.isFetching}
-                  onClick={() => {
-                    setPage(page + 1);
-                    setSelected('');
-                  }}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={!query.data.hasPreviousPage || query.isFetching}
+                    onClick={() => {
+                      setPage(page - 1);
+                      setSelected('');
+                    }}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={!query.data.hasNextPage || query.isFetching}
+                    onClick={() => {
+                      setPage(page + 1);
+                      setSelected('');
+                    }}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </div>
             </>
           )}

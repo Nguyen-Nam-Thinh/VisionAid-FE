@@ -33,7 +33,7 @@ export function RulesManager({ global = false }: { global?: boolean }) {
         {
           key: 'recipient',
           label: t('Email bàn trực (tùy chọn)'),
-          hint: t('Địa chỉ nhận bổ sung trong quy tắc demo; chờ contract BE cho routing thật.'),
+          hint: t('Địa chỉ nhận bổ sung trong quy tắc demo; chưa dùng để gửi thông báo thật.'),
         },
       ]}
       details={(e) => (

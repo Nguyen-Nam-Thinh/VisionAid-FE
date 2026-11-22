@@ -23,6 +23,22 @@ const copy: Record<string, ConfigCopy> = {
     name: msg('Mức tin cậy người thật khi nhận diện gương mặt'),
     hint: msg('Dưới mức này (từ 0 đến 1), gương mặt bị xem là ảnh chụp hoặc màn hình.'),
   },
+  'ai.vision_assist.enabled': {
+    name: msg('Dùng AI để mô tả hình ảnh'),
+    hint: msg(
+      'Khi bật, điện thoại dùng AI để mô tả, nhận biết và trả lời câu hỏi về hình ảnh; khi tắt chỉ đọc chữ.',
+    ),
+  },
+  'ai.vision_assist.timeout_ms': {
+    name: msg('Thời gian chờ tối đa khi mô tả hình ảnh'),
+    hint: msg('Quá thời gian này, điện thoại chuyển sang chỉ đọc chữ trong ảnh.'),
+    unit: msg('mili giây'),
+  },
+  'ai.vision_assist.daily_limit': {
+    name: msg('Số lần mô tả hình ảnh bằng AI mỗi ngày'),
+    hint: msg('Mỗi người khiếm thị được dùng AI tối đa số lần này mỗi ngày; sau đó chỉ đọc chữ.'),
+    unit: msg('lần'),
+  },
   ocr_confidence_threshold: {
     name: msg('Độ tin cậy tối thiểu khi đọc chữ'),
     hint: msg('Kết quả đọc chữ thấp hơn mức này được đánh dấu là chưa chắc chắn (từ 0 đến 1).'),

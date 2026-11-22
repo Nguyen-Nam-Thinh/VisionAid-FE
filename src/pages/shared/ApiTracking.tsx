@@ -268,20 +268,24 @@ function Tracking({ actor }: { actor: Person }) {
                       p4: Math.max(1, users.data.totalPages),
                     })}
                   </span>
-                  <button
-                    className="btn"
-                    disabled={users.isFetching || !users.data.hasPreviousPage}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    {t('Trang người dùng trước')}
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={users.isFetching || !users.data.hasNextPage}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    {t('Trang người dùng sau')}
-                  </button>
+                  {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={users.isFetching || !users.data.hasPreviousPage}
+                      onClick={() => setPage(page - 1)}
+                    >
+                      {t('Trang người dùng trước')}
+                    </button>
+                  )}
+                  {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={users.isFetching || !users.data.hasNextPage}
+                      onClick={() => setPage(page + 1)}
+                    >
+                      {t('Trang người dùng sau')}
+                    </button>
+                  )}
                 </div>
               )}
               <PageLocations key={page + ':' + search} actor={actor} people={users.data.items} />

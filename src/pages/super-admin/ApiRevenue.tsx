@@ -14,6 +14,8 @@ import {
 } from '../../services/api/revenue';
 import type { Person } from '../../models/domain';
 
+/** "2026-11-20" → "20/11/2026", "2026-11" → "11/2026". */
+const periodText = (value: string) => value.split('-').reverse().join('/');
 export function ApiRevenue() {
   const { data: actor } = useSession();
   return actor?.role === 'Admin' ? <Revenue key={actor.id} actor={actor} /> : null;
@@ -101,7 +103,10 @@ function ReportView({ data }: { data: RevenueReport }) {
     <div className="stack revenue">
       <p role="status" className="revenue-period">
         <CalendarRange size={16} aria-hidden="true" />
-        {t('Kỳ báo cáo: {from} → {to}', { from: data.dateFrom, to: data.dateTo })}
+        {t('Kỳ báo cáo: {from} → {to}', {
+          from: periodText(data.dateFrom),
+          to: periodText(data.dateTo),
+        })}
       </p>
       <div className="revenue-kpis">
         <article className="revenue-kpi hero">
@@ -261,12 +266,14 @@ function Timeline({ data, money }: { data: RevenueReport; money: (value: number)
                       }}
                     />
                     <span className="revenue-chart-tip">
-                      <strong>{p.period}</strong>
+                      <strong>{periodText(p.period)}</strong>
                       <span>{money(p.revenue)}</span>
                       <span>{t('{count} giao dịch', { count: formatNumber(p.transactions) })}</span>
                     </span>
                   </div>
-                  <span className="revenue-chart-label">{i % step === 0 ? p.period : ''}</span>
+                  <span className="revenue-chart-label">
+                    {i % step === 0 ? periodText(p.period) : ''}
+                  </span>
                 </div>
               ))}
             </div>
@@ -285,7 +292,7 @@ function Timeline({ data, money }: { data: RevenueReport; money: (value: number)
                 <tbody>
                   {points.map((p) => (
                     <tr key={p.period}>
-                      <td>{p.period}</td>
+                      <td>{periodText(p.period)}</td>
                       <td>{money(p.revenue)}</td>
                       <td>{formatNumber(p.transactions)}</td>
                     </tr>
@@ -298,7 +305,7 @@ function Timeline({ data, money }: { data: RevenueReport; money: (value: number)
           <ul className="sr-only">
             {points.map((p) => (
               <li key={p.period}>
-                {p.period}: {money(p.revenue)} ·{' '}
+                {periodText(p.period)}: {money(p.revenue)} ·{' '}
                 {t('{count} giao dịch', { count: formatNumber(p.transactions) })}
               </li>
             ))}

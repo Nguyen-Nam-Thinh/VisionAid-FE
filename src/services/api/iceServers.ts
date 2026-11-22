@@ -81,22 +81,26 @@ export function validateIceInput(input: IceInput) {
   if (!Number.isInteger(priority) || priority < 1 || priority > 1000)
     throw new ServiceError(t('Độ ưu tiên phải là số nguyên từ 1 đến 1000.'), 400);
   if (typeof isActive !== 'boolean') throw new ServiceError(t('Trạng thái không hợp lệ.'), 400);
+  // BE: both empty → the server issues a time-limited password for every call (coturn
+  // use-auth-secret); otherwise a fixed username AND password are required.
+  const credential = input.credential.trim();
+  const temporary = serverType === 'Turn' && !username && !credential;
   if (
     serverType === 'Turn' &&
-    (!username ||
-      !input.credential.trim() ||
-      username.length > 200 ||
-      input.credential.length > 200)
+    !temporary &&
+    (!username || !credential || username.length > 200 || credential.length > 200)
   )
     throw new ServiceError(
-      t('TURN cần tên đăng nhập và mật khẩu, mỗi giá trị tối đa 200 ký tự.'),
+      t(
+        'Nhập cả tên đăng nhập và mật khẩu (tối đa 200 ký tự), hoặc để trống cả hai để máy chủ tự cấp mật khẩu tạm cho mỗi cuộc gọi.',
+      ),
       400,
     );
   return {
     serverType,
     url,
-    username: serverType === 'Turn' ? username : null,
-    credential: serverType === 'Turn' ? input.credential : null,
+    username: serverType === 'Turn' && !temporary ? username : null,
+    credential: serverType === 'Turn' && !temporary ? input.credential : null,
     priority,
     isActive,
   };
@@ -121,7 +125,7 @@ export function createIceServersApi(get = apiGet, write = apiWrite) {
     const found = (await list(actor, filter)).items.find((row) => row.id === server.id);
     if (!found || JSON.stringify(found) !== JSON.stringify(server))
       throw new ServiceError(
-        t('Danh sách hoặc cấu hình đã thay đổi. Đóng popup và tải lại trước khi tiếp tục.'),
+        t('Danh sách hoặc cấu hình đã thay đổi. Đóng hộp thoại và tải lại trước khi tiếp tục.'),
         409,
       );
   }

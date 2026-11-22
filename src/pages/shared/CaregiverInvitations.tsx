@@ -1,3 +1,4 @@
+import { FileInput } from '../../components/FileInput';
 import { t, msg, formatLocaleDateTime, type MessageId } from '../../i18n';
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -286,8 +287,7 @@ function AcceptInvitation({
         </label>
         <label className="field">
           {t('Hoặc chọn ảnh chụp mã QR')}
-          <input
-            type="file"
+          <FileInput
             accept="image/png,image/jpeg"
             disabled={pending}
             onChange={async (e) => {

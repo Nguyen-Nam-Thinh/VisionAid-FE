@@ -24,9 +24,15 @@ import type { Person } from '../../models/domain';
 
 /** Where a notice opens. Only caregivers have the alerts page; other roles read it in the inbox. */
 function inboxTarget(actor: Person, item: InboxItem) {
-  if (actor.role !== 'Caregiver') return null;
-  if (item.emergencyEventId) return '/caregiver/alerts?event=' + item.emergencyEventId;
-  if (item.locationBoundaryEventId) return '/caregiver/alerts?tab=boundary';
+  const base =
+    actor.role === 'Caregiver'
+      ? '/caregiver/alerts'
+      : actor.role === 'CenterAdmin' && actor.orgId
+        ? '/center-admin/alerts'
+        : null;
+  if (!base) return null;
+  if (item.emergencyEventId) return base + '?event=' + item.emergencyEventId;
+  if (item.locationBoundaryEventId) return base + '?tab=boundary';
   return null;
 }
 const noticeTitle = (item: InboxItem) =>
@@ -403,20 +409,24 @@ function Inbox({ actor }: { actor: Person }) {
                 })}
               </span>
               <div className="row">
-                <button
-                  className="btn small"
-                  disabled={!data.hasPreviousPage || query.isFetching}
-                  onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn small"
-                  disabled={!data.hasNextPage || query.isFetching}
-                  onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(data.hasPreviousPage || data.hasNextPage) && (
+                  <button
+                    className="btn small"
+                    disabled={!data.hasPreviousPage || query.isFetching}
+                    onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(data.hasPreviousPage || data.hasNextPage) && (
+                  <button
+                    className="btn small"
+                    disabled={!data.hasNextPage || query.isFetching}
+                    onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </div>
             </footer>
           )}

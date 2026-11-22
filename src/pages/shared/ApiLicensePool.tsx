@@ -39,7 +39,10 @@ export function OrganizationPool({
     );
   const item = query.data;
   return (
-    <section className="glass card stack license-card" aria-label={t('Kho suất sử dụng của tổ chức')}>
+    <section
+      className="glass card stack license-card"
+      aria-label={t('Kho suất sử dụng của tổ chức')}
+    >
       <div className="row page-head-actions">
         <button
           className="btn small"

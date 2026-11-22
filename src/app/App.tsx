@@ -317,9 +317,16 @@ function Shell() {
           'delivery',
         ].includes(item.path)) ||
       (user.role === 'CenterAdmin' &&
-        ['organization', 'staff', 'users', 'assignments', 'map', 'routing', 'reports'].includes(
-          item.path,
-        )),
+        [
+          'organization',
+          'staff',
+          'users',
+          'assignments',
+          'map',
+          'alerts',
+          'routing',
+          'reports',
+        ].includes(item.path)),
   );
   // Secondary links at the foot of the sidebar; each entry is shown only where its API exists.
   const footItems: { to: string; label: string; Icon: typeof Phone }[] = [
@@ -487,8 +494,8 @@ function Shell() {
             <button
               className="btn sidebar-toggle"
               onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
-              title={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
+              aria-label={collapsed ? t('Mở rộng thanh menu') : t('Thu gọn thanh menu')}
+              title={collapsed ? t('Mở rộng thanh menu') : t('Thu gọn thanh menu')}
               aria-expanded={!collapsed}
             >
               {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
@@ -764,7 +771,8 @@ export function App() {
                             <ApiLinks />
                           ) : ['Caregiver', 'CenterAdmin'].includes(f.role) && f.path === 'map' ? (
                             <ApiTracking />
-                          ) : f.role === 'Caregiver' && f.path === 'alerts' ? (
+                          ) : ['Caregiver', 'CenterAdmin'].includes(f.role) &&
+                            f.path === 'alerts' ? (
                             <ApiAlerts />
                           ) : (f.role === 'Caregiver' && f.path === 'notifications') ||
                             (f.role === 'Admin' && f.path === 'rules') ||

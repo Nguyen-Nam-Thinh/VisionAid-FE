@@ -1,3 +1,4 @@
+import { engineLabels } from '../../constants/serverValues';
 import { BarChart3, CircleCheck, CircleX, Clock, ListChecks, RefreshCw } from 'lucide-react';
 import { PageTabs } from '../../components/PageTabs';
 import { t, msg, labelMap, tText, formatNumber } from '../../i18n';
@@ -19,6 +20,7 @@ import {
 } from '../../services/api/monitoring';
 import type { Person } from '../../models/domain';
 import { SearchPicker } from '../../components/SearchPicker';
+import { notificationTypes } from '../../services/api/notifications';
 import { searchAccounts } from '../../services/api/pickers';
 import { FilterPanel } from '../../components/FilterPanel';
 
@@ -33,18 +35,18 @@ const labels: Record<string, string> = labelMap({
   userId: msg('Mã người dùng'),
   frameId: msg('Mã khung hình'),
   decision: msg('Quyết định'),
-  engineUsed: 'Engine',
-  isOfflineFallback: msg('Fallback theo máy chủ'),
+  engineUsed: msg('Bộ xử lý'),
+  isOfflineFallback: msg('Điện thoại tự quyết định (máy chủ ghi nhận)'),
   latencyMs: msg('Thời gian xử lý'),
   id: msg('Mã bản ghi'),
   modelName: msg('Mô hình'),
   modelVersion: msg('Phiên bản'),
-  metricDate: msg('Ngày UTC'),
+  metricDate: msg('Ngày'),
   sourceTable: msg('Nguồn dữ liệu'),
   totalRequests: msg('Tổng lượt'),
   successfulRequests: msg('Thành công'),
   failedRequests: msg('Thất bại'),
-  avgConfidence: msg('Confidence trung bình'),
+  avgConfidence: msg('Độ tin cậy trung bình'),
   avgLatencyMs: msg('Thời gian trung bình'),
   p95LatencyMs: msg('Thời gian P95'),
   p99LatencyMs: msg('Thời gian P99'),
@@ -83,10 +85,10 @@ const columns = {
   delivery: ['createdAt', 'channel', 'notificationType', 'status'],
 };
 // UC-117: BE logs delivery for FCM and Email only; SignalR has no delivery rows to filter or count.
-const channelLabels: Record<string, string> = {
-  Fcm: 'Push FCM',
-  Email: 'Email',
-};
+const channelLabels: Record<string, string> = labelMap({
+  Fcm: msg('Thông báo trên thiết bị'),
+  Email: msg('Email'),
+});
 const decisions = new Map([
   ['STOP', msg('Dừng lại')],
   ['TURN_LEFT', msg('Rẽ trái')],
@@ -103,9 +105,9 @@ const entities: Record<string, string> = labelMap({
   caregiverlink: msg('Liên kết chăm sóc'),
   emergencyevent: msg('Cảnh báo khẩn cấp'),
   emergencycontact: msg('Liên hệ khẩn cấp'),
-  faceregistryperson: msg('Người quen trong danh bạ khuôn mặt'),
-  faceregistryimage: msg('Ảnh khuôn mặt'),
-  facerecognitionlog: msg('Nhận diện khuôn mặt'),
+  faceregistryperson: msg('Người quen trong danh bạ gương mặt'),
+  faceregistryimage: msg('Ảnh gương mặt'),
+  facerecognitionlog: msg('Nhận diện gương mặt'),
   savedlocation: msg('Địa điểm đã lưu'),
   geofence: msg('Vùng an toàn'),
   systemconfiguration: msg('Cấu hình hệ thống'),
@@ -135,10 +137,15 @@ function valueText(key: string, value: string | number | boolean | null) {
   if (key === 'isOfflineFallback') return value ? t('Có') : t('Không');
   if (key === 'sourceTable' || key === 'targetTable') return entityText(String(value));
   if (key === 'decision') return tText(decisions.get(String(value)) ?? String(value));
+  if (key === 'engineUsed') return engineLabels[String(value)] ?? String(value);
+  // yyyy-MM-dd → dd/MM/yyyy, like every other date on the web.
+  if (key === 'metricDate') return String(value).split('-').reverse().join('/');
   if (key.endsWith('At')) return formatTime(String(value));
   if (key.endsWith('Ms')) return value + ' ms';
   if (key === 'avgConfidence') return (Number(value) * 100).toFixed(1) + '%';
   if (key === 'channel') return channelLabels[String(value)] ?? String(value);
+  if (key === 'notificationType')
+    return notificationTypes[String(value) as keyof typeof notificationTypes] ?? String(value);
   if (key === 'actionType')
     return auditActionLabels[String(value) as keyof typeof auditActionLabels] ?? String(value);
   if (key === 'status' && value === 'Failed') return t('Thất bại');
@@ -322,20 +329,22 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                         queryKey={['guidance-user', actor.id]}
                       />
                       <label className="field">
-                        Engine
+                        {t('Bộ xử lý')}
                         <select name="engineUsed">
-                          <option value="">{t('Tất cả engine')}</option>
+                          <option value="">{t('Mọi bộ xử lý')}</option>
                           {guidanceEngines.map((engine) => (
-                            <option key={engine}>{engine}</option>
+                            <option key={engine} value={engine}>
+                              {engineLabels[engine] ?? engine}
+                            </option>
                           ))}
                         </select>
                       </label>
                       <label className="field">
-                        Fallback
+                        {t('Nơi quyết định')}
                         <select name="isOfflineFallback">
                           <option value="">{t('Tất cả bản ghi')}</option>
-                          <option value="true">{t('Có fallback')}</option>
-                          <option value="false">{t('Không fallback')}</option>
+                          <option value="true">{t('Điện thoại tự quyết định')}</option>
+                          <option value="false">{t('Máy chủ quyết định')}</option>
                         </select>
                       </label>
                     </>
@@ -432,7 +441,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                   <div className="stack">
                     <p>
                       {t(
-                        'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Fallback là cờ do máy chủ ghi nhận, không chứng minh điện thoại đang offline hoặc ghi lại mọi lần chuyển engine. Độ trễ không phải thời gian toàn bộ yêu cầu từ điện thoại.',
+                        'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Thời gian phản hồi là thời gian máy chủ xử lý, chưa gồm thời gian truyền từ điện thoại.',
                       )}
                     </p>
                     <div className="row">
@@ -440,17 +449,17 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                         {t('Xem số liệu AI')}
                       </Link>
                       <Link className="btn" to="/admin/configurations">
-                        {t('Cấu hình engine')}
+                        {t('Cấu hình bộ xử lý')}
                       </Link>
                     </div>
                     <p>
                       {t(
-                        'Trong cấu hình hệ thống, tìm hybrid_navigation_enabled, hybrid_navigation_engine hoặc navigation_near_threshold_ms. Số liệu AI tổng hợp dùng tên JEV, Groq và RuleBased.',
+                        'Bật, tắt hoặc đổi bộ xử lý dẫn đường ở trang Cấu hình hệ thống (nhóm Dẫn đường).',
                       )}
                     </p>
                     <p>
                       {t(
-                        'OnDeviceRules là quyết định điện thoại tự đưa ra khi mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.',
+                        '“Điện thoại tự quyết định” là khi điện thoại tự đưa ra hướng dẫn vì mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.',
                       )}
                     </p>
                   </div>
@@ -458,7 +467,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                 {kind === 'metrics' && (
                   <p>
                     {t(
-                      'Với nguồn navigation_guidance_logs, máy chủ tính bản ghi thiếu độ trễ vào nhóm thất bại, kể cả RuleBased đã trả quyết định. Các số này không đánh giá độ đúng hoặc an toàn của hướng dẫn.',
+                      'Với số liệu dẫn đường, bản ghi thiếu thời gian phản hồi được tính là thất bại, kể cả khi bộ xử lý theo quy tắc đã đưa ra quyết định. Các số này không đánh giá độ đúng hoặc an toàn của hướng dẫn.',
                     )}
                   </p>
                 )}
@@ -530,26 +539,30 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                           })}
                         </span>
                         <div className="row">
-                          <button
-                            className="btn"
-                            disabled={!query.data.hasPreviousPage || query.isFetching}
-                            onClick={() => {
-                              setPage(page - 1);
-                              setSelected(null);
-                            }}
-                          >
-                            {t('Trang trước')}
-                          </button>
-                          <button
-                            className="btn"
-                            disabled={!query.data.hasNextPage || query.isFetching}
-                            onClick={() => {
-                              setPage(page + 1);
-                              setSelected(null);
-                            }}
-                          >
-                            {t('Trang sau')}
-                          </button>
+                          {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                            <button
+                              className="btn"
+                              disabled={!query.data.hasPreviousPage || query.isFetching}
+                              onClick={() => {
+                                setPage(page - 1);
+                                setSelected(null);
+                              }}
+                            >
+                              {t('Trang trước')}
+                            </button>
+                          )}
+                          {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                            <button
+                              className="btn"
+                              disabled={!query.data.hasNextPage || query.isFetching}
+                              onClick={() => {
+                                setPage(page + 1);
+                                setSelected(null);
+                              }}
+                            >
+                              {t('Trang sau')}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </>

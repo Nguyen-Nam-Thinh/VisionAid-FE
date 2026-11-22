@@ -45,20 +45,24 @@ function Pager({
           p4: Math.max(1, data.totalPages),
         })}
       </span>
-      <button
-        className="btn"
-        disabled={busy || !data.hasPreviousPage}
-        onClick={() => change(data.page - 1)}
-      >
-        {t('Trang trước')}
-      </button>
-      <button
-        className="btn"
-        disabled={busy || !data.hasNextPage}
-        onClick={() => change(data.page + 1)}
-      >
-        {t('Trang sau')}
-      </button>
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasPreviousPage}
+          onClick={() => change(data.page - 1)}
+        >
+          {t('Trang trước')}
+        </button>
+      )}
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasNextPage}
+          onClick={() => change(data.page + 1)}
+        >
+          {t('Trang sau')}
+        </button>
+      )}
     </div>
   );
 }
@@ -120,7 +124,7 @@ function Change({
         {uncertain ? (
           <p className="notice error" role="alert">
             {t(
-              'Chưa xác nhận được kết quả ghi. Đóng popup và tải lại cấu hình cùng lịch sử trước khi gửi lại.',
+              'Chưa xác nhận được kết quả ghi. Đóng hộp thoại và tải lại cấu hình cùng lịch sử trước khi gửi lại.',
             )}
           </p>
         ) : (

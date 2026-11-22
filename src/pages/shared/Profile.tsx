@@ -34,7 +34,7 @@ export function Profile() {
           reader.readAsDataURL(file);
         });
         await auth.profile({ name: user.name, phone: user.phone, avatar });
-        setMessage(t('Đã cập nhật avatar demo.'));
+        setMessage(t('Đã cập nhật ảnh đại diện demo.'));
       } else {
         await avatarApi.upload(file);
         await cache.invalidateQueries({ queryKey: ['session'] });

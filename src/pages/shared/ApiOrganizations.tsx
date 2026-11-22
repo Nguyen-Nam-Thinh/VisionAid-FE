@@ -61,20 +61,24 @@ function Pagination({
           p4: Math.max(1, data.totalPages),
         })}
       </span>
-      <button
-        className="btn"
-        disabled={busy || !data.hasPreviousPage}
-        onClick={() => change(data.page - 1)}
-      >
-        {t('Trang trước')}
-      </button>
-      <button
-        className="btn"
-        disabled={busy || !data.hasNextPage}
-        onClick={() => change(data.page + 1)}
-      >
-        {t('Trang sau')}
-      </button>
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasPreviousPage}
+          onClick={() => change(data.page - 1)}
+        >
+          {t('Trang trước')}
+        </button>
+      )}
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasNextPage}
+          onClick={() => change(data.page + 1)}
+        >
+          {t('Trang sau')}
+        </button>
+      )}
     </div>
   );
 }
@@ -361,7 +365,7 @@ function OrganizationEditor({
               throw new Error(
                 (err.message || t('Lỗi máy chủ.')) +
                   t(
-                    ' Có thể thay đổi đã được lưu; đóng form và tải lại danh sách để kiểm tra trước khi gửi lại.',
+                    ' Có thể thay đổi đã được lưu; đóng hộp thoại và tải lại danh sách để kiểm tra trước khi gửi lại.',
                   ),
                 { cause: error },
               );

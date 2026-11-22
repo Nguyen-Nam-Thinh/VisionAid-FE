@@ -18,6 +18,11 @@ import { searchAccounts, searchCareRecipients } from '../../services/api/pickers
 import { FilterPanel } from '../../components/FilterPanel';
 import { caregivingApi } from '../../services/api/caregiving';
 import { accountsApi } from '../../services/api/accounts';
+/** 125 → "2 phút 5 giây". */
+const callLength = (seconds: number) =>
+  seconds < 60
+    ? t('{durationSeconds} giây', { durationSeconds: seconds })
+    : t('{m} phút {s} giây', { m: Math.floor(seconds / 60), s: seconds % 60 });
 const time = (value: string | null) => (value ? formatLocaleDateTime(value) : t('Chưa có'));
 export function ApiCalls() {
   const { data: actor } = useSession();
@@ -149,8 +154,10 @@ function History({ actor }: { actor: Person }) {
                     <td>{callStatuses[call.status]}</td>
                     <td>
                       {call.durationSeconds === null
-                        ? t('Chưa có')
-                        : t('{durationSeconds} giây', { durationSeconds: call.durationSeconds })}
+                        ? ['Missed', 'Rejected'].includes(call.status)
+                          ? t('Không kết nối')
+                          : '—'
+                        : callLength(call.durationSeconds)}
                     </td>
                     <td>
                       <button className="btn small" onClick={() => setSelected(call)}>
@@ -173,26 +180,30 @@ function History({ actor }: { actor: Person }) {
                 p4: Math.max(1, result.data?.totalPages ?? 1),
               })}
             </span>
-            <button
-              className="btn"
-              disabled={!result.data?.hasPreviousPage || result.isFetching}
-              onClick={() => {
-                setPage(page - 1);
-                setSelected(null);
-              }}
-            >
-              {t('Trang trước')}
-            </button>
-            <button
-              className="btn"
-              disabled={!result.data?.hasNextPage || result.isFetching}
-              onClick={() => {
-                setPage(page + 1);
-                setSelected(null);
-              }}
-            >
-              {t('Trang sau')}
-            </button>
+            {(result.data?.hasPreviousPage || result.data?.hasNextPage) && (
+              <button
+                className="btn"
+                disabled={!result.data?.hasPreviousPage || result.isFetching}
+                onClick={() => {
+                  setPage(page - 1);
+                  setSelected(null);
+                }}
+              >
+                {t('Trang trước')}
+              </button>
+            )}
+            {(result.data?.hasPreviousPage || result.data?.hasNextPage) && (
+              <button
+                className="btn"
+                disabled={!result.data?.hasNextPage || result.isFetching}
+                onClick={() => {
+                  setPage(page + 1);
+                  setSelected(null);
+                }}
+              >
+                {t('Trang sau')}
+              </button>
+            )}
           </div>
           {selected && (
             <Dialog title={t('Chi tiết cuộc gọi')} onClose={() => setSelected(null)}>

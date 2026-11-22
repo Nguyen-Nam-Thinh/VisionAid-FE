@@ -405,20 +405,24 @@ function PaymentHistory({ actor }: { actor: Person }) {
                   p4: Math.max(1, query.data.totalPages),
                 })}
               </span>
-              <button
-                className="btn"
-                disabled={query.isFetching || !query.data.hasPreviousPage}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={query.isFetching || !query.data.hasNextPage}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {t('Trang sau')}
-              </button>
+              {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasPreviousPage}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasNextPage}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </footer>
           )}
         </State>

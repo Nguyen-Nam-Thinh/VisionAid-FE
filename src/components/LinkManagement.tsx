@@ -24,7 +24,7 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
       <PageHead
         title={family ? t('Người chăm sóc phụ') : t('Phân công chăm sóc')}
         description={t(
-          'Tối đa {maxCaregivers} người chăm sóc/người dùng và {maxVius} người dùng/người chăm sóc. Duy trì một người chăm sóc chính.',
+          'Mỗi người khiếm thị có tối đa {maxCaregivers} người chăm sóc, mỗi người chăm sóc theo dõi tối đa {maxVius} người khiếm thị. Luôn giữ một người chăm sóc chính.',
           { maxCaregivers, maxVius },
         )}
         actions={
@@ -164,8 +164,8 @@ export function LinkManagement({ family = false }: { family?: boolean }) {
           <Form
             fields={[
               { key: 'alerts', label: t('Nhận và xử lý cảnh báo'), type: 'checkbox' },
-              { key: 'registry', label: t('Quản lý danh bạ khuôn mặt'), type: 'checkbox' },
-              { key: 'locations', label: t('Quản lý địa điểm và geofence'), type: 'checkbox' },
+              { key: 'registry', label: t('Quản lý danh bạ gương mặt'), type: 'checkbox' },
+              { key: 'locations', label: t('Quản lý địa điểm và vùng an toàn'), type: 'checkbox' },
             ]}
             initial={{ alerts: edit.alerts, registry: edit.registry, locations: edit.locations }}
             onSubmit={async (v) => {

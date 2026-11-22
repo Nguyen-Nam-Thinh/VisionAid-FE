@@ -94,7 +94,7 @@ test('linked user creation, QR and secondary flags', async ({ page }) => {
   await screen(page, '/caregiver/caregivers', 'Người chăm sóc phụ');
   const row = page.getByRole('row').filter({ hasText: 'Trần Quốc Bảo' });
   await row.getByRole('button', { name: 'Quyền', exact: true }).click();
-  await dialog(page).getByLabel('Quản lý danh bạ khuôn mặt').check();
+  await dialog(page).getByLabel('Quản lý danh bạ gương mặt').check();
   await dialog(page).getByRole('button', { name: 'Lưu thay đổi' }).click();
   await expect(row).toContainText('Registry');
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();

@@ -17,7 +17,7 @@ export function Activity() {
       type: 'EMERGENCY',
       label: t('Khẩn cấp'),
       at: a.at,
-      text: `${a.type} · ${statuses[a.status]}`,
+      text: `${a.type === 'FALL' ? t('Té ngã') : 'SOS'} · ${statuses[a.status]}`,
       online: true,
       lat: a.lat,
       lng: a.lng,

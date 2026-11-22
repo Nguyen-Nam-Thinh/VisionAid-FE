@@ -175,7 +175,7 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
                       await licenseKeysApi.activate(actor, String(values.licenseKey));
                       setNotice(
                         t(
-                          'Máy chủ đã xác nhận kích hoạt. Kiểm tra trạng thái và thời hạn vừa tải lại ở trên.',
+                          'Máy chủ đã xác nhận kích hoạt. Xem trạng thái và thời hạn mới ở thẻ "Trạng thái và gói".',
                         ),
                       );
                       setOpen(false);
