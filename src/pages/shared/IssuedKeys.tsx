@@ -201,22 +201,26 @@ export function IssuedKeys({ actor }: { actor: Person }) {
             })}
           </span>
           <div className="row">
-            <button
-              className="btn small"
-              aria-label={t('Trang trước')}
-              disabled={!data?.hasPreviousPage || query.isFetching}
-              onClick={() => setPage(page - 1)}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              className="btn small"
-              aria-label={t('Trang sau')}
-              disabled={!data?.hasNextPage || query.isFetching}
-              onClick={() => setPage(page + 1)}
-            >
-              <ChevronRight size={16} />
-            </button>
+            {(data?.hasPreviousPage || data?.hasNextPage) && (
+              <button
+                className="btn small"
+                aria-label={t('Trang trước')}
+                disabled={!data?.hasPreviousPage || query.isFetching}
+                onClick={() => setPage(page - 1)}
+              >
+                <ChevronLeft size={16} />
+              </button>
+            )}
+            {(data?.hasPreviousPage || data?.hasNextPage) && (
+              <button
+                className="btn small"
+                aria-label={t('Trang sau')}
+                disabled={!data?.hasNextPage || query.isFetching}
+                onClick={() => setPage(page + 1)}
+              >
+                <ChevronRight size={16} />
+              </button>
+            )}
           </div>
         </footer>
       </State>

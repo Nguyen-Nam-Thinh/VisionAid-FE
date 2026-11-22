@@ -80,7 +80,7 @@ function Servers({ actor }: { actor: Person }) {
               <div
                 className="table-scroll"
                 role="region"
-                aria-label={t('Máy chủ ICE')}
+                aria-label={t('Máy chủ kết nối cuộc gọi')}
                 tabIndex={0}
               >
                 <table style={{ minWidth: 720 }}>
@@ -101,7 +101,9 @@ function Servers({ actor }: { actor: Person }) {
                           {server.url}
                           {server.serverType === 'Turn' && server.hasCredential !== undefined && (
                             <small className="muted" style={{ display: 'block' }}>
-                              {server.hasCredential ? t('Đã lưu mật khẩu') : t('Chưa có mật khẩu')}
+                              {server.hasCredential
+                                ? t('Dùng mật khẩu cố định')
+                                : t('Mật khẩu tạm do máy chủ cấp mỗi cuộc gọi')}
                             </small>
                           )}
                         </td>
@@ -150,20 +152,24 @@ function Servers({ actor }: { actor: Person }) {
                   })}
                 </span>
                 <div className="row">
-                  <button
-                    className="btn"
-                    disabled={!query.data.hasPreviousPage || query.isFetching}
-                    onClick={() => setFilter({ ...filter, page: filter.page - 1 })}
-                  >
-                    {t('Trang trước')}
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={!query.data.hasNextPage || query.isFetching}
-                    onClick={() => setFilter({ ...filter, page: filter.page + 1 })}
-                  >
-                    {t('Trang sau')}
-                  </button>
+                  {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={!query.data.hasPreviousPage || query.isFetching}
+                      onClick={() => setFilter({ ...filter, page: filter.page - 1 })}
+                    >
+                      {t('Trang trước')}
+                    </button>
+                  )}
+                  {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={!query.data.hasNextPage || query.isFetching}
+                      onClick={() => setFilter({ ...filter, page: filter.page + 1 })}
+                    >
+                      {t('Trang sau')}
+                    </button>
+                  )}
                 </div>
               </div>
             </>
@@ -233,14 +239,14 @@ function Change({
         {!remove && (
           <p>
             {t(
-              'TURN cần nhập tên đăng nhập và mật khẩu mỗi lần lưu. Ô mật khẩu luôn trống khi mở, không dùng lại giá trị cũ. STUN bỏ qua hai ô này.',
+              'TURN: để trống cả tên đăng nhập và mật khẩu thì máy chủ tự cấp mật khẩu tạm cho mỗi cuộc gọi (nên dùng). Muốn dùng mật khẩu cố định thì nhập cả hai mỗi lần lưu; ô mật khẩu luôn trống khi mở. STUN bỏ qua hai ô này.',
             )}
           </p>
         )}
         {uncertain ? (
           <p className="notice error" role="alert">
             {t(
-              'Chưa xác nhận kết quả ghi. Đóng popup và tải lại danh sách trước khi gửi lại để tránh tạo hoặc ghi trùng.',
+              'Chưa xác nhận kết quả ghi. Đóng hộp thoại và tải lại danh sách trước khi gửi lại để tránh tạo hoặc ghi trùng.',
             )}
           </p>
         ) : (

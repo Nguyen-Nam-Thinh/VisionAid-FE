@@ -65,6 +65,32 @@ export const boundaryLabels: Record<string, string> = labelMap({
   Arrived: msg('Đến địa điểm đã lưu'),
 });
 
+// Voice command codes matched by the phone (VisionAid-MO src/constants/voiceCommands.ts).
+export const voiceCommandLabels: Record<string, string> = labelMap({
+  START_NAVIGATION: msg('Bắt đầu dẫn đường'),
+  STOP_NAVIGATION: msg('Dừng dẫn đường'),
+  READ_TEXT: msg('Đọc chữ'),
+  SCAN_QR: msg('Quét mã QR'),
+  RECOGNIZE_FACE: msg('Nhận diện gương mặt'),
+  WHERE_AM_I: msg('Hỏi vị trí hiện tại'),
+  EMERGENCY: msg('Gọi khẩn cấp'),
+  MODE_MINIMAL: msg('Chuyển chế độ tối giản'),
+  MODE_FULL: msg('Chuyển chế độ đầy đủ'),
+  I_AM_OK: msg('Báo đang ổn'),
+  SPEED_UP: msg('Đọc nhanh hơn'),
+  SLOW_DOWN: msg('Đọc chậm hơn'),
+  VOICE_MALE: msg('Đổi sang giọng nam'),
+  VOICE_FEMALE: msg('Đổi sang giọng nữ'),
+  VOLUME_UP: msg('Tăng âm lượng'),
+  VOLUME_DOWN: msg('Giảm âm lượng'),
+  HELP: msg('Trợ giúp'),
+  REPEAT: msg('Nhắc lại'),
+  ASK_PHOTO: msg('Hỏi về hình ảnh'),
+  CALL_CAREGIVER: msg('Gọi người chăm sóc'),
+  END_CALL: msg('Kết thúc cuộc gọi'),
+  RETRY: msg('Thử lại'),
+});
+
 // The 80 COCO classes YOLOv8 reports on the phone.
 const objects: Record<string, string> = labelMap({
   person: msg('Người'),
@@ -149,6 +175,27 @@ const objects: Record<string, string> = labelMap({
   toothbrush: msg('Bàn chải đánh răng'),
 });
 
+// Fixed English reasons the BE writes into alert status history (EmergencyEventDispatcher etc.).
+const historyReasons: Record<string, string> = labelMap({
+  'Auto-dispatched: grace period expired': msg(
+    'Hệ thống tự gửi cảnh báo vì hết thời gian chờ hủy.',
+  ),
+  'Auto-sent: no grace period for manual/voice/gesture emergency': msg(
+    'Hệ thống gửi ngay vì cảnh báo do người dùng chủ động bấm, nói hoặc ra hiệu.',
+  ),
+  'Dismissed by user': msg('Người khiếm thị đã hủy cảnh báo.'),
+});
+export const historyReason = (reason: string | null | undefined) =>
+  reason ? (historyReasons[reason.trim()] ?? reason) : '';
+/** 1758 minutes → "1 ngày 5 giờ"; short spans stay in minutes. */
+export function elapsedText(minutes: number) {
+  const m = Math.max(0, Math.floor(minutes));
+  if (m < 60) return t('{m} phút', { m });
+  const h = Math.floor(m / 60);
+  if (h < 24) return m % 60 ? t('{h} giờ {m} phút', { h, m: m % 60 }) : t('{h} giờ', { h });
+  const d = Math.floor(h / 24);
+  return h % 24 ? t('{d} ngày {h} giờ', { d, h: h % 24 }) : t('{d} ngày', { d });
+}
 export const serverValue = (value: string | null | undefined, map: Record<string, string>) =>
   value ? (map[value] ?? value) : '';
 export const objectLabel = (name: string) => objects[name.trim().toLowerCase()] ?? name;
@@ -165,6 +212,13 @@ export function timelineDetail(type: string, detail: string | null) {
     return match ? obstacleLabel(match[1], match[2]) : objectLabel(detail);
   }
   if (type === 'NavigationGuidance') return serverValue(detail, decisionLabels);
+  if (type === 'VoiceCommand') {
+    // "transcript → COMMAND" (the command is '?' when nothing matched)
+    const [spoken, command = ''] = detail.split(' → ');
+    const label =
+      command === '?' ? t('Không nhận ra lệnh') : serverValue(command, voiceCommandLabels);
+    return label ? t('"{spoken}" → {command}', { spoken: spoken.trim(), command: label }) : detail;
+  }
   if (type === 'Emergency' || type === 'BoundaryEvent') {
     const [head, ...rest] = detail.split(': ');
     const map = type === 'Emergency' ? detectionMethodLabels : boundaryLabels;

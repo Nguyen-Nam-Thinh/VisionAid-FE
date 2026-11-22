@@ -91,7 +91,7 @@ export function packageInput(values: Fields, current?: LicensePackage) {
   if (!result.success)
     throw new ServiceError(
       t(
-        'Kiểm tra thông tin gói: giá hợp lệ, số lượng/ngày là số nguyên và flags chỉ chứa true/false.',
+        'Kiểm tra thông tin gói: giá hợp lệ, số lượng/ngày là số nguyên và danh sách tính năng chỉ chứa true/false.',
       ),
       400,
       Object.fromEntries(result.error.issues.map((i) => [String(i.path[0]), i.message])),

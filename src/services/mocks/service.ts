@@ -115,7 +115,7 @@ export function createMockService(persistence?: DemoPersistence, delay = 180): V
       !db.entities.faces.some((x) => x.id === e.id) &&
       db.entities.faces.filter((x) => x.viuId === e.viuId).length >= 20
     )
-      fail('Tối đa 20 người trong danh bạ khuôn mặt.');
+      fail('Tối đa 20 người trong danh bạ gương mặt.');
     if (kind === 'contacts') {
       const f = e.fields;
       const t = f.type;

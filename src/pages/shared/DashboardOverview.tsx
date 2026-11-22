@@ -42,6 +42,8 @@ import type { Person } from '../../models/domain';
 const refresh = { retry: false, refetchInterval: 60000 } as const;
 const FRESH_MS = 2 * 60000;
 const ROSTER_SIZE = 6;
+// Recent notices and audit entries: the latest three keep the panel level with its neighbour.
+const RECENT_SIZE = 3;
 const dateOnly: Intl.DateTimeFormatOptions = {
   day: '2-digit',
   month: '2-digit',
@@ -130,7 +132,7 @@ function RecentNotices({ actor }: { actor: Person }) {
     queryKey: ['api-inbox-latest', actor.id, actor.orgId, 'dashboard'],
     queryFn: ({ signal }) => inboxApi.list({ page: 1 }, signal),
   });
-  const items = query.data?.items.slice(0, 5) ?? [];
+  const items = query.data?.items.slice(0, RECENT_SIZE) ?? [];
   return (
     <section className="glass card stack overview-panel" aria-labelledby="overview-recent">
       <div className="row between">
@@ -508,10 +510,17 @@ function CenterOverview({ actor }: { actor: Person }) {
               : t('Không ai trong trung tâm đang có cảnh báo mở.')
         }
         action={
-          <Link className={withAlert.length ? 'btn primary' : 'btn'} to="/center-admin/map">
-            <MapPin size={18} aria-hidden="true" />
-            {t('Mở bản đồ toàn trung tâm')}
-          </Link>
+          withAlert.length ? (
+            <Link className="btn primary" to="/center-admin/alerts">
+              <Bell size={18} aria-hidden="true" />
+              {t('Xử lý cảnh báo')}
+            </Link>
+          ) : (
+            <Link className="btn" to="/center-admin/map">
+              <MapPin size={18} aria-hidden="true" />
+              {t('Mở bản đồ toàn trung tâm')}
+            </Link>
+          )
         }
       />
       <PoolFigures actor={actor} members={members.length} fresh={fresh.length} />
@@ -906,7 +915,7 @@ function RecentAudit({ actor }: { actor: Person }) {
     queryKey: ['dashboard-audit', actor.id],
     queryFn: ({ signal }) => monitoringApi.list(actor, 'audit', 1, {}, signal),
   });
-  const items = query.data?.items.slice(0, 5) ?? [];
+  const items = query.data?.items.slice(0, RECENT_SIZE) ?? [];
   return (
     <section className="glass card stack overview-panel" aria-labelledby="overview-audit">
       <div className="row between">

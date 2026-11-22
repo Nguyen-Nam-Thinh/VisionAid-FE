@@ -1,3 +1,4 @@
+import { FileInput } from '../../components/FileInput';
 import { t } from '../../i18n';
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -132,8 +133,7 @@ export function LinkedUsers() {
             <div className="stack">
               <label className="field">
                 {t('Đọc mã từ ảnh QR · JPG/PNG dưới 5 MB')}
-                <input
-                  type="file"
+                <FileInput
                   accept="image/png,image/jpeg"
                   disabled={scanning}
                   onChange={async (e) => {

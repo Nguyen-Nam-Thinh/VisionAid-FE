@@ -52,7 +52,7 @@ export function Dashboard() {
           foot: t('Chỉ số tổng hợp'),
         },
         {
-          label: t('Delivery thất bại'),
+          label: t('Thông báo gửi lỗi'),
           value: db?.deliveries.filter((d) => d.status === 'FAILED').length ?? 0,
           icon: Send,
           path: 'delivery',

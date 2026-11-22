@@ -152,16 +152,14 @@ function Lookup({ actor }: { actor: Person }) {
               aria-label={t('Tra cứu thông báo')}
               tabIndex={0}
             >
-              <table style={{ minWidth: 860 }}>
+              <table style={{ minWidth: 760 }}>
                 <thead>
                   <tr>
                     <th scope="col">{t('Thời gian')}</th>
                     <th scope="col">{t('Loại thông báo')}</th>
                     <th scope="col">{t('Người nhận')}</th>
                     <th scope="col">{t('Người được chăm sóc')}</th>
-                    <th scope="col">{t('Kênh')}</th>
-                    <th scope="col">{t('Trạng thái')}</th>
-                    <th scope="col">{t('Đã xem')}</th>
+                    <th scope="col">{t('Kênh và trạng thái')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -191,8 +189,9 @@ function Lookup({ actor }: { actor: Person }) {
                         )}
                       </td>
                       <td>{item.visuallyImpairedUserName || '—'}</td>
-                      <td>{deliveryChannelLabels[item.channel] ?? item.channel}</td>
                       <td>
+                        {deliveryChannelLabels[item.channel] ?? item.channel}
+                        <br />
                         <Badge
                           tone={
                             item.status === 'Sent'
@@ -210,8 +209,13 @@ function Lookup({ actor }: { actor: Person }) {
                             <small>{failureReasonText(item.failureReason)}</small>
                           </>
                         )}
+                        <br />
+                        <small className="muted">
+                          {item.readAt
+                            ? t('Đã xem lúc {time}', { time: formatLocaleDateTime(item.readAt) })
+                            : t('Chưa xem')}
+                        </small>
                       </td>
-                      <td>{item.readAt ? formatLocaleDateTime(item.readAt) : t('Chưa xem')}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -229,20 +233,24 @@ function Lookup({ actor }: { actor: Person }) {
                 })}
               </span>
               <div className="row">
-                <button
-                  className="btn small"
-                  disabled={!data.hasPreviousPage || query.isFetching}
-                  onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn small"
-                  disabled={!data.hasNextPage || query.isFetching}
-                  onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(data.hasPreviousPage || data.hasNextPage) && (
+                  <button
+                    className="btn small"
+                    disabled={!data.hasPreviousPage || query.isFetching}
+                    onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(data.hasPreviousPage || data.hasNextPage) && (
+                  <button
+                    className="btn small"
+                    disabled={!data.hasNextPage || query.isFetching}
+                    onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </div>
             </footer>
           )}

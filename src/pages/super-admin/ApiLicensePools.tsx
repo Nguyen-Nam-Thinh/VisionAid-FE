@@ -195,20 +195,24 @@ function Pools({ actor }: { actor: Person }) {
                     p4: Math.max(1, pools.totalPages),
                   })}
                 </span>
-                <button
-                  className="btn"
-                  disabled={query.isFetching || !pools.hasPreviousPage}
-                  onClick={() => setPage(page - 1)}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={query.isFetching || !pools.hasNextPage}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(pools.hasPreviousPage || pools.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={query.isFetching || !pools.hasPreviousPage}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(pools.hasPreviousPage || pools.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={query.isFetching || !pools.hasNextPage}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </div>
             </>
           )}

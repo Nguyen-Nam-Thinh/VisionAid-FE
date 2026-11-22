@@ -6,8 +6,8 @@ export const en = {
   'Đăng nhập': 'Sign in',
   'Đăng xuất': 'Sign out',
   'Đến nội dung chính': 'Skip to main content',
-  'Mở rộng sidebar': 'Expand sidebar',
-  'Thu gọn sidebar': 'Collapse sidebar',
+  'Mở rộng thanh menu': 'Expand sidebar',
+  'Thu gọn thanh menu': 'Collapse sidebar',
   'Điều hướng chính': 'Main navigation',
   'Tổng quan': 'Overview',
   'Liên kết của tôi': 'My links',
@@ -116,8 +116,8 @@ export const en = {
     'Pick a location on the demo diagram; use the coordinate fields to enter it with the keyboard',
   'Tâm: {p1}, {p3} · {p5} m': 'Center: {p1}, {p3} · {p5} m',
   'Đang xử lý…': 'Processing…',
-  'Tối đa {maxCaregivers} người chăm sóc/người dùng và {maxVius} người dùng/người chăm sóc. Duy trì một người chăm sóc chính.':
-    'At most {maxCaregivers} caregivers per user and {maxVius} users per caregiver. Keep one primary caregiver.',
+  'Mỗi người khiếm thị có tối đa {maxCaregivers} người chăm sóc, mỗi người chăm sóc theo dõi tối đa {maxVius} người khiếm thị. Luôn giữ một người chăm sóc chính.':
+    'Each visually impaired user has at most {maxCaregivers} caregivers, and each caregiver follows at most {maxVius} visually impaired users. Always keep one primary caregiver.',
   'Thêm liên kết': 'Add link',
   'Chỉ người chăm sóc chính được quản lý liên kết này.':
     'Only the primary caregiver can manage this link.',
@@ -140,8 +140,8 @@ export const en = {
   'Người chăm sóc chính (khi chưa có)': 'Primary caregiver (if none yet)',
   'Quyền trên người dùng được liên kết': 'Permissions on the linked user',
   'Nhận và xử lý cảnh báo': 'Receive and handle alerts',
-  'Quản lý danh bạ khuôn mặt': 'Manage the face registry',
-  'Quản lý địa điểm và geofence': 'Manage places and geofences',
+  'Quản lý danh bạ gương mặt': 'Manage the face registry',
+  'Quản lý địa điểm và vùng an toàn': 'Manage places and geofences',
   'Gỡ liên kết chăm sóc?': 'Remove care link?',
   'Gỡ {name} khỏi {name2}. Quyền truy cập sẽ bị thu hồi.':
     'Remove {name} from {name2}. Their access will be revoked.',
@@ -242,7 +242,7 @@ export const en = {
   'Kênh email': 'Email channel',
   'Thông báo bắt buộc': 'Mandatory notification',
   'Email bàn trực (tùy chọn)': 'Duty desk email (optional)',
-  'Địa chỉ nhận bổ sung trong quy tắc demo; chờ contract BE cho routing thật.':
+  'Địa chỉ nhận bổ sung trong quy tắc demo; chưa dùng để gửi thông báo thật.':
     'Additional recipient in the demo rule; real routing awaits the BE contract.',
   'Bắt buộc': 'Mandatory',
   'Tùy chọn': 'Optional',
@@ -673,24 +673,20 @@ export const en = {
   'Giọng đọc': 'Voice',
   Nữ: 'Female',
   'Tốc độ đọc': 'Reading speed',
-  'Từ 0,5 đến 2 lần.': 'From 0.5 to 2 times.',
   'Âm lượng': 'Volume',
   'Từ 0 đến 100%. Mức 0 sẽ tắt âm thanh giọng đọc.': 'From 0 to 100%. Level 0 mutes the voice.',
   'Ngôn ngữ chính': 'Primary language',
   'Ngôn ngữ phụ': 'Secondary language',
   'Giọng đọc của {name}': 'Voice of {name}',
   'Không dùng': 'Not used',
-  ' lần': '×',
   'Chưa có cấu hình giọng đọc. Bạn có thể tạo cấu hình cho người được chọn.':
     'No voice configuration yet. You can create one for the selected person.',
   'Tải lại cấu hình': 'Reload configuration',
   'Chỉnh sửa giọng đọc': 'Edit voice',
   'Tạo cấu hình giọng đọc': 'Create voice configuration',
-  'Giá trị đề xuất: giọng nữ, tốc độ 1 lần, âm lượng 80%, chế độ đầy đủ và tiếng Việt. Chỉ được lưu khi bạn xác nhận.':
-    'Suggested values: female voice, speed 1×, volume 80%, full mode and Vietnamese. Saved only when you confirm.',
-  'Đã lưu cấu hình trên máy chủ. Kiểm tra lại trên Mobile.':
+  'Đã lưu cấu hình trên máy chủ. Kiểm tra lại trên điện thoại.':
     'Configuration saved on the server. Check it on Mobile.',
-  'Chưa xác nhận được kết quả lưu. Đóng popup và tải lại cấu hình trước khi gửi lại.':
+  'Chưa xác nhận được kết quả lưu. Đóng hộp thoại và tải lại cấu hình trước khi gửi lại.':
     'The save result was not confirmed. Close the popup and reload the configuration before resubmitting.',
   'Chọn người được chăm sóc ở trên để xem và chỉnh cấu hình giọng đọc.':
     'Choose a care recipient above to view and edit the voice configuration.',
@@ -754,7 +750,7 @@ export const en = {
   'Xóa ảnh đã chọn?': 'Delete the selected photo?',
   'Xóa ảnh có thể khiến người này không còn đủ 3 ảnh để nhận diện.':
     'Deleting the photo may leave this person with fewer than the 3 photos needed for recognition.',
-  'Cấu hình từ xa cho người được chăm sóc. Demo chỉ lưu tùy chọn, chưa đồng bộ xuống thiết bị Mobile.':
+  'Cấu hình từ xa cho người được chăm sóc. Demo chỉ lưu tùy chọn, chưa đồng bộ xuống điện thoại.':
     'Remote configuration for the care recipient. The demo only stores preferences and does not sync to the Mobile device.',
   'Tốc độ đọc (0.5–2 lần)': 'Reading speed (0.5–2×)',
   'Âm lượng (0–100)': 'Volume (0–100)',
@@ -765,12 +761,10 @@ export const en = {
   'Hoạt động của trung tâm': 'Center activity',
   'Xem báo cáo': 'View report',
   'Tải lại báo cáo': 'Reload report',
-  'Không giới hạn đầu kỳ': 'No start limit',
-  'Không giới hạn cuối kỳ': 'No end limit',
   'Sự kiện khẩn cấp': 'Emergency events',
   'Sự kiện ranh giới vùng an toàn': 'Safe zone boundary events',
   'Yêu cầu đọc chữ và quét QR': 'Text reading and QR scan requests',
-  'Lượt nhận diện khuôn mặt': 'Face recognitions',
+  'Lượt nhận diện gương mặt': 'Face recognitions',
   'Số liệu do máy chủ tổng hợp cho các thành viên khiếm thị hiện thuộc trung tâm, chưa bị xóa. Các nhóm có thể trùng sự kiện nên không cộng thành một tổng chung.':
     'Figures aggregated by the server for visually impaired members currently in the center and not deleted. Groups may overlap, so they are not added into one total.',
   'Thành viên hiện tại': 'Current members',
@@ -814,10 +808,10 @@ export const en = {
   'Đóng menu': 'Close menu',
   'Mở menu': 'Open menu',
   'Dành cho gia đình và các trung tâm chăm sóc': 'For families and care centers',
-  'VisionAid đang trong giai đoạn kiểm thử liên thông. Hybrid AI, cuộc gọi và thông báo cần được xác minh cùng ứng dụng di động trước khi sử dụng thực tế; trang này không cam kết mọi tính năng đã sẵn sàng trên mọi thiết bị.':
+  'VisionAid đang trong giai đoạn kiểm thử liên thông. AI dẫn đường, cuộc gọi và thông báo cần được xác minh cùng ứng dụng di động trước khi sử dụng thực tế; trang này không cam kết mọi tính năng đã sẵn sàng trên mọi thiết bị.':
     'VisionAid is in integration testing. Hybrid AI, calls and notifications must be verified with the mobile app before real-world use; this page does not promise every feature is ready on every device.',
   'Nhận biết trên thiết bị. Kết nối khi cần.': 'Recognition on the device. Connection when needed.',
-  'Hybrid AI kết hợp xử lý trên điện thoại và máy chủ. Web là nơi người chăm sóc theo dõi và phối hợp hỗ trợ, không phải công cụ chỉ đường trực tiếp.':
+  'AI của VisionAid kết hợp xử lý trên điện thoại và máy chủ. Web là nơi người chăm sóc theo dõi và phối hợp hỗ trợ, không phải công cụ chỉ đường trực tiếp.':
     'Hybrid AI combines processing on the phone and on the server. The Web is where caregivers monitor and coordinate support, not a live navigation tool.',
   'Vật thể ở gần': 'Nearby objects',
   'Theo thiết kế, điện thoại xử lý cảnh báo gần bằng YOLOv8n ngay trên thiết bị, để không phụ thuộc phản hồi từ máy chủ cho phần này.':
@@ -848,14 +842,14 @@ export const en = {
   'Business · Trung tâm': 'Business · Center',
   'Trung tâm quản lý kho suất sử dụng, phân công nhân viên và theo dõi người được chăm sóc trong tổ chức. Nhân viên dùng tài khoản do trung tâm cấp.':
     'Centers manage the license pool, assign staff and follow care recipients in the organization. Staff use accounts issued by the center.',
-  'Standalone · Trung tâm đồng hành': 'Standalone · Center-supported',
+  'Người dùng độc lập · Trung tâm đồng hành': 'Standalone · Center-supported',
   'Người khiếm thị thuộc tổ chức được nhân viên chăm sóc hỗ trợ qua ứng dụng di động và danh bạ khẩn cấp. Đây là mô hình sử dụng trong tổ chức, không phải một vai trò tài khoản hoặc gói mua riêng.':
     'Visually impaired members of an organization are supported by care staff through the mobile app and emergency contacts. This is an in-organization usage model, not an account role or a separately purchased plan.',
   'Đăng nhập để xem gói': 'Sign in to see plans',
   'Chuẩn bị trước mỗi hành trình.': 'Prepare before every journey.',
   'VisionAid là công cụ hỗ trợ. Tiếp tục sử dụng gậy trắng và thiết bị hỗ trợ phù hợp; không dựa hoàn toàn vào camera hoặc một cảnh báo trên ứng dụng để di chuyển.':
     'VisionAid is an assistive tool. Keep using a white cane and suitable assistive devices; do not rely entirely on the camera or a single app alert to move around.',
-  'Cố định điện thoại bằng chest strap để camera hướng về phía trước khi dùng chức năng nhận biết trên hành trình.':
+  'Cố định điện thoại bằng dây đeo ngực để camera hướng về phía trước khi dùng chức năng nhận biết trên hành trình.':
     'Secure the phone with a chest strap so the camera faces forward when using recognition on the move.',
   'Bắt buộc dùng đai đeo ngực.': 'A chest strap is required.',
   'Thiếu sáng, mưa hoặc ống kính bị che có thể làm giảm khả năng nhận biết. Không coi việc không có cảnh báo là đường đi an toàn.':
@@ -894,7 +888,7 @@ export const en = {
   'Lưu hồ sơ': 'Save profile',
   '{p0} Kiểm tra dữ liệu và kho suất sử dụng; nếu hết suất, mua thêm gói Business rồi thử lại.':
     '{p0} Check the data and the license pool; if seats are exhausted, buy another Business plan and try again.',
-  'Chưa xác nhận được kết quả lưu. Đóng form và tải lại/tìm email trước khi gửi lại để tránh tạo trùng tài khoản.':
+  'Chưa xác nhận được kết quả lưu. Đóng hộp thoại và tải lại hoặc tìm theo email trước khi gửi lại để tránh tạo trùng tài khoản.':
     'The save result was not confirmed. Close the form and reload/search the email before resubmitting to avoid duplicate accounts.',
   'Chưa có điện thoại': 'No phone yet',
   'Không thuộc tổ chức': 'No organization',
@@ -1052,7 +1046,7 @@ export const en = {
     "System-wide rules and the center's own rules.",
   'Thiết lập tùy chọn': 'Set a preference',
   'Thêm quy tắc': 'Add rule',
-  'Lưu tùy chọn thông báo đẩy chưa bật nhận thông báo trên trình duyệt này. Để nhận thông báo đẩy, vào Hồ sơ và chọn Bật thông báo trình duyệt.':
+  'Các tùy chọn ở đây chỉ chọn loại thông báo muốn nhận; chúng không tự bật thông báo trên trình duyệt này. Muốn nhận thông báo ngay trên máy, vào Hồ sơ và chọn Bật thông báo trình duyệt.':
     'Saving the Push preference does not enable notifications in this browser. To receive push, go to Profile and choose Enable browser notifications.',
   'Ngừng áp dụng': 'Not applied',
   'Chưa lưu tùy chọn nào. Máy chủ áp dụng quy tắc mặc định.':
@@ -1090,7 +1084,7 @@ export const en = {
   'Sửa tổ chức': 'Edit organization',
   'Lưu tổ chức': 'Save organization',
   'Lỗi máy chủ.': 'Server error.',
-  ' Có thể thay đổi đã được lưu; đóng form và tải lại danh sách để kiểm tra trước khi gửi lại.':
+  ' Có thể thay đổi đã được lưu; đóng hộp thoại và tải lại danh sách để kiểm tra trước khi gửi lại.':
     ' The change may have been saved; close the form and reload the list to check before resubmitting.',
   'Chưa có email': 'No email yet',
   'Vô hiệu hóa tổ chức': 'Deactivate organization',
@@ -1144,9 +1138,6 @@ export const en = {
   'Chi tiết / Sửa': 'Details / Edit',
   'Chưa có gói phù hợp trên trang này.': 'No suitable plans on this page.',
   ' Hãy xem trang tiếp theo.': ' See the next page.',
-  ' gói': ' plans',
-  'Phân trang theo danh mục máy chủ; chỉ hiển thị loại gói phù hợp tài khoản.':
-    'Paginated by the server catalog; only plan types suitable for the account are shown.',
   'Đã lưu gói trên máy chủ.': 'Plan saved on the server.',
   'Mã gói': 'Plan code',
   'Chữ in hoa, số, dấu gạch dưới. Không thể đổi sau khi tạo.':
@@ -1264,7 +1255,7 @@ export const en = {
   'Trên toàn nền tảng': 'Across the platform',
   'Mô hình AI': 'AI models',
   'Chỉ số tổng hợp': 'Aggregated metrics',
-  'Delivery thất bại': 'Failed deliveries',
+  'Thông báo gửi lỗi': 'Failed deliveries',
   'Cần kiểm tra · mô phỏng': 'Needs checking · simulated',
   'Trong tổ chức của bạn': 'In your organization',
   'Đang được liên kết': 'Currently linked',
@@ -1381,15 +1372,15 @@ export const en = {
     'Confirm using the key once for your account. Check its validity with the center before activating.',
   'Xác nhận tạo mã kích hoạt': 'Confirm key creation',
   'Xác nhận kích hoạt': 'Confirm activation',
-  'Máy chủ đã xác nhận kích hoạt. Kiểm tra trạng thái và thời hạn vừa tải lại ở trên.':
-    'The server confirmed the activation. Check the status and expiry reloaded above.',
+  'Máy chủ đã xác nhận kích hoạt. Xem trạng thái và thời hạn mới ở thẻ "Trạng thái và gói".':
+    'The server confirmed the activation. See the new status and expiry in the "Status and package" tab.',
   'Hồ sơ của bạn': 'Your profile',
   'Thông tin cá nhân, mật khẩu và các thiết bị đang đăng nhập.':
     'Personal information and sign-in session protection.',
   'Thông tin cá nhân': 'Personal information',
   'Chỉnh sửa hồ sơ': 'Edit profile',
   'Chọn ảnh JPG/PNG dưới 2 MB.': 'Choose a JPG/PNG image under 2 MB.',
-  'Đã cập nhật avatar demo.': 'Demo avatar updated.',
+  'Đã cập nhật ảnh đại diện demo.': 'Demo avatar updated.',
   'Ảnh đại diện của bạn': 'Your avatar',
   'Đổi mật khẩu': 'Change password',
   'Dùng mật khẩu riêng cho VisionAid. Bạn cần nhập mật khẩu hiện tại để thay đổi.':
@@ -1430,7 +1421,7 @@ export const en = {
   'Khôi phục về giá trị trước lần thay đổi lúc {p1}:':
     'Restore the value from before the change at {p1}:',
   '. Một bản ghi lịch sử mới sẽ được tạo.': '. A new history record will be created.',
-  'Chưa xác nhận được kết quả ghi. Đóng popup và tải lại cấu hình cùng lịch sử trước khi gửi lại.':
+  'Chưa xác nhận được kết quả ghi. Đóng hộp thoại và tải lại cấu hình cùng lịch sử trước khi gửi lại.':
     'The write result was not confirmed. Close the popup and reload the configuration and history before resubmitting.',
   'Giá trị mới': 'New value',
   'Lý do thay đổi': 'Reason for change',
@@ -1462,7 +1453,7 @@ export const en = {
   'Trạng thái máy chủ': 'Server status',
   'Đang tắt': 'Disabled',
   'Không có máy chủ phù hợp.': 'No matching servers.',
-  'Máy chủ ICE': 'ICE servers',
+  'Máy chủ kết nối cuộc gọi': 'ICE servers',
   '{totalCount} máy chủ · Trang {page}/{p4}': '{totalCount} servers · Page {page}/{p4}',
   'Đã lưu thay đổi trên máy chủ. Cần kiểm tra kết nối cuộc gọi sau khi đổi cấu hình.':
     'Changes saved on the server. Check call connectivity after changing the configuration.',
@@ -1474,9 +1465,7 @@ export const en = {
     'Deleting the configuration may stop new calls from connecting. Only delete when a suitable replacement server exists.',
   'Máy chủ mới được bật ngay sau khi tạo. Thay đổi áp dụng cho cấu hình kết nối mới, không tự cài đặt hoặc đổi mật khẩu trên máy chủ TURN.':
     'New servers are enabled right after creation. Changes apply to new connection configurations; they do not install anything or change passwords on the TURN server.',
-  'TURN cần nhập tên đăng nhập và mật khẩu mỗi lần lưu. Ô mật khẩu luôn trống khi mở, không dùng lại giá trị cũ. STUN bỏ qua hai ô này.':
-    'TURN requires a username and credential every time you save. The credential field is always empty when opened and old values are never reused. STUN ignores these two fields.',
-  'Chưa xác nhận kết quả ghi. Đóng popup và tải lại danh sách trước khi gửi lại để tránh tạo hoặc ghi trùng.':
+  'Chưa xác nhận kết quả ghi. Đóng hộp thoại và tải lại danh sách trước khi gửi lại để tránh tạo hoặc ghi trùng.':
     'The write result was not confirmed. Close the popup and reload the list before resubmitting to avoid duplicate creates or writes.',
   'Loại máy chủ': 'Server type',
   'Địa chỉ máy chủ': 'Server address',
@@ -1495,14 +1484,13 @@ export const en = {
   'Mã người dùng': 'User ID',
   'Mã khung hình': 'Frame ID',
   'Quyết định': 'Decision',
-  'Fallback theo máy chủ': 'Server fallback',
+  'Điện thoại tự quyết định (máy chủ ghi nhận)': 'Server fallback',
   'Mã bản ghi': 'Record ID',
   'Mô hình': 'Model',
   'Phiên bản': 'Version',
-  'Ngày UTC': 'UTC date',
   'Nguồn dữ liệu': 'Data source',
   'Tổng lượt': 'Total requests',
-  'Confidence trung bình': 'Average confidence',
+  'Độ tin cậy trung bình': 'Average confidence',
   'Thời gian trung bình': 'Average time',
   'Thời gian P95': 'P95 time',
   'Thời gian P99': 'P99 time',
@@ -1533,24 +1521,20 @@ export const en = {
     'Alert delivery statistics and failed notification lookup.',
   'Thông báo thất bại': 'Failed notifications',
   'Tra cứu bản ghi': 'Look up records',
-  'Tất cả engine': 'All engines',
+  'Mọi bộ xử lý': 'All engines',
   'Tất cả bản ghi': 'All records',
-  'Có fallback': 'With fallback',
-  'Không fallback': 'Without fallback',
+  'Điện thoại tự quyết định': 'With fallback',
+  'Máy chủ quyết định': 'Without fallback',
   'Tên mô hình': 'Model name',
   'Tên chính xác từ máy chủ': 'Exact name from the server',
   'Tất cả kênh': 'All channels',
   'Lọc bản ghi': 'Filter records',
   'Chi tiết hiển thị thông tin thao tác. Nội dung trước/sau, ghi chú và thông tin thiết bị chưa hiển thị vì có thể chứa dữ liệu nhạy cảm.':
     'Details show action information. Before/after content, notes and device information are hidden because they may contain sensitive data.',
-  'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Fallback là cờ do máy chủ ghi nhận, không chứng minh điện thoại đang offline hoặc ghi lại mọi lần chuyển engine. Độ trễ không phải thời gian toàn bộ yêu cầu từ điện thoại.':
-    'Only operational information is shown, never scenes or speech content. Fallback is a flag recorded by the server; it does not prove the phone was offline or capture every engine switch. Latency is not the full request time from the phone.',
+  'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Thời gian phản hồi là thời gian máy chủ xử lý, chưa gồm thời gian truyền từ điện thoại.':
+    'Only operational information is shown, never scenes or speech content. Response time is the server processing time and does not include the trip from the phone.',
   'Xem số liệu AI': 'View AI metrics',
-  'Cấu hình engine': 'Engine configuration',
-  'Trong cấu hình hệ thống, tìm hybrid_navigation_enabled, hybrid_navigation_engine hoặc navigation_near_threshold_ms. Số liệu AI tổng hợp dùng tên JEV, Groq và RuleBased.':
-    'In the system configuration, look for hybrid_navigation_enabled, hybrid_navigation_engine or navigation_near_threshold_ms. Aggregated AI metrics use the names JEV, Groq and RuleBased.',
-  'Với nguồn navigation_guidance_logs, máy chủ tính bản ghi thiếu độ trễ vào nhóm thất bại, kể cả RuleBased đã trả quyết định. Các số này không đánh giá độ đúng hoặc an toàn của hướng dẫn.':
-    'For the navigation_guidance_logs source, the server counts records without latency as failures, even when RuleBased returned a decision. These figures do not assess the correctness or safety of the guidance.',
+  'Cấu hình bộ xử lý': 'Engine configuration',
   'Không có bản ghi phù hợp.': 'No matching records.',
   'Chi tiết bản ghi': 'Record details',
   'Tổng quan gửi cảnh báo': 'Alert delivery overview',
@@ -1577,12 +1561,11 @@ export const en = {
   'Đang chờ · mô phỏng': 'Pending · simulated',
   'Theo dõi thông báo đã gửi tới đâu theo từng cách gửi. Toàn bộ bản ghi dưới đây là dữ liệu minh họa, không phải xác nhận gửi thật.':
     'Monitor delivery status by channel. All records below are illustrative data, not confirmation of real delivery.',
-  'Nhật ký delivery': 'Delivery log',
-  'Trạng thái delivery': 'Delivery status',
+  'Nhật ký gửi thông báo': 'Delivery log',
+  'Trạng thái gửi': 'Delivery status',
   'Mọi trạng thái': 'All statuses',
-  'Kênh delivery': 'Delivery channel',
   'Mọi kênh': 'All channels',
-  'Chi tiết delivery mô phỏng': 'Simulated delivery details',
+  'Chi tiết gửi thông báo (mô phỏng)': 'Simulated delivery details',
   'Kịch bản demo: nhà cung cấp tạm thời không khả dụng. Chưa hỗ trợ gửi lại.':
     'Demo scenario: the provider is temporarily unavailable. No confirmed retry API yet.',
   'Bản ghi trạng thái minh họa của bản demo.': 'Illustrative status records from the mock service.',
@@ -1590,9 +1573,9 @@ export const en = {
     'Simulated aggregated metrics by model and date. Confidence and processing success rate are not ground-truth accuracy.',
   'Tất cả mô hình': 'All models',
   'Lượt xử lý': 'Requests processed',
-  'Latency trung bình': 'Average latency',
+  'Thời gian phản hồi trung bình': 'Average latency',
   'Xử lý thành công': 'Processed successfully',
-  'Latency theo mô hình': 'Latency by model',
+  'Thời gian phản hồi theo mô hình': 'Latency by model',
   'Thang hiển thị 0–1.000 ms · dữ liệu demo': 'Display scale 0–1,000 ms · demo data',
   'Chi tiết theo ngày': 'Details by day',
   Ngày: 'Date',
@@ -1734,7 +1717,7 @@ export const en = {
   'Nhập URL STUN hợp lệ, không chứa thông tin đăng nhập.':
     'Enter a valid STUN URL without credentials.',
   'Cấu hình không khớp lựa chọn.': 'The configuration does not match the selection.',
-  'Cấu hình đã thay đổi. Đóng popup và tải lại trước khi sửa.':
+  'Cấu hình đã thay đổi. Đóng hộp thoại và tải lại trước khi sửa.':
     'The configuration has changed. Close the popup and reload before editing.',
   'Lý do tối đa 500 ký tự.': 'The reason can be at most 500 characters.',
   'Chưa xác nhận được kết quả lưu. Tải lại cấu hình trước khi gửi lại.':
@@ -1773,11 +1756,9 @@ export const en = {
   'Địa chỉ phải đúng loại STUN hoặc TURN, có host và cổng hợp lệ. TURN có thể thêm ?transport=udp hoặc ?transport=tcp.':
     'The address must be a STUN or TURN type with a valid host and port. TURN may add ?transport=udp or ?transport=tcp.',
   'Độ ưu tiên phải là số nguyên từ 1 đến 1000.': 'Priority must be an integer from 1 to 1000.',
-  'TURN cần tên đăng nhập và mật khẩu, mỗi giá trị tối đa 200 ký tự.':
-    'TURN needs a username and credential, each at most 200 characters.',
   'Bộ lọc máy chủ không hợp lệ.': 'Invalid server filter.',
   'Mã máy chủ không hợp lệ.': 'Invalid server ID.',
-  'Danh sách hoặc cấu hình đã thay đổi. Đóng popup và tải lại trước khi tiếp tục.':
+  'Danh sách hoặc cấu hình đã thay đổi. Đóng hộp thoại và tải lại trước khi tiếp tục.':
     'The list or configuration has changed. Close the popup and reload before continuing.',
   'Không thể xác nhận thao tác máy chủ kết nối. Kiểm tra quyền, dữ liệu và tải lại danh sách.':
     'Could not confirm the connection server action. Check permissions and data, then reload the list.',
@@ -1915,7 +1896,7 @@ export const en = {
   'Dữ liệu gói không hợp lệ. Hãy tải lại.': 'Invalid plan data. Please reload.',
   'Danh sách tính năng cần đúng định dạng, mỗi giá trị là true hoặc false.':
     'Feature flags must be JSON with true/false values.',
-  'Kiểm tra thông tin gói: giá hợp lệ, số lượng/ngày là số nguyên và flags chỉ chứa true/false.':
+  'Kiểm tra thông tin gói: giá hợp lệ, số lượng/ngày là số nguyên và danh sách tính năng chỉ chứa true/false.':
     'Check the plan details: a valid price, whole numbers for quantities/days and flags containing only true/false.',
   'Máy chủ trả về sai gói.': 'The server returned the wrong plan.',
   'Máy chủ trả về sai gói. Tải lại trước khi thao tác tiếp.':
@@ -1980,7 +1961,7 @@ export const en = {
   'Không gửi được ảnh. Có thể ảnh quá lớn hoặc mạng không ổn định.':
     'The photo could not be sent. It may be too large or the connection is unstable.',
   'Không nhận được ảnh từ máy chủ.': 'No photo received from the server.',
-  'Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.':
+  'Không tìm thấy gương mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.':
     'No face found in the photo. Choose a clear, well-lit photo with only one person.',
   'Kết quả tải ảnh không hợp lệ. Tải lại trước khi gửi lại.':
     'Invalid upload result. Reload before resubmitting.',
@@ -2032,7 +2013,7 @@ export const en = {
   'Đã đủ 20 địa điểm. Xóa bớt trước khi thêm.':
     'There are already 20 places. Delete one before adding.',
   'Danh bạ gương mặt đã đủ 20 người.': 'The face registry already has 20 people.',
-  'Dịch vụ nhận diện khuôn mặt tạm thời không hoạt động. Thử lại sau.':
+  'Dịch vụ nhận diện gương mặt tạm thời không hoạt động. Thử lại sau.':
     'The face recognition service is temporarily unavailable. Try again later.',
   'Chỉ nhận ảnh JPEG, PNG hoặc WebP.': 'Only JPEG, PNG or WebP images are accepted.',
   'Nội dung tệp không khớp định dạng ảnh đã chọn.':
@@ -2335,8 +2316,6 @@ export const en = {
   'Gợi ý chuyển cấp lên 115': 'Suggested escalation to 115',
   '{count} cảnh báo chưa có ai tiếp nhận sau hơn 5 phút.':
     '{count} alert(s) not acknowledged by anyone after more than 5 minutes.',
-  'Chưa có ai tiếp nhận sau {minutes} phút. Cân nhắc gọi 115.':
-    'Nobody has acknowledged after {minutes} minutes. Consider calling 115.',
   '{viu} · gửi lúc {time}': '{viu} · sent at {time}',
   'Một người được chăm sóc': 'A care recipient',
   'Xem và chuyển cấp': 'Review and escalate',
@@ -2418,7 +2397,7 @@ export const en = {
   'Để trống để áp dụng toàn hệ thống.': 'Leave empty to apply system-wide.',
   'Không tải được danh sách tổ chức; tìm theo tên hoặc email.':
     'Could not load the organization list; search by name or email.',
-  'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo hai tài khoản và tải lại trước khi gửi lại.':
+  'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng hộp thoại, lọc theo hai tài khoản và tải lại trước khi gửi lại.':
     'The result is not confirmed or the link already exists. Close the form, filter by both accounts and reload before sending again.',
   // FE-35: license pools of all centers.
   'Kho suất sử dụng các trung tâm': 'Center license pools',
@@ -2469,9 +2448,6 @@ export const en = {
   'Sự kiện không thuộc người khiếm thị được chọn.': 'Event does not belong to the selected VIU.',
   'Lọc lịch sử': 'Filter history',
   'Tải lại địa điểm': 'Reload places',
-  'Mã ngôn ngữ, ví dụ vi-VN hoặc en-US. Giọng đọc khả dụng phụ thuộc thiết bị.':
-    'Language code, for example vi-VN or en-US. Available voices depend on the device.',
-  'Để trống nếu không dùng ngôn ngữ phụ.': 'Leave empty if no secondary language is used.',
   'Xuất CSV': 'Export CSV',
   'Đang xuất…': 'Exporting…',
   'Không có lịch sử phù hợp để xuất.': 'There is no matching history to export.',
@@ -2667,11 +2643,8 @@ export const en = {
     'Notifications sent to recipients or about care recipients in your center.',
   'Không rõ tên': 'Unknown name',
   'qua liên kết chăm sóc': 'through a care link',
-  'OnDeviceRules là quyết định điện thoại tự đưa ra khi mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.':
-    'OnDeviceRules are decisions the phone made itself when offline, without a session or when the server was slow; the app uploads them later for tracing. Spoken text and location are shown only to linked caregivers.',
   'Phát hiện vật cản': 'Obstacle detection',
   'Ra/vào vùng an toàn': 'Safe zone entry/exit',
-  'Điện thoại tự quyết định': 'Decided on the phone',
   'Bạn không còn quyền xem cảnh báo này (liên kết chăm sóc đã kết thúc).':
     'You can no longer view this alert (the care link has ended).',
   'Cảnh báo gói dịch vụ sắp hết hạn': 'License expiry warning',
@@ -2690,7 +2663,6 @@ export const en = {
   'Chọn một người để xem hoạt động đã được ghi nhận.':
     'Pick a person to see their recorded activity.',
   'Quản lý gương mặt thân quen': 'Manage familiar faces',
-  'Quản lý địa điểm và vùng an toàn': 'Manage places and safe zones',
   'Mời bằng mã QR': 'Invite with a QR code',
   'Người chăm sóc chính tạo mã QR dùng một lần cho người chăm sóc phụ. Người được mời quét hoặc nhập mã, xem trước rồi chấp nhận để được liên kết với các quyền đã chọn.':
     'The primary caregiver creates a single-use QR code for a secondary caregiver. The invitee scans or enters the code, previews it and accepts to be linked with the chosen permissions.',
@@ -3153,8 +3125,6 @@ export const en = {
   'Trình duyệt đang chặn thông báo. Bấm biểu tượng bên trái thanh địa chỉ, chọn Cho phép thông báo rồi tải lại trang.':
     'The browser is blocking notifications. Click the icon left of the address bar, allow notifications, then reload the page.',
   'Để sau': 'Later',
-  'Chưa có mật khẩu': 'No password stored',
-  'Đã lưu mật khẩu': 'Password stored',
   'Chặn nhận diện bằng ảnh chụp hoặc màn hình': 'Block recognition from photos or screens',
   'Dưới mức này (từ 0 đến 1), gương mặt bị xem là ảnh chụp hoặc màn hình.':
     'Below this level (0 to 1), a face is treated as a photo or a screen.',
@@ -3169,6 +3139,86 @@ export const en = {
     'The image is damaged or incomplete. Choose another image.',
   'Ảnh có độ phân giải quá lớn. Hãy chọn ảnh nhỏ hơn.':
     'The image resolution is too large. Choose a smaller image.',
+  'Hệ thống tự gửi cảnh báo vì hết thời gian chờ hủy.':
+    'The system sent the alert because the cancel window ended.',
+  'Hệ thống gửi ngay vì cảnh báo do người dùng chủ động bấm, nói hoặc ra hiệu.':
+    'Sent at once because the user raised it by button, voice or gesture.',
+  'Người khiếm thị đã hủy cảnh báo.': 'The visually impaired user cancelled the alert.',
+  '{m} phút': '{m} min',
+  '{h} giờ {m} phút': '{h} h {m} min',
+  '{h} giờ': '{h} h',
+  '{d} ngày {h} giờ': '{d} d {h} h',
+  '{d} ngày': '{d} d',
+  'Chưa có ai tiếp nhận sau {elapsed}. Cân nhắc gọi 115.':
+    'No one has acknowledged after {elapsed}. Consider calling 115.',
+  'Còn {count} cảnh báo khác chưa có ai tiếp nhận, xem trong danh sách bên dưới.':
+    '{count} more alerts have not been acknowledged; see the list below.',
+  'Chọn tệp': 'Choose file',
+  'Chưa chọn tệp nào': 'No file chosen',
+  'Bắt đầu dẫn đường': 'Start navigation',
+  'Dừng dẫn đường': 'Stop navigation',
+  'Hỏi vị trí hiện tại': 'Ask current location',
+  'Gọi khẩn cấp': 'Emergency call',
+  'Chuyển chế độ tối giản': 'Switch to minimal mode',
+  'Chuyển chế độ đầy đủ': 'Switch to full mode',
+  'Báo đang ổn': 'Say I am OK',
+  'Đọc nhanh hơn': 'Read faster',
+  'Đọc chậm hơn': 'Read slower',
+  'Đổi sang giọng nam': 'Switch to male voice',
+  'Đổi sang giọng nữ': 'Switch to female voice',
+  'Tăng âm lượng': 'Volume up',
+  'Giảm âm lượng': 'Volume down',
+  'Trợ giúp': 'Help',
+  'Nhắc lại': 'Repeat',
+  'Hỏi về hình ảnh': 'Ask about the picture',
+  'Gọi người chăm sóc': 'Call caregiver',
+  '"{spoken}" → {command}': '"{spoken}" → {command}',
+  'Từ 0,5× (chậm) đến 2× (nhanh); 1× là tốc độ bình thường.':
+    'From 0.5× (slow) to 2× (fast); 1× is normal speed.',
+  'Giọng đọc khả dụng phụ thuộc điện thoại.': 'Available voices depend on the phone.',
+  'Tiếng Việt': 'Vietnamese',
+  'Tiếng Anh': 'English',
+  'Giá trị đề xuất: giọng nữ, tốc độ 1×, âm lượng 80%, chế độ đầy đủ và tiếng Việt. Chỉ được lưu khi bạn xác nhận.':
+    'Suggested values: female voice, speed 1×, volume 80%, full mode and Vietnamese. Saved only when you confirm.',
+  'Không kết nối': 'Not connected',
+  '{m} phút {s} giây': '{m} min {s} s',
+  '{count} gói': '{count} plans',
+  'Chỉ hiển thị các gói phù hợp với tài khoản của bạn.':
+    'Only plans that fit your account are shown.',
+  'Toàn bộ thời gian': 'All time',
+  'Từ {from}': 'From {from}',
+  'Đến {to}': 'Until {to}',
+  '{from} đến {to}': '{from} to {to}',
+  'Kênh và trạng thái': 'Channel and status',
+  'Một trung tâm': 'A center',
+  'Bộ xử lý': 'Engine',
+  'Bật, tắt hoặc đổi bộ xử lý dẫn đường ở trang Cấu hình hệ thống (nhóm Dẫn đường).':
+    'Turn navigation on or off, or change its engine, on the System configuration page (Navigation group).',
+  '“Điện thoại tự quyết định” là khi điện thoại tự đưa ra hướng dẫn vì mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.':
+    '“Decided on the phone” means the phone gave the guidance itself because it was offline, had no session or the server was slow; the app sends it later for tracing. Spoken text and location are shown only to linked caregivers.',
+  'Với số liệu dẫn đường, bản ghi thiếu thời gian phản hồi được tính là thất bại, kể cả khi bộ xử lý theo quy tắc đã đưa ra quyết định. Các số này không đánh giá độ đúng hoặc an toàn của hướng dẫn.':
+    'For navigation figures, records without a response time count as failures, even when the rule-based engine gave a decision. These numbers do not judge whether the guidance was correct or safe.',
+  'Dùng AI để mô tả hình ảnh': 'Use AI to describe pictures',
+  'Khi bật, điện thoại dùng AI để mô tả, nhận biết và trả lời câu hỏi về hình ảnh; khi tắt chỉ đọc chữ.':
+    'When on, the phone uses AI to describe, identify and answer questions about pictures; when off it only reads text.',
+  'Thời gian chờ tối đa khi mô tả hình ảnh': 'Maximum wait for picture description',
+  'Quá thời gian này, điện thoại chuyển sang chỉ đọc chữ trong ảnh.':
+    'After this time, the phone falls back to reading the text in the picture.',
+  'Số lần mô tả hình ảnh bằng AI mỗi ngày': 'AI picture descriptions per day',
+  'Mỗi người khiếm thị được dùng AI tối đa số lần này mỗi ngày; sau đó chỉ đọc chữ.':
+    'Each visually impaired user can use AI up to this many times a day; after that only text is read.',
+  lần: 'times',
+  'Nhập cả tên đăng nhập và mật khẩu (tối đa 200 ký tự), hoặc để trống cả hai để máy chủ tự cấp mật khẩu tạm cho mỗi cuộc gọi.':
+    'Enter both a username and a password (up to 200 characters), or leave both empty so the server issues a temporary password for each call.',
+  'Dùng mật khẩu cố định': 'Fixed password',
+  'Mật khẩu tạm do máy chủ cấp mỗi cuộc gọi':
+    'Temporary password issued by the server for each call',
+  'TURN: để trống cả tên đăng nhập và mật khẩu thì máy chủ tự cấp mật khẩu tạm cho mỗi cuộc gọi (nên dùng). Muốn dùng mật khẩu cố định thì nhập cả hai mỗi lần lưu; ô mật khẩu luôn trống khi mở. STUN bỏ qua hai ô này.':
+    'TURN: leave both the username and password empty and the server issues a temporary password for each call (recommended). For a fixed password, enter both every time you save; the password box is always empty when opened. STUN ignores these two boxes.',
+  'Nhìn giúp tôi · {engine}': 'Look for me · {engine}',
+  'AI Gemini': 'Gemini AI',
+  'AI Groq': 'Groq AI',
+  'không đọc được': 'nothing read',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',
@@ -3238,13 +3288,13 @@ export const en = {
   'Cuộc gọi': 'Call',
   'Giao dịch thanh toán': 'Payment transaction',
   'Hướng dẫn di chuyển': 'Navigation guidance',
-  'Người quen trong danh bạ khuôn mặt': 'Face registry person',
-  'Nhận diện khuôn mặt': 'Face recognition',
+  'Người quen trong danh bạ gương mặt': 'Face registry person',
+  'Nhận diện gương mặt': 'Face recognition',
   'Phiên phát hiện vật cản': 'Obstacle detection session',
   'Quét mã QR': 'QR scan',
   'Tổ chức của bạn': 'Your organization',
   'Đăng ký gói': 'Subscription',
-  'Ảnh khuôn mặt': 'Face photo',
+  'Ảnh gương mặt': 'Face photo',
   'Xác nhận thay đổi': 'Confirm changes',
   'Kiểm tra lại các quyền sẽ được lưu cho liên kết này.':
     'Review the permissions that will be saved for this link.',

@@ -112,7 +112,10 @@ export function translate(
 }
 applyDocumentLang(current);
 /** Translates with the current locale. Call during render or when the text is produced. */
-export const t = (id: MessageId, params?: MessageParams) => translate(current, id, params);
+// Result summaries read "12 kết quả · Trang 1/1"; with a single page the page part says nothing.
+const singlePage = / · (Trang|Page) 1\/1$/;
+export const t = (id: MessageId, params?: MessageParams) =>
+  translate(current, id, params).replace(singlePage, '');
 /** Translates text that is only known at runtime (stored labels); unknown text is returned as is. */
 export const tText = (text: string, params?: MessageParams) => translate(current, text, params);
 /** Marks module-level copy for translation later at render time (`t(label)`); returns the id. */

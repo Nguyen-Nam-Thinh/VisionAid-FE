@@ -35,7 +35,7 @@ test('landing is accessible and fits desktop, tablet and narrow screens', async 
   await expect(page.getByRole('heading', { name: 'Personal · Gia đình' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Business · Trung tâm' })).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Standalone · Trung tâm đồng hành' }),
+    page.getByRole('heading', { name: 'Người dùng độc lập · Trung tâm đồng hành' }),
   ).toBeVisible();
   await expect(page.getByText('Bắt buộc dùng đai đeo ngực.', { exact: true })).toBeVisible();
   await expect(

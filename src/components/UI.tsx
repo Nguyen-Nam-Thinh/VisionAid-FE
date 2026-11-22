@@ -387,24 +387,26 @@ export function DataTable<T extends { id: string }>({
             pages,
           })}
         </span>
-        <div className="row">
-          <button
-            className="btn small"
-            aria-label={t('Trang trước')}
-            disabled={current === 1}
-            onClick={() => setPage(current - 1)}
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            className="btn small"
-            aria-label={t('Trang sau')}
-            disabled={current === pages}
-            onClick={() => setPage(current + 1)}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        {pages > 1 && (
+          <div className="row">
+            <button
+              className="btn small"
+              aria-label={t('Trang trước')}
+              disabled={current === 1}
+              onClick={() => setPage(current - 1)}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              className="btn small"
+              aria-label={t('Trang sau')}
+              disabled={current === pages}
+              onClick={() => setPage(current + 1)}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
       </footer>
     </section>
   );

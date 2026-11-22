@@ -9,6 +9,9 @@ test('login, dashboard and dialog have no automated WCAG AA violations', async (
   expect(result.violations).toEqual([]);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page.locator('.dashboard-stats')).toBeVisible();
+  // Stat cards fade in; axe would measure the half-transparent text mid-animation.
+  for (const card of await page.locator('.stat-card').all())
+    await expect(card).toHaveCSS('opacity', '1');
   result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
     .analyze();

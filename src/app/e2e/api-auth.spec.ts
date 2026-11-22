@@ -191,9 +191,9 @@ test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ pag
   await expect(page.getByRole('cell', { name: 'Dừng lại', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Chưa có dữ liệu', exact: true })).toBeVisible();
   await openFilters(page);
-  await pick(page, 'Người dùng', 'VIU', /VIU mẫu/);
-  await page.getByRole('combobox', { name: 'Engine', exact: true }).selectOption('RuleBased');
-  await page.getByRole('combobox', { name: 'Fallback', exact: true }).selectOption('true');
+  await pick(page, 'Người dùng', 'VIU', /người khiếm thị mẫu/);
+  await page.getByRole('combobox', { name: 'Bộ xử lý', exact: true }).selectOption('RuleBased');
+  await page.getByRole('combobox', { name: 'Nơi quyết định', exact: true }).selectOption('true');
   await page.getByLabel('Từ ngày').fill('2026-10-11');
   await page.getByLabel('Đến ngày').fill('2026-10-11');
   await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
@@ -206,7 +206,7 @@ test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ pag
   await page.screenshot({ path: 'test-results/stageU7b-desktop.png', fullPage: true });
   await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog).toContainText('RuleBased');
+  await expect(dialog).toContainText('Máy chủ (theo quy tắc)');
   await expect(dialog).not.toContainText('PRIVATE_');
   await dialog.getByRole('button', { name: 'Xem cùng phiên điều hướng' }).click();
   await expect.poll(() => requests.at(-1)?.searchParams.get('sessionId')).toBe(id);
@@ -222,15 +222,16 @@ test('U7b: Hybrid filters, pagination, metadata dialog and errors', async ({ pag
   await page.screenshot({ path: 'test-results/stageU7b-dialog-mobile.png', fullPage: false });
   await page.keyboard.press('Escape');
   await openFilters(page);
-  await page.getByRole('combobox', { name: 'Engine', exact: true }).selectOption('Groq');
+  await page.getByRole('combobox', { name: 'Bộ xử lý', exact: true }).selectOption('Groq');
   await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
   await expect(page.getByText('Không có bản ghi phù hợp.')).toBeVisible();
-  await expect(page.getByRole('status').filter({ hasText: 'Trang' })).toContainText('Trang 1/1');
+  // A single page shows only the count; the page part is dropped.
+  await expect(page.getByText('Trang 1/1')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Xem số liệu AI' })).toHaveAttribute(
     'href',
     '/admin/metrics',
   );
-  await expect(page.getByRole('link', { name: 'Cấu hình engine', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Cấu hình bộ xử lý', exact: true })).toHaveAttribute(
     'href',
     '/admin/configurations',
   );
@@ -318,7 +319,7 @@ test('U7a: ICE CRUD, credential exclusion and uncertain writes', async ({ page }
   await expect(page.getByText('EXISTING_SECRET')).toHaveCount(0);
   await dialog.getByLabel('Tôi xác nhận').check();
   await dialog.getByRole('button', { name: 'Lưu máy chủ' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('TURN cần');
+  await expect(dialog.getByRole('alert')).toContainText('Nhập cả tên đăng nhập và mật khẩu');
   expect(writes).toHaveLength(0);
   await dialog.getByLabel('Mật khẩu TURN muốn áp dụng').fill('replacement');
   await dialog.getByLabel('Độ ưu tiên').fill('25');
@@ -517,8 +518,12 @@ test('13b: metrics, audit and delivery filters, details and independent errors',
   await page.getByRole('button', { name: 'Bỏ lọc này' }).click();
   await expect.poll(() => calls.at(-1)?.searchParams.has('targetRecordId')).toBe(false);
   await page.goto('/admin/delivery');
-  await expect(page.getByRole('cell', { name: 'FallDetected', exact: true })).toBeVisible();
-  await expect(page.getByText('24 giờ gần nhất', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '24 giờ qua', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await openTab(page, 'Thông báo thất bại');
+  await expect(page.getByRole('cell', { name: 'Phát hiện té ngã', exact: true })).toBeVisible();
   await openFilters(page);
   await page.getByRole('combobox', { name: /Kênh gửi/ }).selectOption('Fcm');
   await page.getByRole('button', { name: 'Lọc bản ghi' }).click();
@@ -532,9 +537,11 @@ test('13b: metrics, audit and delivery filters, details and independent errors',
   await page.screenshot({ path: 'test-results/stage13b-dialog-mobile.png', fullPage: false });
   await page.keyboard.press('Escape');
   statusError = true;
+  await openTab(page, 'Tổng quan');
   await page.getByRole('button', { name: 'Tải lại thống kê' }).click();
   await expect(page.getByRole('alert')).toContainText('Máy chủ đang gặp sự cố');
-  await expect(page.getByRole('cell', { name: 'FallDetected', exact: true })).toBeVisible();
+  await openTab(page, 'Thông báo thất bại');
+  await expect(page.getByRole('cell', { name: 'Phát hiện té ngã', exact: true })).toBeVisible();
 });
 
 test('13b: non-admin cannot access global monitoring routes', async ({ page }) => {
@@ -723,14 +730,16 @@ test('12b: organization report totals, UTC days, member pagination and scope err
   await expect(page.getByRole('group', { name: 'Sự kiện ranh giới vùng an toàn' })).toContainText(
     '0',
   );
+  await openTab(page, 'Thành viên hiện tại');
   await expect(page.getByText('11 thành viên · Trang 1/2')).toBeVisible();
   await page.getByRole('button', { name: 'Trang sau', exact: true }).click();
   await expect(page.getByText('Thành viên trang hai')).toBeVisible();
+  await openTab(page, 'Hoạt động của trung tâm');
   await openFilters(page);
-  await page.getByLabel('Từ ngày').fill('2026-10-01');
-  await page.getByLabel('Đến ngày').fill('2026-10-11');
+  await page.getByLabel('Từ ngày').filter({ visible: true }).fill('2026-10-01');
+  await page.getByLabel('Đến ngày').filter({ visible: true }).fill('2026-10-11');
   await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('2026-10-01 → 2026-10-11');
+  await expect(page.getByRole('status')).toContainText('01/10/2026 đến 11/10/2026');
   expect(
     requests.some(
       (url) =>
@@ -738,7 +747,8 @@ test('12b: organization report totals, UTC days, member pagination and scope err
         url.searchParams.get('dateTo') === '2026-10-11',
     ),
   ).toBe(true);
-  await openFilters(page, 1);
+  await openTab(page, 'Thành viên hiện tại');
+  await openFilters(page);
   await page.getByLabel('Tìm thành viên', { exact: true }).fill('test');
   await page
     .getByRole('combobox', { name: 'Vai trò', exact: true })
@@ -760,14 +770,15 @@ test('12b: organization report totals, UTC days, member pagination and scope err
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.setViewportSize({ width: 1440, height: 1000 });
   const previous = requests.length;
+  await openTab(page, 'Hoạt động của trung tâm');
   await openFilters(page);
-  await page.getByLabel('Từ ngày').fill('2026-10-12');
+  await page.getByLabel('Từ ngày').filter({ visible: true }).fill('2026-10-12');
   await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('ngày kết thúc');
   expect(requests).toHaveLength(previous);
   wrongOrg = true;
   await openFilters(page);
-  await page.getByLabel('Từ ngày').fill('2026-10-01');
+  await page.getByLabel('Từ ngày').filter({ visible: true }).fill('2026-10-01');
   await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('không thuộc tổ chức');
   await expect(page.getByRole('group', { name: 'Sự kiện khẩn cấp' })).toHaveCount(0);
@@ -847,6 +858,7 @@ test('TC-FE59-02 · Center Admin reads caregiver alert handling with caregiver a
   });
   await login(page);
   await page.getByRole('link', { name: 'Báo cáo hoạt động', exact: true }).click();
+  await openTab(page, 'Xử lý cảnh báo của nhân viên');
   const section = page.getByRole('region', { name: 'Bảng hoạt động xử lý cảnh báo' });
   await expect(section.getByRole('cell', { name: 'Nhân viên Lan' })).toBeVisible();
   await expect(section.getByRole('cell', { name: 'Bác Tư' })).toBeVisible();
@@ -854,7 +866,7 @@ test('TC-FE59-02 · Center Admin reads caregiver alert handling with caregiver a
   expect(requests[0].searchParams.get('page')).toBe('1');
   expect(requests[0].searchParams.get('pageSize')).toBe('20');
   // The caregiver is picked by name from /members?role=Caregiver; no id is typed.
-  await openFilters(page, 2);
+  await openFilters(page);
   await pick(page, 'Người chăm sóc', 'Lan', /Nhân viên Lan/);
   await page.getByLabel('Thao tác từ ngày').fill('2026-10-01');
   await page.getByLabel('Thao tác đến ngày').fill('2026-10-31');
@@ -1061,11 +1073,12 @@ test('12a: scoped activity history, dates, pagination, all details and revoked a
   await page
     .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
     .selectOption(viuId);
+  await openTab(page, 'Theo loại hoạt động');
   await expect(page.getByText('21 kết quả · Trang 1/2')).toBeVisible();
-  // Panel 0 searches care recipients, panel 1 filters the activity trace, panel 2 holds this list's dates.
-  await openFilters(page, 2);
-  await page.getByLabel('Từ ngày', { exact: true }).fill('2026-10-11');
-  await page.getByLabel('Đến ngày', { exact: true }).fill('2026-10-11');
+  // Panel 0 searches care recipients, panel 1 holds this list's dates (the trace tab is hidden).
+  await openFilters(page, 1);
+  await page.getByLabel('Từ ngày', { exact: true }).filter({ visible: true }).fill('2026-10-11');
+  await page.getByLabel('Đến ngày', { exact: true }).filter({ visible: true }).fill('2026-10-11');
   await page.getByRole('button', { name: 'Lọc lịch sử' }).click();
   await expect
     .poll(() =>
@@ -1087,14 +1100,14 @@ test('12a: scoped activity history, dates, pagination, all details and revoked a
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByText('chair', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('Ghế', { exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: 'Trang sau' }).click();
   await expect(dialog.getByText('door', { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   for (const [kind, content] of [
     ['ocr', '<script>alert(1)</script>'],
     ['qr', 'javascript:alert(1)'],
-    ['recognition', 'Chưa nhận diện được'],
+    ['recognition', 'Người lạ'],
     ['voice', 'Đọc văn bản'],
   ]) {
     await page.getByRole('combobox', { name: 'Loại hoạt động', exact: true }).selectOption(kind);
@@ -1532,16 +1545,18 @@ test('8c: opt-in push registers the login device, survives reload and revokes on
   });
   await login(page);
   await page.goto('/profile');
-  expect(registrations).toBe(0);
-  await page.getByRole('button', { name: 'Bật thông báo trình duyệt', exact: true }).click();
+  await openTab(page, 'Thông báo trên trình duyệt');
+  // The browser already granted notifications, so the session registers on its own (PushSync).
   await expect(
     page.getByText('Đã đăng ký nhận thông báo đẩy cho phiên này.', { exact: true }),
   ).toBeVisible();
-  expect(registrations).toBe(1);
+  await expect.poll(() => registrations).toBeGreaterThanOrEqual(1);
+  const beforeReload = registrations;
   await page.screenshot({ path: 'test-results/8c-push-profile.png', fullPage: true });
   await page.reload();
   // Focus can also sync; every upsert above must use the same login device.
-  await expect.poll(() => registrations).toBeGreaterThanOrEqual(2);
+  await expect.poll(() => registrations).toBeGreaterThan(beforeReload);
+  await openTab(page, 'Thông báo trên trình duyệt');
   await page
     .getByRole('button', { name: 'Tắt thông báo đẩy trên trình duyệt', exact: true })
     .click();
@@ -1663,7 +1678,7 @@ test('11b: TTS create/update, percent mapping, cleared language, revoked link an
   await dialog.getByLabel('Giọng đọc', { exact: false }).selectOption('Male');
   await dialog.getByLabel('Tốc độ đọc').fill('1.5');
   await dialog.getByLabel('Chế độ phát hiện').selectOption('Minimal');
-  await dialog.getByLabel('Ngôn ngữ phụ').fill('en-US');
+  await dialog.getByLabel('Ngôn ngữ phụ').selectOption('en-US');
   await page.screenshot({ path: 'test-results/stage11b-desktop.png' });
   await page.setViewportSize({ width: 375, height: 812 });
   const bounds = await dialog.boundingBox();
@@ -1695,7 +1710,7 @@ test('11b: TTS create/update, percent mapping, cleared language, revoked link an
   await page.getByRole('button', { name: 'Chỉnh sửa giọng đọc', exact: true }).click();
   await expect(dialog.getByLabel('Âm lượng')).toHaveValue('0');
   await expect(dialog.getByLabel('Ngôn ngữ phụ')).toHaveValue('en-US');
-  await dialog.getByLabel('Ngôn ngữ phụ').fill('');
+  await dialog.getByLabel('Ngôn ngữ phụ').selectOption('');
   await dialog.getByLabel('Âm lượng').fill('80');
   failWrite = true;
   await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
@@ -1969,12 +1984,19 @@ async function stubPeopleSearch(page: Page, people: Record<string, string>) {
   );
   return searches;
 }
+// Pages split into tabs; only the selected panel is visible.
+async function openTab(page: Page, name: string) {
+  await page.getByRole('tab', { name, exact: true }).click();
+  // Wait until the panel switch settles so later lookups do not catch the outgoing panel.
+  await expect(page.getByRole('tabpanel', { name, exact: true })).toBeVisible();
+}
 // List filters live in a "Bộ lọc" panel that closes after applying.
 async function openFilters(page: Page, index = 0) {
   // The name grows to "Bộ lọc N điều kiện" once filters are applied. Pages with two panels
   // (report dates + members, map people + movement history) pass the panel index.
   await page
     .getByRole('button', { name: /^Bộ lọc/ })
+    .filter({ visible: true })
     .nth(index)
     .click();
 }
@@ -2104,10 +2126,15 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
   test(`API ${role}: login, reload, refresh, stage boundary and logout`, async ({ page }) => {
     const calls = await stubApi(page, role);
     await login(page);
-    await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toBeVisible();
+    // A Center Admin account without an organization only sees the assignment notice.
+    const overview = () =>
+      role === 'CenterAdmin'
+        ? page.getByText('Tài khoản chưa có tổ chức.', { exact: false })
+        : page.getByRole('heading', { name: 'Đi nhanh tới' });
+    await expect(overview()).toBeVisible();
     await page.screenshot({ path: `test-results/dashboard-${role}.png`, fullPage: true });
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toBeVisible();
+    await expect(overview()).toBeVisible();
     await page.evaluate(() => {
       const key = 'visionaid.api.session.v1';
       const data = JSON.parse(sessionStorage.getItem(key)!);
@@ -2115,32 +2142,34 @@ for (const role of ['Caregiver', 'CenterAdmin', 'Admin']) {
       sessionStorage.setItem(key, JSON.stringify(data));
     });
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Đi nhanh tới' })).toBeVisible();
+    await expect(overview()).toBeVisible();
     expect(calls.filter((p) => p === '/api/auth/refresh')).toHaveLength(1);
     const path = role === 'Admin' ? '/admin/metrics' : '/dashboard';
     await page.goto(path);
     await expect(
-      page.getByRole('heading', {
-        name: role !== 'Admin' ? 'Đi nhanh tới' : 'Hiệu năng AI',
-      }),
+      role === 'Admin' ? page.getByRole('heading', { name: 'Hiệu năng AI' }) : overview(),
     ).toBeVisible();
-    expect(
-      calls.every((p) =>
-        [
-          '/api/auth/login',
-          '/api/users/me',
-          '/api/auth/refresh',
-          '/api/ai-metrics',
-          // The topbar bell polls the inbox unread count for every role.
-          '/api/notifications/inbox/unread-count',
-          ...(role === 'Caregiver'
-            ? ['/api/licenses/subscription', '/api/payments/history', '/api/emergency-events']
-            : role === 'Admin'
-              ? ['/api/notifications/status']
-              : []),
-        ].includes(p),
-      ),
-    ).toBe(true);
+    const allowed = [
+      '/api/auth/login',
+      '/api/users/me',
+      '/api/auth/refresh',
+      '/api/ai-metrics',
+      // The topbar bell polls the inbox unread count for every role.
+      '/api/notifications/inbox/unread-count',
+      // The overview lists recent inbox items, linked people and, for Admin, revenue and audit.
+      ...(role === 'Caregiver'
+        ? [
+            '/api/licenses/subscription',
+            '/api/payments/history',
+            '/api/emergency-events',
+            '/api/users',
+            '/api/notifications/inbox',
+          ]
+        : role === 'Admin'
+          ? ['/api/notifications/status', '/api/payments/revenue-report', '/api/audit-logs']
+          : []),
+    ];
+    expect(calls.filter((p) => !allowed.includes(p))).toEqual([]);
     await page.getByRole('button', { name: 'Menu tài khoản' }).click();
     await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
     await expect(page).toHaveURL(/\/auth\/login$/);
@@ -2230,6 +2259,7 @@ test('profile save, reload, password rejection and successful change', async ({ 
     'image/jpeg,image/png,image/webp',
   );
   await expect(page.locator('.profile-photo label.btn')).toContainText('Tải ảnh lên');
+  await openTab(page, 'Mật khẩu và đăng nhập');
   await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
   await expect(page.getByLabel('Nhập lại mật khẩu mới')).toHaveAttribute(
     'autocomplete',
@@ -2287,6 +2317,7 @@ test('register caregiver, reject duplicate email, then confirm logout all', asyn
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await expect(page).toHaveURL(/dashboard$/);
   await page.goto('/profile');
+  await openTab(page, 'Mật khẩu và đăng nhập');
   await page.getByRole('button', { name: 'Đăng xuất tất cả thiết bị', exact: true }).click();
   await page.getByRole('button', { name: 'Hủy', exact: true }).click();
   expect(logouts).toBe(0);
@@ -2302,6 +2333,7 @@ test('failed logout all reports uncertainty and still clears local session', asy
   await expect(page).toHaveURL(/dashboard$/);
   await page.route('**/api/auth/logout-all', (route) => route.abort('failed'));
   await page.goto('/profile');
+  await openTab(page, 'Mật khẩu và đăng nhập');
   await page.getByRole('button', { name: 'Đăng xuất tất cả thiết bị', exact: true }).click();
   await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
   await expect(page).toHaveURL(/auth\/login$/);
@@ -3317,7 +3349,7 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
         await dialog.getByLabel('Người được chăm sóc').selectOption(linkedViuId);
       } else {
         await pick(dialog, 'Người chăm sóc *', 'Nhân', /Nhân viên mẫu/);
-        await pick(dialog, 'Người được chăm sóc *', 'VIU', /VIU mẫu/);
+        await pick(dialog, 'Người được chăm sóc *', 'VIU', /người khiếm thị mẫu/);
       }
       await dialog.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();
       await dialog.getByRole('button', { name: 'Xác nhận tạo liên kết' }).click();
@@ -3757,9 +3789,7 @@ for (const role of ['Caregiver']) {
     await login(page);
     await page.goto(role === 'Caregiver' ? '/caregiver/map' : '/center-admin/map');
     await expect(page.getByText('Chưa có vị trí khả dụng', { exact: true })).toBeVisible();
-    await page
-      .getByRole('button', { name: 'Xem GPS của GPS Test người khiếm thị', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Xem GPS của GPS Test VIU', exact: true }).click();
     await expect(page.getByRole('cell', { name: '0 %', exact: true })).toBeVisible();
     await expect(
       page.getByRole('cell', { name: '0.000000 / 0.000000', exact: true }),
@@ -4690,10 +4720,12 @@ for (const role of ['Staff', 'Admin', 'CenterAdmin']) {
   }) => {
     const calls = await stubApi(page, role === 'Staff' ? 'Caregiver' : role, id);
     await login(page);
-    await page.getByRole('link', { name: 'License', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Trạng thái tài khoản' })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Thông tin gói dịch vụ' })).toContainText(
-      'không yêu cầu gói dịch vụ cá nhân',
+    // Only a family caregiver has a personal package, so other accounts get no menu entry.
+    await expect(page.getByRole('link', { name: 'Gói của tôi', exact: true })).toHaveCount(0);
+    // Opening the page directly sends them back to where their packages are managed.
+    await page.goto('/license');
+    await expect(page).toHaveURL(
+      role === 'CenterAdmin' ? /\/center-admin\/licenses$/ : /\/dashboard$/,
     );
     await expect(page.getByRole('heading', { name: 'Gói sử dụng cá nhân' })).toHaveCount(0);
     expect(calls).not.toContain('/api/licenses/subscription');
@@ -4910,7 +4942,7 @@ test('U2 Staff has no personal catalog and makes no package request', async ({ p
   await login(page);
   await expect(page.getByRole('link', { name: 'Gói dịch vụ' })).toHaveCount(0);
   await page.goto('/packages');
-  await expect(page.getByText(/License do tổ chức quản lý/)).toBeVisible();
+  await expect(page.getByText(/Gói dịch vụ do tổ chức quản lý/)).toBeVisible();
   expect(calls.some((c) => c.includes('/licenses/packages'))).toBe(false);
 });
 
@@ -4941,7 +4973,9 @@ test('U3a: staff cannot read personal payments', async ({ page }) => {
   const calls = await stubApi(page, 'Caregiver', id);
   await login(page);
   await page.goto('/payments/return?orderCode=' + u3Order);
-  await expect(page.getByText(/Luồng thanh toán này dành cho Caregiver cá nhân/)).toBeVisible();
+  await expect(
+    page.getByText(/Luồng thanh toán này dành cho người chăm sóc gia đình/),
+  ).toBeVisible();
   expect(calls.some((path) => path.startsWith('/api/payments'))).toBe(false);
 });
 const u3Transaction = (status = 'Pending') => ({
@@ -5403,6 +5437,7 @@ test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates an
   });
   await login(page);
   await page.goto('/center-admin/licenses');
+  await openTab(page, 'Mã kích hoạt cho gia đình');
   await page.getByRole('button', { name: 'Tạo mã kích hoạt cho gia đình', exact: true }).click();
   await page.getByLabel('Ghi chú', { exact: true }).fill('Gia đình test');
   await page.getByRole('button', { name: 'Xác nhận tạo mã kích hoạt' }).click();
@@ -5419,6 +5454,7 @@ test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates an
   );
   expect(page.url()).not.toContain(key);
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  await openTab(page, 'Kho suất sử dụng');
   const pool = page.getByRole('region', { name: 'Kho suất sử dụng của tổ chức' });
   await expect(
     pool
@@ -5426,6 +5462,7 @@ test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates an
       .filter({ has: page.locator('dt', { hasText: 'Còn lại' }) })
       .last(),
   ).toContainText('46');
+  await openTab(page, 'Mã kích hoạt cho gia đình');
   await page.getByRole('button', { name: 'Xem mã kích hoạt vừa tạo' }).click();
   await expect(page.getByLabel('Mã kích hoạt vừa tạo')).toHaveValue('••••-••••-••••-••••');
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
@@ -5472,16 +5509,18 @@ test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates an
   });
   await login(page);
   await page.goto('/license');
+  await openTab(page, 'Kích hoạt bằng mã');
   await page.getByRole('button', { name: 'Nhập mã kích hoạt' }).click();
   await page.getByLabel('Mã kích hoạt').fill(key.toLowerCase());
   await page.getByRole('button', { name: 'Xác nhận kích hoạt' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(
-    page.getByRole('region', { name: 'Thông tin gói dịch vụ', exact: true }),
-  ).toContainText('Gói dịch vụ đang hoạt động');
   await expect(page.getByRole('region', { name: 'Kích hoạt mã', exact: true })).toContainText(
     'Máy chủ đã xác nhận kích hoạt',
   );
+  await openTab(page, 'Trạng thái và gói');
+  await expect(
+    page.getByRole('region', { name: 'Thông tin gói dịch vụ', exact: true }),
+  ).toContainText('Gói dịch vụ đang hoạt động');
   expect(await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))).not.toContain(
     key,
   );
@@ -5499,6 +5538,7 @@ test('U5: invalid key retains form; unknown distribution blocks replay; staff ca
   );
   await login(page);
   await page.goto('/license');
+  await openTab(page, 'Kích hoạt bằng mã');
   await page.getByRole('button', { name: 'Nhập mã kích hoạt' }).click();
   await page.getByLabel('Mã kích hoạt').fill('ABCD-1234-EFAB-5678');
   await page.getByRole('button', { name: 'Xác nhận kích hoạt' }).click();
@@ -5526,6 +5566,7 @@ test('U5: invalid key retains form; unknown distribution blocks replay; staff ca
   });
   await page.goto('/center-admin/licenses');
   await page.reload();
+  await openTab(page, 'Mã kích hoạt cho gia đình');
   await page.getByRole('button', { name: 'Tạo mã kích hoạt cho gia đình', exact: true }).click();
   await page.getByRole('button', { name: 'Xác nhận tạo mã kích hoạt' }).click();
   await expect(
@@ -5646,6 +5687,7 @@ test('TC-FE56-01 · U4: revoke confirmation and reassign refresh server quota; q
   await login(page);
   await page.goto('/center-admin/licenses');
   const pool = page.getByRole('region', { name: 'Kho suất sử dụng của tổ chức' });
+  await openTab(page, 'Suất đã cấp');
   await expect(page.getByRole('cell', { name: /VIU U4/ })).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.screenshot({ path: 'test-results/redesign-license-pool-1440.png', fullPage: true });
@@ -5660,12 +5702,14 @@ test('TC-FE56-01 · U4: revoke confirmation and reassign refresh server quota; q
   await page.getByRole('button', { name: 'Hủy', exact: true }).click();
   await page.getByRole('button', { name: 'Thu hồi', exact: true }).click();
   await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await openTab(page, 'Kho suất sử dụng');
   await expect(
     pool
       .locator('div')
       .filter({ has: page.locator('dt', { hasText: 'Còn lại' }) })
       .last(),
   ).toContainText('50');
+  await openTab(page, 'Suất đã cấp');
   await page.getByLabel('Trạng thái cấp').selectOption('false');
   await expect(page.getByRole('cell', { name: /Đã thu hồi/ })).toBeVisible();
   await page.getByRole('button', { name: 'Cấp suất sử dụng', exact: true }).click();
@@ -5748,7 +5792,7 @@ for (const initial of ['None', 'Active', 'Expired']) {
     await login(page);
     await page.goto('/center-admin/licenses');
     if (initial === 'None')
-      await expect(page.getByText(/Tổ chức chưa có kho license/)).toBeVisible();
+      await expect(page.getByText(/Tổ chức chưa có kho suất sử dụng/)).toBeVisible();
     else
       await expect(
         page.getByRole('region', { name: 'Kho suất sử dụng của tổ chức' }),
@@ -6199,7 +6243,7 @@ test('WF-01: alert detail shows the scene snapshot from the authorized BE endpoi
   await expect(photo).toBeVisible();
   await expect(photo).toHaveAttribute('src', /^blob:/);
   expect(await photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
-  await expect(dialog.getByRole('link', { name: /Mở ảnh cỡ lớn/ })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: /Mở ảnh cỡ lớn/ })).toBeVisible();
   await expect(dialog).not.toContainText('API chưa cung cấp URL');
   await page.screenshot({ path: 'test-results/wf01-scene-snapshot.png', fullPage: true });
   await page.keyboard.press('Escape');
@@ -6385,15 +6429,16 @@ test('FE-35: Super Admin revenue report with date and grouping filters', async (
   await expect(page.getByRole('region', { name: 'Trung tâm có doanh thu cao nhất' })).toContainText(
     'Trung tâm Ánh Sáng',
   );
-  expect(queries[0].get('groupBy')).toBe('Month');
-  expect(queries[0].has('dateFrom')).toBe(false);
+  // The admin overview reads its own 7-day chart first; the report page asks for months.
+  const pageQuery = queries.find((q) => !q.has('dateFrom'));
+  expect(pageQuery?.get('groupBy')).toBe('Month');
   await openFilters(page);
   await page.getByLabel('Từ ngày').fill('2026-10-01');
   await page.getByLabel('Đến ngày').fill('2026-10-27');
   await page.getByLabel('Xem theo').selectOption('Day');
   await page.getByRole('button', { name: 'Xem báo cáo' }).click();
   await expect(page.getByRole('region', { name: 'Doanh thu theo ngày' })).toContainText(
-    '2026-10-27',
+    '27/10/2026',
   );
   const last = queries[queries.length - 1];
   expect([last.get('dateFrom'), last.get('dateTo'), last.get('groupBy')]).toEqual([
@@ -6541,7 +6586,7 @@ test('Center Admin reads organization call history with VIU and date filters', a
   await expect(page.getByRole('cell', { name: 'người khiếm thị mẫu' })).toBeVisible();
   await expect(page.getByText('Để bắt đầu gọi')).toHaveCount(0);
   await openFilters(page);
-  await pick(page, 'Người khiếm thị', 'VIU', /VIU mẫu/);
+  await pick(page, 'Người khiếm thị', 'VIU', /người khiếm thị mẫu/);
   await page.getByLabel('Từ thời điểm').fill('2026-10-27T00:00');
   await page.getByRole('button', { name: 'Lọc lịch sử' }).click();
   const last = queries[queries.length - 1];
@@ -6601,7 +6646,7 @@ test('FE-18: caregiver views geofence alerts of a chosen VIU with type and page 
   await expect(section.getByText('Chưa chọn người được chăm sóc.')).toBeVisible();
   expect(reads).toHaveLength(0);
   await openFilters(page);
-  await pick(section, 'Người được chăm sóc', 'VIU', /VIU mẫu/);
+  await pick(section, 'Người được chăm sóc', 'VIU', /người khiếm thị mẫu/);
   await section.getByRole('button', { name: 'Xem sự kiện vùng' }).click();
   const table = section.getByRole('region', { name: 'Danh sách sự kiện vùng an toàn' });
   await expect(table.getByRole('row')).toHaveCount(3);
@@ -6697,6 +6742,7 @@ test('UC-74: export the filtered activity history as a CSV download', async ({ p
   await page
     .getByRole('combobox', { name: 'Người được chăm sóc', exact: true })
     .selectOption(viuId);
+  await openTab(page, 'Theo loại hoạt động');
   const exportButton = page.getByRole('button', { name: 'Xuất CSV', exact: true });
   await expect(exportButton).toBeDisabled();
   await page.getByRole('combobox', { name: 'Loại hoạt động', exact: true }).selectOption('ocr');

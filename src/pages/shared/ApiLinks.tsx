@@ -75,7 +75,13 @@ function Links({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title={actor.role === 'Caregiver' ? t('Liên kết của tôi') : t('Phân công chăm sóc')}
+        title={
+          actor.role === 'Caregiver'
+            ? t('Liên kết của tôi')
+            : actor.role === 'Admin'
+              ? t('Liên kết chăm sóc')
+              : t('Phân công chăm sóc')
+        }
         description={
           actor.role === 'Caregiver'
             ? t('Những người cùng chăm sóc và quyền của từng người.')
@@ -203,7 +209,7 @@ function Links({ actor }: { actor: Person }) {
                         <table className="care-links-table">
                           <thead>
                             <tr>
-                              <th>Caregiver</th>
+                              <th>{t('Người chăm sóc')}</th>
                               <th>{t('Người được chăm sóc')}</th>
                               <th>{t('Loại')}</th>
                               <th>{t('Trạng thái')}</th>
@@ -252,20 +258,24 @@ function Links({ actor }: { actor: Person }) {
                             p4: Math.max(1, list.data.totalPages),
                           })}
                         </span>
-                        <button
-                          className="btn"
-                          disabled={list.isFetching || !list.data.hasPreviousPage}
-                          onClick={() => filter({ page: filters.page - 1 })}
-                        >
-                          {t('Trang trước')}
-                        </button>
-                        <button
-                          className="btn"
-                          disabled={list.isFetching || !list.data.hasNextPage}
-                          onClick={() => filter({ page: filters.page + 1 })}
-                        >
-                          {t('Trang sau')}
-                        </button>
+                        {(list.data.hasPreviousPage || list.data.hasNextPage) && (
+                          <button
+                            className="btn"
+                            disabled={list.isFetching || !list.data.hasPreviousPage}
+                            onClick={() => filter({ page: filters.page - 1 })}
+                          >
+                            {t('Trang trước')}
+                          </button>
+                        )}
+                        {(list.data.hasPreviousPage || list.data.hasNextPage) && (
+                          <button
+                            className="btn"
+                            disabled={list.isFetching || !list.data.hasNextPage}
+                            onClick={() => filter({ page: filters.page + 1 })}
+                          >
+                            {t('Trang sau')}
+                          </button>
+                        )}
                       </div>
                     </>
                   )}
@@ -432,7 +442,7 @@ function LinkEditor({
       setError(
         status === 409 || status >= 500
           ? t(
-              'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo hai tài khoản và tải lại trước khi gửi lại.',
+              'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng hộp thoại, lọc theo hai tài khoản và tải lại trước khi gửi lại.',
             )
           : e instanceof Error
             ? e.message

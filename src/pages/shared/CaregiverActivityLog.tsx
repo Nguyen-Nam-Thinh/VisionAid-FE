@@ -1,3 +1,4 @@
+import { historyReason } from '../../constants/serverValues';
 import { RefreshCw } from 'lucide-react';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
@@ -144,7 +145,7 @@ export function CaregiverActivityLog({
                       to: statusLabel(item.toStatus),
                     })}
                   </td>
-                  <td style={{ overflowWrap: 'anywhere' }}>{item.reason || '—'}</td>
+                  <td style={{ overflowWrap: 'anywhere' }}>{historyReason(item.reason) || '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -162,20 +163,24 @@ export function CaregiverActivityLog({
             </span>
             {(log.data.totalPages > 1 || page > 1) && (
               <>
-                <button
-                  className="btn"
-                  disabled={log.isFetching || !log.data.hasPreviousPage}
-                  onClick={() => setPage(page - 1)}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={log.isFetching || !log.data.hasNextPage}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(log.data.hasPreviousPage || log.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={log.isFetching || !log.data.hasPreviousPage}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(log.data.hasPreviousPage || log.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={log.isFetching || !log.data.hasNextPage}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </>
             )}
           </div>

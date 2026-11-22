@@ -58,12 +58,16 @@ function Pages({
           p4: Math.max(1, pages),
         })}
       </span>
-      <button className="btn" disabled={busy || !previous} onClick={() => onPage(page - 1)}>
-        {t('Trang trước')}
-      </button>
-      <button className="btn" disabled={busy || !next} onClick={() => onPage(page + 1)}>
-        {t('Trang sau')}
-      </button>
+      {(previous || next) && (
+        <button className="btn" disabled={busy || !previous} onClick={() => onPage(page - 1)}>
+          {t('Trang trước')}
+        </button>
+      )}
+      {(previous || next) && (
+        <button className="btn" disabled={busy || !next} onClick={() => onPage(page + 1)}>
+          {t('Trang sau')}
+        </button>
+      )}
     </div>
   );
 }

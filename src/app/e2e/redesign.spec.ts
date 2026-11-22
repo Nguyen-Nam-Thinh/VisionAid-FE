@@ -32,7 +32,7 @@ test('sidebar collapses to icons and preserves navigation', async ({ page }) => 
   await page.goto('/auth/login');
   await page.getByLabel('Địa chỉ email').fill('caregiver@demo.vn');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await page.getByRole('button', { name: 'Thu gọn sidebar' }).click();
+  await page.getByRole('button', { name: 'Thu gọn thanh menu' }).click();
   await expect(page.locator('.sidebar')).toHaveCSS('width', '76px');
   const people = page.getByRole('link', { name: 'Người được chăm sóc', exact: true });
   // Icon-only links are named by an animated tooltip on hover instead of a native title.
@@ -45,9 +45,9 @@ test('sidebar collapses to icons and preserves navigation', async ({ page }) => 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Mở điều hướng' }).click();
   await expect(people).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Mở rộng sidebar' })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Mở rộng thanh menu' })).toBeHidden();
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.getByRole('button', { name: 'Mở rộng sidebar' }).focus();
+  await page.getByRole('button', { name: 'Mở rộng thanh menu' }).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('.sidebar')).toHaveCSS('width', '252px');
 });
@@ -137,9 +137,9 @@ test('desktop redesign: permission labels and keyboard controls', async ({ page 
     .getByRole('button', { name: 'Quyền', exact: true })
     .click();
   const popup = page.getByRole('dialog');
-  const checkbox = popup.getByLabel('Quản lý danh bạ khuôn mặt');
+  const checkbox = popup.getByLabel('Quản lý danh bạ gương mặt');
   const original = await checkbox.isChecked();
-  await popup.locator('label').filter({ hasText: 'Quản lý danh bạ khuôn mặt' }).click();
+  await popup.locator('label').filter({ hasText: 'Quản lý danh bạ gương mặt' }).click();
   await expect(checkbox).toBeChecked({ checked: !original });
   await checkbox.focus();
   await page.keyboard.press('Space');

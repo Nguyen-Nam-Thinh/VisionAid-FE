@@ -9,6 +9,9 @@ const reviewedKeys = new Set([
   'ai.yolo.confidence_threshold',
   'ai.facenet.similarity_threshold',
   'ai.facenet.liveness_enabled',
+  'ai.vision_assist.enabled',
+  'ai.vision_assist.timeout_ms',
+  'ai.vision_assist.daily_limit',
   'ai.facenet.liveness_threshold',
   'caregiving.max_caregivers_per_viu',
   'caregiving.max_vius_per_caregiver',
@@ -165,7 +168,10 @@ export function createConfigurationsApi(get = apiGet, write = apiWrite) {
         (key) => latest[key as keyof SystemConfig] !== config[key as keyof SystemConfig],
       )
     )
-      throw new ServiceError(t('Cấu hình đã thay đổi. Đóng popup và tải lại trước khi sửa.'), 409);
+      throw new ServiceError(
+        t('Cấu hình đã thay đổi. Đóng hộp thoại và tải lại trước khi sửa.'),
+        409,
+      );
     return latest;
   }
   async function mutate(

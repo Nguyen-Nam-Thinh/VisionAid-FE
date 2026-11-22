@@ -378,7 +378,7 @@ a {
   border-bottom: 1px solid var(--border);
 }
 .care-people-table {
-  min-width: 980px;
+  min-width: 860px;
 }
 .care-links-table {
   min-width: 780px;
@@ -2500,8 +2500,13 @@ tbody tr:hover {
     min-width: 0;
     padding-inline: 6px;
     font-size: 0.8125rem;
+    /* Long labels ("Xử lý cảnh báo của nhân viên") wrap inside their tab instead of pushing
+       the page sideways; the grid row keeps every tab the same height. */
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
   }
-  /* Both labels stay on one line, so the two tabs keep the same height. */
   .tabs-trigger > svg {
     display: none;
   }

@@ -1,3 +1,4 @@
+import { FileInput } from '../../components/FileInput';
 import { t } from '../../i18n';
 import { useState } from 'react';
 import { ResourcePage } from '../../components/ResourcePage';
@@ -54,8 +55,7 @@ export function Registry() {
             {canWrite('faces', face) && (
               <label className="field">
                 {t('Thêm nhiều ảnh JPG/PNG')}
-                <input
-                  type="file"
+                <FileInput
                   multiple
                   accept="image/jpeg,image/png"
                   disabled={uploading || cmd.isPending}

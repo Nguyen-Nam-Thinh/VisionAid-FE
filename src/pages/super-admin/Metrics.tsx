@@ -48,9 +48,9 @@ export function Metrics() {
           <div className="grid">
             {[
               [t('Lượt xử lý'), count],
-              [t('Latency trung bình'), count ? latency.toFixed(0) + ' ms' : '—'],
+              [t('Thời gian phản hồi trung bình'), count ? latency.toFixed(0) + ' ms' : '—'],
               [t('Xử lý thành công'), count ? ((successes / count) * 100).toFixed(1) + '%' : '—'],
-              [t('Confidence trung bình'), count ? (confidence * 100).toFixed(1) + '%' : '—'],
+              [t('Độ tin cậy trung bình'), count ? (confidence * 100).toFixed(1) + '%' : '—'],
             ].map(([label, value]) => (
               <section className="glass card" key={label}>
                 <p className="muted">{label}</p>
@@ -59,7 +59,7 @@ export function Metrics() {
             ))}
           </div>
           <section className="glass card stack">
-            <h2>{t('Latency theo mô hình')}</h2>
+            <h2>{t('Thời gian phản hồi theo mô hình')}</h2>
             <div className="bars">
               {['YOLOv8n', 'VietOCR', 'FaceNet'].map((m) => {
                 const group = rows.filter((r) => r.model === m);

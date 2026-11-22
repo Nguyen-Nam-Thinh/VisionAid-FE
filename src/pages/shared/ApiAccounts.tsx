@@ -273,20 +273,24 @@ function Accounts({
                     p4: Math.max(1, list.data.totalPages),
                   })}
                 </span>
-                <button
-                  className="btn"
-                  disabled={list.isFetching || !list.data.hasPreviousPage}
-                  onClick={() => filter({ page: filters.page - 1 })}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={list.isFetching || !list.data.hasNextPage}
-                  onClick={() => filter({ page: filters.page + 1 })}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(list.data.hasPreviousPage || list.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={list.isFetching || !list.data.hasPreviousPage}
+                    onClick={() => filter({ page: filters.page - 1 })}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(list.data.hasPreviousPage || list.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={list.isFetching || !list.data.hasNextPage}
+                    onClick={() => filter({ page: filters.page + 1 })}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -453,7 +457,7 @@ function AccountEditor({
             if ((error as { status?: number }).status! >= 500)
               throw new Error(
                 t(
-                  'Chưa xác nhận được kết quả lưu. Đóng form và tải lại/tìm email trước khi gửi lại để tránh tạo trùng tài khoản.',
+                  'Chưa xác nhận được kết quả lưu. Đóng hộp thoại và tải lại hoặc tìm theo email trước khi gửi lại để tránh tạo trùng tài khoản.',
                 ),
                 { cause: error },
               );

@@ -8,7 +8,7 @@ export function Tts() {
       kind="tts"
       title={t('Giọng đọc hỗ trợ')}
       description={t(
-        'Cấu hình từ xa cho người được chăm sóc. Demo chỉ lưu tùy chọn, chưa đồng bộ xuống thiết bị Mobile.',
+        'Cấu hình từ xa cho người được chăm sóc. Demo chỉ lưu tùy chọn, chưa đồng bộ xuống điện thoại.',
       )}
       allowCreate={!db?.entities.tts.some((e) => e.viuId === selected?.id)}
       allowDelete={false}

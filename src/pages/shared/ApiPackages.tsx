@@ -178,10 +178,21 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                   <tr key={p.id}>
                     <td>
                       <strong>{p.name}</strong>
-                      <p className="package-meta">
-                        {p.code} · {packageTypeLabels[p.packageType] ?? p.packageType}
-                      </p>
-                      <p className="package-meta">{p.isActive ? t('Đang mở') : t('Ngừng mở')}</p>
+                      {/* Codes and sale state are for the Admin; buyers only need the plan. */}
+                      {admin ? (
+                        <>
+                          <p className="package-meta">
+                            {p.code} · {packageTypeLabels[p.packageType] ?? p.packageType}
+                          </p>
+                          <p className="package-meta">
+                            {p.isActive ? t('Đang mở') : t('Ngừng mở')}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="package-meta">
+                          {packageTypeLabels[p.packageType] ?? p.packageType}
+                        </p>
+                      )}
                     </td>
                     <td>
                       <strong className="package-price">
@@ -263,25 +274,30 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
           {query.data && (
             <footer className="pagination">
               <span>
-                {t('Trang {page}/{total}', { page, total: Math.max(1, query.data.totalPages) })} ·{' '}
                 {admin
-                  ? query.data.totalCount + t(' gói')
-                  : t('Phân trang theo danh mục máy chủ; chỉ hiển thị loại gói phù hợp tài khoản.')}
+                  ? t('{count} gói', { count: query.data.totalCount })
+                  : t('Chỉ hiển thị các gói phù hợp với tài khoản của bạn.')}
+                {query.data.totalPages > 1 &&
+                  ' · ' + t('Trang {page}/{total}', { page, total: query.data.totalPages })}
               </span>
-              <button
-                className="btn"
-                disabled={query.isFetching || !query.data.hasPreviousPage}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={query.isFetching || !query.data.hasNextPage}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {t('Trang sau')}
-              </button>
+              {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasPreviousPage}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasNextPage}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </footer>
           )}
         </State>

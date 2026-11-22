@@ -21,6 +21,8 @@ import { CaregiverActivityLog } from '../shared/CaregiverActivityLog';
 import { roles } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 
+// yyyy-MM-dd from the API → dd/MM/yyyy.
+const day = (value: string) => value.split('-').reverse().join('/');
 export function ApiReports() {
   const { data: actor } = useSession();
   if (actor?.role !== 'CenterAdmin' || !actor.orgId)
@@ -118,8 +120,17 @@ function Reports({ actor }: { actor: Person }) {
                     <>
                       <p role="status" className="revenue-period">
                         <CalendarRange size={16} aria-hidden="true" />
-                        {t('Kỳ báo cáo:')} {summary.data.dateFrom || t('Không giới hạn đầu kỳ')} →{' '}
-                        {summary.data.dateTo || t('Không giới hạn cuối kỳ')}
+                        {t('Kỳ báo cáo:')}{' '}
+                        {!summary.data.dateFrom && !summary.data.dateTo
+                          ? t('Toàn bộ thời gian')
+                          : !summary.data.dateTo
+                            ? t('Từ {from}', { from: day(summary.data.dateFrom!) })
+                            : !summary.data.dateFrom
+                              ? t('Đến {to}', { to: day(summary.data.dateTo) })
+                              : t('{from} đến {to}', {
+                                  from: day(summary.data.dateFrom),
+                                  to: day(summary.data.dateTo),
+                                })}
                       </p>
                       <div className="report-tiles">
                         {(
@@ -143,7 +154,7 @@ function Reports({ actor }: { actor: Person }) {
                               'primary',
                             ],
                             [
-                              t('Lượt nhận diện khuôn mặt'),
+                              t('Lượt nhận diện gương mặt'),
                               summary.data.faceRecognitionCount,
                               ScanFace,
                               'primary',
@@ -281,20 +292,24 @@ function Reports({ actor }: { actor: Person }) {
                           p4: Math.max(1, members.data.totalPages),
                         })}
                       </span>
-                      <button
-                        className="btn"
-                        disabled={members.isFetching || !members.data.hasPreviousPage}
-                        onClick={() => setPage(page - 1)}
-                      >
-                        {t('Trang trước')}
-                      </button>
-                      <button
-                        className="btn"
-                        disabled={members.isFetching || !members.data.hasNextPage}
-                        onClick={() => setPage(page + 1)}
-                      >
-                        {t('Trang sau')}
-                      </button>
+                      {(members.data.hasPreviousPage || members.data.hasNextPage) && (
+                        <button
+                          className="btn"
+                          disabled={members.isFetching || !members.data.hasPreviousPage}
+                          onClick={() => setPage(page - 1)}
+                        >
+                          {t('Trang trước')}
+                        </button>
+                      )}
+                      {(members.data.hasPreviousPage || members.data.hasNextPage) && (
+                        <button
+                          className="btn"
+                          disabled={members.isFetching || !members.data.hasNextPage}
+                          onClick={() => setPage(page + 1)}
+                        >
+                          {t('Trang sau')}
+                        </button>
+                      )}
                     </div>
                   )}
                 </State>

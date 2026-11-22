@@ -11,7 +11,11 @@ export const notificationTypes = labelMap({
   ArrivalNotification: msg('Thông báo đến nơi'),
   SystemAlert: msg('Thông báo hệ thống'),
 });
-export const channels = { Fcm: 'Push (FCM)', SignalR: 'Realtime (SignalR)', Email: 'Email' };
+export const channels = labelMap({
+  Fcm: msg('Thông báo trên thiết bị'),
+  SignalR: msg('Trực tiếp trên web'),
+  Email: msg('Email'),
+});
 const type = z.enum([
   'FallDetected',
   'EmergencyManual',

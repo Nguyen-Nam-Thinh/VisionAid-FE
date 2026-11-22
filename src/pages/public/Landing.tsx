@@ -362,7 +362,7 @@ export function Landing() {
                 <h2 id="hybrid-title">{t('Nhận biết trên thiết bị. Kết nối khi cần.')}</h2>
                 <p className="lp-peak-lede">
                   {t(
-                    'Hybrid AI kết hợp xử lý trên điện thoại và máy chủ. Web là nơi người chăm sóc theo dõi và phối hợp hỗ trợ, không phải công cụ chỉ đường trực tiếp.',
+                    'AI của VisionAid kết hợp xử lý trên điện thoại và máy chủ. Web là nơi người chăm sóc theo dõi và phối hợp hỗ trợ, không phải công cụ chỉ đường trực tiếp.',
                   )}
                 </p>
                 <div className="lp-peak-notes">
@@ -428,7 +428,7 @@ export function Landing() {
               ))}
               <p className="lp-rail-note notice">
                 {t(
-                  'VisionAid đang trong giai đoạn kiểm thử liên thông. Hybrid AI, cuộc gọi và thông báo cần được xác minh cùng ứng dụng di động trước khi sử dụng thực tế; trang này không cam kết mọi tính năng đã sẵn sàng trên mọi thiết bị.',
+                  'VisionAid đang trong giai đoạn kiểm thử liên thông. AI dẫn đường, cuộc gọi và thông báo cần được xác minh cùng ứng dụng di động trước khi sử dụng thực tế; trang này không cam kết mọi tính năng đã sẵn sàng trên mọi thiết bị.',
                 )}
               </p>
             </div>
@@ -500,7 +500,7 @@ export function Landing() {
               </p>
             </article>
             <article>
-              <h3>{t('Standalone · Trung tâm đồng hành')}</h3>
+              <h3>{t('Người dùng độc lập · Trung tâm đồng hành')}</h3>
               <p>
                 {t(
                   'Người khiếm thị thuộc tổ chức được nhân viên chăm sóc hỗ trợ qua ứng dụng di động và danh bạ khẩn cấp. Đây là mô hình sử dụng trong tổ chức, không phải một vai trò tài khoản hoặc gói mua riêng.',
@@ -525,7 +525,7 @@ export function Landing() {
               <li>
                 <strong>{t('Bắt buộc dùng đai đeo ngực.')}</strong>{' '}
                 {t(
-                  'Cố định điện thoại bằng chest strap để camera hướng về phía trước khi dùng chức năng nhận biết trên hành trình.',
+                  'Cố định điện thoại bằng dây đeo ngực để camera hướng về phía trước khi dùng chức năng nhận biết trên hành trình.',
                 )}
               </li>
               <li>

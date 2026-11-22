@@ -58,6 +58,11 @@ it('validates host, protocol/type, ports, priority and TURN credentials', () => 
     expect(() => validateIceInput({ ...input, priority })).toThrow();
   for (const credential of ['', ' ', 'x'.repeat(201)])
     expect(() => validateIceInput({ ...input, credential })).toThrow();
+  // Both empty: the server issues a temporary password for each call.
+  expect(validateIceInput({ ...input, username: '', credential: '' })).toMatchObject({
+    username: null,
+    credential: null,
+  });
   expect(
     validateIceInput({ ...input, url: 'turns:[2001:db8::1]:5349?transport=tcp' }).credential,
   ).toBe(' new-value ');
