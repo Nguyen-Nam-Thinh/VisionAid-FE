@@ -1,4 +1,5 @@
 import { t } from '../../i18n';
+import { issuesError } from './validation';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { createCaregivingApi } from './caregiving';
@@ -116,13 +117,15 @@ export function createPlacesApi(get = apiGet, write = apiWrite) {
       const input = kind === 'geofences' ? zoneInput : savedInput;
       const parsed = (id ? input.extend({ isActive: z.boolean() }) : input).safeParse(values);
       if (!parsed.success)
-        throw new ServiceError(
-          t('Kiểm tra tên, tọa độ và bán kính. Bán kính phải là số nguyên trong khoảng cho phép.'),
-          400,
-          Object.fromEntries(
-            parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message]),
-          ),
-        );
+        throw issuesError(parsed.error.issues, {
+          name: t('Nhập tên (tối đa 200 ký tự).'),
+          latitude: t('Hãy tìm địa chỉ hoặc bấm lên bản đồ để chọn vị trí.'),
+          longitude: t('Hãy tìm địa chỉ hoặc bấm lên bản đồ để chọn vị trí.'),
+          radiusMeters: t('Bán kính phải là số nguyên trong khoảng cho phép.'),
+          arrivalRadiusMeters: t('Bán kính phải là số nguyên trong khoảng cho phép.'),
+          description: t('Mô tả quá dài.'),
+          ttsAnnouncement: t('Lời nhắc tối đa 500 ký tự.'),
+        });
       await authorize(actor, viuId, true);
       if (id) await read(kind, viuId, id);
       return checked(

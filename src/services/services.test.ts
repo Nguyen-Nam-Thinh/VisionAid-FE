@@ -160,7 +160,7 @@ describe('integration boundary', () => {
             status: 409,
           }),
       ),
-    ).rejects.toMatchObject({ status: 409, fields: { name: 'Invalid' } });
+    ).rejects.toMatchObject({ status: 409, fields: { name: 'Giá trị chưa hợp lệ.' } });
   });
   it('clears session on logout', async () => {
     const s = await login();

@@ -102,6 +102,20 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
       <h2>{t('Giọng đọc của {name}', { name })}</h2>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
+        {/* Actions sit above the settings, like the toolbar of every other page. */}
+        <div className="row">
+          <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
+            <RefreshCw size={16} aria-hidden="true" />
+            {t('Tải lại cấu hình')}
+          </button>
+          <button
+            className="btn primary"
+            disabled={query.isFetching}
+            onClick={() => setEditing(true)}
+          >
+            {data ? t('Chỉnh sửa giọng đọc') : t('Tạo cấu hình giọng đọc')}
+          </button>
+        </div>
         {data ? (
           <dl className="settings-details">
             {fields.map((field) => (
@@ -122,19 +136,6 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
         ) : (
           <p>{t('Chưa có cấu hình giọng đọc. Bạn có thể tạo cấu hình cho người được chọn.')}</p>
         )}
-        <div className="row">
-          <button className="btn" disabled={query.isFetching} onClick={() => void query.refetch()}>
-            <RefreshCw size={16} aria-hidden="true" />
-            {t('Tải lại cấu hình')}
-          </button>
-          <button
-            className="btn primary"
-            disabled={query.isFetching}
-            onClick={() => setEditing(true)}
-          >
-            {data ? t('Chỉnh sửa giọng đọc') : t('Tạo cấu hình giọng đọc')}
-          </button>
-        </div>
         {editing && (
           <Dialog
             title={data ? t('Chỉnh sửa giọng đọc') : t('Tạo cấu hình giọng đọc')}
@@ -153,7 +154,7 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
               onSubmit={async (values) => {
                 try {
                   await ttsApi.save(actor, viuId, values);
-                  setNotice(t('Đã lưu cấu hình trên máy chủ. Kiểm tra lại trên điện thoại.'));
+                  setNotice(t('Đã lưu cấu hình. Hãy kiểm tra lại trên điện thoại.'));
                   setEditing(false);
                   await cache.invalidateQueries({ queryKey: key });
                 } catch (error) {

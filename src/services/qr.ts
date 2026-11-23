@@ -3,8 +3,8 @@ import jsQR from 'jsqr';
 import { ServiceError } from './contracts';
 /** Reads the text of a QR code in a local image. Never navigates to the decoded content. */
 export async function decodeQrImage(file: File): Promise<string> {
-  if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 5 * 1024 * 1024)
-    throw new ServiceError(t('Chọn ảnh QR JPG/PNG dưới 5 MB.'));
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)
+    throw new ServiceError(t('Chọn ảnh QR JPG, PNG hoặc WebP dưới 5 MB.'));
   const bitmap = await createImageBitmap(file);
   try {
     const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));

@@ -1,4 +1,5 @@
 import { t } from '../../i18n';
+import { fieldError } from './validation';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -106,12 +107,12 @@ function review(config: SystemConfig) {
   if (!config.reviewed || !reviewedKeys.has(config.configKey))
     throw new ServiceError(t('Khóa này chưa được duyệt để hiển thị hoặc sửa trên Web.'), 403);
 }
-function pageQuery(page: number) {
+function pageQuery(page: number, pageSize = 10) {
   if (!Number.isInteger(page) || page < 1) throw new ServiceError(t('Trang không hợp lệ.'), 400);
-  return new URLSearchParams({ page: String(page), pageSize: '10' });
+  return new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
 }
 export function validateConfigValue(config: SystemConfig, value: string) {
-  if (!value.trim()) throw new ServiceError(t('Giá trị không được để trống.'), 400);
+  if (!value.trim()) throw fieldError('value', t('Giá trị không được để trống.'));
   if (config.valueType === 'Integer' || config.valueType === 'Decimal') {
     const valid =
       config.valueType === 'Integer'
@@ -124,7 +125,7 @@ export function validateConfigValue(config: SystemConfig, value: string) {
       (config.valueType === 'Integer' &&
         (!Number.isInteger(n) || n < -2147483648 || n > 2147483647))
     )
-      throw new ServiceError(t('Nhập số hợp lệ, dùng dấu chấm cho phần thập phân.'), 400);
+      throw fieldError('value', t('Nhập số hợp lệ, dùng dấu chấm cho phần thập phân.'));
     for (const [bound, lower] of [
       [config.minValue, true],
       [config.maxValue, false],
@@ -133,25 +134,25 @@ export function validateConfigValue(config: SystemConfig, value: string) {
         bound !== null &&
         (!Number.isFinite(Number(bound)) || (lower ? n < Number(bound) : n > Number(bound)))
       )
-        throw new ServiceError(t('Giá trị nằm ngoài giới hạn cấu hình.'), 400);
+        throw fieldError('value', t('Giá trị nằm ngoài giới hạn cấu hình.'));
     }
   }
   if (config.valueType === 'Boolean' && !['true', 'false'].includes(value))
-    throw new ServiceError(t('Giá trị phải là true hoặc false.'), 400);
+    throw fieldError('value', t('Giá trị phải là true hoặc false.'));
   if (config.valueType === 'Json') {
     try {
       JSON.parse(value);
     } catch {
-      throw new ServiceError(t('Dữ liệu không đúng định dạng.'), 400);
+      throw fieldError('value', t('Dữ liệu không đúng định dạng.'));
     }
   }
   const choices: Record<string, string[]> = {
     hybrid_navigation_engine: ['JEV', 'GROQ', 'RULE_BASED'],
   };
   if (choices[config.configKey] && !choices[config.configKey].includes(value))
-    throw new ServiceError(t('Giá trị không nằm trong lựa chọn được hỗ trợ.'), 400);
+    throw fieldError('value', t('Giá trị không nằm trong lựa chọn được hỗ trợ.'));
   if (config.configKey === 'webrtc_stun_fallback_url' && !/^stuns?:[^\s@]+$/.test(value))
-    throw new ServiceError(t('Nhập URL STUN hợp lệ, không chứa thông tin đăng nhập.'), 400);
+    throw fieldError('value', t('Nhập URL STUN hợp lệ, không chứa thông tin đăng nhập.'));
 }
 export function createConfigurationsApi(get = apiGet, write = apiWrite) {
   async function detail(actor: Actor, id: string, signal?: AbortSignal) {
@@ -208,9 +209,16 @@ export function createConfigurationsApi(get = apiGet, write = apiWrite) {
     return result;
   }
   return {
-    async list(actor: Actor, page: number, search: string, category: string, signal?: AbortSignal) {
+    async list(
+      actor: Actor,
+      page: number,
+      search: string,
+      category: string,
+      signal?: AbortSignal,
+      pageSize = 10,
+    ) {
       authorize(actor);
-      const query = pageQuery(page);
+      const query = pageQuery(page, pageSize);
       if (search) query.set('search', search);
       if (category) query.set('category', category);
       return parse(paged(configSchema), await get(`/api/system-configs?${query}`, signal));

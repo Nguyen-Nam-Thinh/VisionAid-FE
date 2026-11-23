@@ -214,7 +214,7 @@ it('maps the current BE 422 wrong-password response and keeps other 422 messages
   });
   detail = 'Password was used recently.';
   await expect(auth.changePassword('Wrong-Pass1!', 'New-Pass1!')).rejects.toMatchObject({
-    message: 'Password was used recently.',
+    message: 'Không thực hiện được thao tác này. Hãy kiểm tra lại thông tin.',
   });
   expect(await auth.session()).not.toBeNull();
 });
@@ -461,7 +461,7 @@ it('BR-10: register and profile reject full names shorter than 2 characters befo
   const auth = createApiAuth('http://example.test', memory(), fetcher);
   await expect(auth.register(' A ', user.email, 'Password@1')).rejects.toMatchObject({
     status: 400,
-    message: 'Họ tên phải có từ 2 đến 200 ký tự.',
+    message: 'Họ và tên cần từ 2 đến 200 ký tự.',
   });
   await expect(auth.profile({ name: 'B', phone: '', avatar: '' })).rejects.toMatchObject({
     status: 400,

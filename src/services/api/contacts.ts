@@ -1,4 +1,6 @@
 import { t, msg, labelMap } from '../../i18n';
+import { issuesError } from './validation';
+import { normalizePhone } from './phone';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { createCaregivingApi } from './caregiving';
@@ -22,7 +24,7 @@ const inputSchema = z
   .object({
     contactName: z.string().trim().min(1).max(200),
     contactType: z.enum(['Phone', 'Zalo', 'Both']),
-    phoneNumber: z.string().trim().max(20),
+    phoneNumber: z.string().transform(normalizePhone).pipe(z.string().max(20)),
     zaloDeepLink: z.string().trim().max(500),
     priorityOrder: z.number().int().min(1).max(32767),
     notes: z.string().trim().max(500),
@@ -88,13 +90,14 @@ export function createContactsApi(get = apiGet, write = apiWrite) {
     async save(actor: Person, viuId: string, values: unknown, id?: string) {
       const parsed = inputSchema.safeParse(values);
       if (!parsed.success)
-        throw new ServiceError(
-          t('Kiểm tra tên, loại liên hệ, số điện thoại, Zalo và thứ tự ưu tiên.'),
-          400,
-          Object.fromEntries(
-            parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message]),
-          ),
-        );
+        throw issuesError(parsed.error.issues, {
+          contactName: t('Nhập tên liên hệ (tối đa 200 ký tự).'),
+          contactType: t('Hãy chọn loại liên hệ.'),
+          phoneNumber: t('Nhập số điện thoại hợp lệ, ví dụ 0901 234 567 hoặc 115.'),
+          zaloDeepLink: t('Nhập liên kết Zalo, ví dụ https://zalo.me/0901234567.'),
+          priorityOrder: t('Thứ tự ưu tiên là số nguyên từ 1 trở lên.'),
+          notes: t('Ghi chú tối đa 500 ký tự.'),
+        });
       if (id) await detail(actor, viuId, id);
       else await authorize(actor, viuId);
       const data = parsed.data;
@@ -115,7 +118,8 @@ export function createContactsApi(get = apiGet, write = apiWrite) {
         if (
           error instanceof ServiceError &&
           error.status === 409 &&
-          (error.code === 'CONTACT_PRIORITY_TAKEN' || /priority/i.test(error.message))
+          (error.code === 'CONTACT_PRIORITY_TAKEN' ||
+            /priority|thứ tự ưu tiên/i.test(error.message))
         )
           throw new ServiceError(
             t('Thứ tự ưu tiên {priorityOrder} đã được dùng cho liên hệ khác. Chọn số khác.', {

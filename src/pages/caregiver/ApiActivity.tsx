@@ -73,6 +73,14 @@ const values: Record<string, string> = labelMap({
   Near: msg('Gần'),
   Medium: msg('Trung bình'),
   Far: msg('Xa'),
+  // OcrRequestType and TriggerMethod
+  TextReading: msg('Đọc chữ'),
+  QrCode: msg('Quét mã QR'),
+  VoiceCommand: msg('Bằng giọng nói'),
+  Tap: msg('Chạm màn hình'),
+  // Languages the phone reports
+  vi: msg('Tiếng Việt'),
+  en: msg('Tiếng Anh'),
 });
 // Vietnamese reads "Chi tiết di chuyển"; English keeps the capital ("Movement details").
 const lowerFirst = (text: string) =>
@@ -104,6 +112,9 @@ function display(key: string, value: ActivityRecord[string]) {
     'recognitionResult',
     'executionStatus',
     'distanceRange',
+    'requestType',
+    'triggerMethod',
+    'languageDetected',
   ].includes(key)
     ? values[String(value)] || resultLabels[String(value)] || String(value)
     : String(value);

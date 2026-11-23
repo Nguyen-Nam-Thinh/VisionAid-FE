@@ -1,4 +1,5 @@
 import { t } from '../../i18n';
+import { fieldError } from './validation';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -72,14 +73,14 @@ export function validateIceInput(input: IceInput) {
       ? match[1].toLowerCase() !== 'stun' || !!match[4]
       : match[1].toLowerCase() === 'stun')
   )
-    throw new ServiceError(
+    throw fieldError(
+      'url',
       t(
-        'Địa chỉ phải đúng loại STUN hoặc TURN, có host và cổng hợp lệ. TURN có thể thêm ?transport=udp hoặc ?transport=tcp.',
+        'Địa chỉ phải đúng loại máy chủ đã chọn và có cổng hợp lệ, ví dụ stun:stun.l.google.com:19302 hoặc turn:ten-may-chu:3478.',
       ),
-      400,
     );
   if (!Number.isInteger(priority) || priority < 1 || priority > 1000)
-    throw new ServiceError(t('Độ ưu tiên phải là số nguyên từ 1 đến 1000.'), 400);
+    throw fieldError('priority', t('Thứ tự dùng là số nguyên từ 1 đến 1000.'));
   if (typeof isActive !== 'boolean') throw new ServiceError(t('Trạng thái không hợp lệ.'), 400);
   // BE: both empty → the server issues a time-limited password for every call (coturn
   // use-auth-secret); otherwise a fixed username AND password are required.
@@ -95,6 +96,10 @@ export function validateIceInput(input: IceInput) {
         'Nhập cả tên đăng nhập và mật khẩu (tối đa 200 ký tự), hoặc để trống cả hai để máy chủ tự cấp mật khẩu tạm cho mỗi cuộc gọi.',
       ),
       400,
+      {
+        username: t('Nhập cả hai ô, hoặc để trống cả hai.'),
+        credential: t('Nhập cả hai ô, hoặc để trống cả hai.'),
+      },
     );
   return {
     serverType,

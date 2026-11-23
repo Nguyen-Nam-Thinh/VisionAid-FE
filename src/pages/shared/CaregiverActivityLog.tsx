@@ -2,6 +2,7 @@ import { historyReason } from '../../constants/serverValues';
 import { RefreshCw } from 'lucide-react';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
+import { collectPages, containsText, pageOf } from '../../services/api/textSearch';
 import { useQuery } from '@tanstack/react-query';
 import { organizationsApi } from '../../services/api/organizations';
 import { alertLabels } from '../../services/api/emergencies';
@@ -25,9 +26,10 @@ export function CaregiverActivityLog({
   actor: Person;
   organizationId: string;
 }) {
-  const empty = { caregiverId: '', caregiverName: '', dateFrom: '', dateTo: '' };
+  const empty = { caregiverId: '', caregiverName: '', caregiverText: '', dateFrom: '', dateTo: '' };
   const [filters, setFilters] = useState(empty);
   const [caregiver, setCaregiver] = useState({ id: '', name: '' });
+  const [caregiverText, setCaregiverText] = useState('');
   const [page, setPage] = useState(1);
   const log = useQuery({
     queryKey: [
@@ -38,19 +40,30 @@ export function CaregiverActivityLog({
       filters.dateFrom,
       filters.dateTo,
       page,
+      filters.caregiverText,
     ],
-    queryFn: ({ signal }) =>
-      organizationsApi.caregiverActivity(
-        actor,
-        organizationId,
-        {
-          page,
-          caregiverId: filters.caregiverId,
-          dateFrom: filters.dateFrom,
-          dateTo: filters.dateTo,
-        },
-        signal,
-      ),
+    queryFn: async ({ signal }) => {
+      const load = (p: number, pageSize = 20) =>
+        organizationsApi.caregiverActivity(
+          actor,
+          organizationId,
+          {
+            page: p,
+            pageSize,
+            caregiverId: filters.caregiverId,
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+          },
+          signal,
+        );
+      if (!filters.caregiverText) return load(page);
+      // Typed words match every caregiver whose name contains them, not just one picked person.
+      const rows = await collectPages((p) => load(p, 100));
+      return pageOf(
+        rows.filter((row) => containsText(filters.caregiverText, row.caregiverName)),
+        page,
+      );
+    },
     retry: false,
     gcTime: 0,
   });
@@ -63,13 +76,18 @@ export function CaregiverActivityLog({
         )}
       </p>
       <FilterPanel
-        active={[filters.caregiverId, filters.dateFrom, filters.dateTo].filter(Boolean).length}
+        active={
+          [filters.caregiverId || filters.caregiverText, filters.dateFrom, filters.dateTo].filter(
+            Boolean,
+          ).length
+        }
         submitLabel={t('Lọc hoạt động')}
         onApply={(form) => {
           const data = new FormData(form);
           setFilters({
             caregiverId: caregiver.id,
             caregiverName: caregiver.name,
+            caregiverText: caregiver.id ? '' : caregiverText.trim(),
             dateFrom: String(data.get('dateFrom') || ''),
             dateTo: String(data.get('dateTo') || ''),
           });
@@ -77,6 +95,7 @@ export function CaregiverActivityLog({
         }}
         onReset={() => {
           setCaregiver({ id: '', name: '' });
+          setCaregiverText('');
           setFilters(empty);
           setPage(1);
         }}
@@ -97,6 +116,9 @@ export function CaregiverActivityLog({
           label={t('Người chăm sóc')}
           value={caregiver.id}
           onChange={(id, option) => setCaregiver({ id, name: option?.label ?? '' })}
+          freeText
+          text={caregiverText}
+          onText={setCaregiverText}
           search={searchOrganizationMembers(actor, organizationId, 'Caregiver')}
           queryKey={['org-caregivers', actor.id, organizationId]}
         />
@@ -111,8 +133,10 @@ export function CaregiverActivityLog({
           </label>
         </div>
       </FilterPanel>
-      {filters.caregiverName && (
-        <p role="status">{t('Đang lọc theo: {name}', { name: filters.caregiverName })}</p>
+      {(filters.caregiverName || filters.caregiverText) && (
+        <p role="status">
+          {t('Đang lọc theo: {name}', { name: filters.caregiverName || filters.caregiverText })}
+        </p>
       )}
       <State loading={log.isPending} error={log.error} retry={() => log.refetch()}>
         <div

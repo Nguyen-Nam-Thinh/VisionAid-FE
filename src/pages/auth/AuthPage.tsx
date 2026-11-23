@@ -1,4 +1,5 @@
 import { t } from '../../i18n';
+import { inviteResumeTarget } from '../../services/api/invitations';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { ThemeSwitch } from '../../components/ThemeSwitch';
 import { useState } from 'react';
@@ -20,6 +21,7 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
   const location = useLocation();
   const returnTo =
     paymentResumeTarget((location.state as { returnTo?: unknown } | null)?.returnTo) ??
+    inviteResumeTarget((location.state as { returnTo?: unknown } | null)?.returnTo) ??
     '/dashboard';
   const { action: routeAction = 'login' } = useParams();
   const action = fixedAction ?? routeAction;

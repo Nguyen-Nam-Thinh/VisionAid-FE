@@ -1,4 +1,6 @@
 import { t } from '../../i18n';
+import { normalizePhone } from './phone';
+import { searchWithoutAccents } from './textSearch';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -69,6 +71,7 @@ export type CaregiverActivityFilter = {
   caregiverId: string;
   dateFrom: string;
   dateTo: string;
+  pageSize?: number;
 };
 type Scope = Pick<Person, 'role' | 'orgId'>;
 export type OrganizationInput = {
@@ -99,7 +102,7 @@ function input(values: OrganizationInput, create: boolean) {
       address: z.string().trim().max(500),
       phoneNumber: z
         .string()
-        .trim()
+        .transform(normalizePhone)
         // Mirrors BE f6df5b3: mobile, landline 02x (10–11 digits) or 1800/1900 hotline.
         .refine((v) => !v || /^(0[35789]\d{8}|02\d{8,9}|1[89]00\d{4,6})$/.test(v)),
       contactEmail: z
@@ -169,10 +172,21 @@ export function createOrganizationsApi(get = apiGet, write = apiWrite) {
       signal?: AbortSignal,
     ) {
       scopeCheck(scope, undefined, true);
-      const query = new URLSearchParams({ page: String(page), pageSize: '10', search });
-      if (isActive) query.set('isActive', isActive);
-      if (isDeleted) query.set('isDeleted', isDeleted);
-      return parse(paged(organization), await get('/api/organizations?' + query, signal));
+      return searchWithoutAccents(
+        search,
+        page,
+        async (term, p, bulk) => {
+          const query = new URLSearchParams({
+            page: String(p),
+            pageSize: bulk ? '100' : '10',
+            search: term,
+          });
+          if (isActive) query.set('isActive', isActive);
+          if (isDeleted) query.set('isDeleted', isDeleted);
+          return parse(paged(organization), await get('/api/organizations?' + query, signal));
+        },
+        (org) => [org.name, org.contactEmail, org.phoneNumber, org.address],
+      );
     },
     async detail(scope: Scope, id: string, signal?: AbortSignal) {
       scopeCheck(scope, id);
@@ -199,12 +213,23 @@ export function createOrganizationsApi(get = apiGet, write = apiWrite) {
       signal?: AbortSignal,
     ) {
       scopeCheck(scope, id);
-      const query = new URLSearchParams({ page: String(page), pageSize: '10', search });
-      if (role) query.set('role', role);
-      if (isActive) query.set('isActive', isActive);
-      return parse(
-        paged(member),
-        await get('/api/organizations/' + id + '/members?' + query, signal),
+      return searchWithoutAccents(
+        search,
+        page,
+        async (term, p, bulk) => {
+          const query = new URLSearchParams({
+            page: String(p),
+            pageSize: bulk ? '100' : '10',
+            search: term,
+          });
+          if (role) query.set('role', role);
+          if (isActive) query.set('isActive', isActive);
+          return parse(
+            paged(member),
+            await get('/api/organizations/' + id + '/members?' + query, signal),
+          );
+        },
+        (person) => [person.fullName, person.email, person.phoneNumber],
       );
     },
     async caregiverActivity(
@@ -225,7 +250,10 @@ export function createOrganizationsApi(get = apiGet, write = apiWrite) {
           t('Kiểm tra ngày lọc; ngày kết thúc phải sau hoặc bằng ngày bắt đầu.'),
           400,
         );
-      const query = new URLSearchParams({ page: String(page), pageSize: '20' });
+      const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(filter.pageSize ?? 20),
+      });
       if (caregiverId) query.set('caregiverId', caregiverId);
       if (dateFrom) query.set('dateFrom', dateFrom);
       if (dateTo) query.set('dateTo', dateTo);

@@ -1,6 +1,6 @@
 import { FileInput } from '../../components/FileInput';
 import { t, msg, formatLocaleDateTime, type MessageId } from '../../i18n';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QrCode, ScanLine } from 'lucide-react';
@@ -11,6 +11,8 @@ import { decodeQrImage } from '../../services/qr';
 import {
   invitationsApi,
   invitationStateLabels,
+  inviteLink,
+  inviteToken,
   type Invitation,
   type InvitationPermissions,
   type InvitationPreview,
@@ -35,12 +37,15 @@ const granted = (p: InvitationPermissions) =>
 export function CaregiverInvitations({
   actor,
   onAccepted,
+  initialToken = '',
 }: {
   actor: Person;
   onAccepted: () => Promise<unknown>;
+  /** From an opened invitation link (?invite=…): the accept dialog starts with it. */
+  initialToken?: string;
 }) {
   const [inviting, setInviting] = useState(false);
-  const [accepting, setAccepting] = useState(false);
+  const [accepting, setAccepting] = useState(!!initialToken);
   const [notice, setNotice] = useState('');
   if (actor.role !== 'Caregiver') return null;
   return (
@@ -70,6 +75,7 @@ export function CaregiverInvitations({
       {accepting && (
         <AcceptInvitation
           actor={actor}
+          initialToken={initialToken}
           onClose={() => setAccepting(false)}
           onAccepted={async (name) => {
             setAccepting(false);
@@ -156,7 +162,8 @@ function CreateInvitation({ actor, onClose }: { actor: Person; onClose: () => vo
               })}
             </p>
             <div className="invite-qr">
-              <QRCodeSVG value={result.token} size={200} title={t('Mã QR lời mời')} />
+              {/* A link, so a phone camera opens the accept page instead of showing bare text. */}
+              <QRCodeSVG value={inviteLink(result.token)} size={200} title={t('Mã QR lời mời')} />
             </div>
             <p>
               {t('Hết hạn lúc {time}. Mã chỉ dùng được một lần.', {
@@ -179,6 +186,21 @@ function CreateInvitation({ actor, onClose }: { actor: Person; onClose: () => vo
               }}
             >
               {t('Sao chép mã')}
+            </button>
+            <button
+              className="btn"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(inviteLink(result.token));
+                  setCopied(
+                    t('Đã sao chép liên kết lời mời. Gửi liên kết này cho người được mời.'),
+                  );
+                } catch {
+                  setCopied(t('Không sao chép được. Hãy chọn mã và sao chép thủ công.'));
+                }
+              }}
+            >
+              {t('Sao chép liên kết')}
             </button>
             {copied && <p role="status">{copied}</p>}
           </div>
@@ -243,14 +265,18 @@ function CreateInvitation({ actor, onClose }: { actor: Person; onClose: () => vo
 
 function AcceptInvitation({
   actor,
+  initialToken = '',
   onClose,
   onAccepted,
 }: {
   actor: Person;
+  initialToken?: string;
   onClose: () => void;
   onAccepted: (name: string) => Promise<void>;
 }) {
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState(initialToken);
+  // An opened invitation link shows its details right away.
+  const checkedLink = useRef(false);
   const [preview, setPreview] = useState<InvitationPreview | null>(null);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
@@ -266,6 +292,14 @@ function AcceptInvitation({
       setPending(false);
     }
   };
+  useEffect(() => {
+    if (initialToken && !checkedLink.current) {
+      checkedLink.current = true;
+      void check(initialToken);
+    }
+    // Runs once for the link the page was opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialToken]);
   return (
     <Dialog
       title={t('Nhận lời mời người chăm sóc phụ')}
@@ -279,8 +313,10 @@ function AcceptInvitation({
           <input
             value={token}
             autoComplete="off"
+            placeholder={t('Dán mã hoặc liên kết lời mời')}
             onChange={(e) => {
-              setToken(e.target.value);
+              // A pasted invitation link works as well as the bare code.
+              setToken(inviteToken(e.target.value));
               setPreview(null);
             }}
           />
@@ -288,7 +324,7 @@ function AcceptInvitation({
         <label className="field">
           {t('Hoặc chọn ảnh chụp mã QR')}
           <FileInput
-            accept="image/png,image/jpeg"
+            accept="image/png,image/jpeg,image/webp"
             disabled={pending}
             onChange={async (e) => {
               const input = e.currentTarget;
@@ -297,7 +333,7 @@ function AcceptInvitation({
               if (!file) return;
               setError('');
               try {
-                const code = await decodeQrImage(file);
+                const code = inviteToken(await decodeQrImage(file));
                 setToken(code);
                 await check(code);
               } catch (err) {

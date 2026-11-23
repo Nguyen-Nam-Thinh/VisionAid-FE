@@ -29,11 +29,11 @@ const endReasons: Record<string, string> = labelMap({
 });
 export const callEndReason = (reason: string | null) =>
   reason ? (endReasons[reason] ?? reason) : t('Chưa có');
-export const callTriggers = {
+export const callTriggers = labelMap({
   CaregiverInitiated: msg('Người chăm sóc gọi'),
   ViuVoiceCommand: msg('Lệnh giọng nói'),
-  SosAuto: 'SOS',
-};
+  SosAuto: msg('SOS tự động'),
+});
 const item = z.object({
   sessionId: z.string().uuid(),
   triggerType: z.enum(['CaregiverInitiated', 'ViuVoiceCommand', 'SosAuto']),
@@ -119,13 +119,19 @@ export function createCallsApi(get = apiGet, write = apiWrite) {
     async end(id: string, reason = 'user_hangup') {
       await post(`/api/webrtc/sessions/${validId(id)}/end`, { reason });
     },
-    async history(actor: Person, page: number, filters: CallFilters, signal?: AbortSignal) {
+    async history(
+      actor: Person,
+      page: number,
+      filters: CallFilters,
+      signal?: AbortSignal,
+      pageSize = 10,
+    ) {
       // BE scopes CenterAdmin to calls of VIUs in their organization; Caregiver to own calls.
       if (actor.role !== 'Caregiver' && actor.role !== 'CenterAdmin')
         throw new ServiceError(t('Bạn không có quyền xem lịch sử cuộc gọi.'), 403);
       if (!Number.isInteger(page) || page < 1)
         throw new ServiceError(t('Trang không hợp lệ.'), 400);
-      const query = new URLSearchParams({ page: String(page), pageSize: '10' });
+      const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
       if (filters.viuUserId) {
         if (!z.string().uuid().safeParse(filters.viuUserId).success)
           throw new ServiceError(t('Mã người được chăm sóc không hợp lệ.'), 400);

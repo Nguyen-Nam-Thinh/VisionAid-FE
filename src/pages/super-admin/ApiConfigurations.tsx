@@ -19,6 +19,7 @@ import {
   configValue,
 } from '../../constants/configLabels';
 import type { Person } from '../../models/domain';
+import { collectPages, containsText, pageOf } from '../../services/api/textSearch';
 
 type PageInfo = {
   page: number;
@@ -317,7 +318,18 @@ function ConfigPanel({
     </div>
   );
 }
-function ConfigDetail({ actor, id, close }: { actor: Person; id: string; close: () => void }) {
+function ConfigDetail({
+  actor,
+  id,
+  seed,
+  close,
+}: {
+  actor: Person;
+  id: string;
+  /** The row from the list, so the first history page loads together with the detail. */
+  seed?: SystemConfig;
+  close: () => void;
+}) {
   const cache = useQueryClient();
   const [notice, setNotice] = useState('');
   const query = useQuery({
@@ -326,9 +338,28 @@ function ConfigDetail({ actor, id, close }: { actor: Person; id: string; close: 
     retry: false,
     gcTime: 0,
   });
+  // Same key as the panel's first history page: the dialog opens once, fully filled, instead of
+  // growing from a loading line to the details and then to the history table.
+  const base = query.data ?? seed;
+  const firstHistory = useQuery({
+    queryKey: ['api-config-history', actor.id, id, 1],
+    queryFn: ({ signal }) => configurationsApi.history(actor, base!, 1, signal),
+    enabled: !!base,
+    retry: false,
+    gcTime: 0,
+  });
+  // A failed history page refetches when the panel mounts; that must not send the dialog back to
+  // "loading", so only the first answer holds it.
+  const [historyAnswered, setHistoryAnswered] = useState(false);
+  if (!historyAnswered && (firstHistory.isSuccess || firstHistory.isError))
+    setHistoryAnswered(true);
   return (
     <Dialog title={t('Chi tiết cấu hình')} onClose={close}>
-      <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
+      <State
+        loading={query.isPending || (!!base && firstHistory.isPending && !historyAnswered)}
+        error={query.error}
+        retry={() => query.refetch()}
+      >
         {query.data && (
           <ConfigPanel
             key={query.data.updatedAt}
@@ -340,7 +371,7 @@ function ConfigDetail({ actor, id, close }: { actor: Person; id: string; close: 
                 cache.invalidateQueries({ queryKey: ['api-config-history', actor.id, id] }),
                 query.refetch(),
               ]);
-              setNotice(t('Đã lưu cấu hình trên máy chủ. Thiết bị áp dụng khi đồng bộ lại.'));
+              setNotice(t('Đã lưu cấu hình. Điện thoại áp dụng ở lần đồng bộ tiếp theo.'));
             }}
           />
         )}
@@ -359,8 +390,25 @@ function Configurations({ actor }: { actor: Person }) {
   const [selected, setSelected] = useState('');
   const query = useQuery({
     queryKey: ['api-configs', actor.id, filters, page],
-    queryFn: ({ signal }) =>
-      configurationsApi.list(actor, page, filters.search, filters.category, signal),
+    // Search runs on the names people see ("Chặn nhận diện bằng ảnh chụp…") and the technical
+    // key; the server only knows the technical key.
+    queryFn: async ({ signal }) => {
+      if (!filters.search) return configurationsApi.list(actor, page, '', filters.category, signal);
+      const rows = await collectPages((p) =>
+        configurationsApi.list(actor, p, '', filters.category, signal, 100),
+      );
+      return pageOf(
+        rows.filter((config) =>
+          containsText(
+            filters.search,
+            // The name people see and the technical key; hints would match unrelated words.
+            configName(config.configKey),
+            config.configKey,
+          ),
+        ),
+        page,
+      );
+    },
     retry: false,
     gcTime: 0,
   });
@@ -388,11 +436,32 @@ function Configurations({ actor }: { actor: Person }) {
         >
           <label className="field">
             {t('Tìm cấu hình')}
-            <input name="search" />
+            <input
+              name="search"
+              onChange={(e) => {
+                // Emptying the box shows every configuration again without pressing Search.
+                if (!e.target.value && filters.search) {
+                  setFilters((f) => ({ ...f, search: '' }));
+                  setPage(1);
+                }
+              }}
+            />
           </label>
           <label className="field">
             {t('Nhóm cấu hình')}
-            <select name="category" defaultValue="">
+            <select
+              name="category"
+              defaultValue=""
+              onChange={(e) => {
+                // Picking a group filters right away, together with the words in the search box.
+                const search = String(
+                  new FormData(e.currentTarget.form!).get('search') || '',
+                ).trim();
+                setFilters({ search, category: e.target.value });
+                setPage(1);
+                setSelected('');
+              }}
+            >
               <option value="">{t('Tất cả nhóm')}</option>
               {configCategoryValues.map((value) => (
                 <option key={value} value={value}>
@@ -453,7 +522,14 @@ function Configurations({ actor }: { actor: Person }) {
             {!query.data?.items.length && <p className="empty">{t('Chưa có cấu hình phù hợp.')}</p>}
           </div>
           {query.data && <Pager data={query.data} busy={query.isFetching} change={setPage} />}
-          {selected && <ConfigDetail actor={actor} id={selected} close={() => setSelected('')} />}
+          {selected && (
+            <ConfigDetail
+              actor={actor}
+              id={selected}
+              seed={query.data?.items.find((item) => item.id === selected)}
+              close={() => setSelected('')}
+            />
+          )}
         </State>
       </section>
     </>

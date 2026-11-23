@@ -13,6 +13,7 @@ import {
   retryBlockedLabels,
   auditActions,
   auditActionLabels,
+  auditTargets,
   guidanceEngines,
   type MonitoringKind,
   type MonitoringFilters,
@@ -21,8 +22,11 @@ import {
 import type { Person } from '../../models/domain';
 import { SearchPicker } from '../../components/SearchPicker';
 import { notificationTypes } from '../../services/api/notifications';
+import { failureReasonText } from '../../services/api/inbox';
 import { searchAccounts } from '../../services/api/pickers';
+import { accountsApi } from '../../services/api/accounts';
 import { FilterPanel } from '../../components/FilterPanel';
+import { collectPages, containsText, pageOf } from '../../services/api/textSearch';
 
 const titles = labelMap({
   metrics: msg('Hiệu năng AI'),
@@ -32,11 +36,10 @@ const titles = labelMap({
 });
 const labels: Record<string, string> = labelMap({
   sessionId: msg('Mã phiên điều hướng'),
-  userId: msg('Mã người dùng'),
+  userId: msg('Người dùng'),
   frameId: msg('Mã khung hình'),
   decision: msg('Quyết định'),
   engineUsed: msg('Bộ xử lý'),
-  isOfflineFallback: msg('Điện thoại tự quyết định (máy chủ ghi nhận)'),
   latencyMs: msg('Thời gian xử lý'),
   id: msg('Mã bản ghi'),
   modelName: msg('Mô hình'),
@@ -68,10 +71,15 @@ const labels: Record<string, string> = labelMap({
   channel: msg('Kênh gửi'),
   status: msg('Trạng thái'),
   failureReason: msg('Lý do thất bại'),
+  retryCount: msg('Số lần đã gửi lại'),
+  lastRetriedAt: msg('Lần gửi lại gần nhất'),
+  sentAt: msg('Gửi thành công lúc'),
+  canRetry: msg('Có thể gửi lại'),
+  retryBlockedReason: msg('Vì sao không gửi lại được'),
   createdAt: msg('Thời gian tạo'),
 });
 const columns = {
-  guidance: ['createdAt', 'engineUsed', 'decision', 'latencyMs', 'isOfflineFallback'],
+  guidance: ['createdAt', 'userId', 'engineUsed', 'decision', 'latencyMs'],
   metrics: [
     'metricDate',
     'modelName',
@@ -97,7 +105,9 @@ const decisions = new Map([
 ]);
 // Record ids and aggregation internals stay out of the details dialog; ids are only used to
 // filter (e.g. "same navigation session"), never shown.
-const hiddenDetail = (key: string) => key === 'id' || key.endsWith('Id') || key === 'aggregatedBy';
+// Fields without a Vietnamese label (codes, internals the server may add later) are not shown.
+const hiddenDetail = (key: string) =>
+  key === 'id' || key.endsWith('Id') || key === 'aggregatedBy' || !labels[key];
 // Server-side table/entity names in plain words; unknown ones fall back to the raw name.
 const entities: Record<string, string> = labelMap({
   user: msg('Tài khoản'),
@@ -114,6 +124,7 @@ const entities: Record<string, string> = labelMap({
   systemconfigurationhistory: msg('Lịch sử cấu hình'),
   globalnotificationrule: msg('Quy tắc thông báo'),
   organizationlicensepool: msg('Kho suất sử dụng của tổ chức'),
+  alertnotification: msg('Thông báo cảnh báo'),
   licensepackage: msg('Gói dịch vụ'),
   licensesubscription: msg('Đăng ký gói'),
   paymenttransaction: msg('Giao dịch thanh toán'),
@@ -129,15 +140,33 @@ const entityText = (raw: string) => {
   const key = raw.toLowerCase().replace(/_/g, '').replace(/logs$/, 'log').replace(/s$/, '');
   return entities[key] ?? entities[key + 's'] ?? raw;
 };
+// AI models BE aggregates metrics for, named by what they do; the model name stays in brackets.
+const models: Record<string, string> = labelMap({
+  FaceNet: msg('Nhận diện gương mặt (FaceNet)'),
+  SpeechRecognition: msg('Nhận lệnh giọng nói'),
+  VietOCR: msg('Đọc chữ (VietOCR)'),
+  YOLOv8n: msg('Phát hiện vật cản (YOLOv8n)'),
+  JEV: msg('Dẫn đường bằng AI (JEV)'),
+  Groq: msg('Dẫn đường bằng AI dự phòng (Groq)'),
+  RuleBased: msg('Dẫn đường theo quy tắc'),
+});
+const sourceTypes: Record<string, string> = labelMap({
+  EmergencyEvent: msg('Cảnh báo khẩn cấp'),
+  LocationBoundary: msg('Vùng an toàn'),
+  System: msg('Hệ thống'),
+});
 function valueText(key: string, value: string | number | boolean | null) {
   if (value === null || value === undefined)
     return key === 'actorId' || key === 'actorName'
       ? t('Hệ thống hoặc chưa ghi nhận')
       : t('Chưa có dữ liệu');
-  if (key === 'isOfflineFallback') return value ? t('Có') : t('Không');
+  if (typeof value === 'boolean') return value ? t('Có') : t('Không');
+  if (key === 'failureReason') return failureReasonText(String(value)) || String(value);
   if (key === 'sourceTable' || key === 'targetTable') return entityText(String(value));
   if (key === 'decision') return tText(decisions.get(String(value)) ?? String(value));
   if (key === 'engineUsed') return engineLabels[String(value)] ?? String(value);
+  if (key === 'modelName') return models[String(value)] ?? String(value);
+  if (key === 'sourceType') return sourceTypes[String(value)] ?? String(value);
   // yyyy-MM-dd → dd/MM/yyyy, like every other date on the web.
   if (key === 'metricDate') return String(value).split('-').reverse().join('/');
   if (key.endsWith('At')) return formatTime(String(value));
@@ -152,12 +181,6 @@ function valueText(key: string, value: string | number | boolean | null) {
   return String(value);
 }
 // Audit actions are a fixed list: match the typed text against the translated labels and codes.
-const searchActions = async (term: string) => {
-  const q = term.trim().toLowerCase();
-  return auditActions
-    .filter((a) => auditActionLabels[a].toLowerCase().includes(q) || a.toLowerCase().includes(q))
-    .map((a) => ({ value: a, label: auditActionLabels[a] }));
-};
 export function ApiMonitoring({ kind }: { kind: MonitoringKind }) {
   const { data: actor } = useSession();
   if (actor?.role !== 'Admin')
@@ -226,17 +249,79 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<MonitoringRecord | null>(null);
   const [retryNotice, setRetryNotice] = useState('');
-  // Person filters are picked by name/email; session/record ids only come from a record's details.
+  // Person filters take typed words (name/email contains) or one picked person; session and
+  // record ids only come from a record's details.
   const [person, setPerson] = useState('');
-  const [action, setAction] = useState('');
+  const [personText, setPersonText] = useState('');
+  const [applied, setApplied] = useState('');
   const scope = (next: MonitoringFilters) => {
     setFilters(next);
     setPage(1);
     setSelected(null);
   };
+  // Guidance records carry only the user id: show the person's name instead.
+  const people = useQuery({
+    queryKey: ['monitoring-people', actor.id],
+    queryFn: async ({ signal }) => {
+      const accounts = await collectPages((p) =>
+        accountsApi.list(
+          actor,
+          {
+            page: p,
+            search: '',
+            role: 'VisuallyImpaired',
+            active: '',
+            deleted: '',
+            organizationId: '',
+          },
+          signal,
+        ),
+      );
+      return new Map(accounts.map((account) => [account.id, account.fullName]));
+    },
+    enabled: kind === 'guidance',
+    staleTime: 5 * 60000,
+    retry: false,
+  });
+  const personName = (id: unknown) =>
+    people.data?.get(String(id)) ??
+    (people.isPending ? t('Đang tải…') : t('Người dùng không còn trong hệ thống'));
   const query = useQuery({
-    queryKey: ['api-monitoring', actor.id, kind, filters, page],
-    queryFn: ({ signal }) => monitoringApi.list(actor, kind, page, filters, signal),
+    queryKey: ['api-monitoring', actor.id, kind, filters, page, applied],
+    queryFn: async ({ signal }) => {
+      const text = applied.trim();
+      if (!text) return monitoringApi.list(actor, kind, page, filters, signal);
+      if (kind === 'audit') {
+        // The API filters by one actor id; typed words are matched against every record.
+        const rows = await collectPages((p) =>
+          monitoringApi.list(actor, kind, p, filters, signal, 100),
+        );
+        return pageOf(
+          rows.filter((row) =>
+            containsText(
+              text,
+              row.actorName ? String(row.actorName) : t('Hệ thống hoặc chưa ghi nhận'),
+              row.actorEmail ? String(row.actorEmail) : '',
+            ),
+          ),
+          page,
+          10,
+        );
+      }
+      // Guidance records carry only the user id: find the matching people, then their records.
+      const people = new Set(
+        (await searchAccounts(actor, 'VisuallyImpaired')(text, signal)).map((o) => o.value),
+      );
+      if (!people.size) return pageOf<MonitoringRecord>([], 1, 10);
+      const rows = await collectPages((p) =>
+        monitoringApi.list(actor, kind, p, filters, signal, 100),
+      );
+      return pageOf(
+        rows.filter((row) => people.has(String(row.userId))),
+        page,
+        10,
+      );
+    },
     retry: false,
     gcTime: 0,
   });
@@ -281,12 +366,13 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                   active={
                     Object.entries(filters).filter(
                       ([key, value]) => value && key !== 'sessionId' && key !== 'targetRecordId',
-                    ).length
+                    ).length + (applied ? 1 : 0)
                   }
                   submitLabel={t('Lọc bản ghi')}
                   onReset={() => {
                     setPerson('');
-                    setAction('');
+                    setPersonText('');
+                    setApplied('');
                     scope({});
                   }}
                   tools={
@@ -302,6 +388,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                   }
                   onApply={(form) => {
                     const data = new FormData(form);
+                    setApplied(person ? '' : personText.trim());
                     scope({
                       ...Object.fromEntries(
                         Array.from(data.entries()).map(([key, value]) => [
@@ -311,7 +398,6 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                       ),
                       ...(kind === 'audit' && {
                         actorId: person,
-                        actionType: action,
                         targetRecordId: filters.targetRecordId,
                       }),
                       ...(kind === 'guidance' && { userId: person, sessionId: filters.sessionId }),
@@ -325,10 +411,13 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                         label={t('Người dùng')}
                         value={person}
                         onChange={setPerson}
+                        freeText
+                        text={personText}
+                        onText={setPersonText}
                         search={searchAccounts(actor, 'VisuallyImpaired')}
                         queryKey={['guidance-user', actor.id]}
                       />
-                      <label className="field">
+                      <label className="field wide">
                         {t('Bộ xử lý')}
                         <select name="engineUsed">
                           <option value="">{t('Mọi bộ xử lý')}</option>
@@ -339,42 +428,59 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                           ))}
                         </select>
                       </label>
-                      <label className="field">
-                        {t('Nơi quyết định')}
-                        <select name="isOfflineFallback">
-                          <option value="">{t('Tất cả bản ghi')}</option>
-                          <option value="true">{t('Điện thoại tự quyết định')}</option>
-                          <option value="false">{t('Máy chủ quyết định')}</option>
-                        </select>
-                      </label>
                     </>
                   )}
                   {kind === 'metrics' && (
                     <label className="field wide">
                       {t('Tên mô hình')}
-                      <input name="modelName" placeholder={t('Tên chính xác từ máy chủ')} />
+                      <select name="modelName" defaultValue={filters.modelName ?? ''}>
+                        <option value="">{t('Mọi mô hình')}</option>
+                        {Object.entries(models).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                   )}
                   {kind === 'audit' && (
                     <>
                       <SearchPicker
                         label={t('Người thực hiện')}
+                        placeholder={t('Gõ tên, email hoặc "Hệ thống"')}
                         value={person}
                         onChange={setPerson}
+                        freeText
+                        text={personText}
+                        onText={setPersonText}
                         search={searchAccounts(actor)}
                         queryKey={['audit-actor', actor.id]}
                       />
-                      <SearchPicker
-                        label={t('Hành động')}
-                        placeholder={t('Gõ tên hành động')}
-                        value={action}
-                        onChange={setAction}
-                        search={searchActions}
-                        queryKey={['audit-action', actor.id]}
-                      />
+                      <label className="field">
+                        {t('Hành động')}
+                        <select name="actionType" defaultValue={filters.actionType ?? ''}>
+                          <option value="">{t('Mọi hành động')}</option>
+                          {[...auditActions]
+                            .sort((a, b) =>
+                              auditActionLabels[a].localeCompare(auditActionLabels[b]),
+                            )
+                            .map((value) => (
+                              <option key={value} value={value}>
+                                {auditActionLabels[value]}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
                       <label className="field wide">
-                        {t('Bảng đối tượng')}
-                        <input name="targetTable" maxLength={100} />
+                        {t('Loại đối tượng')}
+                        <select name="targetTable" defaultValue={filters.targetTable ?? ''}>
+                          <option value="">{t('Mọi loại đối tượng')}</option>
+                          {auditTargets.map((value) => (
+                            <option key={value} value={value}>
+                              {entityText(value)}
+                            </option>
+                          ))}
+                        </select>
                       </label>
                     </>
                   )}
@@ -408,8 +514,10 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                     <span>
                       {filters.sessionId
                         ? t('Đang xem các bản ghi của một phiên điều hướng.')
-                        : t('Đang xem các thao tác trên một bản ghi của bảng {table}.', {
-                            table: filters.targetTable || t('đã chọn'),
+                        : t('Đang xem các thao tác trên một {table} cụ thể.', {
+                            table: filters.targetTable
+                              ? entityText(filters.targetTable).toLocaleLowerCase('vi')
+                              : t('đối tượng'),
                           })}
                     </span>
                     <button
@@ -421,14 +529,12 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                     </button>
                   </div>
                 )}
-                {kind === 'metrics' ? (
+                {kind === 'metrics' && (
                   <p>
                     {t(
                       'Số liệu của ngày hôm trước được tổng hợp lúc 07:00 sáng. Số thành công phụ thuộc quy tắc tổng hợp của từng nguồn.',
                     )}
                   </p>
-                ) : (
-                  <p>{t('Bộ lọc gồm cả ngày kết thúc. Để trống ngày để xem dữ liệu còn lưu.')}</p>
                 )}
                 {kind === 'audit' && (
                   <p>
@@ -439,11 +545,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                 )}
                 {kind === 'guidance' && (
                   <div className="stack">
-                    <p>
-                      {t(
-                        'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Thời gian phản hồi là thời gian máy chủ xử lý, chưa gồm thời gian truyền từ điện thoại.',
-                      )}
-                    </p>
+                    <p>{t('Không hiển thị hình ảnh hay lời nói của người khiếm thị.')}</p>
                     <div className="row">
                       <Link className="btn" to="/admin/metrics">
                         {t('Xem số liệu AI')}
@@ -454,12 +556,7 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                     </div>
                     <p>
                       {t(
-                        'Bật, tắt hoặc đổi bộ xử lý dẫn đường ở trang Cấu hình hệ thống (nhóm Dẫn đường).',
-                      )}
-                    </p>
-                    <p>
-                      {t(
-                        '“Điện thoại tự quyết định” là khi điện thoại tự đưa ra hướng dẫn vì mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.',
+                        '“Máy chủ (theo quy tắc)” và “Điện thoại tự quyết định” là khi AI đang tắt, trả lời chậm hoặc điện thoại mất mạng.',
                       )}
                     </p>
                   </div>
@@ -498,11 +595,13 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
                               <tr key={row.id}>
                                 {columns[kind].map((key) => (
                                   <td key={key}>
-                                    {valueText(
-                                      key,
-                                      // Older BE deploys have no actorName; never show the raw actor ID.
-                                      key === 'actorName' ? (row.actorName ?? null) : row[key],
-                                    )}
+                                    {key === 'userId'
+                                      ? personName(row.userId)
+                                      : valueText(
+                                          key,
+                                          // Older BE deploys have no actorName; never show the raw actor ID.
+                                          key === 'actorName' ? (row.actorName ?? null) : row[key],
+                                        )}
                                   </td>
                                 ))}
                                 <td>
@@ -576,12 +675,23 @@ function Monitoring({ actor, kind }: { actor: Person; kind: MonitoringKind }) {
       {selected && (
         <Dialog title={t('Chi tiết bản ghi')} onClose={() => setSelected(null)}>
           <dl className="record-details">
+            {kind === 'guidance' && (
+              <div>
+                <dt>{labels.userId}</dt>
+                <dd>{personName(selected.userId)}</dd>
+              </div>
+            )}
             {Object.entries(selected)
               .filter(([key]) => !hiddenDetail(key))
               .map(([key, value]) => (
                 <div key={key}>
                   <dt>{labels[key] ?? key}</dt>
-                  <dd style={{ whiteSpace: 'pre-wrap' }}>{valueText(key, value)}</dd>
+                  <dd style={{ whiteSpace: 'pre-wrap' }}>
+                    {key === 'retryBlockedReason'
+                      ? retryBlockedLabels[String(selected.retryBlockedCode)] ||
+                        t('Máy chủ không cho gửi lại thông báo này.')
+                      : valueText(key, value)}
+                  </dd>
                 </div>
               ))}
           </dl>

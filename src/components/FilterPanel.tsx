@@ -14,6 +14,7 @@ export function FilterPanel({
   submitLabel = t('Tìm kiếm'),
   tools,
   extra,
+  compact,
   children,
 }: {
   active: number;
@@ -24,6 +25,8 @@ export function FilterPanel({
   tools?: ReactNode;
   /** Buttons on the right, e.g. create. */
   extra?: ReactNode;
+  /** A narrow panel for one or two fields. */
+  compact?: boolean;
   children: ReactNode;
 }) {
   const id = useId();
@@ -32,6 +35,16 @@ export function FilterPanel({
   const toggle = useRef<HTMLButtonElement>(null);
   const form = useRef<HTMLFormElement>(null);
   const still = useReducedMotion();
+  // Emptying a text box shows everything again without pressing the button. The apply runs after
+  // React has re-rendered, so pages that keep typed words in state see the emptied value.
+  const latestApply = useRef(onApply);
+  const [clearedAt, setClearedAt] = useState(0);
+  useEffect(() => {
+    latestApply.current = onApply;
+  });
+  useEffect(() => {
+    if (clearedAt && form.current) latestApply.current(form.current);
+  }, [clearedAt]);
   useEffect(() => {
     if (!open) return;
     const outside = (e: PointerEvent) => {
@@ -77,7 +90,7 @@ export function FilterPanel({
           <motion.form
             id={id}
             ref={form}
-            className="filter-popover"
+            className={'filter-popover' + (compact ? ' compact' : '')}
             aria-label={t('Bộ lọc')}
             inert={!open}
             initial={false}
@@ -91,6 +104,13 @@ export function FilterPanel({
               e.preventDefault();
               onApply(e.currentTarget);
               setOpen(false);
+            }}
+            onInput={(e) => {
+              const input = e.target as HTMLInputElement;
+              const typed =
+                input.tagName === 'INPUT' &&
+                ['text', 'search', 'email', ''].includes(input.getAttribute('type') ?? '');
+              if (typed && input.value === '') setClearedAt(Date.now());
             }}
           >
             <h3>{t('Bộ lọc')}</h3>

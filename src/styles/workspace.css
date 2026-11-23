@@ -1127,6 +1127,13 @@ tbody tr:hover {
 .dialog-body {
   padding: 24px;
 }
+/* A detail popup opens close to its final height while it loads, instead of starting as a
+   thin "Đang tải" strip and jumping when the content arrives. */
+.dialog-body > .empty[role='status']:only-child {
+  display: grid;
+  place-items: center;
+  min-height: min(480px, 60vh);
+}
 .call-workspace {
   position: fixed;
   inset: 100px 32px auto 264px;

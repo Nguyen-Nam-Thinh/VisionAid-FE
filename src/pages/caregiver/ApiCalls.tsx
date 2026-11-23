@@ -18,6 +18,7 @@ import { searchAccounts, searchCareRecipients } from '../../services/api/pickers
 import { FilterPanel } from '../../components/FilterPanel';
 import { caregivingApi } from '../../services/api/caregiving';
 import { accountsApi } from '../../services/api/accounts';
+import { collectPages, pageOf } from '../../services/api/textSearch';
 /** 125 → "2 phút 5 giây". */
 const callLength = (seconds: number) =>
   seconds < 60
@@ -35,10 +36,26 @@ function History({ actor }: { actor: Person }) {
   const [filters, setFilters] = useState<CallFilters>({ viuUserId: '', dateFrom: '', dateTo: '' });
   const [selected, setSelected] = useState<CallHistoryItem | null>(null);
   const [viu, setViu] = useState('');
+  const [draftText, setDraftText] = useState('');
+  const [viuText, setViuText] = useState('');
   const center = actor.role === 'CenterAdmin';
+  const viuSearch = center ? searchAccounts(actor, 'VisuallyImpaired') : searchCareRecipients();
   const result = useQuery({
-    queryKey: ['api-calls', actor.id, actor.orgId, page, filters],
-    queryFn: ({ signal }) => callsApi.history(actor, page, filters, signal),
+    queryKey: ['api-calls', actor.id, actor.orgId, page, filters, viuText],
+    queryFn: async ({ signal }) => {
+      if (!viuText) return callsApi.history(actor, page, filters, signal);
+      // Calls only carry the person's id: find everyone whose name/email contains the words.
+      const ids = (await viuSearch(viuText, signal)).map((option) => option.value);
+      if (!ids.length) return pageOf<CallHistoryItem>([], 1);
+      if (ids.length === 1)
+        return callsApi.history(actor, page, { ...filters, viuUserId: ids[0] }, signal);
+      const wanted = new Set(ids);
+      const rows = await collectPages((p) => callsApi.history(actor, p, filters, signal, 100));
+      return pageOf(
+        rows.filter((call) => !!call.viuUserId && wanted.has(call.viuUserId)),
+        page,
+      );
+    },
     retry: false,
   });
   // Calls only carry the VIU id; show a name when the person is in the first page of the scope.
@@ -79,10 +96,13 @@ function History({ actor }: { actor: Person }) {
       />
       <section className="glass card stack">
         <FilterPanel
-          active={[filters.viuUserId, filters.dateFrom, filters.dateTo].filter(Boolean).length}
+          active={
+            [filters.viuUserId || viuText, filters.dateFrom, filters.dateTo].filter(Boolean).length
+          }
           submitLabel={t('Lọc lịch sử')}
           onApply={(form) => {
             const data = new FormData(form);
+            setViuText(viu ? '' : draftText.trim());
             setFilters({
               viuUserId: viu,
               dateFrom: String(data.get('dateFrom') || ''),
@@ -93,6 +113,8 @@ function History({ actor }: { actor: Person }) {
           }}
           onReset={() => {
             setViu('');
+            setDraftText('');
+            setViuText('');
             setFilters({ viuUserId: '', dateFrom: '', dateTo: '' });
             setPage(1);
             setSelected(null);
@@ -118,7 +140,10 @@ function History({ actor }: { actor: Person }) {
             placeholder={t('Gõ tên hoặc email')}
             value={viu}
             onChange={setViu}
-            search={center ? searchAccounts(actor, 'VisuallyImpaired') : searchCareRecipients()}
+            freeText
+            text={draftText}
+            onText={setDraftText}
+            search={viuSearch}
             queryKey={['call-viu', actor.id, actor.orgId]}
           />
           <div className="filter-range wide">

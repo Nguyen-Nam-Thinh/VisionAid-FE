@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { cleanToken, createInvitationsApi } from './invitations';
+import { cleanToken, createInvitationsApi, inviteResumeTarget, inviteToken } from './invitations';
 import type { Person } from '../../models/domain';
 
 const id = '01900000-0000-7000-8000-000000000001';
@@ -63,4 +63,22 @@ it('rejects malformed tokens and reads invitation history', async () => {
   const api = createInvitationsApi(get, vi.fn());
   expect((await api.history(caregiver, viuId))[0].acceptedByName).toBe('C');
   expect(get).toHaveBeenCalledWith('/api/caregiver-links/invitations?viuId=' + viuId, undefined);
+});
+
+it('reads the code from a scanned or pasted invitation link', () => {
+  const link = 'https://app.example.test/caregiver/caregivers?invite=ABCDEFGH1234';
+  expect(inviteToken(link)).toBe('ABCDEFGH1234');
+  expect(inviteToken('  ABCDEFGH1234 ')).toBe('ABCDEFGH1234');
+  expect(cleanToken(link)).toBe('ABCDEFGH1234');
+});
+
+it('returns to an invitation link after sign-in but never to another page or site', () => {
+  expect(inviteResumeTarget('/caregiver/caregivers?invite=ABCDEFGH1234')).toBe(
+    '/caregiver/caregivers?invite=ABCDEFGH1234',
+  );
+  expect(inviteResumeTarget('/admin/accounts?invite=ABCDEFGH1234')).toBeNull();
+  expect(
+    inviteResumeTarget('https://evil.test/caregiver/caregivers?invite=ABCDEFGH1234'),
+  ).toBeNull();
+  expect(inviteResumeTarget('/caregiver/caregivers?invite=short')).toBeNull();
 });

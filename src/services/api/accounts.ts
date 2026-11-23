@@ -1,4 +1,7 @@
 import { t } from '../../i18n';
+import { fieldError, issuesError } from './validation';
+import { normalizePhone } from './phone';
+import { searchWithoutAccents } from './textSearch';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -48,7 +51,7 @@ const profileSchema = z.object({
   fullName: z.string().trim().min(2).max(200),
   phoneNumber: z
     .string()
-    .trim()
+    .transform(normalizePhone)
     .refine((v) => !v || /^0[35789][0-9]{8}$/.test(v)),
   avatarUrl: z.string().trim().max(500),
 });
@@ -88,13 +91,16 @@ function authorize(actor: Scope, target?: Account) {
     throw new ServiceError(t('Không có quyền quản lý tài khoản này.'), 403);
 }
 const validId = (id: string) => parse(z.string().uuid(), id, t('Mã không hợp lệ.'), 400);
-const profile = (values: unknown) =>
-  parse(
-    profileSchema,
-    values,
-    t('Kiểm tra họ tên từ 2 đến 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.'),
-    400,
-  );
+const profile = (values: unknown) => {
+  const result = profileSchema.safeParse(values);
+  if (!result.success)
+    throw issuesError(result.error.issues, {
+      fullName: t('Họ và tên cần từ 2 đến 200 ký tự.'),
+      phoneNumber: t('Nhập số di động Việt Nam 10 số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.'),
+      avatarUrl: t('Đường dẫn ảnh tối đa 500 ký tự.'),
+    });
+  return result.data;
+};
 export function createAccountsApi(get = apiGet, write = apiWrite) {
   const json = (method: string, body: unknown): RequestInit => ({
     method,
@@ -123,18 +129,27 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
     detail,
     async list(actor: Scope, filters: AccountFilters, signal?: AbortSignal) {
       authorize(actor);
-      const query = new URLSearchParams({
-        page: String(filters.page),
-        pageSize: '10',
-        search: filters.search,
-      });
-      if (filters.role)
-        query.set('role', parse(roleSchema, filters.role, t('Vai trò không hợp lệ.'), 400));
-      if (filters.active) query.set('isActive', filters.active);
-      if (filters.deleted) query.set('isDeleted', filters.deleted);
+      const role = filters.role
+        ? parse(roleSchema, filters.role, t('Vai trò không hợp lệ.'), 400)
+        : '';
       const orgId = actor.role === 'CenterAdmin' ? actor.orgId : filters.organizationId;
-      if (orgId) query.set('organizationId', validId(orgId));
-      const result = parse(pageSchema, await get('/api/users?' + query, signal));
+      const result = await searchWithoutAccents(
+        filters.search,
+        filters.page,
+        async (term, page, bulk) => {
+          const query = new URLSearchParams({
+            page: String(page),
+            pageSize: bulk ? '100' : '10',
+            search: term,
+          });
+          if (role) query.set('role', role);
+          if (filters.active) query.set('isActive', filters.active);
+          if (filters.deleted) query.set('isDeleted', filters.deleted);
+          if (orgId) query.set('organizationId', validId(orgId));
+          return parse(pageSchema, await get('/api/users?' + query, signal));
+        },
+        (account) => [account.fullName, account.email, account.phoneNumber],
+      );
       result.items.forEach((target) => {
         authorize(actor, target);
         if (filters.role && target.role !== filters.role)
@@ -171,28 +186,29 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
     async create(actor: Scope, values: AccountInput) {
       authorize(actor);
       const basic = profile(values);
-      const role = parse(roleSchema, values.role, t('Vai trò không hợp lệ.'), 400);
+      const roleResult = roleSchema.safeParse(values.role);
+      if (!roleResult.success) throw fieldError('role', t('Hãy chọn vai trò tài khoản.'));
+      const role = roleResult.data;
       if (actor.role === 'CenterAdmin' && !['Caregiver', 'VisuallyImpaired'].includes(role))
         throw new ServiceError(t('Trung tâm chỉ tạo người chăm sóc hoặc người khiếm thị.'), 403);
       const organizationId =
         actor.role === 'CenterAdmin' ? actor.orgId : values.organizationId.trim();
       if (role !== 'Admin' && !organizationId)
-        throw new ServiceError(
-          t('Cần chọn tổ chức cho tài khoản không phải quản trị viên hệ thống.'),
-          400,
+        throw fieldError(
+          'organizationId',
+          t('Hãy chọn tổ chức; chỉ quản trị viên hệ thống mới không thuộc tổ chức.'),
         );
-      const email = parse(
-        z.string().trim().email().max(255),
-        values.email,
-        t('Email không hợp lệ.'),
-        400,
-      );
-      const password = parse(
-        passwordSchema,
-        values.password,
-        t('Mật khẩu cần ít nhất 8 ký tự, chữ hoa/thường, số và ký tự đặc biệt.'),
-        400,
-      );
+      const emailResult = z.string().trim().email().max(255).safeParse(values.email);
+      if (!emailResult.success)
+        throw fieldError('email', t('Email chưa đúng, ví dụ ten@gmail.com.'));
+      const email = emailResult.data;
+      const passwordResult = passwordSchema.safeParse(values.password);
+      if (!passwordResult.success)
+        throw fieldError(
+          'password',
+          t('Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.'),
+        );
+      const password = passwordResult.data;
       if (organizationId) {
         validId(organizationId);
         const org = parse(

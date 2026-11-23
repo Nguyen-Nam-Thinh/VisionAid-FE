@@ -1,6 +1,6 @@
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useIsFetching, useQuery, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 import * as AnimatedTabs from '@animate-ui/react/primitives/radix-ui/tabs';
 import { FilterPanel } from '../../components/FilterPanel';
@@ -88,6 +88,14 @@ export function ActivityTimeline({
   const [range, setRange] = useState<HistoryRange>({ dateFrom: '', dateTo: '' });
   const [types, setTypes] = useState<string[]>([]);
   const [error, setError] = useState('');
+  const cache = useQueryClient();
+  const keys = [
+    ['api-activity-timeline', actor.id, actor.orgId, viuId],
+    ['api-activity-guidance', actor.id, actor.orgId, viuId],
+  ];
+  const fetching = useIsFetching({
+    predicate: (q) => keys.some((key) => key.every((part, i) => q.queryKey[i] === part)),
+  });
   return (
     <section className="glass card stack" aria-labelledby="timeline-title">
       <h2 id="timeline-title">{t('Truy vết hoạt động của {name}', { name })}</h2>
@@ -112,6 +120,20 @@ export function ActivityTimeline({
           setTypes([]);
           setError('');
         }}
+        tools={
+          // Reload sits beside the filter, like every other list; it refreshes both views.
+          <button
+            type="button"
+            className="btn"
+            disabled={fetching > 0}
+            onClick={() =>
+              void Promise.all(keys.map((queryKey) => cache.invalidateQueries({ queryKey })))
+            }
+          >
+            <RefreshCw size={16} aria-hidden="true" />
+            {t('Tải lại')}
+          </button>
+        }
       >
         <label className="field">
           {t('Loại hoạt động')}
@@ -188,12 +210,6 @@ function Timeline({
   const data = query.data;
   return (
     <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
-      <div className="row">
-        <button className="btn small" disabled={query.isFetching} onClick={() => query.refetch()}>
-          <RefreshCw size={16} aria-hidden="true" />
-          {t('Tải lại')}
-        </button>
-      </div>
       {data && (
         <div className="table-scroll" role="region" aria-label={t('Dòng thời gian')} tabIndex={0}>
           <table style={{ minWidth: 820 }}>
