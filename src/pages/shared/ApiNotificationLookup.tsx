@@ -7,7 +7,7 @@ import { Badge, PageHead, State } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
 import { SearchPicker } from '../../components/SearchPicker';
 import { searchAccounts } from '../../services/api/pickers';
-import { roles } from '../../constants/labels';
+import { roles, viuWord } from '../../constants/labels';
 import {
   deliveryChannelLabels,
   deliveryStatusLabels,
@@ -19,6 +19,9 @@ import {
   failureReasonText,
 } from '../../services/api/inbox';
 import type { Person } from '../../models/domain';
+import { collectPages, containsText, pageOf } from '../../services/api/textSearch';
+
+type Filters = LookupFilters & { recipientText?: string; viuText?: string };
 
 /** Super Admin / Center Admin: who was told what about which person, on which channel. */
 export function ApiNotificationLookup() {
@@ -29,12 +32,29 @@ export function ApiNotificationLookup() {
 }
 
 function Lookup({ actor }: { actor: Person }) {
-  const [filters, setFilters] = useState<LookupFilters>({ page: 1 });
+  const [filters, setFilters] = useState<Filters>({ page: 1 });
   const [recipient, setRecipient] = useState('');
   const [viu, setViu] = useState('');
+  const [recipientText, setRecipientText] = useState('');
+  const [viuText, setViuText] = useState('');
   const query = useQuery({
     queryKey: ['api-notification-lookup', actor.id, actor.orgId, filters],
-    queryFn: ({ signal }) => inboxApi.lookup(actor, filters, signal),
+    queryFn: async ({ signal }) => {
+      const { recipientText: who = '', viuText: about = '', ...server } = filters;
+      if (!who && !about) return inboxApi.lookup(actor, server, signal);
+      // The API filters by one person id; typed words are matched against every notification.
+      const rows = await collectPages((page) =>
+        inboxApi.lookup(actor, { ...server, page, pageSize: 100 }, signal),
+      );
+      return pageOf(
+        rows.filter(
+          (row) =>
+            containsText(who, row.recipientName) &&
+            containsText(about, row.visuallyImpairedUserName),
+        ),
+        filters.page ?? 1,
+      );
+    },
     placeholderData: keepPreviousData,
     retry: false,
   });
@@ -58,6 +78,8 @@ function Lookup({ actor }: { actor: Person }) {
           onReset={() => {
             setRecipient('');
             setViu('');
+            setRecipientText('');
+            setViuText('');
             setFilters({ page: 1 });
           }}
           tools={
@@ -78,6 +100,8 @@ function Lookup({ actor }: { actor: Person }) {
               page: 1,
               recipientId: recipient,
               viuId: viu,
+              recipientText: recipient ? '' : recipientText.trim(),
+              viuText: viu ? '' : viuText.trim(),
               type: text('type'),
               channel: text('channel'),
               status: text('status'),
@@ -90,13 +114,19 @@ function Lookup({ actor }: { actor: Person }) {
             label={t('Người nhận')}
             value={recipient}
             onChange={setRecipient}
+            freeText
+            text={recipientText}
+            onText={setRecipientText}
             search={searchAccounts(actor)}
             queryKey={['lookup-recipient', actor.id, actor.orgId]}
           />
           <SearchPicker
-            label={t('Người được chăm sóc')}
+            label={viuWord(actor.role)}
             value={viu}
             onChange={setViu}
+            freeText
+            text={viuText}
+            onText={setViuText}
             search={searchAccounts(actor, 'VisuallyImpaired')}
             queryKey={['lookup-viu', actor.id, actor.orgId]}
           />
@@ -158,7 +188,7 @@ function Lookup({ actor }: { actor: Person }) {
                     <th scope="col">{t('Thời gian')}</th>
                     <th scope="col">{t('Loại thông báo')}</th>
                     <th scope="col">{t('Người nhận')}</th>
-                    <th scope="col">{t('Người được chăm sóc')}</th>
+                    <th scope="col">{viuWord(actor.role)}</th>
                     <th scope="col">{t('Kênh và trạng thái')}</th>
                   </tr>
                 </thead>

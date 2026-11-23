@@ -105,6 +105,7 @@ export function notificationCopy(item: {
 export const deliveryStatusLabels: Record<string, string> = labelMap({
   Pending: msg('Đang chờ gửi'),
   Sent: msg('Đã gửi'),
+  Delivered: msg('Đã đến thiết bị'),
   Failed: msg('Gửi thất bại'),
 });
 const uuid = z.string().uuid();
@@ -165,6 +166,8 @@ export type InboxFilters = {
   to?: string;
   unreadOnly?: boolean;
   page?: number;
+  /** Rows per request (text filters read 100 at a time). */
+  pageSize?: number;
 };
 export type LookupFilters = {
   recipientId?: string;
@@ -175,6 +178,7 @@ export type LookupFilters = {
   from?: string;
   to?: string;
   page?: number;
+  pageSize?: number;
 };
 /** BE failure_reason (NotificationFailureReasons, Firebase/SMTP errors) in plain words. */
 export function failureReasonText(reason: string | null | undefined) {
@@ -223,7 +227,10 @@ function id(value: string | undefined, query: URLSearchParams, key: string) {
 export function createInboxApi(get = apiGet, write = apiWrite) {
   return {
     async list(filters: InboxFilters, signal?: AbortSignal) {
-      const query = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '20' });
+      const query = new URLSearchParams({
+        page: String(filters.page ?? 1),
+        pageSize: String(filters.pageSize ?? 20),
+      });
       id(filters.viuId, query, 'viuId');
       if (filters.type) query.set('type', filters.type);
       if (filters.unreadOnly) query.set('unreadOnly', 'true');
@@ -261,7 +268,10 @@ export function createInboxApi(get = apiGet, write = apiWrite) {
     ) {
       if (actor.role !== 'Admin' && (actor.role !== 'CenterAdmin' || !actor.orgId))
         throw new ServiceError(t('Chỉ quản trị viên được tra cứu thông báo.'), 403);
-      const query = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '20' });
+      const query = new URLSearchParams({
+        page: String(filters.page ?? 1),
+        pageSize: String(filters.pageSize ?? 20),
+      });
       id(filters.recipientId, query, 'recipientId');
       id(filters.viuId, query, 'viuId');
       for (const key of ['type', 'channel', 'status'] as const)

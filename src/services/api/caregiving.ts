@@ -1,4 +1,7 @@
 import { t } from '../../i18n';
+import { issuesError } from './validation';
+import { normalizePhone } from './phone';
+import { searchWithoutAccents } from './textSearch';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -74,17 +77,19 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
             .regex(/[^a-zA-Z0-9]/),
           phoneNumber: z
             .string()
-            .trim()
+            .transform(normalizePhone)
             .refine((v) => !v || /^0[35789][0-9]{8}$/.test(v)),
         })
         .safeParse(values);
       if (!input.success)
-        throw new ServiceError(
-          t(
-            'Kiểm tra họ tên, email, số điện thoại và mật khẩu. Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.',
+        throw issuesError(input.error.issues, {
+          fullName: t('Họ và tên cần từ 2 đến 200 ký tự.'),
+          email: t('Email chưa đúng, ví dụ ten@gmail.com.'),
+          password: t(
+            'Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.',
           ),
-          400,
-        );
+          phoneNumber: t('Nhập số di động Việt Nam 10 số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.'),
+        });
       const active = parse(
         paged(linkSchema),
         await get('/api/caregiver-links?page=1&pageSize=1&isActive=true'),
@@ -164,14 +169,21 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
       await write('/api/caregiver-links/' + encodeURIComponent(id), { method: 'DELETE' });
     },
     async users(page: number, search: string, signal?: AbortSignal) {
-      const query = new URLSearchParams({
-        page: String(page),
-        pageSize: '10',
-        role: 'VisuallyImpaired',
-        isDeleted: 'false',
+      return searchWithoutAccents(
         search,
-      });
-      return parse(paged(userSchema), await get('/api/users?' + query, signal));
+        page,
+        async (term, p, bulk) => {
+          const query = new URLSearchParams({
+            page: String(p),
+            pageSize: bulk ? '100' : '10',
+            role: 'VisuallyImpaired',
+            isDeleted: 'false',
+            search: term,
+          });
+          return parse(paged(userSchema), await get('/api/users?' + query, signal));
+        },
+        (person) => [person.fullName, person.email, person.phoneNumber],
+      );
     },
     async links(caregiverId: string, viuId: string, page: number, signal?: AbortSignal) {
       const query = new URLSearchParams({

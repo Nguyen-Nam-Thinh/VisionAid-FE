@@ -121,7 +121,7 @@ it('uses paged server filters and forwards cancellation without using user detai
   expect(url.searchParams.get('role')).toBe('VisuallyImpaired');
   expect(read.mock.calls[0][1]).toBe(signal);
   await api.links(caregiverId, viuId, 1, signal);
-  expect(String(read.mock.calls[1][0])).toContain('viuId=' + viuId);
+  expect(String(read.mock.calls.at(-1)![0])).toContain('viuId=' + viuId);
 });
 it('rejects malformed data and links outside the selected user/account scope', async () => {
   const read = vi.fn<Parameters<typeof createCaregivingApi>[0]>(async () => link as unknown);

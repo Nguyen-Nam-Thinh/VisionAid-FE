@@ -1,4 +1,5 @@
 import { Building2, RefreshCw } from 'lucide-react';
+import { formatPhone } from '../../services/api/phone';
 import { t, msg } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -111,6 +112,11 @@ function Organizations({ user }: { user: Person }) {
     enabled: !admin || !!selected,
     refetchInterval: 30000,
   });
+  const opening = useFirstOrganizationLoads(
+    user,
+    admin ? selected : '',
+    !!list.data?.items.find((item) => item.id === selected)?.deletedAt,
+  );
   const refresh = async () => {
     await cache.invalidateQueries({
       predicate: (q) =>
@@ -199,11 +205,11 @@ function Organizations({ user }: { user: Person }) {
               </select>
             </label>
             <label className="field">
-              {t('Dữ liệu xóa')}
+              {t('Tổ chức đã xóa')}
               <select name="deleted" defaultValue={deleted}>
-                <option value="false">{t('Chưa xóa')}</option>
-                <option value="true">{t('Đã xóa')}</option>
-                <option value="">{t('Tất cả')}</option>
+                <option value="false">{t('Không hiện')}</option>
+                <option value="true">{t('Chỉ hiện tổ chức đã xóa')}</option>
+                <option value="">{t('Hiện cả tổ chức đã xóa')}</option>
               </select>
             </label>
           </FilterPanel>
@@ -261,7 +267,11 @@ function Organizations({ user }: { user: Person }) {
       {(!admin || selected) &&
         (admin ? (
           <Dialog title={t('Chi tiết tổ chức')} onClose={() => setSelected('')}>
-            <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
+            <State
+              loading={detail.isPending || opening}
+              error={detail.error}
+              retry={() => detail.refetch()}
+            >
               {detail.data && (
                 <OrganizationDetails
                   key={detail.data.id}
@@ -270,12 +280,16 @@ function Organizations({ user }: { user: Person }) {
                   refresh={refresh}
                   removed={() => {
                     setSelected('');
-                    setNotice(t('Đã xóa mềm tổ chức.'));
+                    setNotice(
+                      t(
+                        'Đã xóa tổ chức. Muốn xem lại: mở Bộ lọc, ở ô Tổ chức đã xóa chọn "Chỉ hiện tổ chức đã xóa".',
+                      ),
+                    );
                   }}
                 />
               )}
             </State>
-            {detail.data && (
+            {detail.data && !opening && (
               <CaregiverActivityLog
                 key={detail.data.id}
                 actor={user}
@@ -293,7 +307,11 @@ function Organizations({ user }: { user: Person }) {
                 refresh={refresh}
                 removed={() => {
                   setSelected('');
-                  setNotice(t('Đã xóa mềm tổ chức.'));
+                  setNotice(
+                    t(
+                      'Đã xóa tổ chức. Muốn xem lại: mở Bộ lọc, ở ô Tổ chức đã xóa chọn "Chỉ hiện tổ chức đã xóa".',
+                    ),
+                  );
                 }}
               />
             )}
@@ -435,7 +453,7 @@ function OrganizationDetails({
           </div>
           <div>
             <dt>{t('Số điện thoại')}</dt>
-            <dd>{org.phoneNumber || t('Chưa có số điện thoại')}</dd>
+            <dd>{formatPhone(org.phoneNumber) || t('Chưa có số điện thoại')}</dd>
           </div>
         </dl>
         <dl className="record-details">
@@ -498,7 +516,7 @@ function OrganizationDetails({
             (action === 'activate'
               ? t(': khôi phục tổ chức; thành viên vẫn cần được kích hoạt riêng.')
               : t(': thành viên đang hoạt động sẽ bị vô hiệu hóa và đăng xuất khỏi mọi thiết bị.') +
-                (action === 'delete' ? t(' Tổ chức được đánh dấu xóa mềm.') : ''))
+                (action === 'delete' ? t(' Tổ chức sẽ chuyển sang danh sách đã xóa.') : ''))
           }
           onClose={() => setAction(null)}
           onConfirm={async () => {
@@ -531,7 +549,17 @@ function OrganizationDetails({
           >
             <label className="field">
               {t('Tìm thành viên')}
-              <input value={draft} onChange={(e) => setDraft(e.target.value)} />
+              <input
+                value={draft}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  // Emptying the box lists every member again without pressing the button.
+                  if (!e.target.value && search) {
+                    setSearch('');
+                    setPage(1);
+                  }
+                }}
+              />
             </label>
             <label className="field">
               {t('Vai trò')}
@@ -585,7 +613,7 @@ function OrganizationDetails({
                         <tr key={m.id}>
                           <td>{m.fullName}</td>
                           <td>{m.email}</td>
-                          <td>{m.phoneNumber || t('Chưa có')}</td>
+                          <td>{formatPhone(m.phoneNumber) || t('Chưa có')}</td>
                           <td>{roles[m.role]}</td>
                           <td>{m.isActive ? t('Hoạt động') : t('Vô hiệu hóa')}</td>
                         </tr>
@@ -604,6 +632,47 @@ function OrganizationDetails({
       )}
     </section>
   );
+}
+
+/**
+ * Starts the first page of members, the license pool and the caregiver activity together with
+ * the organization detail, under the same query keys the sections use. The dialog then opens
+ * once with everything filled instead of growing three times as each section finishes.
+ */
+function useFirstOrganizationLoads(user: Person, id: string, deleted: boolean) {
+  const enabled = !!id && !deleted;
+  const members = useQuery({
+    queryKey: ['api-organization-members', user.id, user.orgId, id, 1, '', '', ''],
+    queryFn: ({ signal }) => organizationsApi.members(user, id, 1, '', '', '', signal),
+    enabled,
+    retry: false,
+  });
+  const pool = useQuery({
+    queryKey: ['api-admin-pool', user.id, id],
+    queryFn: ({ signal }) => getAdminOrganizationPool(user, id, signal),
+    enabled: enabled && user.role === 'Admin',
+    retry: false,
+  });
+  const activity = useQuery({
+    queryKey: ['api-caregiver-activity', user.id, id, '', '', '', 1, ''],
+    queryFn: ({ signal }) =>
+      organizationsApi.caregiverActivity(
+        user,
+        id,
+        { page: 1, caregiverId: '', dateFrom: '', dateTo: '' },
+        signal,
+      ),
+    enabled,
+    retry: false,
+    gcTime: 0,
+  });
+  // Only the first fetch holds the dialog. Once every section has answered (or failed) for this
+  // organization the dialog stays open: a section that failed, such as a centre without a license
+  // pool, refetches when it mounts and must not send the dialog back to "loading" in a loop.
+  const [ready, setReady] = useState('');
+  const loading = [members, pool, activity].some((q) => q.isLoading);
+  if (id && !loading && ready !== id) setReady(id);
+  return !!id && ready !== id && loading;
 }
 
 // UC-130 / WF-04: Super Admin suspends, reactivates or manually renews the organization's pool.

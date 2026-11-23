@@ -1,4 +1,5 @@
 import { t } from '../i18n';
+import { containsText } from '../services/api/textSearch';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import * as AnimatedDialog from '@animate-ui/react/primitives/radix-ui/dialog';
@@ -325,9 +326,7 @@ export function DataTable<T extends { id: string }>({
 }) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const filtered = rows.filter((r) =>
-    searchText(r).toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi')),
-  );
+  const filtered = rows.filter((r) => containsText(search, searchText(r)));
   const pages = Math.max(1, Math.ceil(filtered.length / 6));
   const current = Math.min(page, pages);
   return (

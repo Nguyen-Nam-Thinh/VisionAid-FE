@@ -1,4 +1,5 @@
 import { t, formatLocaleDateTime } from '../../i18n';
+import { viuWord } from '../../constants/labels';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,6 +22,7 @@ import {
   notificationCopy,
 } from '../../services/api/inbox';
 import type { Person } from '../../models/domain';
+import { collectPages, containsText, pageOf } from '../../services/api/textSearch';
 
 /** Where a notice opens. Only caregivers have the alerts page; other roles read it in the inbox. */
 function inboxTarget(actor: Person, item: InboxItem) {
@@ -173,11 +175,23 @@ function Inbox({ actor }: { actor: Person }) {
   const actions = useInboxActions(actor);
   const [filters, setFilters] = useState<InboxFilters>({ page: 1 });
   const [viu, setViu] = useState('');
+  const [draftText, setDraftText] = useState('');
+  const [viuText, setViuText] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState('');
   const query = useQuery({
-    queryKey: ['api-inbox', actor.id, actor.orgId, filters],
-    queryFn: ({ signal }) => inboxApi.list(filters, signal),
+    queryKey: ['api-inbox', actor.id, actor.orgId, filters, viuText],
+    queryFn: async ({ signal }) => {
+      if (!viuText) return inboxApi.list(filters, signal);
+      // The API filters by one person id; typed words match every message about such a person.
+      const rows = await collectPages((page) =>
+        inboxApi.list({ ...filters, page, pageSize: 100 }, signal),
+      );
+      return pageOf(
+        rows.filter((item) => containsText(viuText, item.visuallyImpairedUserName)),
+        filters.page ?? 1,
+      );
+    },
     placeholderData: keepPreviousData,
     refetchInterval: 45000,
     retry: false,
@@ -213,10 +227,15 @@ function Inbox({ actor }: { actor: Person }) {
       />
       <section className="glass card stack">
         <FilterPanel
-          active={Object.entries(filters).filter(([key, value]) => key !== 'page' && value).length}
+          active={
+            Object.entries(filters).filter(([key, value]) => key !== 'page' && value).length +
+            (viuText ? 1 : 0)
+          }
           submitLabel={t('Lọc thông báo')}
           onReset={() => {
             setViu('');
+            setDraftText('');
+            setViuText('');
             setFilters({ page: 1 });
           }}
           tools={
@@ -232,6 +251,7 @@ function Inbox({ actor }: { actor: Person }) {
           }
           onApply={(form) => {
             const values = new FormData(form);
+            setViuText(viu ? '' : draftText.trim());
             setFilters({
               page: 1,
               viuId: viu,
@@ -245,9 +265,12 @@ function Inbox({ actor }: { actor: Person }) {
           {actor.role !== 'VisuallyImpaired' && (
             <SearchPicker
               wide
-              label={t('Người được chăm sóc')}
+              label={viuWord(actor.role)}
               value={viu}
               onChange={setViu}
+              freeText
+              text={draftText}
+              onText={setDraftText}
               search={
                 caregiver ? searchCareRecipients() : searchAccounts(actor, 'VisuallyImpaired')
               }

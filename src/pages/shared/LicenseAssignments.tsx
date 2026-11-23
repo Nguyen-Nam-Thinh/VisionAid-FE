@@ -1,4 +1,5 @@
 import { RefreshCw } from 'lucide-react';
+import { viuWord } from '../../constants/labels';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -81,7 +82,7 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
                 <caption className="sr-only">{t('Suất đã cấp cho người được chăm sóc')}</caption>
                 <thead>
                   <tr>
-                    <th>{t('Người được chăm sóc')}</th>
+                    <th>{viuWord(actor.role)}</th>
                     <th>{t('Ngày cấp')}</th>
                     <th>{t('Trạng thái')}</th>
                     <th>{t('Thao tác')}</th>
@@ -165,7 +166,7 @@ export function LicenseAssignments({ actor }: { actor: Person }) {
             <Form
               fields={[
                 personField(
-                  { key: 'viuId', label: t('Người được chăm sóc'), required: true },
+                  { key: 'viuId', label: viuWord(actor.role), required: true },
                   vius,
                   t('Trung tâm chưa có người được chăm sóc đang hoạt động.'),
                   {

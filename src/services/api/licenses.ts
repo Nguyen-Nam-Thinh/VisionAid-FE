@@ -33,12 +33,13 @@ export const subscriptionLabels = labelMap({
   Expired: msg('Đã hết hạn'),
   Cancelled: msg('Đã hủy'),
   Suspended: msg('Tạm ngưng'),
+  PendingActivation: msg('Chờ kích hoạt'),
 });
 export function viuLicenseLabel(status?: string | null) {
   return status === 'None'
     ? t('Chưa có gói dịch vụ')
     : subscriptionLabels[status as keyof typeof subscriptionLabels] ||
-        t('Chưa có thông tin gói dịch vụ từ máy chủ');
+        t('Chưa có thông tin gói dịch vụ');
 }
 export const isPersonalCaregiver = (user: Person) => user.role === 'Caregiver' && !user.orgId;
 export const isOrganizationBuyer = (user: Person) => user.role === 'CenterAdmin' && !!user.orgId;

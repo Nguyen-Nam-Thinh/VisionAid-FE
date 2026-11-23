@@ -342,17 +342,19 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
   return (
     <div className="stack">
       <p>{t('Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.')}</p>
+      <div className="row">
+        <button
+          className="btn"
+          disabled={live.some((q) => q.isFetching)}
+          onClick={() =>
+            void cache.invalidateQueries({ queryKey: ['api-location-live', actor.id, actor.orgId] })
+          }
+        >
+          <RefreshCw size={16} aria-hidden="true" />
+          {t('Tải lại vị trí')}
+        </button>
+      </div>
       <GpsMap points={points} selected={selected} onSelect={setSelected} />
-      <button
-        className="btn"
-        disabled={live.some((q) => q.isFetching)}
-        onClick={() =>
-          void cache.invalidateQueries({ queryKey: ['api-location-live', actor.id, actor.orgId] })
-        }
-      >
-        <RefreshCw size={16} aria-hidden="true" />
-        {t('Tải lại vị trí')}
-      </button>
       <div className="table-scroll" tabIndex={0} role="region" aria-label={t('Dữ liệu vị trí')}>
         <table className="tracking-table">
           <thead>
@@ -570,6 +572,7 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
                           ? t('Không có dữ liệu')
                           : {
                               Wifi: 'Wi-Fi',
+                              Mobile: t('Mạng di động'),
                               Mobile4G: '4G',
                               Mobile3G: '3G',
                               Offline: t('Ngoại tuyến'),

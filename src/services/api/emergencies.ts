@@ -142,6 +142,7 @@ export type AlertFilters = {
   dateFrom: string;
   dateTo: string;
   page: number;
+  pageSize?: number;
 };
 function parse<T>(schema: z.ZodType<T>, value: unknown) {
   const r = schema.safeParse(value);
@@ -238,7 +239,10 @@ export function createEmergenciesApi(
       if (!Number.isInteger(filters.page) || filters.page < 1)
         throw new ServiceError(t('Trang không hợp lệ.'), 400);
       const range = historyRange(filters.dateFrom, filters.dateTo);
-      const q = new URLSearchParams({ page: String(filters.page), pageSize: '10' });
+      const q = new URLSearchParams({
+        page: String(filters.page),
+        pageSize: String(filters.pageSize ?? 10),
+      });
       for (const [key, value] of Object.entries({
         viuId: filters.viuId,
         status: filters.status,

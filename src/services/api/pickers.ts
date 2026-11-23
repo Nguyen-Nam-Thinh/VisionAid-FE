@@ -18,7 +18,8 @@ export const searchAccounts =
       (
         await accountsApi.list(
           actor,
-          { page: 1, search: term, role, active: '', deleted: '', organizationId },
+          // Deleted accounts are never offered; they are found again only under "Đã xóa".
+          { page: 1, search: term, role, active: '', deleted: 'false', organizationId },
           signal,
         )
       ).items,
@@ -36,7 +37,7 @@ export const searchOrganizationMembers =
 export const searchOrganizations =
   (actor: Scope) =>
   async (term: string, signal?: AbortSignal): Promise<PickerOption[]> =>
-    (await organizationsApi.list(actor, 1, term, '', '', signal)).items.map((o) => ({
+    (await organizationsApi.list(actor, 1, term, '', 'false', signal)).items.map((o) => ({
       value: o.id,
       label: o.name,
       detail: o.contactEmail ?? undefined,

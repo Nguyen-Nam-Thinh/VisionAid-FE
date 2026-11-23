@@ -1,4 +1,5 @@
 import { t, useI18n } from '../i18n';
+import { inviteResumeTarget } from '../services/api/invitations';
 import { Avatar } from '../components/Avatar';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ThemeSwitch } from '../components/ThemeSwitch';
@@ -124,7 +125,11 @@ export function Guard({ role }: { role?: string }) {
     return (
       <Navigate
         to="/auth/login"
-        state={{ returnTo: paymentResumeTarget(location.pathname + location.search) }}
+        state={{
+          returnTo:
+            paymentResumeTarget(location.pathname + location.search) ??
+            inviteResumeTarget(location.pathname + location.search),
+        }}
         replace
       />
     );

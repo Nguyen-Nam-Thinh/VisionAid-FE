@@ -1742,7 +1742,10 @@ tbody tr:hover,
 }
 /* File picker: the native control is hidden (its text follows the browser language). */
 .file-input {
+  /* Anchors the hidden input, so focusing it never scrolls the dialog sideways. */
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   min-width: 0;
@@ -1750,10 +1753,17 @@ tbody tr:hover,
 }
 .file-input-native {
   position: absolute;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   opacity: 0;
   pointer-events: none;
+}
+.file-input > .field-error {
+  flex-basis: 100%;
 }
 .file-input-name {
   overflow: hidden;
@@ -1813,4 +1823,81 @@ button.alert-snapshot span {
 
 .bar-list li > span:first-child {
   white-space: nowrap;
+}
+
+/* Place picker: address search, results and a map to drop or drag the pin. */
+.location-picker {
+  display: grid;
+  gap: 8px;
+}
+.location-picker-label {
+  font-weight: 600;
+}
+.location-picker-search input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.location-picker-results {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.location-picker-results button {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.location-picker-results button:hover {
+  background: var(--panel-sunk);
+}
+.location-picker-canvas {
+  height: 260px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--panel-sunk);
+}
+.location-picker-manual summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+}
+.location-picker-manual[open] {
+  display: grid;
+  gap: 8px;
+}
+
+/* Narrow filter panel for one or two fields (report period). */
+.filter-popover.compact {
+  width: min(440px, calc(100vw - 32px));
+}
+/* Date inputs have a wide built-in minimum; let them shrink to their column instead of
+   spilling past the panel, and keep the two action buttons on one line each. */
+.filter-range > .field {
+  min-width: 0;
+}
+.filter-range > .field input {
+  min-width: 0;
+}
+.filter-actions .btn {
+  white-space: nowrap;
+}
+.filter-popover.compact .filter-actions .btn {
+  flex: 1 1 0;
+  justify-content: center;
+}
+/* On phones the two dates stack, so neither runs into the panel edge. */
+@media (max-width: 600px) {
+  .filter-range {
+    grid-template-columns: 1fr;
+  }
 }

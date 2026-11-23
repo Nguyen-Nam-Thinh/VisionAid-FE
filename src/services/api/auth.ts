@@ -1,4 +1,6 @@
 import { t } from '../../i18n';
+import { fieldError } from './validation';
+import { normalizePhone } from './phone';
 import { z } from 'zod';
 import { ServiceError } from '../contracts';
 import { request, REQUEST_TIMEOUT, NETWORK_ERROR } from '../http/client';
@@ -300,7 +302,7 @@ export function createApiAuth(
     async recover(email: string) {
       email = email.trim();
       if (!z.string().email().max(255).safeParse(email).success)
-        throw new ServiceError(t('Email không hợp lệ hoặc quá dài.'), 400);
+        throw fieldError('email', t('Email chưa đúng, ví dụ ten@gmail.com.'));
       await call('/api/auth/forgot-password', json({ email }));
       return t(
         'Nếu email này đã đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu. Kiểm tra hộp thư và thư rác; liên kết có hiệu lực 15 phút.',
@@ -334,7 +336,7 @@ export function createApiAuth(
           );
         token = link.searchParams.get('token')!;
       }
-      if (!token) throw new ServiceError(t('Vui lòng nhập mã hoặc liên kết trong email.'), 400);
+      if (!token) throw fieldError('code', t('Vui lòng nhập mã hoặc liên kết trong email.'));
       if (
         newPassword.length < 8 ||
         newPassword.length > 100 ||
@@ -343,9 +345,9 @@ export function createApiAuth(
         !/[0-9]/.test(newPassword) ||
         !/[^a-zA-Z0-9]/.test(newPassword)
       )
-        throw new ServiceError(
+        throw fieldError(
+          'password',
           t('Mật khẩu cần 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.'),
-          400,
         );
       try {
         await call('/api/auth/reset-password', json({ email, token, newPassword }));
@@ -361,11 +363,14 @@ export function createApiAuth(
     },
     async profile(values: Pick<Person, 'name' | 'phone' | 'avatar'>) {
       const fullName = values.name.trim();
-      const phoneNumber = values.phone.trim();
+      const phoneNumber = normalizePhone(values.phone);
       if (fullName.length < 2 || fullName.length > 200)
-        throw new ServiceError(t('Họ tên phải có từ 2 đến 200 ký tự.'), 400);
+        throw fieldError('name', t('Họ và tên cần từ 2 đến 200 ký tự.'));
       if (phoneNumber && !/^0[35789][0-9]{8}$/.test(phoneNumber))
-        throw new ServiceError(t('Số điện thoại Việt Nam phải có 10 số, ví dụ 0901234567.'), 400);
+        throw fieldError(
+          'phone',
+          t('Nhập số di động Việt Nam 10 số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.'),
+        );
       return mapProfile(
         await authorized('/api/users/me', {
           ...json({ fullName, phoneNumber }),
@@ -398,9 +403,11 @@ export function createApiAuth(
           error instanceof ServiceError &&
           (error.code === 'WRONG_CURRENT_PASSWORD' ||
             error.status === 403 ||
-            (error.status === 422 && /current password/i.test(error.message)))
+            (error.status === 422 && /current password|mật khẩu hiện tại/i.test(error.message)))
         )
-          throw new ServiceError(t('Mật khẩu hiện tại không đúng.'), error.status);
+          throw new ServiceError(t('Mật khẩu hiện tại không đúng.'), error.status, {
+            current: t('Mật khẩu hiện tại không đúng.'),
+          });
         throw error;
       }
       clear();
@@ -410,9 +417,9 @@ export function createApiAuth(
     },
     async register(name: string, email: string, password: string) {
       if (name.trim().length < 2 || name.trim().length > 200)
-        throw new ServiceError(t('Họ tên phải có từ 2 đến 200 ký tự.'), 400);
+        throw fieldError('name', t('Họ và tên cần từ 2 đến 200 ký tự.'));
       if (!z.string().email().max(255).safeParse(email.trim()).success)
-        throw new ServiceError(t('Email không hợp lệ hoặc quá dài.'), 400);
+        throw fieldError('email', t('Email chưa đúng, ví dụ ten@gmail.com.'));
       if (
         password.length < 8 ||
         password.length > 100 ||
@@ -421,9 +428,9 @@ export function createApiAuth(
         !/[0-9]/.test(password) ||
         !/[^a-zA-Z0-9]/.test(password)
       )
-        throw new ServiceError(
+        throw fieldError(
+          'password',
           t('Mật khẩu cần 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.'),
-          400,
         );
       try {
         return await authenticate('/api/auth/register', {

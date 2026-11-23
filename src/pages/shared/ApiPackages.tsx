@@ -16,6 +16,7 @@ import {
   canDeletePackage,
   packageForActor,
   packagePrice,
+  packageFeatures,
   type LicensePackage,
 } from '../../services/api/packages';
 import type { Person } from '../../models/domain';
@@ -71,15 +72,26 @@ const editorFields: FieldSpec[] = [
     step: 1,
     required: true,
   },
-  {
-    key: 'featureFlags',
-    label: 'Feature flags (JSON)',
-    type: 'textarea',
-    hint: msg(
-      'Ví dụ {"ocr": true}. Chỉ lưu cờ true/false, không nhập khóa bí mật. Cờ không tự triển khai tính năng mới; cờ fleet_map hiện chưa áp dụng, bản đồ đội vẫn mở cho quản trị trung tâm.',
-    ),
-  },
+  // Package features as plain checkboxes; BE stores them as true/false flags.
+  ...packageFeatures.map(({ flag, label, hint }): FieldSpec => ({
+    key: 'flag_' + flag,
+    label,
+    hint,
+    type: 'checkbox',
+  })),
 ];
+/** Turns the feature checkboxes back into the flags object, keeping flags this form does not show. */
+function withFlags(values: Record<string, unknown>, current?: LicensePackage) {
+  const featureFlags: Record<string, boolean> = { ...(current?.featureFlags ?? {}) };
+  const rest: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (key.startsWith('flag_')) featureFlags[key.slice(5)] = value === true;
+    else rest[key] = value;
+  }
+  return { ...rest, featureFlags: JSON.stringify(featureFlags) };
+}
+const featureInitial = (flags: Record<string, boolean>) =>
+  Object.fromEntries(packageFeatures.map(({ flag }) => ['flag_' + flag, flags[flag] === true]));
 export function ApiPackages({ admin = false }: { admin?: boolean }) {
   const { data: actor } = useSession();
   return actor ? (
@@ -252,7 +264,7 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                                 setNotice('');
                                 setRemoving(p);
                               }}
-                              aria-label={t('Xóa gói {name}', { name: p.name })}
+                              aria-label={t('Xóa “{name}”', { name: p.name })}
                             >
                               {t('Xóa')}
                             </button>
@@ -313,21 +325,21 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
           onClose={() => setSelected(null)}
           onSaved={() => {
             setSelected(null);
-            setNotice(t('Đã lưu gói trên máy chủ.'));
+            setNotice(t('Đã lưu gói dịch vụ.'));
           }}
         />
       )}
       {removing && (
         <Confirm
-          title={t('Xóa gói {name}?', { name: removing.name })}
+          title={t('Xóa “{name}”?', { name: removing.name })}
           description={t(
-            'Gói {name} ({code}) sẽ bị xóa vĩnh viễn và không khôi phục được. Chỉ xóa được gói chưa ai mua; gói đã bán hãy ngừng bán thay vì xóa.',
+            '“{name}” ({code}) sẽ bị xóa vĩnh viễn và không khôi phục được. Chỉ xóa được gói chưa ai mua; gói đã bán hãy ngừng bán thay vì xóa.',
             { name: removing.name, code: removing.code },
           )}
           onConfirm={async () => {
             await packagesApi.remove(actor, removing);
             await cache.invalidateQueries({ queryKey: ['license-packages'] });
-            setNotice(t('Đã xóa gói {name}.', { name: removing.name }));
+            setNotice(t('Đã xóa “{name}”.', { name: removing.name }));
           }}
           onClose={() => setRemoving(null)}
         />
@@ -407,17 +419,23 @@ function PackageEditor({
               initial={
                 current
                   ? {
-                      ...current,
+                      ...Object.fromEntries(
+                        Object.entries(current).filter(([key]) => key !== 'featureFlags'),
+                      ),
                       priceYearly: current.priceYearly ?? '',
-                      featureFlags: JSON.stringify(current.featureFlags, null, 2),
+                      ...featureInitial(current.featureFlags),
                     }
-                  : { featureFlags: '{}' }
+                  : featureInitial({ webrtc: true, ai_navigation: true })
               }
               submit={creating ? t('Tạo gói') : t('Lưu gói')}
               onSubmit={async (values) => {
                 setPending(true);
                 try {
-                  await packagesApi.save(actor, values, current);
+                  await packagesApi.save(
+                    actor,
+                    withFlags(values, current) as typeof values,
+                    current,
+                  );
                   await cache.invalidateQueries({ queryKey: ['license-packages'] });
                   await cache.invalidateQueries({ queryKey: ['license-subscription'] });
                   cache.removeQueries({ queryKey: ['license-package', actor.id, id] });

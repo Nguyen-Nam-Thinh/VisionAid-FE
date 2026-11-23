@@ -238,7 +238,7 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                 <thead>
                   <tr>
                     <th>{t('Tên')}</th>
-                    <th>{t('Tọa độ và bán kính')}</th>
+                    <th>{t('Vị trí và bán kính')}</th>
                     <th>{t('Trạng thái')}</th>
                     <th>{t('Thao tác')}</th>
                   </tr>
@@ -250,18 +250,24 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                         <strong>{item.name}</strong>
                         {'alertOnExit' in item && (
                           <p className="care-secondary">
-                            {t('Vào:')} {item.alertOnEnter ? t('bật') : t('tắt')} · {t('Ra:')}{' '}
-                            {item.alertOnExit ? t('bật') : t('tắt')}
+                            {item.alertOnEnter && item.alertOnExit
+                              ? t('Báo khi đi vào và khi ra ngoài')
+                              : item.alertOnExit
+                                ? t('Báo khi ra ngoài')
+                                : item.alertOnEnter
+                                  ? t('Báo khi đi vào')
+                                  : t('Không gửi cảnh báo')}
                           </p>
                         )}
                       </td>
                       <td>
-                        <span>
-                          {t('Vĩ độ: {latitude} · Kinh độ: {longitude}', {
-                            latitude: item.latitude,
-                            longitude: item.longitude,
-                          })}
-                        </span>
+                        <a
+                          href={`https://www.google.com/maps?q=${item.latitude},${item.longitude}`}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          {t('Xem trên bản đồ')}
+                        </a>
                         <p>
                           {t('Bán kính: {p3} m', {
                             p3:
@@ -328,7 +334,7 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                 onClose={() => setEditing(null)}
                 onSave={() => {
                   setEditing(null);
-                  setNotice(t('Đã lưu theo dữ liệu máy chủ.'));
+                  setNotice(t('Đã lưu.'));
                 }}
                 refresh={refresh}
               />
@@ -346,7 +352,7 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                 onConfirm={async () => {
                   try {
                     await placesApi.remove(actor, viuId, kind, removing.id);
-                    setNotice(t('Đã xóa theo dữ liệu máy chủ.'));
+                    setNotice(t('Đã xóa.'));
                     if (query.data.items.length === 1 && page > 1) setPage(page - 1);
                   } finally {
                     await refresh();
@@ -448,6 +454,11 @@ function PlaceEditor({
             <Form
               fields={fields}
               initial={initial}
+              location={{
+                lat: 'latitude',
+                lng: 'longitude',
+                radius: zone ? 'radiusMeters' : 'arrivalRadiusMeters',
+              }}
               onSubmit={async (values) => {
                 try {
                   await placesApi.save(actor, viuId, kind, values, creating ? undefined : id);

@@ -1,4 +1,4 @@
-import { msg, labelMap, formatLocaleDateTime } from '../i18n';
+import { t, msg, labelMap, formatLocaleDateTime } from '../i18n';
 import type { AlertStatus, Role } from '../models/domain';
 export const roles: Record<Role, string> = labelMap({
   Caregiver: msg('Người chăm sóc'),
@@ -39,3 +39,9 @@ export function normalizeRole(raw: string): Role | null {
   );
 }
 export const formatTime = (at: string) => formatLocaleDateTime(at);
+/**
+ * What to call a care recipient: a caregiver looks after "người được chăm sóc"; for a centre or
+ * system admin they are simply "người khiếm thị", like the menu.
+ */
+export const viuWord = (role: Role | string) =>
+  role === 'Caregiver' ? t('Người được chăm sóc') : t('Người khiếm thị');

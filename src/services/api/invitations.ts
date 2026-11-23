@@ -63,9 +63,31 @@ function caregiver(actor: Pick<Person, 'role'>) {
   if (actor.role !== 'Caregiver')
     throw new ServiceError(t('Chỉ tài khoản người chăm sóc mới dùng được lời mời.'), 403);
 }
-/** The QR holds the token only; trim whitespace a scanner or a paste may add. */
+/** Page that accepts an invitation; the QR opens it straight from a phone camera. */
+export const INVITE_PATH = '/caregiver/caregivers';
+export const inviteLink = (token: string) =>
+  `${window.location.origin}${INVITE_PATH}?invite=${encodeURIComponent(token)}`;
+/** The token from a scanned or pasted invitation link, or the raw code itself. */
+export function inviteToken(value: string) {
+  const text = value.trim();
+  try {
+    const url = new URL(text);
+    return url.searchParams.get('invite')?.trim() || text;
+  } catch {
+    return text;
+  }
+}
+/** After sign-in, return to an invitation link only (an internal path, never another site). */
+export function inviteResumeTarget(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.startsWith(INVITE_PATH + '?')) return null;
+  const token = new URLSearchParams(value.slice(INVITE_PATH.length + 1)).get('invite') ?? '';
+  return token.length >= 8 && token.length <= 512 && !/\s/.test(token)
+    ? `${INVITE_PATH}?invite=${encodeURIComponent(token)}`
+    : null;
+}
+/** Accepts the raw code or a whole invitation link; trims what a scanner or a paste adds. */
 export function cleanToken(value: string) {
-  const token = value.trim();
+  const token = inviteToken(value);
   if (token.length < 8 || token.length > 512 || /\s/.test(token))
     throw new ServiceError(t('Mã lời mời không hợp lệ. Kiểm tra lại mã hoặc quét lại QR.'), 400);
   return token;

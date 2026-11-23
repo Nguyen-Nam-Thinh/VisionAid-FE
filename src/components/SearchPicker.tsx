@@ -9,6 +9,9 @@ export type PickerSearch = (term: string, signal?: AbortSignal) => Promise<Picke
 /**
  * Combobox that finds a record by name/email and reports its id, so users never type UUIDs.
  * `queryKey` must identify the actor/scope of `search` to keep cached results apart.
+ *
+ * With `freeText` (list filters) the typed words are kept as they are: applying the filter finds
+ * every record whose name or email contains them. Picking a suggestion narrows to that one record.
  */
 export function SearchPicker({
   id,
@@ -23,6 +26,9 @@ export function SearchPicker({
   invalid,
   describedBy,
   wide,
+  freeText,
+  text,
+  onText,
   children,
 }: {
   id?: string;
@@ -38,13 +44,22 @@ export function SearchPicker({
   describedBy?: string;
   /** Take a full row inside a two-column filter panel. */
   wide?: boolean;
+  /** Keep typed words as a "contains" filter instead of requiring a pick. */
+  freeText?: boolean;
+  /** Typed words in `freeText` mode (controlled, so "clear filters" empties them). */
+  text?: string;
+  onText?: (text: string) => void;
   /** Rendered under the control, e.g. a hint or field error. */
   children?: ReactNode;
 }) {
   const auto = useId();
   const inputId = id ?? auto + '-input';
   const listId = auto + '-list';
-  const [term, setTerm] = useState('');
+  const [localTerm, setLocalTerm] = useState('');
+  const term = freeText ? (text ?? '') : localTerm;
+  const setTerm = (next: string) => (freeText ? onText?.(next) : setLocalTerm(next));
+  // In free-text mode Enter applies the typed words unless the user moved to a suggestion.
+  const [navigated, setNavigated] = useState(false);
   const [debounced, setDebounced] = useState('');
   const [chosen, setChosen] = useState<PickerOption | null>(null);
   const [open, setOpen] = useState(false);
@@ -71,6 +86,7 @@ export function SearchPicker({
     setChosen(option);
     setTerm('');
     setOpen(false);
+    setNavigated(false);
     onChange(option.value, option);
   };
   const clear = () => {
@@ -91,7 +107,9 @@ export function SearchPicker({
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
-          aria-activedescendant={open && options[active] ? `${listId}-${active}` : undefined}
+          aria-activedescendant={
+            open && options[active] && (!freeText || navigated) ? `${listId}-${active}` : undefined
+          }
           aria-invalid={invalid}
           aria-describedby={describedBy}
           autoComplete="off"
@@ -101,11 +119,13 @@ export function SearchPicker({
           onFocus={() => setOpen(true)}
           onBlur={() => {
             setOpen(false);
-            setTerm('');
+            setNavigated(false);
+            if (!freeText) setTerm('');
           }}
           onChange={(e) => {
             setTerm(e.target.value);
             setActive(0);
+            setNavigated(false);
             setOpen(true);
             if (value) {
               setChosen(null);
@@ -116,10 +136,14 @@ export function SearchPicker({
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
               e.preventDefault();
               setOpen(true);
+              setNavigated(true);
               if (options.length)
                 setActive(
                   (i) => (i + (e.key === 'ArrowDown' ? 1 : options.length - 1)) % options.length,
                 );
+            } else if (e.key === 'Enter' && open && freeText && !navigated) {
+              // Let the surrounding filter form submit the typed words.
+              setOpen(false);
             } else if (e.key === 'Enter' && open) {
               e.preventDefault();
               if (options[active]) choose(options[active]);
@@ -143,6 +167,16 @@ export function SearchPicker({
       </div>
       {open && term.trim() && (
         <ul id={listId} role="listbox" className="picker-list" aria-label={label}>
+          {freeText && (
+            <li className="muted picker-hint" role="presentation">
+              {t(
+                'Bấm lọc để tìm mọi người có “{term}” trong tên hoặc email, hoặc chọn một người:',
+                {
+                  term: term.trim(),
+                },
+              )}
+            </li>
+          )}
           {!settled || results.isPending ? (
             <li className="muted" role="presentation">
               {t('Đang tìm…')}
@@ -161,8 +195,8 @@ export function SearchPicker({
                 key={option.value}
                 id={`${listId}-${index}`}
                 role="option"
-                aria-selected={index === active}
-                className={index === active ? 'active' : undefined}
+                aria-selected={index === active && (!freeText || navigated)}
+                className={index === active && (!freeText || navigated) ? 'active' : undefined}
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={() => setActive(index)}
                 onClick={() => choose(option)}

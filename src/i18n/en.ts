@@ -197,15 +197,14 @@ export const en = {
     'Notifications show only a generic reminder. Open the Dashboard to see data according to your permissions. Each browser receives push for one session; enabling it in another tab moves delivery there. Signing out or turning it off in one tab disables push in this browser.',
   'Trình duyệt chưa hỗ trợ hoặc trang chưa dùng HTTPS.':
     'The browser does not support it or the page is not served over HTTPS.',
-  'Đã đăng ký trên máy chủ. Việc nhận thông báo đẩy còn phụ thuộc dịch vụ gửi thông báo.':
-    'Registered on the server. Push delivery still depends on the notification service.',
+  'Đã bật thông báo trên trình duyệt này.': 'Notifications are on for this browser.',
   'Không đăng ký được thông báo đẩy. Kiểm tra quyền thông báo, kết nối rồi thử lại.':
     'Could not register push. Check notification permission and connection, then try again.',
   'Đồng bộ đăng ký thông báo đẩy': 'Sync push registration',
   'Bật thông báo trình duyệt': 'Enable browser notifications',
   'Tắt thông báo đẩy trên trình duyệt': 'Turn off push in this browser',
-  'Đã tắt thông báo đẩy trên trình duyệt này. Tùy chọn kênh trên máy chủ không thay đổi.':
-    'Push is off in this browser. Channel preferences on the server are unchanged.',
+  'Đã tắt thông báo trên trình duyệt này. Các tùy chọn thông báo khác vẫn giữ nguyên.':
+    'Notifications are off for this browser. Your other notification options stay the same.',
   'Chưa xác nhận tắt thông báo đẩy. Hãy chặn thông báo trong cài đặt trình duyệt.':
     'Turning off push was not confirmed. Block notifications in the browser settings.',
   'Thêm mới': 'Add new',
@@ -496,7 +495,7 @@ export const en = {
   'Bắt buộc với Zalo hoặc Điện thoại và Zalo.': 'Required for Zalo or Phone and Zalo.',
   'Thứ tự ưu tiên': 'Priority order',
   'Ghi chú': 'Notes',
-  'Đã lưu liên hệ theo dữ liệu máy chủ.': 'Contact saved from server data.',
+  'Đã lưu liên hệ.': 'Contact saved.',
   'Chưa xác nhận được kết quả lưu. Tải lại danh sách trước khi gửi lại để tránh tạo trùng.':
     'The save result was not confirmed. Reload the list before resubmitting to avoid duplicates.',
   'Xóa liên hệ': 'Delete contact',
@@ -585,8 +584,6 @@ export const en = {
     'At most {max} places per person, including paused places.',
   'Chưa có địa điểm phù hợp.': 'No matching places.',
   'Danh sách địa điểm': 'Place list',
-  'Tọa độ và bán kính': 'Coordinates and radius',
-  'Vào:': 'Enter:',
   bật: 'on',
   tắt: 'off',
   'Vĩ độ: {latitude} · Kinh độ: {longitude}': 'Latitude: {latitude} · Longitude: {longitude}',
@@ -594,11 +591,11 @@ export const en = {
   'Xem và sửa': 'View and edit',
   'Trang địa điểm trước': 'Previous places page',
   'Trang địa điểm sau': 'Next places page',
-  'Đã lưu theo dữ liệu máy chủ.': 'Saved from server data.',
+  'Đã lưu.': 'Saved.',
   'Xóa vùng an toàn': 'Delete safe zone',
   'Xóa địa điểm': 'Delete place',
   'Xóa {name}? {p1}': 'Delete {name}? {p1}',
-  'Đã xóa theo dữ liệu máy chủ.': 'Deleted according to server data.',
+  'Đã xóa.': 'Deleted.',
   'Bán kính (mét)': 'Radius (meters)',
   'Từ 50 đến 50.000 mét.': 'From 50 to 50,000 meters.',
   'Từ 10 đến 5.000 mét.': 'From 10 to 5,000 meters.',
@@ -637,9 +634,6 @@ export const en = {
     'The save result was not confirmed. Reload the registry before resubmitting to avoid duplicates.',
   'Ảnh người thân': 'Family member photos',
   'Ảnh của {displayName}': 'Photos of {displayName}',
-  '{imageCount} ảnh ·': '{imageCount} photos ·',
-  '. Xóa ảnh khiến số lượng dưới {min} sẽ ngừng kích hoạt người này.':
-    '. Deleting photos so that fewer than {min} remain will deactivate this person.',
   'Hãy chọn một ảnh.': 'Please choose a photo.',
   'Đã tải ảnh lên.': 'Photo uploaded.',
   'Không thể tải ảnh.': 'Could not upload the photo.',
@@ -684,8 +678,7 @@ export const en = {
   'Tải lại cấu hình': 'Reload configuration',
   'Chỉnh sửa giọng đọc': 'Edit voice',
   'Tạo cấu hình giọng đọc': 'Create voice configuration',
-  'Đã lưu cấu hình trên máy chủ. Kiểm tra lại trên điện thoại.':
-    'Configuration saved on the server. Check it on Mobile.',
+  'Đã lưu cấu hình. Hãy kiểm tra lại trên điện thoại.': 'Settings saved. Check them on the phone.',
   'Chưa xác nhận được kết quả lưu. Đóng hộp thoại và tải lại cấu hình trước khi gửi lại.':
     'The save result was not confirmed. Close the popup and reload the configuration before resubmitting.',
   'Chọn người được chăm sóc ở trên để xem và chỉnh cấu hình giọng đọc.':
@@ -765,8 +758,6 @@ export const en = {
   'Sự kiện ranh giới vùng an toàn': 'Safe zone boundary events',
   'Yêu cầu đọc chữ và quét QR': 'Text reading and QR scan requests',
   'Lượt nhận diện gương mặt': 'Face recognitions',
-  'Số liệu do máy chủ tổng hợp cho các thành viên khiếm thị hiện thuộc trung tâm, chưa bị xóa. Các nhóm có thể trùng sự kiện nên không cộng thành một tổng chung.':
-    'Figures aggregated by the server for visually impaired members currently in the center and not deleted. Groups may overlap, so they are not added into one total.',
   'Thành viên hiện tại': 'Current members',
   'Tìm thành viên': 'Find a member',
   'Lọc thành viên': 'Filter members',
@@ -865,20 +856,14 @@ export const en = {
     'Trial build · Integrated features are being tested.',
   'Để trống hoặc nhập số Việt Nam có 10 chữ số.':
     'Leave empty or enter a 10-digit Vietnamese number.',
-  'URL ảnh đại diện': 'Avatar URL',
   'Ít nhất 8 ký tự, có chữ hoa/thường, số và ký tự đặc biệt.':
     'At least 8 characters with upper/lowercase letters, a number and a special character.',
-  'Đã tạo tài khoản. Kiểm tra thông tin gói dịch vụ và phân công chăm sóc cho người dùng.':
-    'Account created. Check the license information and care assignment for the user.',
   'Tìm tài khoản': 'Find account',
   'Tên, email, điện thoại': 'Name, email, phone',
-  'Dữ liệu xóa': 'Deleted data',
-  'Chưa xóa': 'Not deleted',
   'Đã xóa': 'Deleted',
   'Không có tài khoản phù hợp.': 'No matching accounts.',
   'Xem tài khoản ': 'View account ',
   'Chi tiết tài khoản': 'Account details',
-  'Đã xóa mềm tài khoản.': 'Account soft-deleted.',
   'Sửa hồ sơ tài khoản': 'Edit account profile',
   'Email, vai trò và tổ chức giữ nguyên: {email} · {p3}':
     'Email, role and organization stay unchanged: {email} · {p3}',
@@ -897,17 +882,10 @@ export const en = {
   'Kích hoạt tài khoản': 'Activate account',
   'Xóa tài khoản': 'Delete account',
   'Đã cập nhật hồ sơ.': 'Profile updated.',
-  ': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.':
-    ': reopens the account. The organization must also be active to sign in.',
-  ': đăng xuất khỏi mọi thiết bị và ngừng gửi thông báo. ': ': revokes refresh sessions and FCM. ',
-  'Người dùng sẽ bị chặn đăng nhập.': 'The user will be blocked from signing in.',
   'Đã cập nhật trạng thái.': 'Status updated.',
   'Tài khoản: {email}. Đặt lại mật khẩu sẽ đăng xuất người dùng khỏi mọi thiết bị; họ cần đăng nhập lại.':
     'Account: {email}. Resetting the password revokes refresh sessions; the user must sign in again.',
-  'Tôi xác nhận đặt lại mật khẩu cho tài khoản này':
-    'I confirm resetting the password for this account',
   'Xác nhận đặt lại mật khẩu': 'Confirm password reset',
-  'Vui lòng xác nhận thao tác.': 'Please confirm the action.',
   'Đã đặt lại mật khẩu; người dùng cần đăng nhập lại.':
     'Password reset; the user must sign in again.',
   'Cử chỉ': 'Gesture',
@@ -980,8 +958,6 @@ export const en = {
     'Care staff do not use licenses from the pool. Assigning licenses to care recipients is checked by the server.',
   'Lịch sử thanh toán': 'Payment history',
   'Tạo liên kết': 'Create link',
-  'Đã tạo liên kết. Trạng thái chính/phụ do máy chủ quyết định.':
-    'Link created. Primary/secondary status is decided by the server.',
   'Loại liên kết': 'Link type',
   'Tất cả loại': 'All types',
   'Trạng thái liên kết': 'Link status',
@@ -989,10 +965,8 @@ export const en = {
   'Lọc liên kết': 'Filter links',
   'Không có liên kết phù hợp.': 'No matching links.',
   'Danh sách liên kết chăm sóc': 'Care link list',
-  'Xem liên kết ': 'View link ',
   'Thông tin liên kết': 'Link information',
-  'Đã gỡ liên kết. BE sẽ chọn lại người chăm sóc chính nếu cần và còn liên kết hoạt động.':
-    'Link removed. The BE will reselect the primary caregiver if needed and active links remain.',
+  'Đã gỡ liên kết. Nếu đó là người chăm sóc chính, người chăm sóc lâu nhất còn lại sẽ tự trở thành người chính.': 'Link removed. If it was the primary caregiver, the longest-serving remaining caregiver becomes primary.',
   'Trung tâm chưa có nhân viên đang hoạt động. Tạo nhân viên trước.':
     'The center has no active staff yet. Create staff first.',
   'Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản người khiếm thị trước.':
@@ -1019,25 +993,17 @@ export const en = {
   'Đang tải danh sách nhân viên và người được chăm sóc…': 'Loading staff and care recipients…',
   'Lưu quyền liên kết': 'Save link permissions',
   'Chi tiết liên kết': 'Link details',
-  'Mã: {caregiverId}': 'ID: {caregiverId}',
-  'Mã: {visuallyImpairedUserId}': 'ID: {visuallyImpairedUserId}',
   'Chuyển thành chăm sóc chính': 'Make primary caregiver',
   'Liên kết này chỉ được xem trong tài khoản hiện tại.':
     'This link can only be viewed in the current account.',
   'Đã lưu quyền liên kết.': 'Link permissions saved.',
   'Chuyển người chăm sóc chính': 'Transfer primary caregiver',
-  ': người chăm sóc chính hiện tại sẽ chuyển thành phụ. Quyền truy cập vẫn theo các cờ quyền.':
-    ': the current primary caregiver becomes secondary. Access still follows the permission flags.',
-  ': mất quyền qua liên kết này; không xóa tài khoản. Nếu gỡ người chăm sóc chính, BE chọn liên kết còn hoạt động lâu nhất thay thế.':
-    ': access through this link is lost; the account is not deleted. If the primary caregiver is removed, the BE picks the longest-active remaining link instead.',
   'Đã chuyển người chăm sóc chính.': 'Primary caregiver transferred.',
   'Loại thông báo': 'Notification type',
   'Kênh thông báo': 'Notification channel',
   'Bắt buộc nhận': 'Mandatory',
   'Đang áp dụng': 'Applied',
   'Toàn hệ thống': 'System-wide',
-  'Đã lưu trên máy chủ. Việc gửi thông báo còn phụ thuộc quy tắc và dịch vụ phân phối.':
-    'Saved on the server. Delivery still depends on the rules and the delivery service.',
   'Tài khoản cần thuộc một trung tâm để quản lý quy tắc.':
     'The account must belong to a center to manage rules.',
   'Chọn loại thông báo bạn muốn nhận và cách nhận (ứng dụng, email, trên web).':
@@ -1063,12 +1029,10 @@ export const en = {
   'Sửa quy tắc': 'Edit rule',
   'Bật nhận khi không bắt buộc': 'Receive when not mandatory',
   'Vai trò nhận': 'Recipient role',
-  'Tôi xác nhận thay đổi quy tắc gửi thông báo': 'I confirm changing the notification rule',
-  'Cần xác nhận thay đổi quy tắc.': 'The rule change must be confirmed.',
   'Xóa quy tắc thông báo?': 'Delete notification rule?',
   '. Việc gửi thông báo có thể thay đổi sau khi xóa; quy tắc toàn hệ thống có thể được áp dụng lại.':
     '. Notification delivery may change after deletion; the system-wide rule may apply again.',
-  'Đã xóa quy tắc trên máy chủ.': 'Rule deleted on the server.',
+  'Đã xóa quy tắc thông báo.': 'Notification rule deleted.',
   'Tên tổ chức': 'Organization name',
   'Để trống, hoặc nhập số di động, số bàn 02x hay tổng đài 1800/1900.':
     'Leave empty, or enter a mobile number, a 02x landline or a 1800/1900 number.',
@@ -1080,7 +1044,7 @@ export const en = {
   'Không có tổ chức phù hợp.': 'No matching organizations.',
   'Xem tổ chức ': 'View organization ',
   'Chi tiết tổ chức': 'Organization details',
-  'Đã xóa mềm tổ chức.': 'Organization soft-deleted.',
+  'Đã xóa tổ chức. Muốn xem lại: mở Bộ lọc, ở ô Tổ chức đã xóa chọn "Chỉ hiện tổ chức đã xóa".': 'Organisation deleted. To see it again: open Filters and set Deleted organisations to "Only deleted organisations".',
   'Sửa tổ chức': 'Edit organization',
   'Lưu tổ chức': 'Save organization',
   'Lỗi máy chủ.': 'Server error.',
@@ -1095,7 +1059,7 @@ export const en = {
     ': restores the organization; members still need to be activated individually.',
   ': thành viên đang hoạt động sẽ bị vô hiệu hóa và đăng xuất khỏi mọi thiết bị.':
     ': active members will be deactivated and their sessions/FCM revoked.',
-  ' Tổ chức được đánh dấu xóa mềm.': ' The organization is marked as soft-deleted.',
+  ' Tổ chức sẽ chuyển sang danh sách đã xóa.': ' The organisation moves to the deleted list.',
   'Đã kích hoạt tổ chức; cần kích hoạt từng thành viên riêng.':
     'Organization activated; each member must be activated individually.',
   'Đã vô hiệu hóa tổ chức.': 'Organization deactivated.',
@@ -1111,8 +1075,6 @@ export const en = {
   'Số suất sử dụng đi kèm': 'Included licenses',
   'Số ngày dùng thử': 'Trial days',
   'Thời hạn gói (ngày)': 'Plan duration (days)',
-  'Ví dụ {"ocr": true}. Chỉ lưu cờ true/false, không nhập khóa bí mật. Cờ không tự triển khai tính năng mới; cờ fleet_map hiện chưa áp dụng, bản đồ đội vẫn mở cho quản trị trung tâm.':
-    'For example {"ocr": true}. Only true/false flags; do not enter secret keys. Flags do not deploy new features by themselves; the fleet_map flag is not applied yet, and the fleet map stays open to center admins.',
   'Tài khoản này không cần chọn gói cá nhân. Gói dịch vụ do tổ chức quản lý.':
     'This account does not need a personal plan. Licenses are managed by the organization.',
   'Quản lý gói dịch vụ': 'License plan management',
@@ -1138,7 +1100,7 @@ export const en = {
   'Chi tiết / Sửa': 'Details / Edit',
   'Chưa có gói phù hợp trên trang này.': 'No suitable plans on this page.',
   ' Hãy xem trang tiếp theo.': ' See the next page.',
-  'Đã lưu gói trên máy chủ.': 'Plan saved on the server.',
+  'Đã lưu gói dịch vụ.': 'Package saved.',
   'Mã gói': 'Plan code',
   'Chữ in hoa, số, dấu gạch dưới. Không thể đổi sau khi tạo.':
     'Uppercase letters, digits and underscores. Cannot be changed after creation.',
@@ -1438,8 +1400,8 @@ export const en = {
   'Khôi phục': 'Restore',
   'Chưa có lịch sử thay đổi.': 'No change history yet.',
   'Chi tiết cấu hình': 'Configuration details',
-  'Đã lưu cấu hình trên máy chủ. Thiết bị áp dụng khi đồng bộ lại.':
-    'Configuration saved on the server. Devices apply it when they sync again.',
+  'Đã lưu cấu hình. Điện thoại áp dụng ở lần đồng bộ tiếp theo.':
+    'Setting saved. Phones apply it at their next sync.',
   'Tìm cấu hình': 'Find configuration',
   'Nhóm cấu hình': 'Configuration group',
   'Danh sách cấu hình': 'Configuration list',
@@ -1448,43 +1410,27 @@ export const en = {
   'Chỉ quản trị viên hệ thống được quản lý máy chủ kết nối.':
     'Only system administrators can manage connection servers.',
   'Thêm máy chủ': 'Add server',
-  'Số ưu tiên nhỏ được xếp trước. Thay đổi cấu hình không xác nhận máy chủ đang hoạt động; cần kiểm tra bằng cuộc gọi thực tế.':
-    'Lower priority numbers come first. Changing the configuration does not confirm the server is working; test with a real call.',
   'Trạng thái máy chủ': 'Server status',
   'Đang tắt': 'Disabled',
   'Không có máy chủ phù hợp.': 'No matching servers.',
   'Máy chủ kết nối cuộc gọi': 'ICE servers',
   '{totalCount} máy chủ · Trang {page}/{p4}': '{totalCount} servers · Page {page}/{p4}',
-  'Đã lưu thay đổi trên máy chủ. Cần kiểm tra kết nối cuộc gọi sau khi đổi cấu hình.':
-    'Changes saved on the server. Check call connectivity after changing the configuration.',
   'Xóa máy chủ kết nối': 'Delete connection server',
   'Chỉnh sửa máy chủ kết nối': 'Edit connection server',
   'Thêm máy chủ kết nối': 'Add connection server',
   'Máy chủ: {url}': 'Server: {url}',
   'Xóa cấu hình có thể làm cuộc gọi mới không kết nối được. Chỉ xóa khi đã có máy chủ thay thế phù hợp.':
     'Deleting the configuration may stop new calls from connecting. Only delete when a suitable replacement server exists.',
-  'Máy chủ mới được bật ngay sau khi tạo. Thay đổi áp dụng cho cấu hình kết nối mới, không tự cài đặt hoặc đổi mật khẩu trên máy chủ TURN.':
-    'New servers are enabled right after creation. Changes apply to new connection configurations; they do not install anything or change passwords on the TURN server.',
   'Chưa xác nhận kết quả ghi. Đóng hộp thoại và tải lại danh sách trước khi gửi lại để tránh tạo hoặc ghi trùng.':
     'The write result was not confirmed. Close the popup and reload the list before resubmitting to avoid duplicate creates or writes.',
   'Loại máy chủ': 'Server type',
   'Địa chỉ máy chủ': 'Server address',
-  'Ví dụ: stun:host:3478 hoặc turns:host:5349?transport=tcp':
-    'For example: stun:host:3478 or turns:host:5349?transport=tcp',
-  'Độ ưu tiên': 'Priority',
-  'Tên đăng nhập TURN': 'TURN username',
-  'Mật khẩu TURN muốn áp dụng': 'TURN credential to apply',
   'Bật máy chủ': 'Enable server',
-  'Tôi xác nhận thay đổi cấu hình kết nối cuộc gọi':
-    'I confirm changing the call connection configuration',
   'Xác nhận xóa': 'Confirm deletion',
   'Lưu máy chủ': 'Save server',
-  'Vui lòng xác nhận thay đổi trước khi tiếp tục.': 'Please confirm the change before continuing.',
   'Mã phiên điều hướng': 'Navigation session ID',
-  'Mã người dùng': 'User ID',
   'Mã khung hình': 'Frame ID',
   'Quyết định': 'Decision',
-  'Điện thoại tự quyết định (máy chủ ghi nhận)': 'Server fallback',
   'Mã bản ghi': 'Record ID',
   'Mô hình': 'Model',
   'Phiên bản': 'Version',
@@ -1501,7 +1447,6 @@ export const en = {
   'Email người thực hiện': 'Actor email',
   'Mã người thực hiện': 'Actor ID',
   'Hành động': 'Action',
-  'Bảng đối tượng': 'Entity table',
   'Mã đối tượng': 'Entity ID',
   'Nguồn thông báo': 'Notification source',
   'Mã cảnh báo khẩn cấp': 'Emergency alert ID',
@@ -1522,17 +1467,12 @@ export const en = {
   'Thông báo thất bại': 'Failed notifications',
   'Tra cứu bản ghi': 'Look up records',
   'Mọi bộ xử lý': 'All engines',
-  'Tất cả bản ghi': 'All records',
   'Điện thoại tự quyết định': 'With fallback',
-  'Máy chủ quyết định': 'Without fallback',
   'Tên mô hình': 'Model name',
-  'Tên chính xác từ máy chủ': 'Exact name from the server',
   'Tất cả kênh': 'All channels',
   'Lọc bản ghi': 'Filter records',
   'Chi tiết hiển thị thông tin thao tác. Nội dung trước/sau, ghi chú và thông tin thiết bị chưa hiển thị vì có thể chứa dữ liệu nhạy cảm.':
     'Details show action information. Before/after content, notes and device information are hidden because they may contain sensitive data.',
-  'Chỉ hiển thị thông tin vận hành, không hiển thị cảnh vật hoặc nội dung giọng nói. Thời gian phản hồi là thời gian máy chủ xử lý, chưa gồm thời gian truyền từ điện thoại.':
-    'Only operational information is shown, never scenes or speech content. Response time is the server processing time and does not include the trip from the phone.',
   'Xem số liệu AI': 'View AI metrics',
   'Cấu hình bộ xử lý': 'Engine configuration',
   'Không có bản ghi phù hợp.': 'No matching records.',
@@ -1585,8 +1525,6 @@ export const en = {
   'Dữ liệu tài khoản từ máy chủ không hợp lệ.': 'Account data from the server is invalid.',
   'Không có quyền quản lý tài khoản này.': 'You are not allowed to manage this account.',
   'Mã không hợp lệ.': 'The ID must be a valid UUID.',
-  'Kiểm tra họ tên từ 2 đến 200 ký tự, điện thoại Việt Nam và URL ảnh tối đa 500 ký tự.':
-    'Check that the full name is 2 to 200 characters, the phone is Vietnamese and the photo URL is at most 500 characters.',
   'Tài khoản trả về không khớp lựa chọn.': 'The returned account does not match the selection.',
   'Tài khoản đã xóa; hệ thống hiện không hỗ trợ khôi phục.':
     'The account is deleted; the API does not support restoring it.',
@@ -1597,8 +1535,6 @@ export const en = {
     'Only center administrators choose from the organization list.',
   'Trung tâm chỉ tạo người chăm sóc hoặc người khiếm thị.':
     'Centers can only create Caregivers or VIUs.',
-  'Cần chọn tổ chức cho tài khoản không phải quản trị viên hệ thống.':
-    'An organization is required for non-Admin accounts.',
   'Mật khẩu cần ít nhất 8 ký tự, chữ hoa/thường, số và ký tự đặc biệt.':
     'Password must be at least 8 characters with upper/lowercase letters, a number and a special character.',
   'Tổ chức không hợp lệ hoặc không hoạt động.': 'The organization is invalid or inactive.',
@@ -1639,7 +1575,6 @@ export const en = {
   'Tài khoản này không được truy cập trang quản lý trên web.':
     'This account may not access the Web Dashboard.',
   'Yêu cầu đăng nhập đã bị hủy.': 'The sign-in request was cancelled.',
-  'Email không hợp lệ hoặc quá dài.': 'The email is invalid or too long.',
   'Nếu email này đã đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu. Kiểm tra hộp thư và thư rác; liên kết có hiệu lực 15 phút.':
     'If this email is registered, you will receive a password reset link. Check your inbox and spam folder; the link is valid for 15 minutes.',
   'Liên kết khôi phục không hợp lệ.': 'Invalid recovery link.',
@@ -1650,9 +1585,6 @@ export const en = {
     'Password must be 8–100 characters with uppercase, lowercase, a number and a special character.',
   'Mã không hợp lệ, đã dùng hoặc hết hạn. Hãy yêu cầu email khôi phục mới.':
     'The code is invalid, used or expired. Request a new recovery email.',
-  'Họ tên phải có từ 2 đến 200 ký tự.': 'Full name must be 2 to 200 characters.',
-  'Số điện thoại Việt Nam phải có 10 số, ví dụ 0901234567.':
-    'Vietnamese phone numbers have 10 digits, for example 0901234567.',
   'Mật khẩu mới cần 8–100 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt và khác mật khẩu cũ.':
     'The new password must be 8–100 characters with uppercase, lowercase, a number, a special character and differ from the old one.',
   'Mật khẩu hiện tại không đúng.': 'The current password is incorrect.',
@@ -1693,8 +1625,6 @@ export const en = {
     'User or link data has an invalid format.',
   'Liên kết không thuộc tài khoản hoặc người được chọn.':
     'The link does not belong to the account or the selected person.',
-  'Kiểm tra họ tên, email, số điện thoại và mật khẩu. Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.':
-    'Check the full name, email, phone number and password. Password must be at least 8 characters with uppercase, lowercase, a number and a special character.',
   'Liên kết không thuộc tài khoản hiện tại.': 'The link does not belong to the current account.',
   'Bạn đã có tối đa {max} liên kết hoạt động. Chưa tạo tài khoản mới.':
     'You already have the maximum of {max} active links. No new account was created.',
@@ -1732,8 +1662,6 @@ export const en = {
   'Dữ liệu liên hệ từ máy chủ không hợp lệ.': 'Contact data from the server is invalid.',
   'Liên hệ không thuộc người được chọn.': 'The contact does not belong to the selected person.',
   'Danh sách liên hệ không hợp lệ.': 'Invalid contact list.',
-  'Kiểm tra tên, loại liên hệ, số điện thoại, Zalo và thứ tự ưu tiên.':
-    'Check the name, contact type, phone number, Zalo and priority order.',
   'Thứ tự ưu tiên {priorityOrder} đã được dùng cho liên hệ khác. Chọn số khác.':
     'Priority {priorityOrder} is already used by another contact. Choose another number.',
   'Thứ tự ưu tiên đã được dùng.': 'The priority order is already used.',
@@ -1753,9 +1681,6 @@ export const en = {
   'Bạn không có quyền xử lý cảnh báo này.': 'You are not allowed to handle this alert.',
   'Phản hồi chuyển cấp không khớp cảnh báo.': 'The escalation response does not match the alert.',
   'Phản hồi máy chủ kết nối không hợp lệ.': 'Invalid connection server response.',
-  'Địa chỉ phải đúng loại STUN hoặc TURN, có host và cổng hợp lệ. TURN có thể thêm ?transport=udp hoặc ?transport=tcp.':
-    'The address must be a STUN or TURN type with a valid host and port. TURN may add ?transport=udp or ?transport=tcp.',
-  'Độ ưu tiên phải là số nguyên từ 1 đến 1000.': 'Priority must be an integer from 1 to 1000.',
   'Bộ lọc máy chủ không hợp lệ.': 'Invalid server filter.',
   'Mã máy chủ không hợp lệ.': 'Invalid server ID.',
   'Danh sách hoặc cấu hình đã thay đổi. Đóng hộp thoại và tải lại trước khi tiếp tục.':
@@ -1802,7 +1727,6 @@ export const en = {
   'Dùng thử': 'Trial',
   'Đã hết hạn': 'Expired',
   'Chưa có gói dịch vụ': 'No license',
-  'Chưa có thông tin gói dịch vụ từ máy chủ': 'No license information from the server yet',
   'Dữ liệu kho suất sử dụng không hợp lệ. Hãy tải lại.':
     'Invalid license pool data. Please reload.',
   'Máy chủ trả về kho suất sử dụng không thuộc tổ chức của bạn.':
@@ -1930,8 +1854,6 @@ export const en = {
   'Địa điểm không thuộc người được chọn.': 'The place does not belong to the selected person.',
   'Bộ lọc địa điểm không hợp lệ.': 'Invalid place filter.',
   'Danh sách địa điểm không hợp lệ.': 'Invalid place list.',
-  'Kiểm tra tên, tọa độ và bán kính. Bán kính phải là số nguyên trong khoảng cho phép.':
-    'Check the name, coordinates and radius. The radius must be an integer within the allowed range.',
   'Mã đăng ký thông báo không hợp lệ.': 'Invalid notification token.',
   'Ảnh phải có dữ liệu và không vượt quá 10 MB.':
     'The photo must contain data and be at most 10 MB.',
@@ -2153,7 +2075,6 @@ export const en = {
   'Máy chủ trả về dữ liệu không đúng định dạng.': 'Invalid JSON response from the server.',
   'Máy chủ yêu cầu kiểm tra gói dịch vụ cho thao tác này. Phiên đăng nhập vẫn được giữ. Mở mục Gói dịch vụ để xem trạng thái hoặc tải lại sau khi gói dịch vụ được cập nhật.':
     'The server requires a license check for this action. Your session is kept. Open License to see the status, or reload after the license is updated.',
-  'Yêu cầu thất bại. Mã lỗi: {status}.': 'Request failed. Error code: {status}.',
   'Máy chủ đang gặp sự cố. Vui lòng tải lại dữ liệu để kiểm tra kết quả trước khi thử lại.':
     'The server is having problems. Please reload the data to check the result before retrying.',
   'Bạn thao tác quá nhanh. Vui lòng thử lại sau {seconds} giây.':
@@ -2175,7 +2096,6 @@ export const en = {
     'Notification permission has not been granted. You can still use the Dashboard.',
   'Phiên đã thay đổi. Vui lòng thử lại.': 'The session has changed. Please try again.',
   'Phiên đã thay đổi.': 'The session has changed.',
-  'Chọn ảnh QR JPG/PNG dưới 5 MB.': 'Choose a JPG/PNG QR image under 5 MB.',
   'Trình duyệt không hỗ trợ đọc ảnh QR. Hãy nhập mã thủ công.':
     'The browser cannot read QR images. Enter the code manually.',
   'Không tìm thấy mã liên kết VisionAid demo hợp lệ trong ảnh.':
@@ -2236,7 +2156,6 @@ export const en = {
   ' · Còn {days} ngày theo thời hạn hồ sơ': ' · {days} days left according to the profile expiry',
   'Không thể tạo tài khoản.': 'Could not create the account.',
   'Trang {page}/{total}': 'Page {page}/{total}',
-  'Ra:': 'Exit:',
   Pin: 'Battery',
   'Trang sau': 'Next page',
   'VisionAid · Đồng hành an tâm': 'VisionAid · Care with peace of mind',
@@ -2379,17 +2298,12 @@ export const en = {
     'The license pool is no longer suspended. Reload to see the current status.',
   'Gõ tên hoặc email để tìm': 'Type a name or email to search',
   'Gõ tên hoặc email': 'Type a name or email',
-  'Gõ tên tổ chức': 'Type an organization name',
-  'Gõ tên hành động': 'Type an action name',
   'Bỏ chọn {name}': 'Clear {name}',
   'Đang tìm…': 'Searching…',
   'Không tải được kết quả. Thử gõ lại.': 'Could not load results. Try typing again.',
   'Không có kết quả phù hợp.': 'No matching results.',
   'Bỏ lọc này': 'Remove this filter',
   'Đang xem các bản ghi của một phiên điều hướng.': 'Showing records from one navigation session.',
-  'Đang xem các thao tác trên một bản ghi của bảng {table}.':
-    'Showing actions on one record of table {table}.',
-  'đã chọn': 'selected',
   'Xem cùng phiên điều hướng': 'Show this navigation session',
   'Xem các thao tác trên đối tượng này': 'Show actions on this record',
   'Bắt buộc với vai trò không phải quản trị viên hệ thống; tổ chức phải hoạt động.':
@@ -2479,8 +2393,6 @@ export const en = {
   'Có thể khôi phục trong {days} ngày kể từ lúc xóa.':
     'It can be restored within {days} days of deletion.',
   'Khôi phục tài khoản': 'Restore account',
-  'Tài khoản vẫn được giữ lại; Quản trị viên hệ thống có thể khôi phục trong {days} ngày.':
-    'Soft delete; an Admin can restore it within {days} days.',
   '{email}: mở lại tài khoản, đăng nhập bằng mật khẩu cũ, giữ nguyên liên kết và dữ liệu còn lưu. Dữ liệu đã bị xóa theo thời hạn lưu trữ sẽ không lấy lại được.':
     '{email}: reopen the account with its old password, keeping its links and remaining data. Data already removed by retention cannot be recovered.',
   'Đã khôi phục tài khoản. Kho của tổ chức hết suất nên người dùng chưa có gói dịch vụ; trung tâm cần cấp một suất, trước đó chỉ dùng được SOS.':
@@ -2750,8 +2662,6 @@ export const en = {
     'This list only shows locations for up to 10 people on the current page.',
   'Số liệu của ngày hôm trước được tổng hợp lúc 07:00 sáng. Số thành công phụ thuộc quy tắc tổng hợp của từng nguồn.':
     'Figures for the previous day are compiled at 7:00 AM. Success counts depend on the aggregation rules of each source.',
-  'Bộ lọc gồm cả ngày kết thúc. Để trống ngày để xem dữ liệu còn lưu.':
-    'The filter includes the end date. Leave the dates empty to see the stored data.',
   'Bán kính mặc định của vùng an toàn': 'Default safe zone radius',
   'Bán kính mặc định để báo đã đến nơi': 'Default arrival radius',
   'Bán kính được điền sẵn khi tạo vùng an toàn mới.':
@@ -2873,16 +2783,11 @@ export const en = {
     'When off, no new payment links can be created; pending payments are still processed.',
   'Gói hệ thống không thể xóa. Hãy ngừng bán nếu không dùng nữa.':
     'System packages cannot be deleted. Stop selling it if it is no longer needed.',
-  'Gói {name} ({code}) sẽ bị xóa vĩnh viễn và không khôi phục được. Chỉ xóa được gói chưa ai mua; gói đã bán hãy ngừng bán thay vì xóa.':
-    'Package {name} ({code}) will be deleted permanently and cannot be restored. Only packages nobody has bought can be deleted; stop selling a sold package instead.',
   'Gói đã có người mua hoặc đang được dùng. Hãy bỏ chọn “Đang mở bán” để ngừng bán thay vì xóa.':
     'This package has been bought or is in use. Untick “On sale” to stop selling it instead of deleting it.',
   'Nhận cuộc gọi này cũng ghi nhận bạn đã tiếp nhận cảnh báo khẩn cấp.':
     'Answering this call also records that you acknowledged the emergency alert.',
   'Xem cảnh báo khẩn cấp': 'View the emergency alert',
-  'Xóa gói {name}': 'Delete package {name}',
-  'Xóa gói {name}?': 'Delete package {name}?',
-  'Đã xóa gói {name}.': 'Deleted package {name}.',
   'Ba lô': 'Backpack',
   'Biển dừng': 'Stop sign',
   'Bàn chải đánh răng': 'Toothbrush',
@@ -3192,10 +3097,6 @@ export const en = {
   'Kênh và trạng thái': 'Channel and status',
   'Một trung tâm': 'A center',
   'Bộ xử lý': 'Engine',
-  'Bật, tắt hoặc đổi bộ xử lý dẫn đường ở trang Cấu hình hệ thống (nhóm Dẫn đường).':
-    'Turn navigation on or off, or change its engine, on the System configuration page (Navigation group).',
-  '“Điện thoại tự quyết định” là khi điện thoại tự đưa ra hướng dẫn vì mất mạng, chưa có phiên hoặc máy chủ chậm; ứng dụng gửi lại sau để truy vết. Câu đã đọc và vị trí chỉ hiển thị cho người chăm sóc có liên kết.':
-    '“Decided on the phone” means the phone gave the guidance itself because it was offline, had no session or the server was slow; the app sends it later for tracing. Spoken text and location are shown only to linked caregivers.',
   'Với số liệu dẫn đường, bản ghi thiếu thời gian phản hồi được tính là thất bại, kể cả khi bộ xử lý theo quy tắc đã đưa ra quyết định. Các số này không đánh giá độ đúng hoặc an toàn của hướng dẫn.':
     'For navigation figures, records without a response time count as failures, even when the rule-based engine gave a decision. These numbers do not judge whether the guidance was correct or safe.',
   'Dùng AI để mô tả hình ảnh': 'Use AI to describe pictures',
@@ -3213,12 +3114,230 @@ export const en = {
   'Dùng mật khẩu cố định': 'Fixed password',
   'Mật khẩu tạm do máy chủ cấp mỗi cuộc gọi':
     'Temporary password issued by the server for each call',
-  'TURN: để trống cả tên đăng nhập và mật khẩu thì máy chủ tự cấp mật khẩu tạm cho mỗi cuộc gọi (nên dùng). Muốn dùng mật khẩu cố định thì nhập cả hai mỗi lần lưu; ô mật khẩu luôn trống khi mở. STUN bỏ qua hai ô này.':
-    'TURN: leave both the username and password empty and the server issues a temporary password for each call (recommended). For a fixed password, enter both every time you save; the password box is always empty when opened. STUN ignores these two boxes.',
   'Nhìn giúp tôi · {engine}': 'Look for me · {engine}',
   'AI Gemini': 'Gemini AI',
   'AI Groq': 'Groq AI',
   'không đọc được': 'nothing read',
+  'Bản đồ theo dõi cả trung tâm': 'Map of the whole centre',
+  'Bấm lọc để tìm mọi người có “{term}” trong tên hoặc email, hoặc chọn một người:':
+    'Press filter to find everyone with “{term}” in their name or email, or pick one person:',
+  'Chuyển tiếp cuộc gọi (TURN)': 'Call relay (TURN)',
+  'Chuyển tiếp cuộc gọi': 'Call relay',
+  'Chưa có máy chủ chuyển tiếp nào đang bật: cuộc gọi qua mạng 4G hoặc mạng công ty có thể không nối được.':
+    'No relay server is switched on: calls over 4G or office networks may fail to connect.',
+  'Chưa có máy chủ tìm đường nào đang bật: cuộc gọi có thể nối chậm hoặc không nối được.':
+    'No route-finding server is switched on: calls may connect slowly or not at all.',
+  'Do bên cung cấp máy chủ đưa, ví dụ stun:stun.l.google.com:19302 hoặc turn:ten-may-chu:3478.':
+    'Given by the server provider, e.g. stun:stun.l.google.com:19302 or turn:server-name:3478.',
+  'Dẫn đường bằng AI': 'AI navigation',
+  'Gõ tên, email hoặc "Hệ thống"': 'Type a name, email or "System"',
+  'Gọi thoại và video với người khiếm thị': 'Voice and video calls with the visually impaired user',
+  'Gửi lại thông báo': 'Resend notification',
+  'Hiện chỉ để ghi nhận trong gói; quản trị trung tâm vẫn luôn xem được bản đồ.':
+    'Recorded in the package only for now; centre admins can always see the map.',
+  'Hẹn đổi gói của kho suất sử dụng': 'Schedule a package change for the license pool',
+  'Hủy hẹn đổi gói của kho suất sử dụng': 'Cancel the scheduled package change of the license pool',
+  'Khôi phục tài khoản đã xóa': 'Restore deleted account',
+  'Loại đối tượng': 'Object type',
+  'Mật khẩu (chỉ cho máy chủ chuyển tiếp)': 'Password (relay servers only)',
+  'Mọi hành động': 'All actions',
+  'Mọi loại đối tượng': 'All object types',
+  'Người chăm sóc gọi thoại hoặc video tới điện thoại của người khiếm thị.':
+    "Caregivers make voice or video calls to the visually impaired user's phone.",
+  'Số nhỏ được thử trước.': 'Lower numbers are tried first.',
+  'Thông báo cảnh báo': 'Alert notification',
+  'Thứ tự dùng': 'Order of use',
+  'Thứ {priority}': 'No. {priority}',
+  'Tên đăng nhập (chỉ cho máy chủ chuyển tiếp)': 'Username (relay servers only)',
+  'Tìm đường kết nối (STUN)': 'Route finding (STUN)',
+  'Tìm đường kết nối': 'Route finding',
+  'Tất cả tổ chức': 'All organisations',
+  'Xem liên kết giữa {caregiver} và {viu}': 'View the link between {caregiver} and {viu}',
+  'Xóa gói dịch vụ': 'Delete package',
+  'cổng {port}': 'port {port}',
+  'giúp hai thiết bị tự nối thẳng với nhau khi mạng cho phép.':
+    'helps the two devices connect directly when the network allows it.',
+  'khi mạng chặn kết nối thẳng (mạng công ty, 4G), cuộc gọi đi vòng qua máy chủ này để vẫn nghe và thấy được.':
+    'when the network blocks a direct connection (office networks, 4G), the call goes through this server so both sides can still hear and see each other.',
+  'Đang bật {stun} máy chủ tìm đường và {turn} máy chủ chuyển tiếp: đủ để gọi.':
+    '{stun} route-finding and {turn} relay servers are on: calls can connect.',
+  'Điện thoại nhận hướng dẫn tránh vật cản từ máy chủ.':
+    'The phone gets obstacle guidance from the server.',
+  'Đổi tự động gia hạn kho suất sử dụng': 'Change automatic renewal of the license pool',
+  'Nhận diện gương mặt (FaceNet)': 'Face recognition (FaceNet)',
+  'Nhận lệnh giọng nói': 'Voice commands',
+  'Đọc chữ (VietOCR)': 'Text reading (VietOCR)',
+  'Phát hiện vật cản (YOLOv8n)': 'Obstacle detection (YOLOv8n)',
+  'Dẫn đường bằng AI (JEV)': 'AI navigation (JEV)',
+  'Dẫn đường bằng AI dự phòng (Groq)': 'Backup AI navigation (Groq)',
+  'Dẫn đường theo quy tắc': 'Rule-based navigation',
+  'Mọi mô hình': 'All models',
+  'Chưa có thông tin gói dịch vụ': 'No package information yet',
+  '{name} ({email}) sẽ bị đăng xuất khỏi mọi thiết bị và không nhận thông báo nữa. Quản trị viên hệ thống có thể khôi phục tài khoản trong {days} ngày.':
+    '{name} ({email}) will be signed out on every device and stop receiving notifications. A system administrator can restore the account within {days} days.',
+  '{name} ({email}) sẽ bị đăng xuất khỏi mọi thiết bị, không đăng nhập được và không nhận thông báo nữa.':
+    '{name} ({email}) will be signed out on every device, cannot sign in and stops receiving notifications.',
+  '{name} ({email}) sẽ đăng nhập lại được. Tổ chức của tài khoản cũng phải đang hoạt động.':
+    "{name} ({email}) can sign in again. The account's organisation must also be active.",
+  'Đã tạo liên kết chăm sóc.': 'Care link created.',
+  'Đã tạo tài khoản cho {name}.': 'Account created for {name}.',
+  'Xóa “{name}”?': 'Delete “{name}”?',
+  '“{name}” ({code}) sẽ bị xóa vĩnh viễn và không khôi phục được. Chỉ xóa được gói chưa ai mua; gói đã bán hãy ngừng bán thay vì xóa.':
+    '“{name}” ({code}) will be deleted permanently. Only packages nobody bought can be deleted; stop selling a sold package instead.',
+  'Đã xóa “{name}”.': 'Deleted “{name}”.',
+  'Xóa “{name}”': 'Delete “{name}”',
+  'Đã lưu quy tắc thông báo.': 'Notification rule saved.',
+  'Đã lưu máy chủ. Hãy thử một cuộc gọi để chắc chắn kết nối tốt.':
+    'Server saved. Try a call to make sure it connects well.',
+  'Trung tâm chưa mua gói': 'The centre has not bought a package',
+  '{caregiver} chăm sóc {viu}': '{caregiver} cares for {viu}',
+  '{caregiver} sẽ thành người chăm sóc chính của {viu}; người chăm sóc chính hiện tại chuyển thành phụ và giữ các quyền đang có.':
+    '{caregiver} becomes the primary caregiver of {viu}; the current primary becomes secondary and keeps their permissions.',
+  '{caregiver} sẽ không còn chăm sóc {viu}; tài khoản của hai người vẫn giữ nguyên. Nếu đây là người chăm sóc chính, người chăm sóc lâu nhất còn lại sẽ thành người chính.':
+    '{caregiver} will no longer care for {viu}; both accounts stay. If this is the primary caregiver, the longest remaining caregiver becomes primary.',
+  'Người bạn chăm sóc': 'People you care for',
+  'Báo khi ra ngoài': 'Alert on leaving',
+  'Báo khi đi vào và khi ra ngoài': 'Alert on entering and leaving',
+  'Báo khi đi vào': 'Alert on entering',
+  'Gõ địa chỉ, ví dụ 12 Nguyễn Trãi, Quận 5': 'Type an address, e.g. 12 Nguyen Trai, District 5',
+  'Không gửi cảnh báo': 'No alerts',
+  'Không thấy địa chỉ này. Thử gõ ngắn hơn hoặc bấm lên bản đồ.':
+    'Address not found. Try fewer words or click on the map.',
+  'Không tìm được địa chỉ lúc này. Hãy bấm trực tiếp lên bản đồ.':
+    'Address search is unavailable right now. Click on the map instead.',
+  'Không tải được bản đồ. Bạn vẫn có thể tìm địa chỉ hoặc nhập tọa độ.':
+    'The map did not load. You can still search an address or enter coordinates.',
+  'Kết quả tìm địa chỉ': 'Address results',
+  'Nhập tọa độ (nếu bạn đã có)': 'Enter coordinates (if you have them)',
+  'Tìm địa chỉ ở trên hoặc bấm lên bản đồ để đặt ghim.':
+    'Search an address above or click on the map to drop a pin.',
+  'Tìm địa chỉ': 'Search address',
+  Tìm: 'Search',
+  'Vị trí *': 'Location *',
+  'Vị trí và bán kính': 'Location and radius',
+  'Đã chọn một điểm trên bản đồ. Có thể kéo ghim để chỉnh cho đúng chỗ.':
+    'A point is picked on the map. Drag the pin to adjust it.',
+  'Đã chọn: {place}. Có thể kéo ghim để chỉnh cho đúng chỗ.':
+    'Picked: {place}. Drag the pin to adjust it.',
+  'Đã có {imageCount} ảnh. Cần thêm {missing} ảnh rõ mặt nữa để điện thoại nhận ra người này.':
+    '{imageCount} photos so far. Add {missing} more clear face photos so the phone can recognise this person.',
+  'Đã có {imageCount} ảnh, điện thoại đã nhận ra được người này. Nếu xóa bớt còn dưới {min} ảnh, việc nhận diện sẽ tạm dừng.':
+    '{imageCount} photos: the phone can recognise this person. Deleting down to fewer than {min} photos pauses recognition.',
+  'Đã xóa tài khoản. Muốn khôi phục trong {days} ngày: mở Bộ lọc, ở ô Tài khoản đã xóa chọn "Chỉ hiện tài khoản đã xóa", rồi bấm Chi tiết → Khôi phục tài khoản.': 'Account deleted. To restore it within {days} days: open Filters, set Deleted accounts to "Only deleted accounts", then Details → Restore account.',
+  'Đã xóa tài khoản. Quản trị viên hệ thống có thể khôi phục trong {days} ngày.':
+    'Account deleted. A system administrator can restore it within {days} days.',
+  'Bán kính phải là số nguyên trong khoảng cho phép.':
+    'Radius must be a whole number within the allowed range.',
+  'Email chưa đúng, ví dụ ten@gmail.com.': 'Email is not valid, e.g. name@gmail.com.',
+  'Giá trị chưa hợp lệ.': 'This value is not valid.',
+  'Hãy chọn loại liên hệ.': 'Choose a contact type.',
+  'Hãy chọn tổ chức; chỉ quản trị viên hệ thống mới không thuộc tổ chức.':
+    'Choose an organisation; only system administrators belong to none.',
+  'Hãy chọn vai trò tài khoản.': 'Choose an account role.',
+  'Hãy tìm địa chỉ hoặc bấm lên bản đồ để chọn vị trí.':
+    'Search an address or click on the map to pick the location.',
+  'Họ và tên cần từ 2 đến 200 ký tự.': 'Full name needs 2 to 200 characters.',
+  'Lời nhắc tối đa 500 ký tự.': 'The reminder can have at most 500 characters.',
+  'Mô tả quá dài.': 'The description is too long.',
+  'Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.':
+    'Password needs at least 8 characters with upper and lower case letters, a number and a special character.',
+  'Nhập cả hai ô, hoặc để trống cả hai.': 'Fill in both fields, or leave both empty.',
+  'Nhập liên kết Zalo, ví dụ https://zalo.me/0901234567.':
+    'Enter a Zalo link, e.g. https://zalo.me/0901234567.',
+  'Nhập số di động Việt Nam 10 số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.':
+    'Enter a 10-digit Vietnamese mobile number starting with 03, 05, 07, 08 or 09.',
+  'Nhập số điện thoại hợp lệ, ví dụ 0901 234 567 hoặc 115.':
+    'Enter a valid phone number, e.g. 0901 234 567 or 115.',
+  'Nhập tên (tối đa 200 ký tự).': 'Enter a name (at most 200 characters).',
+  'Nhập tên liên hệ (tối đa 200 ký tự).': 'Enter a contact name (at most 200 characters).',
+  'Thứ tự dùng là số nguyên từ 1 đến 1000.': 'Order of use is a whole number from 1 to 1000.',
+  'Thứ tự ưu tiên là số nguyên từ 1 trở lên.': 'Priority is a whole number from 1 up.',
+  'Vui lòng sửa các ô được tô đỏ.': 'Please fix the fields marked in red.',
+  'Đường dẫn ảnh tối đa 500 ký tự.': 'The picture link can have at most 500 characters.',
+  'Địa chỉ phải đúng loại máy chủ đã chọn và có cổng hợp lệ, ví dụ stun:stun.l.google.com:19302 hoặc turn:ten-may-chu:3478.':
+    'The address must match the chosen server type and have a valid port, e.g. stun:stun.l.google.com:19302 or turn:server-name:3478.',
+  'Người chăm sóc chính luôn có đủ quyền nên không chỉnh được. Muốn giới hạn quyền của người này, hãy chuyển một người chăm sóc khác thành người chính trước.':
+    "The primary caregiver always has every permission, so these cannot be changed. To limit this person's permissions, make another caregiver primary first.",
+  'Kiểm tra lại quy tắc rồi bấm Xác nhận lưu.': 'Check the rule, then press Confirm save.',
+  'Xác nhận lưu': 'Confirm save',
+  'Có thể gửi lại': 'Can be resent',
+  'Gửi thành công lúc': 'Delivered at',
+  'Lần gửi lại gần nhất': 'Last resent',
+  'Số lần đã gửi lại': 'Times resent',
+  'Vì sao không gửi lại được': 'Why it cannot be resent',
+  'Bằng giọng nói': 'By voice',
+  'Chạm màn hình': 'Screen tap',
+  'Đã đến thiết bị': 'Reached the device',
+  'Chờ kích hoạt': 'Awaiting activation',
+  'Mạng di động': 'Mobile data',
+  'SOS tự động': 'Automatic SOS',
+  'Đang xem các thao tác trên một {table} cụ thể.': 'Showing the actions on one specific {table}.',
+  'đối tượng': 'object',
+  'Không hiển thị hình ảnh hay lời nói của người khiếm thị.': 'Pictures and speech of the visually impaired user are never shown.',
+  'Người dùng không còn trong hệ thống': 'User no longer in the system',
+  '“Máy chủ (theo quy tắc)” và “Điện thoại tự quyết định” là khi AI đang tắt, trả lời chậm hoặc điện thoại mất mạng.': '“Server (rules)” and “Phone decided itself” mean AI was off, slow, or the phone was offline.',
+  'Khi gọi, hai thiết bị cần một máy chủ giúp nối với nhau. Có hai loại:': 'During a call, the two devices need a server to connect them. There are two kinds:',
+  'Sau khi đổi, hãy thử một cuộc gọi.': 'After a change, try a call.',
+  'Để trống cả tên đăng nhập và mật khẩu (nên dùng): hệ thống tự cấp mật khẩu tạm cho mỗi cuộc gọi. Máy chủ tìm đường không cần hai ô này.': 'Leave both username and password empty (recommended): the system issues a temporary password for each call. Route-finding servers do not need these two fields.',
+  'Tài khoản đã xóa': 'Deleted accounts',
+  'Không hiện': 'Hide',
+  'Chỉ hiện tài khoản đã xóa (để khôi phục)': 'Only deleted accounts (to restore)',
+  'Hiện cả tài khoản đã xóa': 'Include deleted accounts',
+  'Tổ chức đã xóa': 'Deleted organisations',
+  'Chỉ hiện tổ chức đã xóa': 'Only deleted organisations',
+  'Hiện cả tổ chức đã xóa': 'Include deleted organisations',
+  'Tháng này': 'This month',
+  'Tháng trước': 'Last month',
+  'Toàn bộ': 'All time',
+  'Kỳ báo cáo': 'Report period',
+  'Một sự kiện có thể nằm ở nhiều ô, nên không cộng các ô lại với nhau.': 'One event can appear in several boxes, so do not add the boxes together.',
+  'Tùy chọn khoảng ngày': 'Custom date range',
+  'Hãy chọn ít nhất một tệp.': 'Choose at least one file.',
+  'Đã sao chép liên kết lời mời. Gửi liên kết này cho người được mời.': 'Invitation link copied. Send it to the person you are inviting.',
+  'Sao chép liên kết': 'Copy link',
+  'Dán mã hoặc liên kết lời mời': 'Paste the invitation code or link',
+  'Chọn ảnh QR JPG, PNG hoặc WebP dưới 5 MB.': 'Choose a JPG, PNG or WebP QR image under 5 MB.',
+  'Bạn không thể tự nhận lời mời do chính mình tạo.': 'You cannot accept an invitation you created yourself.',
+  'Chỉ hẹn đổi được sang gói rẻ hơn. Gia hạn hoặc nâng cấp thì thanh toán trực tiếp.': 'Only a cheaper package can be scheduled. Renewals and upgrades are paid directly.',
+  'Cảnh báo này đã được tạo trước đó.': 'This alert was already created.',
+  'Cổng thanh toán đang tạm ngưng nhận đơn. Chưa có tiền nào bị trừ. Vui lòng thử lại sau hoặc liên hệ quản trị hệ thống.': 'The payment gateway is not taking orders right now. No money was charged. Please try again later or contact the system administrator.',
+  'Dữ liệu vừa được thay đổi ở nơi khác. Hãy tải lại rồi thử lại.': 'The data was just changed elsewhere. Reload and try again.',
+  'Email hoặc mật khẩu không đúng.': 'Wrong email or password.',
+  'Gói hiện tại không có tính năng này. Hãy nâng cấp gói.': 'Your current package does not include this feature. Please upgrade.',
+  'Gói mặc định của hệ thống không xóa được. Hãy ngừng bán nếu không dùng.': 'System default packages cannot be deleted. Stop selling it if unused.',
+  'Gói này rẻ hơn gói hiện tại nên chỉ đổi được vào cuối kỳ đã thanh toán. Hãy hẹn đổi gói.': 'This package is cheaper than the current one, so it can only start at the end of the paid period. Schedule the change.',
+  'Gói đã có người mua hoặc đang được dùng, hãy ngừng bán thay vì xóa.': 'Someone bought or uses this package; stop selling it instead of deleting.',
+  'Kho suất sử dụng này chưa có lịch đổi gói nào.': 'This license pool has no scheduled package change.',
+  'Kho suất sử dụng đã hết hạn. Hãy gia hạn gói trước khi cấp suất.': 'The license pool has expired. Renew the package before assigning licenses.',
+  'Khoảng ngày quá dài. Hãy chọn khoảng ngắn hơn.': 'The date range is too long. Choose a shorter one.',
+  'Không thể tự liên kết với chính mình.': 'You cannot link an account to itself.',
+  'Không thực hiện được thao tác này. Hãy kiểm tra lại thông tin.': 'This action could not be done. Check the information.',
+  'Không thực hiện được. Vui lòng thử lại sau.': 'Could not be done. Please try again later.',
+  'Không tìm thấy dữ liệu. Có thể nó đã bị xóa; hãy tải lại.': 'Not found. It may have been deleted; reload.',
+  'Lời mời không đúng, đã được dùng hoặc đã hết hạn. Hãy xin người mời tạo mã mới.': 'The invitation is wrong, used or expired. Ask the inviter for a new code.',
+  'Mã khôi phục không đúng hoặc đã hết hạn. Hãy yêu cầu email mới.': 'The recovery code is wrong or expired. Request a new email.',
+  'Mã kích hoạt này đã được một gia đình dùng nên không thu hồi được nữa.': 'A family already used this activation code, so it can no longer be revoked.',
+  'Mã kích hoạt này đã được thu hồi trước đó.': 'This activation code was already revoked.',
+  'Mã kích hoạt vừa được dùng hoặc thay đổi trong lúc bạn thu hồi. Hãy tải lại danh sách.': 'The activation code was used or changed while you revoked it. Reload the list.',
+  'Mã kích hoạt đã hết hạn. Hãy xin trung tâm mã mới.': 'The activation code has expired. Ask the centre for a new one.',
+  'Mật khẩu mới phải khác mật khẩu hiện tại.': 'The new password must differ from the current one.',
+  'Người này không có trong danh bạ gương mặt.': 'This person is not in the face registry.',
+  'Phiên này đã kết thúc.': 'This session has ended.',
+  'Thanh toán trực tuyến đang tạm ngưng. Vui lòng thử lại sau.': 'Online payment is paused. Please try again later.',
+  'Thông báo này đang được gửi lại, hãy chờ một chút.': 'This notification is being resent; please wait.',
+  'Thông tin chưa hợp lệ. Hãy kiểm tra lại các ô đã nhập.': 'Some information is not valid. Check the fields you entered.',
+  'Thông tin này đã tồn tại. Hãy kiểm tra lại để tránh tạo trùng.': 'This already exists. Check to avoid a duplicate.',
+  'Tài khoản cần thuộc một tổ chức.': 'The account must belong to an organisation.',
+  'Tài khoản này chưa bị xóa nên không cần khôi phục.': 'This account is not deleted, so there is nothing to restore.',
+  'Tài khoản đã bị khóa. Hãy liên hệ quản trị viên.': 'The account is locked. Contact an administrator.',
+  'Tài khoản đã bị xóa nên không đổi được trạng thái.': 'The account is deleted, so its status cannot change.',
+  'Tổ chức của tài khoản này đang bị vô hiệu hóa. Hãy kích hoạt lại tổ chức trước.': "This account's organisation is deactivated. Reactivate it first.",
+  'Vui lòng nhập đủ các ô bắt buộc.': 'Please fill in all required fields.',
+  'Đây có vẻ là ảnh chụp hoặc màn hình, không phải người thật.': 'This looks like a photo or a screen, not a real person.',
+  'Đã quá thời gian chờ hủy; cảnh báo khẩn cấp đã được gửi đi.': 'The cancel window has passed; the emergency alert was sent.',
+  'Đã quá thời hạn khôi phục tài khoản này.': 'The restore period for this account has passed.',
+  'Ảnh bị hỏng hoặc không đúng định dạng. Hãy chọn ảnh khác.': 'The image is damaged or in the wrong format. Choose another.',
+  'Thứ tự ưu tiên này đã được dùng cho liên hệ khác. Chọn số khác.': 'This priority is already used by another contact. Choose another number.',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',

@@ -51,11 +51,7 @@ export function PushSettings({ userId }: { userId: string }) {
             try {
               await enablePush(owner, registerPushToken);
               setPushOptOut(userId, false);
-              setMessage(
-                t(
-                  'Đã đăng ký trên máy chủ. Việc nhận thông báo đẩy còn phụ thuộc dịch vụ gửi thông báo.',
-                ),
-              );
+              setMessage(t('Đã bật thông báo trên trình duyệt này.'));
             } catch {
               setMessage(
                 t(
@@ -84,7 +80,7 @@ export function PushSettings({ userId }: { userId: string }) {
               setPushOptOut(userId, true);
               setMessage(
                 t(
-                  'Đã tắt thông báo đẩy trên trình duyệt này. Tùy chọn kênh trên máy chủ không thay đổi.',
+                  'Đã tắt thông báo trên trình duyệt này. Các tùy chọn thông báo khác vẫn giữ nguyên.',
                 ),
               );
             } catch {

@@ -66,10 +66,20 @@ it('keeps the BE errorCode and translates known codes, leaving unknown ones as s
   });
   await expect(
     request('/test', {}, reply({ detail: 'Something new.', errorCode: 'NEW_CODE' }, 409)),
-  ).rejects.toMatchObject({ code: 'NEW_CODE', message: 'Something new.' });
+  ).rejects.toMatchObject({
+    code: 'NEW_CODE',
+    // Unknown English sentences become a plain Vietnamese message for the status.
+    message: 'Dữ liệu vừa được thay đổi ở nơi khác. Hãy tải lại rồi thử lại.',
+  });
+  await expect(
+    request('/test', {}, reply({ detail: 'Invalid email or password.' }, 401)),
+  ).rejects.toMatchObject({ message: 'Email hoặc mật khẩu không đúng.' });
+  await expect(
+    request('/test', {}, reply({ detail: 'Gói không hợp lệ.' }, 422)),
+  ).rejects.toMatchObject({ message: 'Gói không hợp lệ.' });
   await expect(request('/test', {}, reply({ detail: 'No code.' }, 422))).rejects.toMatchObject({
     code: undefined,
-    message: 'No code.',
+    message: 'Không thực hiện được thao tác này. Hãy kiểm tra lại thông tin.',
   });
 });
 it('reports 413 with a fixed message without reading the proxy body', async () => {
