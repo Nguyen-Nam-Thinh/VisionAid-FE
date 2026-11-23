@@ -227,11 +227,11 @@ export function Form({
                 cx="150"
                 cy="85"
                 r={Math.min(70, Math.max(8, Number(values.radius ?? 50) / 10))}
-                fill="#1856ff25"
-                stroke="#1856ff"
+                fill="var(--tactile-soft)"
+                stroke="var(--ink)"
                 strokeDasharray="5 3"
               />
-              <circle cx="150" cy="85" r="5" fill="#1856ff" />
+              <circle cx="150" cy="85" r="5" fill="var(--ink)" />
             </svg>
             <span className="map-caption">
               {t('Tâm: {p1}, {p3} · {p5} m', {

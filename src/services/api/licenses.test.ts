@@ -57,7 +57,7 @@ it('pool is organization-scoped, validates data and preserves missing/error resp
 it('distinguishes missing status, expiry boundaries and organization exemption without granting access', () => {
   expect(licenseSummary(actor, now)).toContain('Chưa xác định');
   expect(licenseSummary({ ...actor, licenseStatus: 'Unexpected' }, now)).toContain('Chưa xác định');
-  expect(licenseSummary({ ...actor, licenseStatus: 'None' }, now)).toContain('Chưa có license');
+  expect(licenseSummary({ ...actor, licenseStatus: 'None' }, now)).toContain('Chưa có gói dịch vụ');
   expect(
     licenseSummary(
       { ...actor, licenseStatus: 'Trial', licenseExpiresAt: '2026-10-04T00:00:00Z' },

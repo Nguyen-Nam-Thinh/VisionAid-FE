@@ -1,13 +1,16 @@
 import { t, formatLocaleDateTime } from '../../i18n';
-import { RefreshCw } from 'lucide-react';
+import { CircleCheck, CircleX, Clock, RefreshCw, RotateCcw, Ban } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { OrganizationPool } from './ApiLicensePool';
 import { useSession } from '../../hooks/useService';
-import { Dialog, Confirm, PageHead, State, CardActions } from '../../components/UI';
+import { Dialog, Confirm, PageHead, State, CardActions, Badge } from '../../components/UI';
 import {
   getMySubscription,
+  getPoolChangeQuote,
+  poolChangeLabels,
+  schedulePoolChange,
   isPersonalCaregiver,
   isOrganizationBuyer,
   subscriptionLabels,
@@ -25,7 +28,147 @@ import {
 import type { Person } from '../../models/domain';
 import { ServiceError } from '../../services/contracts';
 import { PAYMENT_DISABLED } from '../../services/api/payments';
+// Status colors: paid is green, failed is red; icons keep the state readable without color.
+const paymentTones = {
+  Pending: 'amber',
+  Success: 'green',
+  Failed: 'red',
+  Refunded: 'blue',
+  Cancelled: 'gray',
+} as const;
+const paymentIcons = {
+  Pending: Clock,
+  Success: CircleCheck,
+  Failed: CircleX,
+  Refunded: RotateCcw,
+  Cancelled: Ban,
+} as const;
 
+/** Business: what switching to this package costs now and when it applies, as the BE prices it. */
+function PoolChangeSummary({
+  actor,
+  item,
+  onScheduled,
+}: {
+  actor: Person;
+  item: LicensePackage;
+  onScheduled: (message: string) => void;
+}) {
+  const cache = useQueryClient();
+  const [scheduling, setScheduling] = useState(false);
+  const query = useQuery({
+    queryKey: ['pool-change-quote', actor.id, actor.orgId, item.id],
+    queryFn: ({ signal }) => getPoolChangeQuote(actor, item.id, signal),
+    retry: false,
+  });
+  const quote = query.data;
+  return (
+    <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
+      {quote && (
+        <div className="stack">
+          <dl className="record-details">
+            <div>
+              <dt>{t('Loại thay đổi')}</dt>
+              <dd>
+                <strong>{poolChangeLabels[quote.changeType]}</strong>
+              </dd>
+            </div>
+            {quote.currentPackage && (
+              <div>
+                <dt>{t('Gói hiện tại')}</dt>
+                <dd>{quote.currentPackage.name}</dd>
+              </div>
+            )}
+            <div>
+              <dt>{t('Cần trả ngay')}</dt>
+              <dd>
+                <strong>{packagePrice(quote.amount, quote.currency)}</strong>
+              </dd>
+            </div>
+            <div>
+              <dt>{t('Áp dụng từ')}</dt>
+              <dd>{formatLocaleDateTime(quote.effectiveAt)}</dd>
+            </div>
+            <div>
+              <dt>{t('Kho hết hạn vào')}</dt>
+              <dd>{formatLocaleDateTime(quote.newExpiresAt)}</dd>
+            </div>
+            <div>
+              <dt>{t('Số suất')}</dt>
+              <dd>
+                {quote.currentTotalLicenses
+                  ? t('{from} → {to} suất, đang dùng {used}', {
+                      from: quote.currentTotalLicenses,
+                      to: quote.newTotalLicenses,
+                      used: quote.usedLicenses,
+                    })
+                  : t('{to} suất', { to: quote.newTotalLicenses })}
+              </dd>
+            </div>
+          </dl>
+          <p>
+            {quote.changeType === 'Upgrade'
+              ? t(
+                  'Chỉ trả phần chênh lệch cho {days} ngày còn lại. Số suất đổi ngay sau khi thanh toán, ngày hết hạn giữ nguyên.',
+                  { days: quote.daysLeft },
+                )
+              : quote.changeType === 'ScheduledDowngrade'
+                ? t(
+                    'Gói rẻ hơn gói hiện tại: không trả tiền và không hoàn tiền. Kho đổi sang gói này khi hết kỳ đã trả.',
+                  )
+                : quote.changeType === 'Renewal'
+                  ? t('Trả trọn giá; kỳ mới nối tiếp sau ngày hết hạn hiện tại.')
+                  : t('Trả trọn giá; kỳ mới bắt đầu từ lúc thanh toán thành công.')}
+          </p>
+          {quote.seatsToRelease > 0 && (
+            <p className="notice error" role="alert">
+              {t(
+                'Số gói dịch vụ đang dùng nhiều hơn số suất của gói này. Hãy thu hồi {count} gói dịch vụ trước khi đổi gói.',
+                { count: quote.seatsToRelease },
+              )}
+            </p>
+          )}
+          {!quote.canProceed && quote.seatsToRelease === 0 && (
+            <p className="notice error" role="alert">
+              {t(
+                'Hiện chưa thể đổi gói cho kho này. Hãy tải lại kho suất sử dụng để kiểm tra trạng thái.',
+              )}
+            </p>
+          )}
+          {quote.changeType === 'ScheduledDowngrade' && quote.canProceed && quote.poolId && (
+            <button
+              className="btn primary"
+              disabled={scheduling}
+              onClick={async () => {
+                setScheduling(true);
+                try {
+                  await schedulePoolChange(actor, quote.poolId!, item.id);
+                  onScheduled(
+                    t('Đã hẹn đổi sang gói {name} vào {time}.', {
+                      name: item.name,
+                      time: formatLocaleDateTime(quote.effectiveAt),
+                    }),
+                  );
+                } catch (error) {
+                  onScheduled(error instanceof Error ? error.message : t('Không thể thực hiện.'));
+                } finally {
+                  await cache.invalidateQueries({
+                    predicate: (q) =>
+                      ['license-pool', 'pool-change-quote'].includes(String(q.queryKey[0])) &&
+                      q.queryKey[1] === actor.id,
+                  });
+                  setScheduling(false);
+                }
+              }}
+            >
+              {scheduling ? t('Đang xử lý…') : t('Hẹn đổi gói vào cuối kỳ')}
+            </button>
+          )}
+        </div>
+      )}
+    </State>
+  );
+}
 export function PackageCheckout({
   actor,
   item,
@@ -40,7 +183,18 @@ export function PackageCheckout({
   const [attempted, setAttempted] = useState(false);
   const [failure, setFailure] = useState<Error | null>(null);
   const [link, setLink] = useState<PaymentLink | null>(null);
+  const [scheduled, setScheduled] = useState('');
   const cache = useQueryClient();
+  const quote = useQuery({
+    queryKey: ['pool-change-quote', actor.id, actor.orgId, item.id],
+    queryFn: ({ signal }) => getPoolChangeQuote(actor, item.id, signal),
+    enabled: isOrganizationBuyer(actor),
+    retry: false,
+  });
+  // A cheaper package is not paid for: it is scheduled for the end of the period instead.
+  const payable =
+    !isOrganizationBuyer(actor) ||
+    (!!quote.data && quote.data.canProceed && quote.data.changeType !== 'ScheduledDowngrade');
   // Rejected before any order exists: Super Admin turned payos_enabled off.
   const paymentDisabled = failure instanceof ServiceError && failure.code === PAYMENT_DISABLED;
   return (
@@ -72,10 +226,17 @@ export function PackageCheckout({
           </div>
         </dl>
         {isOrganizationBuyer(actor) && (
-          <p>
-            {t(
-              'Mua mới hoặc bổ sung license do máy chủ quyết định. Khi gia hạn kho hiện có, thời hạn được tính lại từ ngày thanh toán; chưa hỗ trợ đổi sang gói khác.',
-            )}
+          <PoolChangeSummary
+            actor={actor}
+            item={item}
+            onScheduled={(message) => {
+              setScheduled(message);
+            }}
+          />
+        )}
+        {scheduled && (
+          <p className="notice" role="status">
+            {scheduled}
           </p>
         )}
         <p>
@@ -88,7 +249,7 @@ export function PackageCheckout({
             <span />
           </State>
         )}
-        {!link && (
+        {!link && payable && (
           <button
             className="btn primary"
             disabled={pending || attempted}
@@ -154,7 +315,9 @@ export function ApiPayments({ result = false }: { result?: boolean }) {
   if (!canPay(actor))
     return (
       <p className="notice">
-        {t('Luồng thanh toán này dành cho Caregiver cá nhân hoặc quản trị trung tâm có tổ chức.')}
+        {t(
+          'Luồng thanh toán này dành cho người chăm sóc gia đình hoặc quản trị trung tâm có tổ chức.',
+        )}
       </p>
     );
   return result ? (
@@ -216,7 +379,9 @@ function PaymentHistory({ actor }: { actor: Person }) {
                   <tr key={item.id}>
                     <td>{item.payosOrderId}</td>
                     <td>{packagePrice(item.amount, item.currency)}</td>
-                    <td>{paymentLabels[item.status]}</td>
+                    <td>
+                      <Badge tone={paymentTones[item.status]}>{paymentLabels[item.status]}</Badge>
+                    </td>
                     <td>{formatLocaleDateTime(item.createdAt)}</td>
                     <td>
                       <Link className="btn" to={'/payments/return?orderCode=' + item.payosOrderId}>
@@ -227,8 +392,10 @@ function PaymentHistory({ actor }: { actor: Person }) {
                 ))}
               </tbody>
             </table>
+            {query.data?.items.length === 0 && (
+              <p className="empty">{t('Chưa có giao dịch trên trang này.')}</p>
+            )}
           </div>
-          {query.data?.items.length === 0 && <p>{t('Chưa có giao dịch trên trang này.')}</p>}
           {query.data && (
             <footer className="row pagination">
               <span>
@@ -238,20 +405,24 @@ function PaymentHistory({ actor }: { actor: Person }) {
                   p4: Math.max(1, query.data.totalPages),
                 })}
               </span>
-              <button
-                className="btn"
-                disabled={query.isFetching || !query.data.hasPreviousPage}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={query.isFetching || !query.data.hasNextPage}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {t('Trang sau')}
-              </button>
+              {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasPreviousPage}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasNextPage}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </footer>
           )}
         </State>
@@ -312,7 +483,9 @@ function PaymentResult({
     <>
       <PageHead
         title={t('Kiểm tra thanh toán')}
-        description={t('Theo dõi trạng thái đơn và xác nhận thanh toán từ VisionAid.')}
+        description={t(
+          'Xem đơn đã thanh toán xong chưa; VisionAid xác nhận lại trước khi mở quyền sử dụng.',
+        )}
       />
       <section className="glass card stack">
         {cancelled && (
@@ -346,9 +519,15 @@ function PaymentResult({
               )}
               {payment && (
                 <>
-                  <p role="status" className="payment-status">
-                    <strong>{paymentLabels[payment.status]}</strong>
-                  </p>
+                  {(() => {
+                    const Icon = paymentIcons[payment.status];
+                    return (
+                      <p role="status" className={'payment-status ' + paymentTones[payment.status]}>
+                        <Icon size={22} aria-hidden="true" />
+                        <strong>{paymentLabels[payment.status]}</strong>
+                      </p>
+                    );
+                  })()}
                   <p className="payment-amount">{packagePrice(payment.amount, payment.currency)}</p>
                   {payment.status === 'Pending' && (
                     <>
@@ -421,7 +600,7 @@ function PaymentResult({
         )}
         {success && isOrganizationBuyer(actor) && <OrganizationPool actor={actor} embedded />}
         <Link to={isOrganizationBuyer(actor) ? '/center-admin/licenses' : '/license'}>
-          {t('Xem license')}
+          {t('Xem gói dịch vụ')}
         </Link>
         <Link to={paymentHistoryPath(actor)}>{t('Lịch sử thanh toán')}</Link>
       </section>

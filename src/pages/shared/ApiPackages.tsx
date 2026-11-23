@@ -1,5 +1,5 @@
 import { RefreshCw } from 'lucide-react';
-import { t, msg } from '../../i18n';
+import { t, msg, labelMap } from '../../i18n';
 import { Toast, CardActions } from '../../components/UI';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,15 +9,21 @@ import { PackageCheckout } from './ApiPayments';
 import { isPersonalCaregiver } from '../../services/api/licenses';
 import { canCheckout, canPay } from '../../services/api/payments';
 import { Form, type FieldSpec } from '../../components/Form';
-import { Dialog, PageHead, State } from '../../components/UI';
+import { Confirm, Dialog, PageHead, State } from '../../components/UI';
 import {
   packagesApi,
   canBrowsePackages,
+  canDeletePackage,
   packageForActor,
   packagePrice,
   type LicensePackage,
 } from '../../services/api/packages';
 import type { Person } from '../../models/domain';
+
+const packageTypeLabels: Record<string, string> = labelMap({
+  Personal: msg('Gia đình (Personal)'),
+  Business: msg('Trung tâm (Business)'),
+});
 
 const editorFields: FieldSpec[] = [
   { key: 'name', label: msg('Tên gói'), required: true, max: 200 },
@@ -26,24 +32,24 @@ const editorFields: FieldSpec[] = [
     key: 'priceYearly',
     label: msg('Giá năm'),
     hint: msg(
-      'Có thể để trống khi tạo. Giá năm chưa dùng để thanh toán trên Web; không thể xóa giá đã lưu.',
+      'Để trống để bỏ giá năm; gói khi đó chỉ bán theo tháng. Giá năm chưa dùng để thanh toán trên Web.',
     ),
   },
   { key: 'currency', label: msg('Đơn vị tiền tệ'), required: true, max: 10 },
   {
     key: 'maxViuPerLicense',
-    label: msg('VIU trên license (cấu hình gói)'),
+    label: msg('Số người khiếm thị trên mỗi suất'),
     type: 'number',
     min: 1,
     step: 1,
     required: true,
     hint: msg(
-      'Số VIU của B2C vẫn theo cấu hình caregiving.max_vius_per_caregiver; trường này không thay đổi giới hạn đó.',
+      'Số người khiếm thị của gói gia đình vẫn theo cấu hình hệ thống; ô này không thay đổi giới hạn đó.',
     ),
   },
   {
     key: 'includedLicenses',
-    label: msg('Số license bao gồm'),
+    label: msg('Số suất sử dụng đi kèm'),
     type: 'number',
     min: 1,
     step: 1,
@@ -90,6 +96,8 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
   const [active, setActive] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
+  const [removing, setRemoving] = useState<LicensePackage | null>(null);
+  const cache = useQueryClient();
   const query = useQuery({
     queryKey: ['license-packages', actor.id, actor.role, actor.orgId, page, active],
     queryFn: ({ signal }) => packagesApi.list(actor, page, active, signal),
@@ -99,20 +107,20 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
   if (!allowed)
     return (
       <p className="notice">
-        {t('Tài khoản này không cần chọn gói cá nhân. License do tổ chức quản lý.')}
+        {t('Tài khoản này không cần chọn gói cá nhân. Gói dịch vụ do tổ chức quản lý.')}
       </p>
     );
   const items = query.data?.items.filter((p) => admin || packageForActor(actor, p)) ?? [];
   return (
     <>
       <PageHead
-        title={admin ? t('Quản lý gói license') : t('Danh mục gói')}
+        title={admin ? t('Quản lý gói dịch vụ') : t('Danh mục gói')}
         description={
           admin
             ? t('Tạo gói, đặt giá và mở bán hoặc ngừng bán.')
             : personal
-              ? t('Chọn gói Personal và tạo đơn thanh toán qua PayOS.')
-              : t('Chọn gói Business và tạo đơn thanh toán qua PayOS.')
+              ? t('Chọn gói Personal dành cho gia đình và thanh toán qua PayOS.')
+              : t('Chọn gói Business dành cho trung tâm và thanh toán qua PayOS.')
         }
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
@@ -155,13 +163,13 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           <div className="table-scroll">
             <table className="package-table">
-              <caption className="sr-only">{t('Danh sách gói license')}</caption>
+              <caption className="sr-only">{t('Danh sách gói dịch vụ')}</caption>
               <thead>
                 <tr>
                   <th>{t('Gói')}</th>
                   <th>{t('Giá tháng')}</th>
                   <th>{t('Thời hạn')}</th>
-                  <th>License</th>
+                  <th>{t('Số người dùng')}</th>
                   {(admin || buyer) && <th>{t('Thao tác')}</th>}
                 </tr>
               </thead>
@@ -170,10 +178,21 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                   <tr key={p.id}>
                     <td>
                       <strong>{p.name}</strong>
-                      <p className="package-meta">
-                        {p.code} · {p.packageType}
-                      </p>
-                      <p className="package-meta">{p.isActive ? t('Đang mở') : t('Ngừng mở')}</p>
+                      {/* Codes and sale state are for the Admin; buyers only need the plan. */}
+                      {admin ? (
+                        <>
+                          <p className="package-meta">
+                            {p.code} · {packageTypeLabels[p.packageType] ?? p.packageType}
+                          </p>
+                          <p className="package-meta">
+                            {p.isActive ? t('Đang mở') : t('Ngừng mở')}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="package-meta">
+                          {packageTypeLabels[p.packageType] ?? p.packageType}
+                        </p>
+                      )}
                     </td>
                     <td>
                       <strong className="package-price">
@@ -195,8 +214,10 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                     </td>
                     <td>
                       {p.packageType === 'Personal'
-                        ? t('Tối đa {max} VIU theo chính sách B2C', { max: maxVius })
-                        : t('{includedLicenses} license bao gồm', {
+                        ? t('Tối đa {max} người khiếm thị theo chính sách gói gia đình', {
+                            max: maxVius,
+                          })
+                        : t('{includedLicenses} suất sử dụng đi kèm', {
                             includedLicenses: p.includedLicenses,
                           })}
                     </td>
@@ -207,57 +228,76 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
                             {t('Chọn gói {name}', { name: p.name })}
                           </button>
                         ) : (
-                          <span>{t('Gói chưa hỗ trợ thanh toán online.')}</span>
+                          <span>{t('Gói chưa hỗ trợ thanh toán trực tuyến.')}</span>
                         )}
                       </td>
                     )}
                     {admin && (
                       <td>
-                        <button
-                          className="btn"
-                          onClick={() => {
-                            setNotice('');
-                            setSelected(p.id);
-                          }}
-                          aria-label={t('Chi tiết ') + p.name}
-                        >
-                          {t('Chi tiết / Sửa')}
-                        </button>
+                        <div className="row">
+                          <button
+                            className="btn"
+                            onClick={() => {
+                              setNotice('');
+                              setSelected(p.id);
+                            }}
+                            aria-label={t('Chi tiết ') + p.name}
+                          >
+                            {t('Chi tiết / Sửa')}
+                          </button>
+                          {canDeletePackage(p) && (
+                            <button
+                              className="btn danger"
+                              onClick={() => {
+                                setNotice('');
+                                setRemoving(p);
+                              }}
+                              aria-label={t('Xóa gói {name}', { name: p.name })}
+                            >
+                              {t('Xóa')}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
                 ))}
               </tbody>
             </table>
+            {!items.length && (
+              <p className="empty">
+                {t('Chưa có gói phù hợp trên trang này.')}
+                {query.data?.hasNextPage ? t(' Hãy xem trang tiếp theo.') : ''}
+              </p>
+            )}
           </div>
-          {!items.length && (
-            <p>
-              {t('Chưa có gói phù hợp trên trang này.')}
-              {query.data?.hasNextPage ? t(' Hãy xem trang tiếp theo.') : ''}
-            </p>
-          )}
           {query.data && (
             <footer className="pagination">
               <span>
-                {t('Trang {page}/{total}', { page, total: Math.max(1, query.data.totalPages) })} ·{' '}
                 {admin
-                  ? query.data.totalCount + t(' gói')
-                  : t('Phân trang theo danh mục máy chủ; chỉ hiển thị loại gói phù hợp tài khoản.')}
+                  ? t('{count} gói', { count: query.data.totalCount })
+                  : t('Chỉ hiển thị các gói phù hợp với tài khoản của bạn.')}
+                {query.data.totalPages > 1 &&
+                  ' · ' + t('Trang {page}/{total}', { page, total: query.data.totalPages })}
               </span>
-              <button
-                className="btn"
-                disabled={query.isFetching || !query.data.hasPreviousPage}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={query.isFetching || !query.data.hasNextPage}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {t('Trang sau')}
-              </button>
+              {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasPreviousPage}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={query.isFetching || !query.data.hasNextPage}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </footer>
           )}
         </State>
@@ -275,6 +315,21 @@ function Packages({ actor, admin }: { actor: Person; admin: boolean }) {
             setSelected(null);
             setNotice(t('Đã lưu gói trên máy chủ.'));
           }}
+        />
+      )}
+      {removing && (
+        <Confirm
+          title={t('Xóa gói {name}?', { name: removing.name })}
+          description={t(
+            'Gói {name} ({code}) sẽ bị xóa vĩnh viễn và không khôi phục được. Chỉ xóa được gói chưa ai mua; gói đã bán hãy ngừng bán thay vì xóa.',
+            { name: removing.name, code: removing.code },
+          )}
+          onConfirm={async () => {
+            await packagesApi.remove(actor, removing);
+            await cache.invalidateQueries({ queryKey: ['license-packages'] });
+            setNotice(t('Đã xóa gói {name}.', { name: removing.name }));
+          }}
+          onClose={() => setRemoving(null)}
         />
       )}
     </>
@@ -317,8 +372,8 @@ function PackageEditor({
             type: 'select' as const,
             required: true,
             options: [
-              { value: 'Personal', label: 'Personal' },
-              { value: 'Business', label: 'Business' },
+              { value: 'Personal', label: packageTypeLabels.Personal },
+              { value: 'Business', label: packageTypeLabels.Business },
             ],
           },
         ]),
@@ -327,7 +382,7 @@ function PackageEditor({
   ];
   return (
     <Dialog
-      title={creating ? t('Thêm gói license') : t('Chi tiết / Sửa gói')}
+      title={creating ? t('Thêm gói dịch vụ') : t('Chi tiết / Sửa gói')}
       onClose={() => {
         if (!pending) onClose();
       }}
@@ -343,7 +398,7 @@ function PackageEditor({
               <p>
                 {t('Mã: {code} · Loại: {packageType} · không thể thay đổi', {
                   code: current.code,
-                  packageType: current.packageType,
+                  packageType: packageTypeLabels[current.packageType] ?? current.packageType,
                 })}
               </p>
             )}

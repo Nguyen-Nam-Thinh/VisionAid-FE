@@ -1,4 +1,4 @@
-import { RefreshCw } from 'lucide-react';
+import { Building2, RefreshCw } from 'lucide-react';
 import { t, msg } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -61,20 +61,24 @@ function Pagination({
           p4: Math.max(1, data.totalPages),
         })}
       </span>
-      <button
-        className="btn"
-        disabled={busy || !data.hasPreviousPage}
-        onClick={() => change(data.page - 1)}
-      >
-        {t('Trang trước')}
-      </button>
-      <button
-        className="btn"
-        disabled={busy || !data.hasNextPage}
-        onClick={() => change(data.page + 1)}
-      >
-        {t('Trang sau')}
-      </button>
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasPreviousPage}
+          onClick={() => change(data.page - 1)}
+        >
+          {t('Trang trước')}
+        </button>
+      )}
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasNextPage}
+          onClick={() => change(data.page + 1)}
+        >
+          {t('Trang sau')}
+        </button>
+      )}
     </div>
   );
 }
@@ -121,7 +125,7 @@ function Organizations({ user }: { user: Person }) {
         title={admin ? t('Tổ chức & trung tâm') : t('Hồ sơ trung tâm')}
         description={
           admin
-            ? t('Danh sách trung tâm, thành viên và kho license của từng trung tâm.')
+            ? t('Danh sách trung tâm, thành viên và kho suất sử dụng của từng trung tâm.')
             : t('Thông tin liên hệ và thành viên của trung tâm.')
         }
       />
@@ -206,7 +210,6 @@ function Organizations({ user }: { user: Person }) {
           <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
             {list.data && (
               <>
-                {!list.data.items.length && <p>{t('Không có tổ chức phù hợp.')}</p>}
                 <div className="table-scroll">
                   <table>
                     <thead>
@@ -238,6 +241,9 @@ function Organizations({ user }: { user: Person }) {
                       ))}
                     </tbody>
                   </table>
+                  {!list.data.items.length && (
+                    <p className="empty">{t('Không có tổ chức phù hợp.')}</p>
+                  )}
                 </div>
                 <Pagination
                   data={list.data}
@@ -359,7 +365,7 @@ function OrganizationEditor({
               throw new Error(
                 (err.message || t('Lỗi máy chủ.')) +
                   t(
-                    ' Có thể thay đổi đã được lưu; đóng form và tải lại danh sách để kiểm tra trước khi gửi lại.',
+                    ' Có thể thay đổi đã được lưu; đóng hộp thoại và tải lại danh sách để kiểm tra trước khi gửi lại.',
                   ),
                 { cause: error },
               );
@@ -400,26 +406,51 @@ function OrganizationDetails({
   });
   return (
     <section className="glass card stack">
-      <h2>{org.name}</h2>
-      <OrganizationStatus org={org} />
-      <p>{t('Mã tổ chức: {id}', { id: org.id })}</p>
-      <p>
-        {t('Mã số thuế:')} {org.taxCode || t('Chưa có')} {t('· Địa chỉ:')}{' '}
-        {org.address || t('Chưa có')}
-      </p>
-      <p>
-        {t('Liên hệ:')} {org.phoneNumber || t('Chưa có số điện thoại')} ·{' '}
-        {org.contactEmail || t('Chưa có email')}
-      </p>
-      <p>
-        {t('Quản trị trung tâm:')} {org.centerAdminName || t('Chưa có')}{' '}
-        {t('· Nhân viên: {staffCount} · Người khiếm thị: {viuCount}', {
-          staffCount: org.staffCount,
-          viuCount: org.viuCount,
-        })}
-      </p>
+      <header className="org-detail-head">
+        <span className="icon-tile org-detail-icon" aria-hidden="true">
+          <Building2 size={22} />
+        </span>
+        <h2>{org.name}</h2>
+        <OrganizationStatus org={org} />
+      </header>
+      <div className="org-detail-stats">
+        <div>
+          <span className="muted">{t('Nhân viên chăm sóc')}</span>
+          <strong>{org.staffCount}</strong>
+        </div>
+        <div>
+          <span className="muted">{t('Người khiếm thị')}</span>
+          <strong>{org.viuCount}</strong>
+        </div>
+        <div>
+          <span className="muted">{t('Quản trị trung tâm')}</span>
+          <strong className="org-detail-admin">{org.centerAdminName || t('Chưa có')}</strong>
+        </div>
+      </div>
+      <div className="org-detail-info">
+        <dl className="record-details">
+          <div>
+            <dt>{t('Email liên hệ')}</dt>
+            <dd>{org.contactEmail || t('Chưa có email')}</dd>
+          </div>
+          <div>
+            <dt>{t('Số điện thoại')}</dt>
+            <dd>{org.phoneNumber || t('Chưa có số điện thoại')}</dd>
+          </div>
+        </dl>
+        <dl className="record-details">
+          <div>
+            <dt>{t('Mã số thuế')}</dt>
+            <dd>{org.taxCode || t('Chưa có')}</dd>
+          </div>
+          <div>
+            <dt>{t('Địa chỉ')}</dt>
+            <dd>{org.address || t('Chưa có')}</dd>
+          </div>
+        </dl>
+      </div>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
-      <div className="row">
+      <div className="row org-detail-actions">
         {!org.deletedAt && (
           <button className="btn" onClick={() => setEdit(true)}>
             {t('Sửa tổ chức')}
@@ -466,7 +497,7 @@ function OrganizationDetails({
             org.name +
             (action === 'activate'
               ? t(': khôi phục tổ chức; thành viên vẫn cần được kích hoạt riêng.')
-              : t(': thành viên đang hoạt động sẽ bị vô hiệu hóa và thu hồi phiên/FCM.') +
+              : t(': thành viên đang hoạt động sẽ bị vô hiệu hóa và đăng xuất khỏi mọi thiết bị.') +
                 (action === 'delete' ? t(' Tổ chức được đánh dấu xóa mềm.') : ''))
           }
           onClose={() => setAction(null)}
@@ -538,7 +569,6 @@ function OrganizationDetails({
           <State loading={members.isPending} error={members.error} retry={() => members.refetch()}>
             {members.data && (
               <>
-                {!members.data.items.length && <p>{t('Chưa có thành viên phù hợp.')}</p>}
                 <div className="table-scroll">
                   <table>
                     <thead>
@@ -562,6 +592,9 @@ function OrganizationDetails({
                       ))}
                     </tbody>
                   </table>
+                  {!members.data.items.length && (
+                    <p className="empty">{t('Chưa có thành viên phù hợp.')}</p>
+                  )}
                 </div>
                 <Pagination data={members.data} busy={members.isFetching} change={setPage} />
               </>
@@ -586,26 +619,26 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
   const done = (next?: OrganizationPool) =>
     setNotice(
       !next
-        ? t('Đã gửi yêu cầu. Tải lại kho license để xem trạng thái mới.')
+        ? t('Đã gửi yêu cầu. Tải lại kho suất sử dụng để xem trạng thái mới.')
         : next.status === 'Suspended'
-          ? t('Đã tạm ngưng kho license.')
+          ? t('Đã tạm ngưng kho suất sử dụng.')
           : next.status === 'Expired'
             ? t('Đã kích hoạt lại, nhưng kho đã quá hạn nên ở trạng thái Đã hết hạn.')
-            : t('Đã kích hoạt lại kho license.'),
+            : t('Đã kích hoạt lại kho suất sử dụng.'),
     );
   const missing = pool.error instanceof ServiceError && pool.error.status === 404;
   return (
     <section className="stack" aria-labelledby={'pool-' + org.id}>
       <div className="row between">
-        <h3 id={'pool-' + org.id}>{t('Kho license')}</h3>
+        <h3 id={'pool-' + org.id}>{t('Kho suất sử dụng')}</h3>
         <button className="btn small" disabled={pool.isFetching} onClick={() => void reload()}>
           <RefreshCw size={16} aria-hidden="true" />
-          {t('Tải lại kho license')}
+          {t('Tải lại kho suất sử dụng')}
         </button>
       </div>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {missing ? (
-        <p>{t('Tổ chức chưa có kho license.')}</p>
+        <p>{t('Tổ chức chưa có kho suất sử dụng.')}</p>
       ) : (
         <State loading={pool.isPending} error={pool.error} retry={() => void reload()}>
           {pool.data && (
@@ -682,11 +715,11 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
         </State>
       )}
       {action === 'suspend' && pool.data && (
-        <Dialog title={t('Tạm ngưng kho license')} onClose={() => setAction(null)}>
+        <Dialog title={t('Tạm ngưng kho suất sử dụng')} onClose={() => setAction(null)}>
           <div className="stack">
             <p>
               {t(
-                '{name}: người được chăm sóc đang dùng license của kho sẽ chuyển về Chưa có license cho tới khi kích hoạt lại. Trung tâm không cấp thêm suất hoặc tạo mã được.',
+                '{name}: người được chăm sóc đang dùng gói dịch vụ của kho sẽ chuyển về Chưa có gói dịch vụ cho tới khi kích hoạt lại. Trung tâm không cấp thêm suất hoặc tạo mã được.',
                 { name: org.name },
               )}
             </p>
@@ -717,7 +750,7 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
         </Dialog>
       )}
       {action === 'renew' && pool.data && (
-        <Dialog title={t('Gia hạn kho license')} onClose={() => setAction(null)}>
+        <Dialog title={t('Gia hạn kho suất sử dụng')} onClose={() => setAction(null)}>
           <div className="stack">
             <p>
               {t(
@@ -766,10 +799,10 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
                 const shown = fresh ?? next;
                 setNotice(
                   shown?.expiresAt
-                    ? t('Đã gia hạn kho license đến {date}.', {
+                    ? t('Đã gia hạn kho suất sử dụng đến {date}.', {
                         date: formatLocaleDateTime(shown.expiresAt),
                       })
-                    : t('Đã gửi yêu cầu. Tải lại kho license để xem trạng thái mới.'),
+                    : t('Đã gửi yêu cầu. Tải lại kho suất sử dụng để xem trạng thái mới.'),
                 );
                 setAction(null);
               }}
@@ -779,9 +812,9 @@ function OrganizationPoolAdmin({ user, org }: { user: Person; org: Organization 
       )}
       {action === 'reactivate' && pool.data && (
         <Confirm
-          title={t('Kích hoạt lại kho license')}
+          title={t('Kích hoạt lại kho suất sử dụng')}
           description={t(
-            '{name}: kho trở về Đang hoạt động, hoặc Đã hết hạn nếu đã qua ngày hết hạn. License của người được chăm sóc được khôi phục theo trạng thái đó.',
+            '{name}: kho trở về Đang hoạt động, hoặc Đã hết hạn nếu đã qua ngày hết hạn. Gói dịch vụ của người được chăm sóc được khôi phục theo trạng thái đó.',
             { name: org.name },
           )}
           onClose={() => setAction(null)}

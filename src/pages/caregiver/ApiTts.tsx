@@ -11,6 +11,11 @@ import { PageHead, State, Dialog } from '../../components/UI';
 import { Form, type FieldSpec } from '../../components/Form';
 import type { Person, Fields } from '../../models/domain';
 import { uiStore, useUI } from '../../stores/ui';
+// The phone reads with its own voices; these are the languages the app ships prompts for.
+const languageOptions = [
+  { value: 'vi-VN', label: msg('Tiếng Việt') },
+  { value: 'en-US', label: msg('Tiếng Anh') },
+];
 
 const fields: FieldSpec[] = [
   {
@@ -31,7 +36,7 @@ const fields: FieldSpec[] = [
     min: 0.5,
     max: 2,
     step: 0.1,
-    hint: msg('Từ 0,5 đến 2 lần.'),
+    hint: msg('Từ 0,5× (chậm) đến 2× (nhanh); 1× là tốc độ bình thường.'),
   },
   {
     key: 'volumePercent',
@@ -56,15 +61,16 @@ const fields: FieldSpec[] = [
   {
     key: 'primaryLanguage',
     label: msg('Ngôn ngữ chính'),
+    type: 'select',
     required: true,
-    max: 10,
-    hint: msg('Mã ngôn ngữ, ví dụ vi-VN hoặc en-US. Giọng đọc khả dụng phụ thuộc thiết bị.'),
+    options: languageOptions,
+    hint: msg('Giọng đọc khả dụng phụ thuộc điện thoại.'),
   },
   {
     key: 'secondaryLanguage',
     label: msg('Ngôn ngữ phụ'),
-    max: 10,
-    hint: msg('Để trống nếu không dùng ngôn ngữ phụ.'),
+    type: 'select',
+    options: [{ value: '', label: msg('Không dùng') }, ...languageOptions],
   },
 ];
 
@@ -102,9 +108,13 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
               <div key={field.key}>
                 <dt>{tText(field.label)}</dt>
                 <dd>
-                  {field.options?.find((o) => o.value === initial[field.key])?.label ||
-                    String(initial[field.key] === '' ? t('Không dùng') : initial[field.key])}
-                  {field.key === 'volumePercent' ? '%' : field.key === 'speedRate' ? t(' lần') : ''}
+                  {(() => {
+                    const label = field.options?.find((o) => o.value === initial[field.key])?.label;
+                    return label
+                      ? tText(label)
+                      : String(initial[field.key] === '' ? t('Không dùng') : initial[field.key]);
+                  })()}
+                  {field.key === 'volumePercent' ? '%' : field.key === 'speedRate' ? '×' : ''}
                 </dd>
               </div>
             ))}
@@ -133,7 +143,7 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
             {!data && (
               <p>
                 {t(
-                  'Giá trị đề xuất: giọng nữ, tốc độ 1 lần, âm lượng 80%, chế độ đầy đủ và tiếng Việt. Chỉ được lưu khi bạn xác nhận.',
+                  'Giá trị đề xuất: giọng nữ, tốc độ 1×, âm lượng 80%, chế độ đầy đủ và tiếng Việt. Chỉ được lưu khi bạn xác nhận.',
                 )}
               </p>
             )}
@@ -143,14 +153,14 @@ function TtsSettings({ actor, viuId, name }: { actor: Person; viuId: string; nam
               onSubmit={async (values) => {
                 try {
                   await ttsApi.save(actor, viuId, values);
-                  setNotice(t('Đã lưu cấu hình trên máy chủ. Kiểm tra lại trên Mobile.'));
+                  setNotice(t('Đã lưu cấu hình trên máy chủ. Kiểm tra lại trên điện thoại.'));
                   setEditing(false);
                   await cache.invalidateQueries({ queryKey: key });
                 } catch (error) {
                   if ((error as { status?: number }).status! >= 500)
                     throw new Error(
                       t(
-                        'Chưa xác nhận được kết quả lưu. Đóng popup và tải lại cấu hình trước khi gửi lại.',
+                        'Chưa xác nhận được kết quả lưu. Đóng hộp thoại và tải lại cấu hình trước khi gửi lại.',
                       ),
                       { cause: error },
                     );
@@ -192,7 +202,7 @@ function Tts({ actor }: { actor: Person }) {
           'Chọn giọng, tốc độ và âm lượng đọc trên điện thoại của người được chăm sóc.',
         )}
       />
-      <section className="glass card stack">
+      <section className="glass card stack viu-picker">
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {
@@ -234,7 +244,7 @@ function Tts({ actor }: { actor: Person }) {
               ))}
             </select>
           </label>
-          {users.data && (
+          {users.data && users.data.totalPages > 1 && (
             <div className="row pagination">
               <span>
                 {t('{totalCount} người · Trang {page}/{p4}', {
@@ -243,26 +253,30 @@ function Tts({ actor }: { actor: Person }) {
                   p4: Math.max(1, users.data.totalPages),
                 })}
               </span>
-              <button
-                className="btn"
-                disabled={!users.data.hasPreviousPage || users.isFetching}
-                onClick={() => {
-                  setPage(page - 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={!users.data.hasNextPage || users.isFetching}
-                onClick={() => {
-                  setPage(page + 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang sau')}
-              </button>
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasPreviousPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page - 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasNextPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page + 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </div>
           )}
           {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}

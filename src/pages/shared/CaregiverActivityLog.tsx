@@ -1,3 +1,4 @@
+import { historyReason } from '../../constants/serverValues';
 import { RefreshCw } from 'lucide-react';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
@@ -101,11 +102,11 @@ export function CaregiverActivityLog({
         />
         <div className="filter-range wide">
           <label className="field">
-            {t('Thao tác từ ngày (UTC)')}
+            {t('Thao tác từ ngày')}
             <input type="date" name="dateFrom" defaultValue={filters.dateFrom} />
           </label>
           <label className="field">
-            {t('Thao tác đến ngày (UTC)')}
+            {t('Thao tác đến ngày')}
             <input type="date" name="dateTo" defaultValue={filters.dateTo} />
           </label>
         </div>
@@ -114,46 +115,43 @@ export function CaregiverActivityLog({
         <p role="status">{t('Đang lọc theo: {name}', { name: filters.caregiverName })}</p>
       )}
       <State loading={log.isPending} error={log.error} retry={() => log.refetch()}>
-        {log.data?.items.length ? (
-          <div
-            className="table-scroll"
-            role="region"
-            aria-label={t('Bảng hoạt động xử lý cảnh báo')}
-            tabIndex={0}
-          >
-            <table style={{ minWidth: 760 }}>
-              <thead>
-                <tr>
-                  <th>{t('Thời điểm')}</th>
-                  <th>{t('Người chăm sóc')}</th>
-                  <th>{t('Người khiếm thị')}</th>
-                  <th>{t('Đổi trạng thái')}</th>
-                  <th>{t('Lý do')}</th>
+        <div
+          className="table-scroll"
+          role="region"
+          aria-label={t('Bảng hoạt động xử lý cảnh báo')}
+          tabIndex={0}
+        >
+          <table style={{ minWidth: 760 }}>
+            <thead>
+              <tr>
+                <th>{t('Thời điểm')}</th>
+                <th>{t('Người chăm sóc')}</th>
+                <th>{t('Người khiếm thị')}</th>
+                <th>{t('Đổi trạng thái')}</th>
+                <th>{t('Lý do')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {log.data?.items.map((item) => (
+                <tr key={`${item.emergencyEventId}-${item.changedAt}-${item.toStatus}`}>
+                  <td>{formatLocaleDateTime(item.changedAt)}</td>
+                  <td>
+                    <strong>{item.caregiverName}</strong>
+                  </td>
+                  <td>{item.viuName}</td>
+                  <td>
+                    {t('{from} → {to}', {
+                      from: statusLabel(item.fromStatus),
+                      to: statusLabel(item.toStatus),
+                    })}
+                  </td>
+                  <td style={{ overflowWrap: 'anywhere' }}>{historyReason(item.reason) || '—'}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {log.data.items.map((item) => (
-                  <tr key={`${item.emergencyEventId}-${item.changedAt}-${item.toStatus}`}>
-                    <td>{formatLocaleDateTime(item.changedAt)}</td>
-                    <td>
-                      <strong>{item.caregiverName}</strong>
-                    </td>
-                    <td>{item.viuName}</td>
-                    <td>
-                      {t('{from} → {to}', {
-                        from: statusLabel(item.fromStatus),
-                        to: statusLabel(item.toStatus),
-                      })}
-                    </td>
-                    <td style={{ overflowWrap: 'anywhere' }}>{item.reason || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>{t('Chưa có hoạt động phù hợp.')}</p>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {!log.data?.items.length && <p className="empty">{t('Chưa có hoạt động phù hợp.')}</p>}
+        </div>
         {log.data && (
           <div className="row pagination">
             <span>
@@ -165,20 +163,24 @@ export function CaregiverActivityLog({
             </span>
             {(log.data.totalPages > 1 || page > 1) && (
               <>
-                <button
-                  className="btn"
-                  disabled={log.isFetching || !log.data.hasPreviousPage}
-                  onClick={() => setPage(page - 1)}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={log.isFetching || !log.data.hasNextPage}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(log.data.hasPreviousPage || log.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={log.isFetching || !log.data.hasPreviousPage}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(log.data.hasPreviousPage || log.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={log.isFetching || !log.data.hasNextPage}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </>
             )}
           </div>

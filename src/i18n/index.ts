@@ -112,7 +112,10 @@ export function translate(
 }
 applyDocumentLang(current);
 /** Translates with the current locale. Call during render or when the text is produced. */
-export const t = (id: MessageId, params?: MessageParams) => translate(current, id, params);
+// Result summaries read "12 kết quả · Trang 1/1"; with a single page the page part says nothing.
+const singlePage = / · (Trang|Page) 1\/1$/;
+export const t = (id: MessageId, params?: MessageParams) =>
+  translate(current, id, params).replace(singlePage, '');
 /** Translates text that is only known at runtime (stored labels); unknown text is returned as is. */
 export const tText = (text: string, params?: MessageParams) => translate(current, text, params);
 /** Marks module-level copy for translation later at render time (`t(label)`); returns the id. */
@@ -135,10 +138,19 @@ export function useI18n() {
   return { locale, setLocale, t };
 }
 const toDate = (value: string | number | Date) => (value instanceof Date ? value : new Date(value));
-/** Date + time in the locale's default layout; replaces `toLocaleString('vi-VN', options)`. */
+/** The one date-time layout shown across the app: "17:23 10/11/2026" in Vietnam time. */
+export const DATE_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: 'Asia/Ho_Chi_Minh',
+};
+/** Date + time; without options it uses the shared layout, with options it behaves like `toLocaleString`. */
 export const formatLocaleDateTime = (
   value: string | number | Date,
-  options?: Intl.DateTimeFormatOptions,
+  options: Intl.DateTimeFormatOptions = DATE_TIME_OPTIONS,
 ) => toDate(value).toLocaleString(intlLocale(), options);
 export const formatNumber = (value: number, options: Intl.NumberFormatOptions = {}) =>
   new Intl.NumberFormat(intlLocale(), options).format(value);

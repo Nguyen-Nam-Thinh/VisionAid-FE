@@ -27,13 +27,13 @@ export function RulesManager({ global = false }: { global?: boolean }) {
             { value: 'BATTERY', label: t('Pin yếu') },
           ],
         },
-        { key: 'push', label: t('Kênh push'), type: 'checkbox' },
+        { key: 'push', label: t('Kênh thông báo đẩy'), type: 'checkbox' },
         { key: 'email', label: t('Kênh email'), type: 'checkbox' },
         { key: 'mandatory', label: t('Thông báo bắt buộc'), type: 'checkbox' },
         {
           key: 'recipient',
           label: t('Email bàn trực (tùy chọn)'),
-          hint: t('Địa chỉ nhận bổ sung trong quy tắc demo; chờ contract BE cho routing thật.'),
+          hint: t('Địa chỉ nhận bổ sung trong quy tắc demo; chưa dùng để gửi thông báo thật.'),
         },
       ]}
       details={(e) => (

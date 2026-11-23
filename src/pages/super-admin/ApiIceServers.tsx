@@ -34,8 +34,10 @@ function Servers({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title={t('Máy chủ kết nối cuộc gọi')}
-        description={t('Máy chủ STUN/TURN giúp cuộc gọi video kết nối được qua mọi mạng.')}
+        title={t('Máy chủ hỗ trợ cuộc gọi')}
+        description={t(
+          'Máy chủ trung gian giúp cuộc gọi video giữa điện thoại và trang web vẫn kết nối được khi mạng hai bên khác nhau hoặc bị chặn.',
+        )}
       />
       <section className="glass card stack">
         <CardActions>
@@ -75,64 +77,72 @@ function Servers({ actor }: { actor: Person }) {
         <State loading={query.isPending} error={query.error} retry={() => void query.refetch()}>
           {query.data && (
             <>
-              {!query.data.items.length ? (
-                <p>{t('Không có máy chủ phù hợp.')}</p>
-              ) : (
-                <div
-                  className="table-scroll"
-                  role="region"
-                  aria-label={t('Máy chủ ICE')}
-                  tabIndex={0}
-                >
-                  <table style={{ minWidth: 720 }}>
-                    <thead>
-                      <tr>
-                        <th>{t('Loại')}</th>
-                        <th>{t('Địa chỉ')}</th>
-                        <th>{t('Ưu tiên')}</th>
-                        <th>{t('Trạng thái')}</th>
-                        <th>{t('Thao tác')}</th>
+              <div
+                className="table-scroll"
+                role="region"
+                aria-label={t('Máy chủ kết nối cuộc gọi')}
+                tabIndex={0}
+              >
+                <table style={{ minWidth: 720 }}>
+                  <thead>
+                    <tr>
+                      <th>{t('Loại')}</th>
+                      <th>{t('Địa chỉ')}</th>
+                      <th>{t('Ưu tiên')}</th>
+                      <th>{t('Trạng thái')}</th>
+                      <th>{t('Thao tác')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {query.data.items.map((server) => (
+                      <tr key={server.id}>
+                        <td>{server.serverType.toUpperCase()}</td>
+                        <td style={{ overflowWrap: 'anywhere' }}>
+                          {server.url}
+                          {server.serverType === 'Turn' && server.hasCredential !== undefined && (
+                            <small className="muted" style={{ display: 'block' }}>
+                              {server.hasCredential
+                                ? t('Dùng mật khẩu cố định')
+                                : t('Mật khẩu tạm do máy chủ cấp mỗi cuộc gọi')}
+                            </small>
+                          )}
+                        </td>
+                        <td>{server.priority}</td>
+                        <td>
+                          <Badge tone={server.isActive ? 'green' : 'amber'}>
+                            {server.isActive ? t('Đang bật') : t('Đang tắt')}
+                          </Badge>
+                        </td>
+                        <td>
+                          <div className="row">
+                            <button
+                              className="btn small"
+                              onClick={() => {
+                                setNotice('');
+                                setChange({ server });
+                              }}
+                            >
+                              {t('Chỉnh sửa')}
+                            </button>
+                            <button
+                              className="btn small danger"
+                              onClick={() => {
+                                setNotice('');
+                                setChange({ server, remove: true });
+                              }}
+                            >
+                              {t('Xóa')}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {query.data.items.map((server) => (
-                        <tr key={server.id}>
-                          <td>{server.serverType.toUpperCase()}</td>
-                          <td style={{ overflowWrap: 'anywhere' }}>{server.url}</td>
-                          <td>{server.priority}</td>
-                          <td>
-                            <Badge tone={server.isActive ? 'green' : 'amber'}>
-                              {server.isActive ? t('Đang bật') : t('Đang tắt')}
-                            </Badge>
-                          </td>
-                          <td>
-                            <div className="row">
-                              <button
-                                className="btn small"
-                                onClick={() => {
-                                  setNotice('');
-                                  setChange({ server });
-                                }}
-                              >
-                                {t('Chỉnh sửa')}
-                              </button>
-                              <button
-                                className="btn small danger"
-                                onClick={() => {
-                                  setNotice('');
-                                  setChange({ server, remove: true });
-                                }}
-                              >
-                                {t('Xóa')}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ))}
+                  </tbody>
+                </table>
+                {!query.data.items.length && (
+                  <p className="empty">{t('Không có máy chủ phù hợp.')}</p>
+                )}
+              </div>
               <div className="row pagination">
                 <span>
                   {t('{totalCount} máy chủ · Trang {page}/{p4}', {
@@ -142,20 +152,24 @@ function Servers({ actor }: { actor: Person }) {
                   })}
                 </span>
                 <div className="row">
-                  <button
-                    className="btn"
-                    disabled={!query.data.hasPreviousPage || query.isFetching}
-                    onClick={() => setFilter({ ...filter, page: filter.page - 1 })}
-                  >
-                    {t('Trang trước')}
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={!query.data.hasNextPage || query.isFetching}
-                    onClick={() => setFilter({ ...filter, page: filter.page + 1 })}
-                  >
-                    {t('Trang sau')}
-                  </button>
+                  {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={!query.data.hasPreviousPage || query.isFetching}
+                      onClick={() => setFilter({ ...filter, page: filter.page - 1 })}
+                    >
+                      {t('Trang trước')}
+                    </button>
+                  )}
+                  {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={!query.data.hasNextPage || query.isFetching}
+                      onClick={() => setFilter({ ...filter, page: filter.page + 1 })}
+                    >
+                      {t('Trang sau')}
+                    </button>
+                  )}
                 </div>
               </div>
             </>
@@ -225,14 +239,14 @@ function Change({
         {!remove && (
           <p>
             {t(
-              'TURN cần nhập tên đăng nhập và credential mỗi lần lưu. Ô credential luôn trống khi mở, không dùng lại giá trị cũ. STUN bỏ qua hai ô này.',
+              'TURN: để trống cả tên đăng nhập và mật khẩu thì máy chủ tự cấp mật khẩu tạm cho mỗi cuộc gọi (nên dùng). Muốn dùng mật khẩu cố định thì nhập cả hai mỗi lần lưu; ô mật khẩu luôn trống khi mở. STUN bỏ qua hai ô này.',
             )}
           </p>
         )}
         {uncertain ? (
           <p className="notice error" role="alert">
             {t(
-              'Chưa xác nhận kết quả ghi. Đóng popup và tải lại danh sách trước khi gửi lại để tránh tạo hoặc ghi trùng.',
+              'Chưa xác nhận kết quả ghi. Đóng hộp thoại và tải lại danh sách trước khi gửi lại để tránh tạo hoặc ghi trùng.',
             )}
           </p>
         ) : (
@@ -282,7 +296,7 @@ function Change({
                     },
                     {
                       key: 'credential',
-                      label: t('Credential TURN muốn áp dụng'),
+                      label: t('Mật khẩu TURN muốn áp dụng'),
                       type: 'password' as const,
                       max: 200,
                       autoComplete: 'new-password',

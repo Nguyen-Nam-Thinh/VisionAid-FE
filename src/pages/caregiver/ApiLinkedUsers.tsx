@@ -136,7 +136,7 @@ export function ApiLinkedUsers() {
                           <th>Email</th>
                           <th>{t('Điện thoại')}</th>
                           <th>{t('Tài khoản')}</th>
-                          <th>License</th>
+                          <th>{t('Gói dịch vụ')}</th>
                           <th>{t('Thao tác')}</th>
                         </tr>
                       </thead>
@@ -183,26 +183,30 @@ export function ApiLinkedUsers() {
                 </>
               )}
               <div className="row pagination">
-                <button
-                  className="btn"
-                  disabled={!query.data.hasPreviousPage || query.isFetching}
-                  onClick={() => {
-                    setPage(page - 1);
-                    setSelected('');
-                  }}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={!query.data.hasNextPage || query.isFetching}
-                  onClick={() => {
-                    setPage(page + 1);
-                    setSelected('');
-                  }}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={!query.data.hasPreviousPage || query.isFetching}
+                    onClick={() => {
+                      setPage(page - 1);
+                      setSelected('');
+                    }}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(query.data.hasPreviousPage || query.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={!query.data.hasNextPage || query.isFetching}
+                    onClick={() => {
+                      setPage(page + 1);
+                      setSelected('');
+                    }}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </div>
             </>
           )}

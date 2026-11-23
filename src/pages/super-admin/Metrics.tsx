@@ -21,7 +21,7 @@ export function Metrics() {
       <PageHead
         title={t('Hiệu năng AI')}
         description={t(
-          'Số liệu tổng hợp mô phỏng theo model và ngày. Confidence và tỷ lệ xử lý thành công không phải độ chính xác có ground truth.',
+          'Số liệu mô phỏng theo từng mô hình AI và từng ngày. Mức độ chắc chắn và tỷ lệ xử lý thành công không có nghĩa là AI nhận diện đúng.',
         )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
@@ -48,9 +48,9 @@ export function Metrics() {
           <div className="grid">
             {[
               [t('Lượt xử lý'), count],
-              [t('Latency trung bình'), count ? latency.toFixed(0) + ' ms' : '—'],
+              [t('Thời gian phản hồi trung bình'), count ? latency.toFixed(0) + ' ms' : '—'],
               [t('Xử lý thành công'), count ? ((successes / count) * 100).toFixed(1) + '%' : '—'],
-              [t('Confidence trung bình'), count ? (confidence * 100).toFixed(1) + '%' : '—'],
+              [t('Độ tin cậy trung bình'), count ? (confidence * 100).toFixed(1) + '%' : '—'],
             ].map(([label, value]) => (
               <section className="glass card" key={label}>
                 <p className="muted">{label}</p>
@@ -59,7 +59,7 @@ export function Metrics() {
             ))}
           </div>
           <section className="glass card stack">
-            <h2>{t('Latency theo mô hình')}</h2>
+            <h2>{t('Thời gian phản hồi theo mô hình')}</h2>
             <div className="bars">
               {['YOLOv8n', 'VietOCR', 'FaceNet'].map((m) => {
                 const group = rows.filter((r) => r.model === m);

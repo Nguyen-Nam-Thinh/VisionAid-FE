@@ -26,7 +26,7 @@ export function Reports() {
       <PageHead
         title={t('Báo cáo hoạt động')}
         description={t(
-          'Cảnh báo và thời gian phản hồi của nhân viên trong trung tâm. Không bao gồm audit toàn hệ thống.',
+          'Cảnh báo và thời gian phản hồi của nhân viên trong trung tâm. Không gồm nhật ký thao tác của toàn hệ thống.',
         )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
@@ -78,7 +78,7 @@ export function Reports() {
                 render: (a) => db?.people.find((p) => p.id === a.viuId)?.name,
               },
               { label: t('Sự kiện'), render: (a) => a.type },
-              { label: t('Thời gian · UTC+7'), render: (a) => formatTime(a.at) },
+              { label: t('Thời gian'), render: (a) => formatTime(a.at) },
               { label: t('Trạng thái'), render: (a) => <Badge>{statuses[a.status]}</Badge> },
               {
                 label: t('Nhân viên / phản hồi'),

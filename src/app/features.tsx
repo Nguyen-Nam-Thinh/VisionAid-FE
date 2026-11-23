@@ -109,13 +109,15 @@ export const features: Feature[] = [
   { role: 'CenterAdmin', path: 'routing', label: msg('Quy tắc thông báo'), component: Routing },
   { role: 'CenterAdmin', path: 'reports', label: msg('Báo cáo hoạt động'), component: Reports },
   { role: 'CenterAdmin', path: 'map', label: msg('Bản đồ toàn trung tâm'), component: Fleet },
+  // BE lets a Center Admin acknowledge, escalate and resolve alerts of their organization.
+  { role: 'CenterAdmin', path: 'alerts', label: msg('Cảnh báo khẩn cấp'), component: Alerts },
   {
     role: 'CenterAdmin',
     path: 'assignments',
     label: msg('Phân công chăm sóc'),
     component: Assignments,
   },
-  { role: 'CenterAdmin', path: 'users', label: msg('Người dùng VIU'), component: Vius },
+  { role: 'CenterAdmin', path: 'users', label: msg('Người khiếm thị'), component: Vius },
   { role: 'CenterAdmin', path: 'staff', label: msg('Nhân viên chăm sóc'), component: Staff },
   {
     role: 'CenterAdmin',

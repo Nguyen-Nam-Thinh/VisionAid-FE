@@ -1,6 +1,7 @@
 import { t } from '../i18n';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Filter, RotateCcw, Search } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 
 /**
  * Collapses a list's filters behind a "Bộ lọc" button. The panel stays mounted while closed so
@@ -30,6 +31,7 @@ export function FilterPanel({
   const anchor = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const form = useRef<HTMLFormElement>(null);
+  const still = useReducedMotion();
   useEffect(() => {
     if (!open) return;
     const outside = (e: PointerEvent) => {
@@ -71,12 +73,20 @@ export function FilterPanel({
               </span>
             )}
           </button>
-          <form
+          {/* Motion fades the panel in and out: inert as soon as it closes, out of the layout once the fade ends. */}
+          <motion.form
             id={id}
             ref={form}
             className="filter-popover"
             aria-label={t('Bộ lọc')}
-            hidden={!open}
+            inert={!open}
+            initial={false}
+            animate={
+              open
+                ? { opacity: 1, y: 0, scale: 1, display: 'grid' }
+                : { opacity: 0, y: -6, scale: 0.98, transitionEnd: { display: 'none' } }
+            }
+            transition={{ duration: still ? 0 : 0.16, ease: 'easeOut' }}
             onSubmit={(e) => {
               e.preventDefault();
               onApply(e.currentTarget);
@@ -102,7 +112,7 @@ export function FilterPanel({
                 {submitLabel}
               </button>
             </div>
-          </form>
+          </motion.form>
         </div>
         {tools}
       </div>

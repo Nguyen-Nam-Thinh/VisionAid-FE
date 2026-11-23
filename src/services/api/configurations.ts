@@ -8,6 +8,11 @@ import type { Person } from '../../models/domain';
 const reviewedKeys = new Set([
   'ai.yolo.confidence_threshold',
   'ai.facenet.similarity_threshold',
+  'ai.facenet.liveness_enabled',
+  'ai.vision_assist.enabled',
+  'ai.vision_assist.timeout_ms',
+  'ai.vision_assist.daily_limit',
+  'ai.facenet.liveness_threshold',
   'caregiving.max_caregivers_per_viu',
   'caregiving.max_vius_per_caregiver',
   'face_registry.min_photos_to_activate',
@@ -33,6 +38,10 @@ const reviewedKeys = new Set([
   'webrtc_ring_timeout_seconds',
   'payos_enabled',
   'ocr_confidence_threshold',
+  'caregiving.invitation_ttl_minutes',
+  'retention.activity_log_days',
+  'retention.notification_days',
+  'license.auto_renew.reminder_days_before_expiry',
 ]);
 const uuid = z.string().uuid();
 const configSchema = z
@@ -133,7 +142,7 @@ export function validateConfigValue(config: SystemConfig, value: string) {
     try {
       JSON.parse(value);
     } catch {
-      throw new ServiceError(t('JSON không hợp lệ.'), 400);
+      throw new ServiceError(t('Dữ liệu không đúng định dạng.'), 400);
     }
   }
   const choices: Record<string, string[]> = {
@@ -159,7 +168,10 @@ export function createConfigurationsApi(get = apiGet, write = apiWrite) {
         (key) => latest[key as keyof SystemConfig] !== config[key as keyof SystemConfig],
       )
     )
-      throw new ServiceError(t('Cấu hình đã thay đổi. Đóng popup và tải lại trước khi sửa.'), 409);
+      throw new ServiceError(
+        t('Cấu hình đã thay đổi. Đóng hộp thoại và tải lại trước khi sửa.'),
+        409,
+      );
     return latest;
   }
   async function mutate(

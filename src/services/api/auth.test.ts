@@ -468,3 +468,23 @@ it('BR-10: register and profile reject full names shorter than 2 characters befo
   });
   expect(fetcher).not.toHaveBeenCalled();
 });
+
+it('adopts the stored session written by another client instance instead of asking to log in', async () => {
+  const storage = memory();
+  const seen: string[] = [];
+  const fetcher = vi.fn<typeof fetch>(async (_url, init) => {
+    seen.push(new Headers(init?.headers).get('Authorization') ?? '');
+    return ok(user);
+  });
+  // Created before login (dev hot reload): memory holds no tokens.
+  const stale = createApiAuth('http://example.test', storage, fetcher);
+  const fresh = pair();
+  storage.setItem(authSessionKey, JSON.stringify(fresh));
+  await stale.get('/api/users/me');
+  expect(seen.at(-1)).toBe(`Bearer ${fresh.accessToken}`);
+  // A rotated pair saved by the other instance replaces the old one here too.
+  const rotated = { ...pair(), refreshToken: 'refresh-rotated' };
+  storage.setItem(authSessionKey, JSON.stringify(rotated));
+  await stale.get('/api/users/me');
+  expect(seen.at(-1)).toBe(`Bearer ${rotated.accessToken}`);
+});

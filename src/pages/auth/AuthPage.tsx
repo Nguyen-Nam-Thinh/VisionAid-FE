@@ -1,5 +1,6 @@
 import { t } from '../../i18n';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
+import { ThemeSwitch } from '../../components/ThemeSwitch';
 import { useState } from 'react';
 import {
   Link,
@@ -86,7 +87,8 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
         ];
   return (
     <div className="auth">
-      <aside className="auth-story">
+      {/* Keyed by the screen so the story animates in again when switching sign-in and sign-up. */}
+      <aside className="auth-story" key={action}>
         <div className="row">
           <img
             className="brand-icon"
@@ -117,7 +119,10 @@ export function AuthPage({ action: fixedAction }: { action?: string } = {}) {
         <div className="stack">
           <div className="row between">
             <Link to="/">{t('← Về trang chủ')}</Link>
-            <LanguageSwitch />
+            <div className="row">
+              <ThemeSwitch />
+              <LanguageSwitch />
+            </div>
           </div>
           {notice && (
             <p className="notice" role="status">

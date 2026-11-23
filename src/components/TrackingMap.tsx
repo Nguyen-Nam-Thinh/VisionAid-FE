@@ -39,10 +39,10 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
             {rt.state === 'connected' ? <Wifi size={14} /> : <WifiOff size={14} />}
             {
               {
-                connected: t('Realtime mô phỏng'),
+                connected: t('Cập nhật trực tiếp (mô phỏng)'),
                 disconnected: t('Đã ngắt kết nối'),
                 reconnecting: t('Đang kết nối lại…'),
-                unconfigured: t('Chưa cấu hình SignalR'),
+                unconfigured: t('Chưa cấu hình cập nhật trực tiếp'),
               }[rt.state]
             }
           </Badge>
@@ -91,9 +91,7 @@ export function TrackingMap({ fleet = false }: { fleet?: boolean }) {
                 </span>
                 <div>
                   <h2>{selected?.name}</h2>
-                  <p className="muted">
-                    {t('Lần ghi nhận: {p1} · UTC+7', { p1: formatTime(current.at) })}
-                  </p>
+                  <p className="muted">{t('Lần ghi nhận: {p1}', { p1: formatTime(current.at) })}</p>
                 </div>
               </div>
               <Badge tone={isStale(current, now) ? 'amber' : 'green'}>

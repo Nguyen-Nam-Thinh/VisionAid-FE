@@ -120,7 +120,7 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
       cg.role !== 'Caregiver' ||
       viu.role !== 'VisuallyImpaired'
     )
-      throw new ServiceError(t('Sai tài khoản Caregiver hoặc VIU.'), 403);
+      throw new ServiceError(t('Sai tài khoản người chăm sóc hoặc người khiếm thị.'), 403);
     if (
       actor.role === 'CenterAdmin' &&
       (cg.organizationId !== actor.orgId || viu.organizationId !== actor.orgId)

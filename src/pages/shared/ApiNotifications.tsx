@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { searchOrganizations } from '../../services/api/pickers';
 import { useOwnOrgName } from '../../hooks/useOrgPeople';
+import { organizationsApi } from '../../services/api/organizations';
 import { Form, type FieldSpec } from '../../components/Form';
 import { CardActions, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
@@ -81,8 +82,26 @@ function Notifications({ actor }: { actor: Person }) {
   });
   const query = personal ? prefs : rules;
   const orgName = useOwnOrgName(actor);
+  // Admin rules can target any center: show its name, never the organization id.
+  const orgNames = useQuery({
+    queryKey: ['api-notification-org-names', actor.id],
+    queryFn: async ({ signal }) => {
+      const names: Record<string, string> = {};
+      for (let p = 1; p <= 5; p++) {
+        const result = await organizationsApi.list(actor, p, '', '', 'false', signal);
+        for (const org of result.items) names[org.id] = org.name;
+        if (!result.hasNextPage) break;
+      }
+      return names;
+    },
+    enabled: actor.role === 'Admin' && allowed && !personal,
+    staleTime: 5 * 60000,
+    retry: false,
+  });
   const scope = (orgId: string | null) =>
-    orgId ? (orgId === actor.orgId && orgName) || orgId : t('Toàn hệ thống');
+    orgId
+      ? (orgId === actor.orgId && orgName) || orgNames.data?.[orgId] || t('Một trung tâm')
+      : t('Toàn hệ thống');
   async function changed(
     message = t(
       'Đã lưu trên máy chủ. Việc gửi thông báo còn phụ thuộc quy tắc và dịch vụ phân phối.',
@@ -107,8 +126,10 @@ function Notifications({ actor }: { actor: Person }) {
         title={personal ? t('Tùy chọn thông báo') : t('Quy tắc thông báo')}
         description={
           personal
-            ? t('Thiết lập theo loại và kênh cho tài khoản của bạn.')
-            : t('Quy tắc toàn hệ thống và quy tắc riêng của trung tâm.')
+            ? t('Chọn loại thông báo bạn muốn nhận và cách nhận (ứng dụng, email, trên web).')
+            : t(
+                'Quy định ai nhận thông báo nào: quy định chung của hệ thống và quy định riêng của trung tâm.',
+              )
         }
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
@@ -116,7 +137,7 @@ function Notifications({ actor }: { actor: Person }) {
         {personal && (
           <p className="muted">
             {t(
-              'Lưu tùy chọn Push chưa bật nhận thông báo trên trình duyệt này. Để nhận push, vào Hồ sơ và chọn Bật thông báo trình duyệt.',
+              'Các tùy chọn ở đây chỉ chọn loại thông báo muốn nhận; chúng không tự bật thông báo trên trình duyệt này. Muốn nhận thông báo ngay trên máy, vào Hồ sơ và chọn Bật thông báo trình duyệt.',
             )}
           </p>
         )}
@@ -200,9 +221,6 @@ function Notifications({ actor }: { actor: Person }) {
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
           {personal ? (
             <>
-              {!prefs.data?.length && (
-                <p>{t('Chưa lưu tùy chọn nào. Máy chủ áp dụng quy tắc mặc định.')}</p>
-              )}
               <div className="table-scroll">
                 <table>
                   <thead>
@@ -237,11 +255,15 @@ function Notifications({ actor }: { actor: Person }) {
                     ))}
                   </tbody>
                 </table>
+                {!prefs.data?.length && (
+                  <p className="empty">
+                    {t('Chưa lưu tùy chọn nào. Máy chủ áp dụng quy tắc mặc định.')}
+                  </p>
+                )}
               </div>
             </>
           ) : (
             <>
-              {!rules.data?.items.length && <p>{t('Không có quy tắc phù hợp.')}</p>}
               <div className="table-scroll">
                 <table>
                   <thead>
@@ -308,6 +330,9 @@ function Notifications({ actor }: { actor: Person }) {
                     ))}
                   </tbody>
                 </table>
+                {!rules.data?.items.length && (
+                  <p className="empty">{t('Không có quy tắc phù hợp.')}</p>
+                )}
               </div>
               {rules.data && (
                 <div className="row pagination">
@@ -318,20 +343,24 @@ function Notifications({ actor }: { actor: Person }) {
                       p4: Math.max(1, rules.data.totalPages),
                     })}
                   </span>
-                  <button
-                    className="btn"
-                    disabled={rules.isFetching || !rules.data.hasPreviousPage}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    {t('Trang trước')}
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={rules.isFetching || !rules.data.hasNextPage}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    {t('Trang sau')}
-                  </button>
+                  {(rules.data.hasPreviousPage || rules.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={rules.isFetching || !rules.data.hasPreviousPage}
+                      onClick={() => setPage(page - 1)}
+                    >
+                      {t('Trang trước')}
+                    </button>
+                  )}
+                  {(rules.data.hasPreviousPage || rules.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={rules.isFetching || !rules.data.hasNextPage}
+                      onClick={() => setPage(page + 1)}
+                    >
+                      {t('Trang sau')}
+                    </button>
+                  )}
                 </div>
               )}
             </>

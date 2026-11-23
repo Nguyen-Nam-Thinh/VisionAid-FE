@@ -1,6 +1,6 @@
 import { t, msg, labelMap } from '../../i18n';
 import { z } from 'zod';
-import { apiGet } from './adapter';
+import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
 import type { Person } from '../../models/domain';
 
@@ -44,10 +44,36 @@ const failed = z.object({
   recipientId: uuid,
   notificationType: z.string(),
   channel: z.string(),
-  status: z.literal('Failed'),
+  status: z.string(),
   failureReason: z.string().nullable(),
   createdAt: time,
+  // Manual resend (BE 4ed129c); optional so older deploys still parse.
+  retryCount: count.optional(),
+  lastRetriedAt: time.nullable().optional(),
+  sentAt: time.nullable().optional(),
+  canRetry: z.boolean().optional(),
+  retryBlockedCode: z.string().nullable().optional(),
+  retryBlockedReason: z.string().nullable().optional(),
 });
+/** Why a failed notification cannot be resent, keyed by the BE's retryBlockedCode. */
+export const retryBlockedLabels: Record<string, string> = labelMap({
+  NOT_FAILED: msg('Chỉ gửi lại được thông báo đang thất bại.'),
+  RETRY_LIMIT_REACHED: msg('Thông báo này đã được gửi lại đủ 3 lần.'),
+  RECIPIENT_INACTIVE: msg('Tài khoản người nhận đã bị khóa hoặc xóa.'),
+  UNSUPPORTED_CHANNEL: msg('Kênh này không hỗ trợ gửi lại.'),
+  TIME_SENSITIVE: msg(
+    'Thông báo đã đến nơi chỉ có ích ngay lúc đến; gửi lại muộn sẽ gây hiểu nhầm.',
+  ),
+  NO_ACTIVE_DEVICE: msg(
+    'Người nhận chưa đăng nhập thiết bị nào. Gửi lại sau khi họ đăng nhập ứng dụng.',
+  ),
+  EMERGENCY_CLOSED: msg('Sự cố khẩn cấp đã được giải quyết, đã bỏ qua hoặc đã gọi hỗ trợ.'),
+  EVENT_TOO_OLD: msg('Thông báo đã quá cũ để gửi lại.'),
+  NO_LONGER_APPLIES: msg('Gói dịch vụ đã được gia hạn nên lời nhắc không còn cần thiết.'),
+  RECIPIENT_NO_LONGER_LINKED: msg('Người nhận không còn nhận cảnh báo của người này.'),
+  NOTIFICATION_RETRY_IN_PROGRESS: msg('Thông báo này đang được gửi lại.'),
+});
+export type FailedNotification = z.infer<typeof failed>;
 // Keep operational metadata only; scene JSON and spoken content stay out of cache/UI.
 const guidance = z.object({
   id: uuid,
@@ -60,7 +86,7 @@ const guidance = z.object({
   latencyMs: count.nullable(),
   createdAt: time,
 });
-export const guidanceEngines = ['Jev', 'Groq', 'RuleBased'] as const;
+export const guidanceEngines = ['Jev', 'Groq', 'RuleBased', 'OnDeviceRules'] as const;
 const period = z.object({
   totalSent: count,
   totalFailed: count,
@@ -123,8 +149,8 @@ export const auditActionLabels: Record<AuditAction, string> = labelMap({
   OrganizationUpdated: msg('Cập nhật tổ chức'),
   UserAssignedToOrg: msg('Thêm người dùng vào tổ chức'),
   UserRemovedFromOrg: msg('Gỡ người dùng khỏi tổ chức'),
-  LicensePoolSuspended: msg('Đình chỉ kho license'),
-  LicensePoolReactivated: msg('Kích hoạt lại kho license'),
+  LicensePoolSuspended: msg('Đình chỉ kho suất sử dụng'),
+  LicensePoolReactivated: msg('Kích hoạt lại kho suất sử dụng'),
 });
 const kinds = {
   metrics: { path: '/api/ai-metrics', schema: metric },
@@ -157,7 +183,7 @@ function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
   if (!result.success) throw new ServiceError(t('Dữ liệu giám sát từ máy chủ không hợp lệ.'), 502);
   return result.data;
 }
-export function createMonitoringApi(get = apiGet) {
+export function createMonitoringApi(get = apiGet, write = apiWrite) {
   return {
     async list(
       actor: Pick<Person, 'role'>,
@@ -202,7 +228,7 @@ export function createMonitoringApi(get = apiGet) {
           ['actorId', 'targetRecordId', 'userId', 'sessionId'].includes(key) &&
           !uuid.safeParse(value).success
         )
-          throw new ServiceError(t('Mã định danh phải là UUID hợp lệ.'), 400);
+          throw new ServiceError(t('Mã định danh không hợp lệ.'), 400);
         if (
           (key === 'targetTable' && value.length > 100) ||
           (key === 'actionType' && !auditActions.some((action) => action === value)) ||
@@ -220,6 +246,15 @@ export function createMonitoringApi(get = apiGet) {
           parse(kinds[kind].schema as z.ZodType<MonitoringRecord>, item),
         ),
       };
+    },
+    /** Resend one failed notification now; the reply carries its new status. */
+    async retry(actor: Pick<Person, 'role'>, id: string) {
+      authorize(actor);
+      if (!uuid.safeParse(id).success) throw new ServiceError(t('Thông báo không hợp lệ.'), 400);
+      return parse(
+        failed,
+        await write('/api/notifications/failed/' + id + '/retry', { method: 'POST' }),
+      );
     },
     async status(actor: Pick<Person, 'role'>, signal?: AbortSignal) {
       authorize(actor);

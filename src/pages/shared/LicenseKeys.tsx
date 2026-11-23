@@ -9,6 +9,7 @@ import {
   type DistributedKey,
 } from '../../services/api/licenseKeys';
 import { isOrganizationBuyer, isPersonalCaregiver } from '../../services/api/licenses';
+import { IssuedKeys } from './IssuedKeys';
 import type { Person } from '../../models/domain';
 
 export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute' | 'activate' }) {
@@ -28,6 +29,7 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
         q.queryKey[0] === 'session' ||
         ([
           'license-pool',
+          'license-keys',
           'license-subscription',
           'api-users',
           'api-accounts',
@@ -38,16 +40,16 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
   return (
     <section
       className="glass card stack license-card"
-      aria-label={distributing ? t('Phân phối key') : t('Kích hoạt key')}
+      aria-label={distributing ? t('Phát mã kích hoạt') : t('Kích hoạt mã')}
     >
-      <h2>{distributing ? t('Key cho gia đình') : t('Kích hoạt bằng key')}</h2>
+      <h2>{distributing ? t('Mã kích hoạt cho gia đình') : t('Kích hoạt bằng mã')}</h2>
       <p>
         {distributing
           ? t(
-              'Mỗi key sử dụng một suất ngay khi tạo, hết hạn theo kho của trung tâm. Bạn tự chuyển key cho gia đình.',
+              'Mỗi mã kích hoạt sử dụng một suất ngay khi tạo, hết hạn theo kho của trung tâm. Bạn tự chuyển mã kích hoạt cho gia đình.',
             )
           : t(
-              'Nhập key do trung tâm cấp. Thời hạn theo key, không tự cộng thêm thời gian trial hoặc gói đang có. Kích hoạt không thay đổi tổ chức hay liên kết chăm sóc.',
+              'Nhập mã kích hoạt do trung tâm cấp. Thời hạn theo mã kích hoạt, không tự cộng thêm thời gian dùng thử hoặc gói đang có. Kích hoạt không thay đổi tổ chức hay liên kết chăm sóc.',
             )}
       </p>
       {notice && (
@@ -58,7 +60,7 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
       {uncertain && (
         <p className="notice error" role="alert">
           {t(
-            'Kết quả chưa rõ. Không gửi lại thao tác; hãy tải lại thông tin license và nhờ quản trị viên kiểm tra.',
+            'Kết quả chưa rõ. Không gửi lại thao tác; hãy tải lại thông tin gói dịch vụ và nhờ quản trị viên kiểm tra.',
           )}
         </p>
       )}
@@ -68,21 +70,21 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
         onClick={() => setOpen(true)}
       >
         {result
-          ? t('Xem key vừa tạo')
+          ? t('Xem mã kích hoạt vừa tạo')
           : distributing
-            ? t('Tạo key cho gia đình')
-            : t('Nhập key kích hoạt')}
+            ? t('Tạo mã kích hoạt cho gia đình')
+            : t('Nhập mã kích hoạt')}
       </button>
       {result && (
         <button className="btn" onClick={() => setAnother(true)}>
-          {t('Tạo key khác')}
+          {t('Tạo mã kích hoạt khác')}
         </button>
       )}
       {another && (
         <Confirm
-          title={t('Bắt đầu key mới')}
+          title={t('Bắt đầu mã kích hoạt mới')}
           description={t(
-            'Hãy bảo đảm đã lưu key vừa tạo. Tiếp tục sẽ xóa key khỏi màn hình, không thu hồi key và không hoàn lại suất đã sử dụng.',
+            'Mã kích hoạt vừa tạo vẫn còn trong danh sách Mã kích hoạt đã phát. Tạo mã kích hoạt mới không thu hồi mã kích hoạt cũ và không hoàn lại suất đã dùng.',
           )}
           onClose={() => setAnother(false)}
           onConfirm={async () => {
@@ -93,16 +95,10 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
           }}
         />
       )}
-      {distributing && (
-        <p>
-          {t(
-            'Chưa có API xem lại hoặc thu hồi key đã phát. Key chỉ giữ trong màn hình này; sao chép và lưu ở nơi an toàn trước khi rời trang.',
-          )}
-        </p>
-      )}
+      {distributing && <IssuedKeys actor={actor} />}
       {open && (
         <Dialog
-          title={distributing ? t('Tạo key cho gia đình') : t('Kích hoạt license')}
+          title={distributing ? t('Tạo mã kích hoạt cho gia đình') : t('Kích hoạt gói dịch vụ')}
           onClose={() => {
             setOpen(false);
             setVisible(false);
@@ -111,9 +107,9 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
         >
           {result ? (
             <div className="stack">
-              <p role="status">{t('Đã tạo key và sử dụng một suất license.')}</p>
+              <p role="status">{t('Đã tạo mã kích hoạt và dùng một suất trong kho.')}</p>
               <label className="field">
-                {t('Key vừa tạo')}
+                {t('Mã kích hoạt vừa tạo')}
                 <input
                   readOnly
                   value={visible ? result.licenseKey : '••••-••••-••••-••••'}
@@ -128,26 +124,28 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
               </p>
               <div className="row">
                 <button className="btn" onClick={() => setVisible(!visible)}>
-                  {visible ? t('Ẩn key') : t('Hiện key')}
+                  {visible ? t('Ẩn mã kích hoạt') : t('Hiện mã kích hoạt')}
                 </button>
                 <button
                   className="btn"
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(result.licenseKey);
-                      setCopied(t('Đã sao chép key.'));
+                      setCopied(t('Đã sao chép mã kích hoạt.'));
                     } catch {
-                      setCopied(t('Không sao chép được. Nhấn Hiện key để sao chép thủ công.'));
+                      setCopied(
+                        t('Không sao chép được. Nhấn Hiện mã kích hoạt để sao chép thủ công.'),
+                      );
                     }
                   }}
                 >
-                  {t('Sao chép key')}
+                  {t('Sao chép mã kích hoạt')}
                 </button>
               </div>
               {copied && <p role="status">{copied}</p>}
               <p>
                 {t(
-                  'Chỉ đóng popup vẫn có thể xem lại key tại màn hình này. Rời trang hoặc tải lại sẽ mất key đang hiển thị.',
+                  'Có thể xem lại mã kích hoạt này bất cứ lúc nào trong danh sách Mã kích hoạt đã phát.',
                 )}
               </p>
             </div>
@@ -156,19 +154,19 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
               <p>
                 {distributing
                   ? t(
-                      'Xác nhận tạo một key và sử dụng một suất trong kho. Ghi chú không phải địa chỉ gửi thư.',
+                      'Xác nhận tạo một mã kích hoạt và sử dụng một suất trong kho. Ghi chú không phải địa chỉ gửi thư.',
                     )
                   : t(
-                      'Xác nhận sử dụng key một lần cho tài khoản của bạn. Hãy kiểm tra thời hạn với trung tâm trước khi kích hoạt.',
+                      'Xác nhận sử dụng mã kích hoạt một lần cho tài khoản của bạn. Hãy kiểm tra thời hạn với trung tâm trước khi kích hoạt.',
                     )}
               </p>
               <Form
                 fields={
                   distributing
                     ? [{ key: 'note', label: t('Ghi chú'), type: 'textarea', max: 500 }]
-                    : [{ key: 'licenseKey', label: t('Key license'), required: true, max: 100 }]
+                    : [{ key: 'licenseKey', label: t('Mã kích hoạt'), required: true, max: 100 }]
                 }
-                submit={distributing ? t('Xác nhận tạo key') : t('Xác nhận kích hoạt')}
+                submit={distributing ? t('Xác nhận tạo mã kích hoạt') : t('Xác nhận kích hoạt')}
                 onSubmit={async (values) => {
                   try {
                     if (distributing)
@@ -177,7 +175,7 @@ export function LicenseKeys({ actor, mode }: { actor: Person; mode: 'distribute'
                       await licenseKeysApi.activate(actor, String(values.licenseKey));
                       setNotice(
                         t(
-                          'Máy chủ đã xác nhận kích hoạt. Kiểm tra trạng thái và thời hạn vừa tải lại ở trên.',
+                          'Máy chủ đã xác nhận kích hoạt. Xem trạng thái và thời hạn mới ở thẻ "Trạng thái và gói".',
                         ),
                       );
                       setOpen(false);

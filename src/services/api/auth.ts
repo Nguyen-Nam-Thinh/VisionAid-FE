@@ -47,6 +47,22 @@ export function createApiAuth(
   }
   if (!deviceId) deviceId = crypto.randomUUID();
 
+  // Storage is the source of truth: a second client instance (dev hot reload) may have logged in
+  // or rotated the refresh token. Adopt the stored pair so this instance never sends a stale one.
+  function sync() {
+    try {
+      const raw = storage?.getItem(authSessionKey);
+      if (!raw) return;
+      const stored = tokensSchema.parse(JSON.parse(raw));
+      if (
+        stored.accessToken !== tokens?.accessToken ||
+        stored.refreshToken !== tokens?.refreshToken
+      )
+        tokens = stored;
+    } catch {
+      /* Unreadable storage: keep the memory session. */
+    }
+  }
   // expired: the server rejected the tokens (deactivated account, revoked refresh), not a user logout.
   function clear(expired = false) {
     onSessionEnd(expired);
@@ -142,6 +158,7 @@ export function createApiAuth(
   }
   async function refresh() {
     if (refreshFlight) return refreshFlight;
+    sync();
     if (!tokens) throw new ServiceError(t('Phiên đã kết thúc. Vui lòng đăng nhập lại.'), 401);
     const epoch = generation;
     const token = tokens.refreshToken;
@@ -175,6 +192,7 @@ export function createApiAuth(
     retry401 = true,
     responseType: 'json' | 'blob' = 'json',
   ) {
+    sync();
     if (!tokens) throw new ServiceError(t('Vui lòng đăng nhập.'), 401);
     const epoch = generation;
     if (expiresSoon()) await refresh();
@@ -224,7 +242,7 @@ export function createApiAuth(
       );
     const p = parsed.data;
     if (!p.isActive || p.role === 'VisuallyImpaired')
-      throw new ServiceError(t('Tài khoản này không được truy cập Web Dashboard.'), 403);
+      throw new ServiceError(t('Tài khoản này không được truy cập trang quản lý trên web.'), 403);
     return {
       id: p.id,
       name: p.fullName,
@@ -272,6 +290,7 @@ export function createApiAuth(
       authorized(path, { signal, cache: 'no-store' }, true, 'blob'),
     write: (path: string, init: RequestInit) => authorized(path, init, false),
     async accessToken() {
+      sync();
       if (!tokens) throw new ServiceError(t('Vui lòng đăng nhập.'), 401);
       const epoch = generation;
       if (expiresSoon()) await refresh();

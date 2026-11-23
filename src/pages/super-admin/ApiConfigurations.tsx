@@ -11,6 +11,13 @@ import {
 import { PageHead, State, Dialog, Toast } from '../../components/UI';
 import { Form } from '../../components/Form';
 import { formatTime } from '../../constants/labels';
+import {
+  configCategory,
+  configCategoryValues,
+  configHint,
+  configName,
+  configValue,
+} from '../../constants/configLabels';
 import type { Person } from '../../models/domain';
 
 type PageInfo = {
@@ -38,20 +45,24 @@ function Pager({
           p4: Math.max(1, data.totalPages),
         })}
       </span>
-      <button
-        className="btn"
-        disabled={busy || !data.hasPreviousPage}
-        onClick={() => change(data.page - 1)}
-      >
-        {t('Trang trước')}
-      </button>
-      <button
-        className="btn"
-        disabled={busy || !data.hasNextPage}
-        onClick={() => change(data.page + 1)}
-      >
-        {t('Trang sau')}
-      </button>
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasPreviousPage}
+          onClick={() => change(data.page - 1)}
+        >
+          {t('Trang trước')}
+        </button>
+      )}
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasNextPage}
+          onClick={() => change(data.page + 1)}
+        >
+          {t('Trang sau')}
+        </button>
+      )}
     </div>
   );
 }
@@ -77,20 +88,27 @@ function Change({
       onClose={close}
     >
       <div className="stack">
-        <strong>{config.configKey}</strong>
+        <strong>{configName(config.configKey)}</strong>
         <dl className="record-details">
           <div>
             <dt>{t('Giá trị hiện tại')}</dt>
-            <dd>{config.configValue}</dd>
-          </div>
-          <div>
-            <dt>{t('Kiểu dữ liệu')}</dt>
-            <dd>{config.valueType}</dd>
+            <dd>{configValue(config)}</dd>
           </div>
           <div>
             <dt>{t('Giới hạn')}</dt>
             <dd>
-              {config.minValue ?? t('Không có')} – {config.maxValue ?? t('Không có')}
+              {config.minValue === null && config.maxValue === null
+                ? t('Không giới hạn')
+                : t('Từ {min} đến {max}', {
+                    min:
+                      config.minValue === null
+                        ? '…'
+                        : configValue({ ...config, configValue: config.minValue }),
+                    max:
+                      config.maxValue === null
+                        ? '…'
+                        : configValue({ ...config, configValue: config.maxValue }),
+                  })}
             </dd>
           </div>
         </dl>
@@ -99,14 +117,14 @@ function Change({
             {t('Khôi phục về giá trị trước lần thay đổi lúc {p1}:', {
               p1: formatTime(history.changedAt),
             })}{' '}
-            <strong>{history.oldValue}</strong>
+            <strong>{configValue({ ...config, configValue: history.oldValue ?? '' })}</strong>
             {t('. Một bản ghi lịch sử mới sẽ được tạo.')}
           </p>
         )}
         {uncertain ? (
           <p className="notice error" role="alert">
             {t(
-              'Chưa xác nhận được kết quả ghi. Đóng popup và tải lại cấu hình cùng lịch sử trước khi gửi lại.',
+              'Chưa xác nhận được kết quả ghi. Đóng hộp thoại và tải lại cấu hình cùng lịch sử trước khi gửi lại.',
             )}
           </p>
         ) : (
@@ -188,30 +206,47 @@ function ConfigPanel({
   });
   return (
     <div className="stack">
-      <h3>{config.configKey}</h3>
+      <h3>{configName(config.configKey)}</h3>
       <p style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
-        {config.description || t('Chưa có mô tả.')}
+        {configHint(config.configKey) || config.description || t('Chưa có mô tả.')}
       </p>
       <dl className="record-details">
         <div>
           <dt>{t('Giá trị hiện tại')}</dt>
-          <dd style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>{config.configValue}</dd>
+          <dd style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
+            {configValue(config)}
+          </dd>
         </div>
         <div>
-          <dt>{t('Kiểu / nhóm')}</dt>
-          <dd>
-            {config.valueType} / {config.category}
-          </dd>
+          <dt>{t('Nhóm')}</dt>
+          <dd>{configCategory(config.category)}</dd>
         </div>
         <div>
           <dt>{t('Giới hạn')}</dt>
           <dd>
-            {config.minValue ?? t('Không có')} – {config.maxValue ?? t('Không có')}
+            {config.minValue === null && config.maxValue === null
+              ? t('Không giới hạn')
+              : t('Từ {min} đến {max}', {
+                  min:
+                    config.minValue === null
+                      ? '…'
+                      : configValue({ ...config, configValue: config.minValue }),
+                  max:
+                    config.maxValue === null
+                      ? '…'
+                      : configValue({ ...config, configValue: config.maxValue }),
+                })}
           </dd>
         </div>
         <div>
-          <dt>{t('Phạm vi đọc')}</dt>
-          <dd>{config.isPublic ? t('Công khai') : t('Quản trị')}</dd>
+          <dt>{t('Nơi sử dụng')}</dt>
+          <dd>{config.isPublic ? t('Ứng dụng di động đọc được') : t('Chỉ máy chủ dùng')}</dd>
+        </div>
+        <div>
+          <dt>{t('Mã kỹ thuật')}</dt>
+          <dd style={{ overflowWrap: 'anywhere' }}>
+            <code>{config.configKey}</code>
+          </dd>
         </div>
         <div>
           <dt>{t('Cập nhật lúc')}</dt>
@@ -223,55 +258,50 @@ function ConfigPanel({
       </button>
       <h3>{t('Lịch sử thay đổi')}</h3>
       <State loading={history.isPending} error={history.error} retry={() => history.refetch()}>
-        {history.data?.items.length ? (
-          <div
-            className="table-scroll"
-            tabIndex={0}
-            role="region"
-            aria-label={t('Lịch sử cấu hình')}
-          >
-            <table style={{ minWidth: 650 }}>
-              <thead>
-                <tr>
-                  <th>{t('Thời gian')}</th>
-                  <th>{t('Trước → Sau')}</th>
-                  <th>{t('Lý do / người thay đổi')}</th>
-                  <th>{t('Thao tác')}</th>
+        <div className="table-scroll" tabIndex={0} role="region" aria-label={t('Lịch sử cấu hình')}>
+          <table style={{ minWidth: 650 }}>
+            <thead>
+              <tr>
+                <th>{t('Thời gian')}</th>
+                <th>{t('Trước → Sau')}</th>
+                <th>{t('Lý do / người thay đổi')}</th>
+                <th>{t('Thao tác')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.data?.items.map((entry) => (
+                <tr key={entry.id}>
+                  <td>{formatTime(entry.changedAt)}</td>
+                  <td style={{ overflowWrap: 'anywhere' }}>
+                    {entry.oldValue === null
+                      ? t('Chưa có')
+                      : configValue({ ...config, configValue: entry.oldValue })}{' '}
+                    → {configValue({ ...config, configValue: entry.newValue })}
+                  </td>
+                  <td style={{ overflowWrap: 'anywhere' }}>
+                    {entry.reason || t('Không ghi lý do')}
+                    <p>
+                      {entry.changedByName
+                        ? entry.changedByName +
+                          (entry.changedByEmail ? ' · ' + entry.changedByEmail : '')
+                        : entry.changedBy || t('Hệ thống')}
+                    </p>
+                  </td>
+                  <td>
+                    <button
+                      className="btn small"
+                      disabled={entry.oldValue === null}
+                      onClick={() => setChange(entry)}
+                    >
+                      {t('Khôi phục')}
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {history.data.items.map((entry) => (
-                  <tr key={entry.id}>
-                    <td>{formatTime(entry.changedAt)}</td>
-                    <td style={{ overflowWrap: 'anywhere' }}>
-                      {entry.oldValue ?? t('Chưa có')} → {entry.newValue}
-                    </td>
-                    <td style={{ overflowWrap: 'anywhere' }}>
-                      {entry.reason || t('Không ghi lý do')}
-                      <p>
-                        {entry.changedByName
-                          ? entry.changedByName +
-                            (entry.changedByEmail ? ' · ' + entry.changedByEmail : '')
-                          : entry.changedBy || t('Hệ thống')}
-                      </p>
-                    </td>
-                    <td>
-                      <button
-                        className="btn small"
-                        disabled={entry.oldValue === null}
-                        onClick={() => setChange(entry)}
-                      >
-                        {t('Khôi phục')}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>{t('Chưa có lịch sử thay đổi.')}</p>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {!history.data?.items.length && <p className="empty">{t('Chưa có lịch sử thay đổi.')}</p>}
+        </div>
         {history.data && <Pager data={history.data} busy={history.isFetching} change={setPage} />}
       </State>
       {change && (
@@ -338,7 +368,9 @@ function Configurations({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Cấu hình hệ thống')}
-        description={t('Xem, điều chỉnh và khôi phục các thông số vận hành của hệ thống.')}
+        description={t(
+          'Xem và chỉnh các thiết lập chung của hệ thống; có thể quay lại giá trị trước đó.',
+        )}
       />
       <section className="glass card stack">
         <form
@@ -360,7 +392,14 @@ function Configurations({ actor }: { actor: Person }) {
           </label>
           <label className="field">
             {t('Nhóm cấu hình')}
-            <input name="category" placeholder={t('Ví dụ: AI, WEBRTC')} />
+            <select name="category" defaultValue="">
+              <option value="">{t('Tất cả nhóm')}</option>
+              {configCategoryValues.map((value) => (
+                <option key={value} value={value}>
+                  {configCategory(value)}
+                </option>
+              ))}
+            </select>
           </label>
           <button className="btn primary">{t('Tìm kiếm')}</button>
           <button
@@ -374,48 +413,45 @@ function Configurations({ actor }: { actor: Person }) {
           </button>
         </form>
         <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
-          {query.data?.items.length ? (
-            <div
-              className="table-scroll"
-              tabIndex={0}
-              role="region"
-              aria-label={t('Danh sách cấu hình')}
-            >
-              <table style={{ minWidth: 650 }}>
-                <thead>
-                  <tr>
-                    <th>{t('Khóa / nhóm')}</th>
-                    <th>{t('Giá trị')}</th>
-                    <th>{t('Thao tác')}</th>
+          <div
+            className="table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label={t('Danh sách cấu hình')}
+          >
+            <table style={{ minWidth: 650 }}>
+              <thead>
+                <tr>
+                  <th>{t('Cấu hình')}</th>
+                  <th>{t('Giá trị')}</th>
+                  <th>{t('Thao tác')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {query.data?.items.map((item) => (
+                  <tr key={item.id}>
+                    <td style={{ overflowWrap: 'anywhere' }}>
+                      <strong>{configName(item.configKey)}</strong>
+                      <p className="muted">{configCategory(item.category)}</p>
+                    </td>
+                    <td style={{ overflowWrap: 'anywhere' }}>
+                      {item.reviewed ? configValue(item) : t('Chưa hỗ trợ xem trên Web')}
+                    </td>
+                    <td>
+                      <button
+                        className="btn small"
+                        disabled={!item.reviewed}
+                        onClick={() => setSelected(item.id)}
+                      >
+                        {t('Chi tiết')}
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {query.data.items.map((item) => (
-                    <tr key={item.id}>
-                      <td style={{ overflowWrap: 'anywhere' }}>
-                        <strong>{item.configKey}</strong>
-                        <p>{item.category}</p>
-                      </td>
-                      <td style={{ overflowWrap: 'anywhere' }}>
-                        {item.reviewed ? item.configValue : t('Chưa duyệt hiển thị trên Web')}
-                      </td>
-                      <td>
-                        <button
-                          className="btn small"
-                          disabled={!item.reviewed}
-                          onClick={() => setSelected(item.id)}
-                        >
-                          {t('Chi tiết')}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>{t('Chưa có cấu hình phù hợp.')}</p>
-          )}
+                ))}
+              </tbody>
+            </table>
+            {!query.data?.items.length && <p className="empty">{t('Chưa có cấu hình phù hợp.')}</p>}
+          </div>
           {query.data && <Pager data={query.data} busy={query.isFetching} change={setPage} />}
           {selected && <ConfigDetail actor={actor} id={selected} close={() => setSelected('')} />}
         </State>

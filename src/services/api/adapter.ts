@@ -13,6 +13,10 @@ const auth = createApiAuth(
     void disablePush().catch(() => {});
   },
 );
+// The token client is a per-tab singleton. Hot-swapping this module in dev would leave two
+// clients rotating the same refresh token, and the server revokes the session on reuse.
+// Reload the page instead.
+import.meta.hot?.accept(() => window.location.reload());
 export const apiGet = auth.get;
 export const apiBlob = auth.blob;
 export const apiWrite = auth.write;
@@ -21,7 +25,7 @@ export const apiDeviceId = auth.deviceId;
 const unavailable = async (): Promise<never> => {
   throw new ServiceError(
     t(
-      'Chức năng này chưa tích hợp API. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
+      'Chức năng này chưa sẵn sàng. Hiện hỗ trợ đăng ký, đăng nhập, hồ sơ, đổi mật khẩu và đăng xuất.',
     ),
     501,
   );

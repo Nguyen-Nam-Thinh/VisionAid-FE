@@ -1,3 +1,4 @@
+import { FileInput } from '../../components/FileInput';
 import { RefreshCw } from 'lucide-react';
 import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
@@ -14,7 +15,7 @@ import {
 } from '../../services/api/registry';
 import { onSessionEnded } from '../../services/sessionLifecycle';
 import { FilterPanel } from '../../components/FilterPanel';
-import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
+import { PageHead, State, Dialog, Confirm, Badge, Checkbox } from '../../components/UI';
 import { Form, type FieldSpec } from '../../components/Form';
 import type { Person, Fields } from '../../models/domain';
 import { uiStore, useUI } from '../../stores/ui';
@@ -46,7 +47,7 @@ function Registry({ actor }: { actor: Person }) {
         title={t('Gương mặt thân quen')}
         description={t('Quản lý người thân và ảnh dùng cho nhận diện của người được chăm sóc.')}
       />
-      <section className="glass card stack">
+      <section className="glass card stack viu-picker">
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {
@@ -95,8 +96,8 @@ function Registry({ actor }: { actor: Person }) {
               )}
             </p>
           )}
-          {users.data && (
-            <div className="row">
+          {users.data && users.data.totalPages > 1 && (
+            <div className="row pagination">
               <span>
                 {t('{totalCount} người · Trang {page}/{p4}', {
                   totalCount: users.data.totalCount,
@@ -104,26 +105,30 @@ function Registry({ actor }: { actor: Person }) {
                   p4: Math.max(1, users.data.totalPages),
                 })}
               </span>
-              <button
-                className="btn"
-                disabled={!users.data.hasPreviousPage || users.isFetching}
-                onClick={() => {
-                  setPage(page - 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={!users.data.hasNextPage || users.isFetching}
-                onClick={() => {
-                  setPage(page + 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang sau')}
-              </button>
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasPreviousPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page - 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasNextPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page + 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </div>
           )}
           {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
@@ -205,7 +210,6 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
                 {t('Bạn có quyền xem. Cần quyền quản lý gương mặt để thêm, sửa hoặc xóa.')}
               </p>
             )}
-            {!items.length && <p>{t('Chưa có người thân phù hợp.')}</p>}
             <div
               className="table-scroll"
               tabIndex={0}
@@ -255,6 +259,7 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
                   ))}
                 </tbody>
               </table>
+              {!items.length && <p className="empty">{t('Chưa có người thân phù hợp.')}</p>}
             </div>
             <p>{t('{length} kết quả', { length: items.length })}</p>
             {editing && (
@@ -480,9 +485,8 @@ function RegistryPhotos({
                 >
                   <label className="field">
                     {t('Chọn ảnh người thân')}
-                    <input
+                    <FileInput
                       name="photo"
-                      type="file"
                       accept="image/jpeg,image/png,image/webp"
                       required
                       disabled={pending}
@@ -494,12 +498,7 @@ function RegistryPhotos({
                     )}
                   </p>
                   <div className="field field-checkbox">
-                    <input
-                      id="registry-upload-primary"
-                      type="checkbox"
-                      name="primary"
-                      disabled={pending}
-                    />
+                    <Checkbox id="registry-upload-primary" name="primary" disabled={pending} />
                     <label htmlFor="registry-upload-primary">
                       {t('Đặt ảnh vừa tải làm ảnh chính')}
                     </label>

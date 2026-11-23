@@ -36,9 +36,11 @@ function Places({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Địa điểm và vùng an toàn')}
-        description={t('Lưu nơi thường đến và cấu hình vùng tròn cho người được chăm sóc.')}
+        description={t(
+          'Lưu những nơi người được chăm sóc hay đến và đặt vùng an toàn quanh các nơi đó.',
+        )}
       />
-      <section className="glass card stack">
+      <section className="glass card stack viu-picker">
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {
@@ -87,7 +89,7 @@ function Places({ actor }: { actor: Person }) {
               )}
             </p>
           )}
-          {users.data && (
+          {users.data && users.data.totalPages > 1 && (
             <div className="row pagination">
               <span>
                 {t('{totalCount} người · Trang {page}/{p4}', {
@@ -96,26 +98,30 @@ function Places({ actor }: { actor: Person }) {
                   p4: Math.max(1, users.data.totalPages),
                 })}
               </span>
-              <button
-                className="btn"
-                disabled={!users.data.hasPreviousPage || users.isFetching}
-                onClick={() => {
-                  setPage(page - 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={!users.data.hasNextPage || users.isFetching}
-                onClick={() => {
-                  setPage(page + 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang sau')}
-              </button>
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasPreviousPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page - 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasNextPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page + 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </div>
           )}
           {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
@@ -222,7 +228,6 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                 })}
               </p>
             )}
-            {!query.data.items.length && <p>{t('Chưa có địa điểm phù hợp.')}</p>}
             <div
               className="table-scroll"
               tabIndex={0}
@@ -285,6 +290,9 @@ function PlaceTable({ actor, viuId, kind }: Scope) {
                   ))}
                 </tbody>
               </table>
+              {!query.data.items.length && (
+                <p className="empty">{t('Chưa có địa điểm phù hợp.')}</p>
+              )}
             </div>
             <div className="row pagination">
               <span>

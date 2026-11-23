@@ -20,8 +20,8 @@ describe('i18n coverage', () => {
       ),
     );
     expect(leftovers).toEqual([]);
-    // Parses every source file; allow more than the 5 s default on a busy machine.
-  }, 30_000);
+    // Parses every source file; allow up to 60 s on a busy machine.
+  }, 60_000);
   it('keeps placeholders and edge spaces of each message', () => {
     const names = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
     const edges = (text: string) => [/^\s/.test(text), /\s$/.test(text)];
@@ -46,5 +46,6 @@ describe('i18n coverage', () => {
       "'" + text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n') + "'";
     const unused = Object.keys(en).filter((id) => !code.includes(quote(id)));
     expect(unused).toEqual([]);
-  });
+    // Reads every source file like the first check; allow the same 60 s on a busy machine.
+  }, 60_000);
 });

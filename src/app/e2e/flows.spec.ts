@@ -51,7 +51,7 @@ test('caregiver CRUD, validation, alert history and map reconnect', async ({ pag
   await expect(page.getByText('Vị trí cũ, không phải trực tiếp')).toBeVisible();
   await page.getByRole('button', { name: 'Kết nối lại', exact: true }).click();
   await expect(page.getByText('Đang kết nối lại…', { exact: true })).toBeVisible();
-  await expect(page.getByText('Realtime mô phỏng', { exact: true })).toBeVisible();
+  await expect(page.getByText('Cập nhật trực tiếp (mô phỏng)', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 test('TC-FE20-01 · face upload activation, primary image and delete confirmation', async ({
@@ -94,11 +94,11 @@ test('linked user creation, QR and secondary flags', async ({ page }) => {
   await screen(page, '/caregiver/caregivers', 'Người chăm sóc phụ');
   const row = page.getByRole('row').filter({ hasText: 'Trần Quốc Bảo' });
   await row.getByRole('button', { name: 'Quyền', exact: true }).click();
-  await dialog(page).getByLabel('Quản lý danh bạ khuôn mặt').check();
+  await dialog(page).getByLabel('Quản lý danh bạ gương mặt').check();
   await dialog(page).getByRole('button', { name: 'Lưu thay đổi' }).click();
   await expect(row).toContainText('Registry');
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await login(page, 'secondary@demo.vn');
   await screen(page, '/caregiver/registry', 'Gương mặt thân quen');
   await expect(page.getByRole('button', { name: 'Thêm mới' })).toBeVisible();
@@ -247,7 +247,7 @@ test('every role route renders on tablet without console errors or document over
       await expect(page.getByRole('alert')).toHaveCount(0);
     }
     await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-    await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   }
   expect(errors).toEqual([]);
 });
@@ -261,7 +261,7 @@ test('narrow view navigation and reset demo', async ({ page }) => {
     page.getByRole('heading', { name: 'Người được chăm sóc', exact: true }).first(),
   ).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Reset dữ liệu demo' }).click();
+  await page.getByRole('button', { name: 'Khôi phục dữ liệu demo' }).click();
   await dialog(page).getByRole('button', { name: 'Xác nhận', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Chào mừng trở lại.' })).toBeVisible();
 });

@@ -155,7 +155,7 @@ it('registry rejects malformed input, no retry on upload or delete failure, no f
   expect(f.write).toHaveBeenCalledTimes(1);
   f.write.mockRejectedValue(
     new ServiceError(
-      'Không tìm thấy khuôn mặt trong ảnh. Vui lòng chụp lại rõ hơn và thử lại.',
+      'Không tìm thấy gương mặt trong ảnh. Vui lòng chụp lại rõ hơn và thử lại.',
       422,
       {},
       'NO_FACE_DETECTED',
@@ -165,7 +165,7 @@ it('registry rejects malformed input, no retry on upload or delete failure, no f
     f.api.upload(actor, viuId, id, new File([png], 'p.png'), false),
   ).rejects.toMatchObject({
     status: 422,
-    message: 'Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
+    message: 'Không tìm thấy gương mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
   });
   f.write.mockRejectedValue(new ServiceError('license', 402));
   await expect(f.api.removePhoto(actor, viuId, id, photoId)).rejects.toMatchObject({ status: 402 });
@@ -186,7 +186,7 @@ it('photo signatures correct wrong MIME and reject empty, oversized and non-imag
 });
 it('maps photo upload failures to actionable messages', () => {
   const noFace = uploadError(new ServiceError('no face', 422, {}, 'NO_FACE_DETECTED'));
-  expect(noFace).toMatchObject({ status: 422, message: expect.stringContaining('khuôn mặt') });
+  expect(noFace).toMatchObject({ status: 422, message: expect.stringContaining('gương mặt') });
   expect(uploadError(new ServiceError('x', 413, {}, 'PAYLOAD_TOO_LARGE'))).toMatchObject({
     status: 413,
     message: 'Ảnh vượt quá giới hạn tải lên của máy chủ (tối đa 10 MB).',

@@ -5,20 +5,9 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { runtime } from '../configs/runtime';
 import { coordinates, mapPoints, mapView, type MapPoint } from '../services/maps/adapter';
 
-const styles = {
-  streets: 'mapbox://styles/mapbox/streets-v12',
-  satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
-} as const;
-type Base = keyof typeof styles;
-const baseKey = 'visionaid.map.base';
-// Per-viewer convenience only; storage may be unavailable (private mode, blocked site data).
-function savedBase(): Base {
-  try {
-    return localStorage.getItem(baseKey) === 'satellite' ? 'satellite' : 'streets';
-  } catch {
-    return 'streets';
-  }
-}
+// Street map only: the documents do not ask for a satellite view, and Mapbox limits satellite
+// tiles on accounts without billing.
+const style = 'mapbox://styles/mapbox/streets-v12';
 // Close enough to read alley names around one person; bounds never zoom in past it.
 const detailZoom = 17;
 
@@ -39,8 +28,6 @@ export default function GpsMapCanvas({
   const popup = useRef<mapboxgl.Popup | null>(null);
   const framed = useRef('');
   const select = useRef(onSelect);
-  const [base, setBase] = useState<Base>(savedBase);
-  const applied = useRef(base);
   const [failure, setFailure] = useState(() =>
     mapboxgl.supported() ? '' : t('Trình duyệt không hỗ trợ WebGL nên không hiển thị được bản đồ.'),
   );
@@ -53,7 +40,7 @@ export default function GpsMapCanvas({
     mapboxgl.accessToken = runtime.mapboxToken;
     const instance = new mapboxgl.Map({
       container: box.current,
-      style: styles[applied.current],
+      style,
       center: [106.7, 10.78],
       zoom: 11,
       language: locale,
@@ -78,18 +65,9 @@ export default function GpsMapCanvas({
       map.current = null;
       framed.current = '';
     };
-    // The map is created once; language and style changes are applied by the effects below.
+    // The map is created once; language changes are applied by the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    const instance = map.current;
-    if (!instance || applied.current === base) return;
-    applied.current = base;
-    setFailure('');
-    // HTML markers and the popup are not style layers, so they survive the style swap.
-    instance.setStyle(styles[base]);
-  }, [base]);
 
   useEffect(() => {
     map.current?.setLanguage(locale);
@@ -157,34 +135,8 @@ export default function GpsMapCanvas({
     }
   }, [points, selected]);
 
-  const choose = (next: Base) => {
-    setBase(next);
-    try {
-      localStorage.setItem(baseKey, next);
-    } catch {
-      // Storage unavailable: the choice still applies to this page view.
-    }
-  };
   return (
     <div className="gps-map-wrap">
-      <div className="row" role="group" aria-label={t('Kiểu bản đồ')}>
-        {(
-          [
-            ['streets', t('Bản đồ')],
-            ['satellite', t('Vệ tinh')],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            className={'btn small' + (base === value ? ' primary' : '')}
-            aria-pressed={base === value}
-            onClick={() => choose(value)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
       <div
         ref={box}
         className="gps-map"

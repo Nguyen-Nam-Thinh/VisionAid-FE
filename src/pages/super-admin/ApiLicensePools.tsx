@@ -32,8 +32,8 @@ function Pools({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title={t('Kho license các trung tâm')}
-        description={t('Số license đã dùng, còn trống và hạn dùng của từng trung tâm.')}
+        title={t('Kho suất sử dụng các trung tâm')}
+        description={t('Số gói dịch vụ đã dùng, còn trống và hạn dùng của từng trung tâm.')}
       />
       <section className="glass card stack">
         <FilterPanel
@@ -97,7 +97,7 @@ function Pools({ actor }: { actor: Person }) {
                   </dd>
                 </div>
                 <div>
-                  <dt>{t('License đã dùng')}</dt>
+                  <dt>{t('Gói dịch vụ đã dùng')}</dt>
                   <dd>
                     {t('{used}/{total} ({percent}%)', {
                       used: formatNumber(summary.usedSeats),
@@ -119,17 +119,16 @@ function Pools({ actor }: { actor: Person }) {
               </dl>
               {summary.organizationsWithoutPool > 0 && (
                 <p className="muted">
-                  {t('{count} trung tâm đang hoạt động chưa mua kho license.', {
+                  {t('{count} trung tâm đang hoạt động chưa mua kho suất sử dụng.', {
                     count: formatNumber(summary.organizationsWithoutPool),
                   })}
                 </p>
               )}
-              {!pools.items.length && <p>{t('Không có kho license phù hợp.')}</p>}
               <div
                 className="table-scroll"
                 tabIndex={0}
                 role="region"
-                aria-label={t('Danh sách kho license')}
+                aria-label={t('Danh sách kho suất sử dụng')}
               >
                 <table>
                   <thead>
@@ -184,6 +183,9 @@ function Pools({ actor }: { actor: Person }) {
                     ))}
                   </tbody>
                 </table>
+                {!pools.items.length && (
+                  <p className="empty">{t('Không có kho suất sử dụng phù hợp.')}</p>
+                )}
               </div>
               <div className="row pagination">
                 <span>
@@ -193,20 +195,24 @@ function Pools({ actor }: { actor: Person }) {
                     p4: Math.max(1, pools.totalPages),
                   })}
                 </span>
-                <button
-                  className="btn"
-                  disabled={query.isFetching || !pools.hasPreviousPage}
-                  onClick={() => setPage(page - 1)}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={query.isFetching || !pools.hasNextPage}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(pools.hasPreviousPage || pools.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={query.isFetching || !pools.hasPreviousPage}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(pools.hasPreviousPage || pools.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={query.isFetching || !pools.hasNextPage}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </div>
             </>
           )}

@@ -19,10 +19,12 @@ test('public home, signup, login and protected dashboard stay separate', async (
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     'Biết người thân đang ở đâu.',
   );
-  await page.getByRole('banner').getByRole('link', { name: 'Đăng nhập' }).click();
+  // Signed in: the header offers the workspace instead of sign-in.
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng nhập' })).toHaveCount(0);
+  await page.getByRole('banner').getByRole('link', { name: 'Tổng quan' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.getByRole('button', { name: 'Menu tài khoản' }).click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
 });
 
@@ -33,7 +35,7 @@ test('landing is accessible and fits desktop, tablet and narrow screens', async 
   await expect(page.getByRole('heading', { name: 'Personal · Gia đình' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Business · Trung tâm' })).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Standalone · Trung tâm đồng hành' }),
+    page.getByRole('heading', { name: 'Người dùng độc lập · Trung tâm đồng hành' }),
   ).toBeVisible();
   await expect(page.getByText('Bắt buộc dùng đai đeo ngực.', { exact: true })).toBeVisible();
   await expect(

@@ -42,7 +42,7 @@ function Contacts({ actor }: { actor: Person }) {
           'Danh bạ khẩn cấp của người được chăm sóc. Lưu liên hệ không thực hiện cuộc gọi.',
         )}
       />
-      <section className="glass card stack">
+      <section className="glass card stack viu-picker">
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {
@@ -91,7 +91,7 @@ function Contacts({ actor }: { actor: Person }) {
               )}
             </p>
           )}
-          {users.data && (
+          {users.data && users.data.totalPages > 1 && (
             <div className="row pagination">
               <span>
                 {t('{totalCount} người · Trang {page}/{p4}', {
@@ -100,26 +100,30 @@ function Contacts({ actor }: { actor: Person }) {
                   p4: Math.max(1, users.data.totalPages),
                 })}
               </span>
-              <button
-                className="btn"
-                disabled={!users.data.hasPreviousPage || users.isFetching}
-                onClick={() => {
-                  setPage(page - 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={!users.data.hasNextPage || users.isFetching}
-                onClick={() => {
-                  setPage(page + 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang sau')}
-              </button>
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasPreviousPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page - 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasNextPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page + 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </div>
           )}
           {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
@@ -181,7 +185,6 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
             {t('Tải lại liên hệ')}
           </button>
         </div>
-        {!query.data?.length && <p>{t('Chưa có liên hệ khẩn cấp.')}</p>}
         <div className="table-scroll" tabIndex={0} role="region" aria-label={t('Danh bạ khẩn cấp')}>
           <table className="care-contacts-table">
             <thead>
@@ -246,6 +249,7 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
               ))}
             </tbody>
           </table>
+          {!query.data?.length && <p className="empty">{t('Chưa có liên hệ khẩn cấp.')}</p>}
         </div>
         {editing && (
           <Dialog

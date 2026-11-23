@@ -1,5 +1,7 @@
 import { t, useI18n } from '../i18n';
+import { Avatar } from '../components/Avatar';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { ThemeSwitch } from '../components/ThemeSwitch';
 import { ApiNotifications } from '../pages/shared/ApiNotifications';
 import { ApiPackages } from '../pages/shared/ApiPackages';
 import { ApiPayments } from '../pages/shared/ApiPayments';
@@ -7,7 +9,7 @@ import { ApiLicensePool } from '../pages/shared/ApiLicensePool';
 import { paymentResumeTarget } from '../services/api/payments';
 import { ApiLicense } from '../pages/shared/ApiLicense';
 import { ApiRealtime } from '../components/ApiRealtime';
-import { PushSync } from '../components/PushSettings';
+import { PushPrompt, PushSync } from '../components/PushSettings';
 import { ApiAlerts } from '../pages/shared/ApiAlerts';
 import { ApiTracking } from '../pages/shared/ApiTracking';
 import { ApiLinks } from '../pages/shared/ApiLinks';
@@ -23,6 +25,9 @@ import { ApiActivity } from '../pages/caregiver/ApiActivity';
 import { ApiReports } from '../pages/center-admin/ApiReports';
 import { ApiIceServers } from '../pages/super-admin/ApiIceServers';
 import { ApiMonitoring } from '../pages/super-admin/ApiMonitoring';
+import { ApiInbox, InboxBell } from '../pages/shared/ApiInbox';
+import { ApiNotificationLookup } from '../pages/shared/ApiNotificationLookup';
+import { ApiCenterActivity } from '../pages/center-admin/ApiCenterActivity';
 import { ApiConfigurations } from '../pages/super-admin/ApiConfigurations';
 import { ApiRevenue } from '../pages/super-admin/ApiRevenue';
 import { ApiLicensePools } from '../pages/super-admin/ApiLicensePools';
@@ -30,8 +35,12 @@ import { ApiContacts } from '../pages/caregiver/ApiContacts';
 import { ApiCalls } from '../pages/caregiver/ApiCalls';
 import { runtime } from '../configs/runtime';
 import { Dashboard } from '../pages/shared/Dashboard';
-import { features } from './features';
-import { useState, Suspense } from 'react';
+import { features, type Feature } from './features';
+import * as AccountMenu from '@animate-ui/react/primitives/radix-ui/dropdown-menu';
+import { Highlight as NavHighlight } from '@animate-ui/react/primitives/sidebar';
+import * as Tooltip from '@animate-ui/react/primitives/radix-ui/tooltip';
+import { useEffect, useState, Suspense, type ReactElement } from 'react';
+import { useAnimate, useReducedMotion } from 'motion/react';
 import {
   BrowserRouter,
   Routes,
@@ -53,12 +62,15 @@ import {
   Package,
   Phone,
   Menu,
+  X,
   LayoutDashboard,
   UserRound,
   ShieldCheck,
   Users,
   MapPin,
   Bell,
+  Inbox as InboxIcon,
+  SearchCheck,
   ScanFace,
   Contact,
   Link2,
@@ -218,6 +230,28 @@ const navigationIcons = {
   delivery: Send,
   audit: History,
 };
+/** A collapsed sidebar shows icons only; the animated tooltip names each link on hover and focus. */
+function NavTip({
+  label,
+  show,
+  children,
+}: {
+  label: string;
+  show: boolean;
+  children: ReactElement;
+}) {
+  if (!show) return children;
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content className="nav-tooltip" side="right" sideOffset={12}>
+          {label}
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  );
+}
 function Shell() {
   const location = useLocation();
   const { data: user } = useSession();
@@ -227,6 +261,22 @@ function Shell() {
   const [reset, setReset] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { notice } = useUI();
+  // Each new page fades up into place; the page itself is not remounted.
+  const [view, animate] = useAnimate<HTMLDivElement>();
+  const still = useReducedMotion();
+  useEffect(() => {
+    if (!still && view.current)
+      animate(view.current, { opacity: [0, 1], y: [6, 0] }, { duration: 0.2, ease: 'easeOut' });
+  }, [location.pathname, still, view, animate]);
+  // The phone drawer closes with Escape, like a dialog.
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [open]);
   useSessionExpiry();
   const warning = useLicenseWarning();
   if (!user) return null;
@@ -234,209 +284,202 @@ function Shell() {
   const graceDays = runtime.mode === 'api' ? licenseGraceDays(user, warning) : null;
   const locked = (path: string) =>
     !!block && (licensedCaregiverPaths as readonly string[]).includes(path);
+  const api = runtime.mode === 'api';
+  const menuLabel = (item: Pick<Feature, 'path' | 'label'>) =>
+    api && user.role === 'Caregiver' && item.path === 'caregivers'
+      ? t('Liên kết của tôi')
+      : t(item.label);
+  const menuItems = (menu[user.role] ?? []).filter(
+    (item) =>
+      runtime.mode === 'mock' ||
+      (user.role === 'Caregiver' &&
+        [
+          'users',
+          'caregivers',
+          'map',
+          'alerts',
+          'notifications',
+          'contacts',
+          'activity',
+          'registry',
+          'locations',
+          'tts',
+        ].includes(item.path)) ||
+      (user.role === 'Admin' &&
+        [
+          'organizations',
+          'accounts',
+          'links',
+          'rules',
+          'configurations',
+          'metrics',
+          'audit',
+          'delivery',
+        ].includes(item.path)) ||
+      (user.role === 'CenterAdmin' &&
+        [
+          'organization',
+          'staff',
+          'users',
+          'assignments',
+          'map',
+          'alerts',
+          'routing',
+          'reports',
+        ].includes(item.path)),
+  );
+  // Secondary links at the foot of the sidebar; each entry is shown only where its API exists.
+  const footItems: { to: string; label: string; Icon: typeof Phone }[] = [
+    ...(api ? [{ to: '/inbox', label: t('Hộp thư thông báo'), Icon: InboxIcon }] : []),
+    ...(api && (user.role === 'Admin' || (user.role === 'CenterAdmin' && user.orgId))
+      ? [{ to: '/notifications/lookup', label: t('Tra cứu thông báo'), Icon: SearchCheck }]
+      : []),
+    ...(api && (user.role === 'Caregiver' || user.role === 'CenterAdmin')
+      ? [
+          {
+            to: user.role === 'Caregiver' ? '/caregiver/calls' : '/center-admin/calls',
+            label: t('Lịch sử cuộc gọi'),
+            Icon: Phone,
+          },
+        ]
+      : []),
+    ...(api && user.role === 'CenterAdmin' && user.orgId
+      ? [
+          { to: '/center-admin/activity', label: t('Truy vết hoạt động'), Icon: History },
+          { to: '/center-admin/licenses', label: t('Kho suất sử dụng'), Icon: ShieldCheck },
+          { to: '/center-admin/payments', label: t('Thanh toán'), Icon: CreditCard },
+        ]
+      : []),
+    ...(api && user.role === 'Admin'
+      ? [
+          {
+            to: '/admin/license-pools',
+            label: t('Kho suất sử dụng các trung tâm'),
+            Icon: ShieldCheck,
+          },
+          { to: '/admin/revenue', label: t('Báo cáo doanh thu'), Icon: BarChart3 },
+          { to: '/admin/hybrid', label: t('Nhật ký chỉ dẫn di chuyển'), Icon: Activity },
+          { to: '/admin/ice-servers', label: t('Máy chủ hỗ trợ cuộc gọi'), Icon: Settings },
+        ]
+      : []),
+    // Only a family caregiver has a personal license to look at; other roles get no entry.
+    ...(api && user.role === 'Caregiver' && !user.orgId
+      ? [{ to: '/license', label: t('Gói của tôi'), Icon: ShieldCheck }]
+      : []),
+    ...(api && user.role === 'Caregiver' && !user.orgId
+      ? [{ to: '/caregiver/payments', label: t('Thanh toán'), Icon: CreditCard }]
+      : []),
+    ...(api &&
+    (user.role === 'Admin' ||
+      user.role === 'CenterAdmin' ||
+      (user.role === 'Caregiver' && !user.orgId))
+      ? [
+          {
+            to: user.role === 'Admin' ? '/admin/packages' : '/packages',
+            label: t('Gói dịch vụ'),
+            Icon: Package,
+          },
+        ]
+      : []),
+  ];
+  // The topbar names the page that the sidebar marks as current (longest matching link).
+  const pages = [
+    { to: '/dashboard', label: t('Tổng quan') },
+    ...menuItems.map((item) => ({
+      to: roleBase(user.role) + '/' + item.path,
+      label: menuLabel(item),
+    })),
+    ...footItems,
+    { to: '/profile', label: t('Hồ sơ của tôi') },
+  ];
+  const currentPage = pages
+    .filter((page) => location.pathname === page.to || location.pathname.startsWith(page.to + '/'))
+    .sort((a, b) => b.to.length - a.to.length)[0];
   const content = (
     <div className={'shell' + (collapsed ? ' sidebar-collapsed' : '')}>
       <a className="skip" href="#main">
         {t('Đến nội dung chính')}
       </a>
-      <aside className={'sidebar' + (open ? ' open' : '')}>
-        <div className="sidebar-brand">
-          <Brand />
-          <button
-            className="btn sidebar-toggle"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
-            title={collapsed ? t('Mở rộng sidebar') : t('Thu gọn sidebar')}
-            aria-expanded={!collapsed}
-          >
-            {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
-          </button>
-        </div>
-        <div>
-          <nav className="nav" aria-label={t('Điều hướng chính')}>
-            <NavLink to="/dashboard" title={t('Tổng quan')} end onClick={() => setOpen(false)}>
-              <LayoutDashboard size={18} />
-              <span>{t('Tổng quan')}</span>
-            </NavLink>
-            {menu[user.role]
-              ?.filter(
-                (item) =>
-                  runtime.mode === 'mock' ||
-                  (user.role === 'Caregiver' &&
-                    [
-                      'users',
-                      'caregivers',
-                      'map',
-                      'alerts',
-                      'notifications',
-                      'contacts',
-                      'activity',
-                      'registry',
-                      'locations',
-                      'tts',
-                    ].includes(item.path)) ||
-                  (user.role === 'Admin' &&
-                    [
-                      'organizations',
-                      'accounts',
-                      'links',
-                      'rules',
-                      'configurations',
-                      'metrics',
-                      'audit',
-                      'delivery',
-                    ].includes(item.path)) ||
-                  (user.role === 'CenterAdmin' &&
-                    [
-                      'organization',
-                      'staff',
-                      'users',
-                      'assignments',
-                      'map',
-                      'routing',
-                      'reports',
-                    ].includes(item.path)),
-              )
-              .map((item) => (
-                <NavLink
-                  key={item.path}
-                  title={
-                    runtime.mode === 'api' &&
-                    user.role === 'Caregiver' &&
-                    item.path === 'caregivers'
-                      ? t('Liên kết của tôi')
-                      : t(item.label)
-                  }
-                  to={roleBase(user.role) + '/' + item.path}
-                  onClick={() => setOpen(false)}
-                >
-                  {(() => {
-                    const Icon =
-                      navigationIcons[item.path as keyof typeof navigationIcons] || FileText;
-                    return <Icon size={18} aria-hidden="true" />;
-                  })()}
-                  <span>
-                    {runtime.mode === 'api' &&
-                    user.role === 'Caregiver' &&
-                    item.path === 'caregivers'
-                      ? t('Liên kết của tôi')
-                      : t(item.label)}
-                  </span>
-                  {locked(item.path) && (
-                    <span className="nav-lock" title={t('Cần gói dịch vụ')}>
-                      <Lock size={14} aria-hidden="true" />
-                      <span className="sr-only">{t('(cần gói dịch vụ)')}</span>
-                    </span>
-                  )}
-                </NavLink>
-              ))}
-          </nav>
-        </div>
-        <div className="sidebar-foot stack">
-          <nav className="nav">
-            {runtime.mode === 'api' &&
-              (user.role === 'Caregiver' || user.role === 'CenterAdmin') && (
-                <NavLink
-                  title={t('Lịch sử cuộc gọi')}
-                  to={user.role === 'Caregiver' ? '/caregiver/calls' : '/center-admin/calls'}
-                  onClick={() => setOpen(false)}
-                >
-                  <Phone size={18} aria-hidden="true" />
-                  <span>{t('Lịch sử cuộc gọi')}</span>
-                </NavLink>
+      <Tooltip.Provider delayDuration={150}>
+        <aside className={'sidebar' + (open ? ' open' : '')}>
+          <div className="sidebar-brand">
+            <Brand />
+            <button
+              type="button"
+              className="btn sidebar-close"
+              aria-label={t('Đóng điều hướng')}
+              onClick={() => setOpen(false)}
+            >
+              <X size={20} aria-hidden="true" />
+            </button>
+          </div>
+          <div>
+            <nav className="nav" aria-label={t('Điều hướng chính')}>
+              {/* animate-ui glides the hover fill between links marked data-sidebar="menu-button". */}
+              <NavHighlight className="nav-items">
+                <NavTip label={t('Tổng quan')} show={collapsed}>
+                  <NavLink
+                    to="/dashboard"
+                    end
+                    data-sidebar="menu-button"
+                    onClick={() => setOpen(false)}
+                  >
+                    <LayoutDashboard size={18} />
+                    <span>{t('Tổng quan')}</span>
+                  </NavLink>
+                </NavTip>
+                {menuItems.map((item) => (
+                  <NavTip key={item.path} label={menuLabel(item)} show={collapsed}>
+                    <NavLink
+                      to={roleBase(user.role) + '/' + item.path}
+                      data-sidebar="menu-button"
+                      onClick={() => setOpen(false)}
+                    >
+                      {(() => {
+                        const Icon =
+                          navigationIcons[item.path as keyof typeof navigationIcons] || FileText;
+                        return <Icon size={18} aria-hidden="true" />;
+                      })()}
+                      <span>{menuLabel(item)}</span>
+                      {locked(item.path) && (
+                        <span className="nav-lock" title={t('Cần gói dịch vụ')}>
+                          <Lock size={14} aria-hidden="true" />
+                          <span className="sr-only">{t('(cần gói dịch vụ)')}</span>
+                        </span>
+                      )}
+                    </NavLink>
+                  </NavTip>
+                ))}
+              </NavHighlight>
+            </nav>
+          </div>
+          <div className="sidebar-foot stack">
+            <nav className="nav">
+              {footItems.length > 0 && (
+                <NavHighlight className="nav-items">
+                  {footItems.map(({ to, label, Icon }) => (
+                    <NavTip key={to} label={label} show={collapsed}>
+                      <NavLink to={to} data-sidebar="menu-button" onClick={() => setOpen(false)}>
+                        <Icon size={18} aria-hidden="true" />
+                        <span>{label}</span>
+                      </NavLink>
+                    </NavTip>
+                  ))}
+                </NavHighlight>
               )}
-            {runtime.mode === 'api' && user.role === 'CenterAdmin' && user.orgId && (
-              <>
-                <NavLink
-                  title={t('Kho license')}
-                  to="/center-admin/licenses"
-                  onClick={() => setOpen(false)}
-                >
-                  <ShieldCheck size={18} aria-hidden="true" />
-                  <span>{t('Kho license')}</span>
-                </NavLink>
-                <NavLink
-                  title={t('Thanh toán')}
-                  to="/center-admin/payments"
-                  onClick={() => setOpen(false)}
-                >
-                  <CreditCard size={18} aria-hidden="true" />
-                  <span>{t('Thanh toán')}</span>
-                </NavLink>
-              </>
-            )}
-            {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink
-                title={t('Kho license các trung tâm')}
-                to="/admin/license-pools"
-                onClick={() => setOpen(false)}
-              >
-                <ShieldCheck size={18} aria-hidden="true" />
-                <span>{t('Kho license các trung tâm')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink
-                title={t('Báo cáo doanh thu')}
-                to="/admin/revenue"
-                onClick={() => setOpen(false)}
-              >
-                <BarChart3 size={18} aria-hidden="true" />
-                <span>{t('Báo cáo doanh thu')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink
-                title={t('Nhật ký Hybrid')}
-                to="/admin/hybrid"
-                onClick={() => setOpen(false)}
-              >
-                <Activity size={18} aria-hidden="true" />
-                <span>{t('Nhật ký Hybrid')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && user.role === 'Admin' && (
-              <NavLink
-                title={t('Máy chủ cuộc gọi')}
-                to="/admin/ice-servers"
-                onClick={() => setOpen(false)}
-              >
-                <Settings size={18} aria-hidden="true" />
-                <span>{t('Máy chủ cuộc gọi')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && (
-              <NavLink title="License" to="/license">
-                <ShieldCheck size={18} aria-hidden="true" />
-                <span>License</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' && user.role === 'Caregiver' && !user.orgId && (
-              <NavLink
-                title={t('Thanh toán')}
-                to="/caregiver/payments"
-                onClick={() => setOpen(false)}
-              >
-                <CreditCard size={18} aria-hidden="true" />
-                <span>{t('Thanh toán')}</span>
-              </NavLink>
-            )}
-            {runtime.mode === 'api' &&
-              (user.role === 'Admin' ||
-                user.role === 'CenterAdmin' ||
-                (user.role === 'Caregiver' && !user.orgId)) && (
-                <NavLink
-                  title={t('Gói dịch vụ')}
-                  to={user.role === 'Admin' ? '/admin/packages' : '/packages'}
-                  onClick={() => setOpen(false)}
-                >
-                  <Package size={18} aria-hidden="true" />
-                  <span>{t('Gói dịch vụ')}</span>
-                </NavLink>
-              )}
-          </nav>
-        </div>
-      </aside>
+            </nav>
+          </div>
+        </aside>
+      </Tooltip.Provider>
+      {open && (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label={t('Đóng điều hướng')}
+          tabIndex={-1}
+          onClick={() => setOpen(false)}
+        />
+      )}
       <div className="workspace">
         <header className="topbar">
           <div className="row">
@@ -448,53 +491,65 @@ function Shell() {
             >
               <Menu size={18} />
             </button>
-            <span className="muted" style={{ fontSize: 13 }}>
-              VisionAid <span aria-hidden="true">/</span> {roles[user.role]}
-            </span>
+            <button
+              className="btn sidebar-toggle"
+              onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? t('Mở rộng thanh menu') : t('Thu gọn thanh menu')}
+              title={collapsed ? t('Mở rộng thanh menu') : t('Thu gọn thanh menu')}
+              aria-expanded={!collapsed}
+            >
+              {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+            </button>
+            <nav aria-label={t('Vị trí hiện tại')} className="muted" style={{ fontSize: 13 }}>
+              VisionAid <span aria-hidden="true">/</span>{' '}
+              <span aria-current="page">{currentPage?.label ?? roles[user.role]}</span>
+            </nav>
           </div>
           <div className="topbar-actions">
+            {api && <InboxBell actor={user} />}
+            <ThemeSwitch />
             <LanguageSwitch />
-            <button
-              className="row account-trigger"
-              popoverTarget="account-menu"
-              aria-label={t('Menu tài khoản')}
-            >
-              <span className="avatar">
-                {user.name.split(' ').at(-1)?.slice(0, 2).toUpperCase()}
-              </span>
-              <span style={{ fontSize: 13, color: 'var(--text)' }}>
-                <strong>{user.name}</strong>
-                <br />
-                <small>{roles[user.role]}</small>
-              </span>
-              <ChevronDown size={16} aria-hidden="true" />
-            </button>
-          </div>
-          <div id="account-menu" popover="auto" className="account-menu">
-            <Link
-              to="/profile"
-              onClick={(event) => {
-                event.currentTarget.parentElement?.hidePopover();
-                setOpen(false);
-              }}
-            >
-              <UserRound size={18} aria-hidden="true" /> {t('Hồ sơ của tôi')}
-            </Link>{' '}
-            <button
-              className="btn"
-              disabled={signingOut}
-              onClick={async () => {
-                setSigningOut(true);
-                try {
-                  await auth.logout();
-                } finally {
-                  setSigningOut(false);
-                }
-              }}
-            >
-              <LogOut size={16} />
-              {signingOut ? t('Đang đăng xuất…') : t('Đăng xuất')}
-            </button>
+            {/* animate-ui (Radix) menu: arrow keys move, Escape closes and returns focus. */}
+            <AccountMenu.Root modal={false}>
+              <AccountMenu.Trigger className="row account-trigger" aria-label={t('Menu tài khoản')}>
+                <Avatar url={user.avatar} name={user.name} />
+                <span style={{ fontSize: 13, color: 'var(--text)' }}>
+                  <strong>{user.name}</strong>
+                  <br />
+                  <small>{roles[user.role]}</small>
+                </span>
+                <ChevronDown size={16} aria-hidden="true" />
+              </AccountMenu.Trigger>
+              <AccountMenu.Portal>
+                <AccountMenu.Content
+                  id="account-menu"
+                  className="account-menu"
+                  align="end"
+                  sideOffset={8}
+                >
+                  <AccountMenu.Item asChild>
+                    <Link to="/profile" onClick={() => setOpen(false)}>
+                      <UserRound size={18} aria-hidden="true" /> {t('Hồ sơ của tôi')}
+                    </Link>
+                  </AccountMenu.Item>
+                  <AccountMenu.Item
+                    className="account-menu-signout"
+                    disabled={signingOut}
+                    onSelect={async () => {
+                      setSigningOut(true);
+                      try {
+                        await auth.logout();
+                      } finally {
+                        setSigningOut(false);
+                      }
+                    }}
+                  >
+                    <LogOut size={16} aria-hidden="true" />
+                    {signingOut ? t('Đang đăng xuất…') : t('Đăng xuất')}
+                  </AccountMenu.Item>
+                </AccountMenu.Content>
+              </AccountMenu.Portal>
+            </AccountMenu.Root>
           </div>
         </header>
         {auth.mode === 'api' &&
@@ -502,11 +557,12 @@ function Shell() {
           (user.role === 'Caregiver' || (user.role === 'CenterAdmin' && user.orgId)) && (
             <>
               <PushSync key={user.id} userId={user.id} />
+              <PushPrompt key={'prompt-' + user.id} userId={user.id} />
             </>
           )}
         {auth.mode === 'mock' && (
           <div className="demo-strip">
-            <span>{t('● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối backend')}</span>
+            <span>{t('● Chế độ demo · Dữ liệu mô phỏng, chưa kết nối máy chủ')}</span>
             <button
               style={{
                 border: 0,
@@ -516,7 +572,7 @@ function Shell() {
               }}
               onClick={() => setReset(true)}
             >
-              {t('Reset dữ liệu demo')}
+              {t('Khôi phục dữ liệu demo')}
             </button>
           </div>
         )}
@@ -524,7 +580,7 @@ function Shell() {
           {graceDays !== null && (
             <p className="notice" role="status">
               {t(
-                'License đã hết hạn. Máy chủ báo còn {days} ngày gia hạn trước khi các chức năng bị khóa.',
+                'Gói dịch vụ đã hết hạn. Máy chủ báo còn {days} ngày gia hạn trước khi các chức năng bị khóa.',
                 {
                   days: graceDays,
                 },
@@ -540,7 +596,9 @@ function Shell() {
             }
           >
             <ErrorBoundary scope="route" resetKey={location.pathname}>
-              <Outlet />
+              <div ref={view} className="route-view">
+                <Outlet />
+              </div>
             </ErrorBoundary>
           </Suspense>
         </main>
@@ -548,7 +606,7 @@ function Shell() {
       {notice && <Toast message={notice} onDismiss={() => uiStore.set({ notice: '' })} />}
       {reset && (
         <Confirm
-          title={t('Reset dữ liệu demo?')}
+          title={t('Khôi phục dữ liệu demo?')}
           description={t(
             'Xóa toàn bộ thay đổi, ảnh demo và phiên đăng nhập trên trình duyệt này để trở về dữ liệu mẫu.',
           )}
@@ -644,6 +702,7 @@ export function App() {
                     <Route path="center-admin/calls" element={<ApiCalls />} />
                     <Route path="center-admin/payments" element={<ApiPayments />} />
                     <Route path="center-admin/licenses" element={<ApiLicensePool />} />
+                    <Route path="center-admin/activity" element={<ApiCenterActivity />} />
                   </Route>
                   <Route path="payments/return" element={<ApiPayments result />} />
                   <Route path="payments/cancel" element={<ApiPayments result />} />
@@ -660,6 +719,10 @@ export function App() {
                 </Route>
               )}
               {runtime.mode === 'api' && <Route path="license" element={<ApiLicense />} />}
+              {runtime.mode === 'api' && <Route path="inbox" element={<ApiInbox />} />}
+              {runtime.mode === 'api' && (
+                <Route path="notifications/lookup" element={<ApiNotificationLookup />} />
+              )}
               {features.map((f) => (
                 <Route key={f.role + f.path} element={<Guard role={f.role} />}>
                   <Route
@@ -708,7 +771,8 @@ export function App() {
                             <ApiLinks />
                           ) : ['Caregiver', 'CenterAdmin'].includes(f.role) && f.path === 'map' ? (
                             <ApiTracking />
-                          ) : f.role === 'Caregiver' && f.path === 'alerts' ? (
+                          ) : ['Caregiver', 'CenterAdmin'].includes(f.role) &&
+                            f.path === 'alerts' ? (
                             <ApiAlerts />
                           ) : (f.role === 'Caregiver' && f.path === 'notifications') ||
                             (f.role === 'Admin' && f.path === 'rules') ||

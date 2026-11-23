@@ -21,6 +21,13 @@ const accountSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
+const restoreSchema = z.object({
+  user: accountSchema,
+  needsLicense: z.boolean(),
+  notes: z.array(z.string()),
+});
+/** BE keeps deleted accounts restorable for this many days. */
+export const RESTORE_WINDOW_DAYS = 30;
 const pageSchema = z.object({
   items: z.array(accountSchema),
   page: z.number().int().positive(),
@@ -80,7 +87,7 @@ function authorize(actor: Scope, target?: Account) {
   )
     throw new ServiceError(t('Không có quyền quản lý tài khoản này.'), 403);
 }
-const validId = (id: string) => parse(z.string().uuid(), id, t('Mã phải là UUID hợp lệ.'), 400);
+const validId = (id: string) => parse(z.string().uuid(), id, t('Mã không hợp lệ.'), 400);
 const profile = (values: unknown) =>
   parse(
     profileSchema,
@@ -109,7 +116,7 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
   const writable = async (actor: Scope, id: string) => {
     const target = await detail(actor, id);
     if (target.deletedAt)
-      throw new ServiceError(t('Tài khoản đã xóa; API hiện không hỗ trợ khôi phục.'), 422);
+      throw new ServiceError(t('Tài khoản đã xóa; hệ thống hiện không hỗ trợ khôi phục.'), 422);
     return target;
   };
   return {
@@ -166,11 +173,14 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
       const basic = profile(values);
       const role = parse(roleSchema, values.role, t('Vai trò không hợp lệ.'), 400);
       if (actor.role === 'CenterAdmin' && !['Caregiver', 'VisuallyImpaired'].includes(role))
-        throw new ServiceError(t('Trung tâm chỉ tạo Caregiver hoặc VIU.'), 403);
+        throw new ServiceError(t('Trung tâm chỉ tạo người chăm sóc hoặc người khiếm thị.'), 403);
       const organizationId =
         actor.role === 'CenterAdmin' ? actor.orgId : values.organizationId.trim();
       if (role !== 'Admin' && !organizationId)
-        throw new ServiceError(t('Cần chọn tổ chức cho tài khoản không phải Admin.'), 400);
+        throw new ServiceError(
+          t('Cần chọn tổ chức cho tài khoản không phải quản trị viên hệ thống.'),
+          400,
+        );
       const email = parse(
         z.string().trim().email().max(255),
         values.email,
@@ -230,10 +240,25 @@ export function createAccountsApi(get = apiGet, write = apiWrite) {
       await write('/api/users/' + id + '/reset-password', json('PATCH', { newPassword: password }));
     },
     async remove(actor: Scope, id: string) {
-      if (actor.role !== 'Admin') throw new ServiceError(t('Chỉ Admin được xóa tài khoản.'), 403);
+      if (actor.role !== 'Admin')
+        throw new ServiceError(t('Chỉ quản trị viên hệ thống được xóa tài khoản.'), 403);
       if (id === actor.id) throw new ServiceError(t('Không thể tự xóa tài khoản.'), 422);
       await writable(actor, id);
       await write('/api/users/' + id, { method: 'DELETE' });
+    },
+    /** Admin: undo a soft delete within the BE window (30 days). The old password still works. */
+    async restore(actor: Scope, id: string) {
+      if (actor.role !== 'Admin')
+        throw new ServiceError(t('Chỉ quản trị viên hệ thống được khôi phục tài khoản.'), 403);
+      if (!z.string().uuid().safeParse(id).success)
+        throw new ServiceError(t('Tài khoản không hợp lệ.'), 400);
+      const result = parse(
+        restoreSchema,
+        await write('/api/users/' + id + '/restore', { method: 'PATCH' }),
+      );
+      if (result.user.id !== id)
+        throw new ServiceError(t('Máy chủ trả về tài khoản khác với tài khoản đã chọn.'), 502);
+      return result;
     },
   };
 }

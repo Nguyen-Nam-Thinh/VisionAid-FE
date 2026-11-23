@@ -18,6 +18,11 @@ import { searchAccounts, searchCareRecipients } from '../../services/api/pickers
 import { FilterPanel } from '../../components/FilterPanel';
 import { caregivingApi } from '../../services/api/caregiving';
 import { accountsApi } from '../../services/api/accounts';
+/** 125 → "2 phút 5 giây". */
+const callLength = (seconds: number) =>
+  seconds < 60
+    ? t('{durationSeconds} giây', { durationSeconds: seconds })
+    : t('{m} phút {s} giây', { m: Math.floor(seconds / 60), s: seconds % 60 });
 const time = (value: string | null) => (value ? formatLocaleDateTime(value) : t('Chưa có'));
 export function ApiCalls() {
   const { data: actor } = useSession();
@@ -60,7 +65,7 @@ function History({ actor }: { actor: Person }) {
   });
   const nameOf = (id: string | null) =>
     id
-      ? (people.data?.find((person) => person.id === id)?.fullName ?? id)
+      ? (people.data?.find((person) => person.id === id)?.fullName ?? t('Một người được chăm sóc'))
       : t('Không còn thông tin');
   return (
     <>
@@ -128,7 +133,6 @@ function History({ actor }: { actor: Person }) {
           </div>
         </FilterPanel>
         <State loading={result.isPending} error={result.error} retry={() => result.refetch()}>
-          {!result.data?.items.length && <p>{t('Chưa có cuộc gọi phù hợp.')}</p>}
           <div className="table-scroll">
             <table>
               <thead>
@@ -150,8 +154,10 @@ function History({ actor }: { actor: Person }) {
                     <td>{callStatuses[call.status]}</td>
                     <td>
                       {call.durationSeconds === null
-                        ? t('Chưa có')
-                        : t('{durationSeconds} giây', { durationSeconds: call.durationSeconds })}
+                        ? ['Missed', 'Rejected'].includes(call.status)
+                          ? t('Không kết nối')
+                          : '—'
+                        : callLength(call.durationSeconds)}
                     </td>
                     <td>
                       <button className="btn small" onClick={() => setSelected(call)}>
@@ -162,6 +168,9 @@ function History({ actor }: { actor: Person }) {
                 ))}
               </tbody>
             </table>
+            {!result.data?.items.length && (
+              <p className="empty">{t('Chưa có cuộc gọi phù hợp.')}</p>
+            )}
           </div>
           <div className="row pagination">
             <span>
@@ -171,35 +180,35 @@ function History({ actor }: { actor: Person }) {
                 p4: Math.max(1, result.data?.totalPages ?? 1),
               })}
             </span>
-            <button
-              className="btn"
-              disabled={!result.data?.hasPreviousPage || result.isFetching}
-              onClick={() => {
-                setPage(page - 1);
-                setSelected(null);
-              }}
-            >
-              {t('Trang trước')}
-            </button>
-            <button
-              className="btn"
-              disabled={!result.data?.hasNextPage || result.isFetching}
-              onClick={() => {
-                setPage(page + 1);
-                setSelected(null);
-              }}
-            >
-              {t('Trang sau')}
-            </button>
+            {(result.data?.hasPreviousPage || result.data?.hasNextPage) && (
+              <button
+                className="btn"
+                disabled={!result.data?.hasPreviousPage || result.isFetching}
+                onClick={() => {
+                  setPage(page - 1);
+                  setSelected(null);
+                }}
+              >
+                {t('Trang trước')}
+              </button>
+            )}
+            {(result.data?.hasPreviousPage || result.data?.hasNextPage) && (
+              <button
+                className="btn"
+                disabled={!result.data?.hasNextPage || result.isFetching}
+                onClick={() => {
+                  setPage(page + 1);
+                  setSelected(null);
+                }}
+              >
+                {t('Trang sau')}
+              </button>
+            )}
           </div>
           {selected && (
             <Dialog title={t('Chi tiết cuộc gọi')} onClose={() => setSelected(null)}>
               <div className="stack" style={{ overflowWrap: 'anywhere' }}>
                 <dl className="record-details">
-                  <div>
-                    <dt>{t('Mã phiên')}</dt>
-                    <dd>{selected.sessionId}</dd>
-                  </div>
                   <div>
                     <dt>{t('Người được chăm sóc')}</dt>
                     <dd>{nameOf(selected.viuUserId)}</dd>

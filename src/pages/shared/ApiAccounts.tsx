@@ -6,11 +6,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth, useSession } from '../../hooks/useService';
 import {
   accountsApi,
+  RESTORE_WINDOW_DAYS,
   type Account,
   type AccountFilters,
   type AccountInput,
 } from '../../services/api/accounts';
 import { Form, type FieldSpec } from '../../components/Form';
+import { useNow } from '../../hooks/useNow';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import { roles } from '../../constants/labels';
 import type { Person } from '../../models/domain';
@@ -20,6 +22,7 @@ import { useOwnOrgName } from '../../hooks/useOrgPeople';
 import { SearchPicker } from '../../components/SearchPicker';
 import { FilterPanel } from '../../components/FilterPanel';
 import { searchOrganizations } from '../../services/api/pickers';
+import { organizationsApi } from '../../services/api/organizations';
 
 const profileFields: FieldSpec[] = [
   { key: 'fullName', label: msg('Họ và tên'), required: true, min: 2, max: 200 },
@@ -103,7 +106,7 @@ function Accounts({
           fixedRole === 'Caregiver'
             ? t('Nhân viên chăm sóc')
             : fixedRole
-              ? t('Người dùng VIU')
+              ? t('Người khiếm thị')
               : t('Quản lý tài khoản')
         }
         description={t('Hồ sơ và trạng thái tài khoản trong phạm vi của bạn.')}
@@ -119,7 +122,7 @@ function Accounts({
             setSelected(account.id);
             setNotice(
               t(
-                'Đã tạo tài khoản. Kiểm tra thông tin license và phân công chăm sóc cho người dùng.',
+                'Đã tạo tài khoản. Kiểm tra thông tin gói dịch vụ và phân công chăm sóc cho người dùng.',
               ),
             );
             await refresh();
@@ -225,7 +228,6 @@ function Accounts({
         <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
           {list.data && (
             <>
-              {!list.data.items.length && <p>{t('Không có tài khoản phù hợp.')}</p>}
               <div className="table-scroll">
                 <table>
                   <thead>
@@ -259,6 +261,9 @@ function Accounts({
                     ))}
                   </tbody>
                 </table>
+                {!list.data.items.length && (
+                  <p className="empty">{t('Không có tài khoản phù hợp.')}</p>
+                )}
               </div>
               <div className="row pagination">
                 <span>
@@ -268,20 +273,24 @@ function Accounts({
                     p4: Math.max(1, list.data.totalPages),
                   })}
                 </span>
-                <button
-                  className="btn"
-                  disabled={list.isFetching || !list.data.hasPreviousPage}
-                  onClick={() => filter({ page: filters.page - 1 })}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={list.isFetching || !list.data.hasNextPage}
-                  onClick={() => filter({ page: filters.page + 1 })}
-                >
-                  {t('Trang sau')}
-                </button>
+                {(list.data.hasPreviousPage || list.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={list.isFetching || !list.data.hasPreviousPage}
+                    onClick={() => filter({ page: filters.page - 1 })}
+                  >
+                    {t('Trang trước')}
+                  </button>
+                )}
+                {(list.data.hasPreviousPage || list.data.hasNextPage) && (
+                  <button
+                    className="btn"
+                    disabled={list.isFetching || !list.data.hasNextPage}
+                    onClick={() => filter({ page: filters.page + 1 })}
+                  >
+                    {t('Trang sau')}
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -361,7 +370,9 @@ function AccountEditor({
                 type: 'search' as const,
                 search: searchOrganizations(actor),
                 searchKey: ['account-org', actor.id],
-                hint: t('Bắt buộc với vai trò không phải Admin; tổ chức phải hoạt động.'),
+                hint: t(
+                  'Bắt buộc với vai trò không phải quản trị viên hệ thống; tổ chức phải hoạt động.',
+                ),
               },
             ]
           : []),
@@ -385,15 +396,15 @@ function AccountEditor({
         <div className="stack">
           <p>
             {t('Tổ chức: {p1} · Vai trò: {p3}', {
-              p1: orgName ?? actor.orgId,
+              p1: orgName ?? t('Tổ chức của bạn'),
               p3: roles[fixedRole || 'Caregiver'],
             })}
           </p>
           <p>
             {t(
-              'Nhân viên không dùng suất license. Để tạo người được chăm sóc, tổ chức cần gói license đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.',
+              'Nhân viên không tính vào số suất. Để tạo người được chăm sóc, tổ chức cần gói dịch vụ đang hoạt động và còn suất. Nếu không cấp được suất, tài khoản sẽ không được tạo.',
             )}{' '}
-            <Link to="/center-admin/licenses">{t('Xem kho license')}</Link>.
+            <Link to="/center-admin/licenses">{t('Xem kho suất sử dụng')}</Link>.
           </p>
         </div>
       )}
@@ -438,7 +449,7 @@ function AccountEditor({
             )
               throw new Error(
                 t(
-                  '{p0} Kiểm tra dữ liệu và kho license; nếu hết suất, mua thêm gói Business rồi thử lại.',
+                  '{p0} Kiểm tra dữ liệu và kho suất sử dụng; nếu hết suất, mua thêm gói Business rồi thử lại.',
                   { p0: error instanceof Error ? error.message : t('Không thể tạo tài khoản.') },
                 ),
                 { cause: error },
@@ -446,7 +457,7 @@ function AccountEditor({
             if ((error as { status?: number }).status! >= 500)
               throw new Error(
                 t(
-                  'Chưa xác nhận được kết quả lưu. Đóng form và tải lại/tìm email trước khi gửi lại để tránh tạo trùng tài khoản.',
+                  'Chưa xác nhận được kết quả lưu. Đóng hộp thoại và tải lại hoặc tìm theo email trước khi gửi lại để tránh tạo trùng tài khoản.',
                 ),
                 { cause: error },
               );
@@ -482,44 +493,104 @@ function AccountDetails({
   const [reset, setReset] = useState(false);
   const [busy, setBusy] = useState(false);
   const [action, setAction] = useState<'activate' | 'deactivate' | 'delete' | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const now = useNow();
   const [notice, setNotice] = useState('');
   const orgName = useOwnOrgName(actor);
+  // Admin may open accounts of any organization: name it from the org record, never the raw id.
+  const otherOrg = !!account.organizationId && account.organizationId !== actor.orgId;
+  const org = useQuery({
+    queryKey: ['api-account-org', actor.id, account.organizationId],
+    queryFn: ({ signal }) => organizationsApi.detail(actor, account.organizationId!, signal),
+    enabled: actor.role === 'Admin' && otherOrg,
+    staleTime: 5 * 60000,
+    retry: false,
+  });
+  const orgLabel = !account.organizationId
+    ? t('Không thuộc tổ chức')
+    : (otherOrg ? org.data?.name : orgName) ||
+      (org.isPending && otherOrg ? t('Đang tải…') : t('Một tổ chức'));
+  const initials = account.fullName
+    .split(' ')
+    .filter(Boolean)
+    .slice(-2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
   return (
-    <section className="glass card stack">
-      <h2>{account.fullName}</h2>
-      <AccountStatus account={account} />
-      <p>
-        {account.email} · {account.phoneNumber || t('Chưa có điện thoại')} · {roles[account.role]}
-      </p>
-      <p>
-        {t('Mã tài khoản: {id} · Tổ chức:', { id: account.id })}{' '}
-        {account.organizationId
-          ? (account.organizationId === actor.orgId && orgName) || account.organizationId
-          : t('Không thuộc tổ chức')}
-      </p>
-      <p>
-        {t('URL ảnh:')} {account.avatarUrl || t('Chưa có')}
-      </p>
-      {account.role === 'VisuallyImpaired' && (
-        <p>
-          License: {viuLicenseLabel(account.licenseStatus)}
-          {account.licenseExpiresAt &&
-            t(' · Hết hạn: {p0}', {
-              p0: formatLocaleDateTime(account.licenseExpiresAt),
-            })}
-          {actor.role === 'CenterAdmin' && (
-            <>
-              {' '}
-              · <Link to="/center-admin/licenses">{t('Quản lý cấp và thu hồi')}</Link>
-            </>
-          )}
-        </p>
-      )}
+    <section className="stack account-detail">
+      <header className="account-detail-head">
+        <span className="avatar account-detail-avatar" aria-hidden="true">
+          {initials}
+        </span>
+        <div className="account-detail-title">
+          <h2>{account.fullName}</h2>
+          <span className="muted">{roles[account.role]}</span>
+        </div>
+        <AccountStatus account={account} />
+      </header>
+      <dl className="record-details">
+        <div>
+          <dt>Email</dt>
+          <dd>{account.email}</dd>
+        </div>
+        <div>
+          <dt>{t('Số điện thoại')}</dt>
+          <dd>{account.phoneNumber || t('Chưa có điện thoại')}</dd>
+        </div>
+        <div>
+          <dt>{t('Tổ chức')}</dt>
+          <dd>{orgLabel}</dd>
+        </div>
+        <div>
+          <dt>{t('Ảnh đại diện')}</dt>
+          <dd>{account.avatarUrl ? t('Đã có') : t('Chưa có')}</dd>
+        </div>
+        {account.role === 'VisuallyImpaired' && (
+          <div>
+            <dt>{t('Gói dịch vụ')}</dt>
+            <dd className="stack account-detail-license">
+              <span>
+                <Badge tone={account.licenseStatus === 'Active' ? 'green' : 'amber'}>
+                  {viuLicenseLabel(account.licenseStatus)}
+                </Badge>
+                {account.licenseExpiresAt && (
+                  <span className="muted">
+                    {' '}
+                    {t('Hết hạn {p0}', { p0: formatLocaleDateTime(account.licenseExpiresAt) })}
+                  </span>
+                )}
+              </span>
+              {actor.role === 'CenterAdmin' && (
+                <Link to="/center-admin/licenses">{t('Quản lý cấp và thu hồi')}</Link>
+              )}
+            </dd>
+          </div>
+        )}
+      </dl>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       {account.deletedAt ? (
-        <p>{t('Tài khoản đã xóa. Chưa có API khôi phục tài khoản.')}</p>
+        <div className="stack">
+          <p>
+            {t('Tài khoản đã xóa lúc {time}.', { time: formatLocaleDateTime(account.deletedAt) })}{' '}
+            {now - Date.parse(account.deletedAt) > RESTORE_WINDOW_DAYS * 86_400_000
+              ? t('Đã quá {days} ngày nên máy chủ có thể không cho khôi phục.', {
+                  days: RESTORE_WINDOW_DAYS,
+                })
+              : t('Có thể khôi phục trong {days} ngày kể từ lúc xóa.', {
+                  days: RESTORE_WINDOW_DAYS,
+                })}
+          </p>
+          {actor.role === 'Admin' && (
+            <div className="row account-detail-actions">
+              <button className="btn" onClick={() => setRestoring(true)}>
+                {t('Khôi phục tài khoản')}
+              </button>
+            </div>
+          )}
+        </div>
       ) : (
-        <div className="row">
+        <div className="row account-detail-actions">
           <button className="btn" onClick={() => setEdit(true)}>
             {t('Sửa hồ sơ tài khoản')}
           </button>
@@ -567,9 +638,14 @@ function AccountDetails({
             account.email +
             (action === 'activate'
               ? t(': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.')
-              : t(': thu hồi phiên refresh và FCM. ') +
+              : t(': đăng xuất khỏi mọi thiết bị và ngừng gửi thông báo. ') +
                 (action === 'delete'
-                  ? t('Xóa mềm, hiện chưa có API khôi phục.')
+                  ? t(
+                      'Tài khoản vẫn được giữ lại; Quản trị viên hệ thống có thể khôi phục trong {days} ngày.',
+                      {
+                        days: RESTORE_WINDOW_DAYS,
+                      },
+                    )
                   : t('Người dùng sẽ bị chặn đăng nhập.')))
           }
           onClose={() => setAction(null)}
@@ -585,6 +661,27 @@ function AccountDetails({
           }}
         />
       )}
+      {restoring && account.deletedAt && (
+        <Confirm
+          title={t('Khôi phục tài khoản')}
+          description={t(
+            '{email}: mở lại tài khoản, đăng nhập bằng mật khẩu cũ, giữ nguyên liên kết và dữ liệu còn lưu. Dữ liệu đã bị xóa theo thời hạn lưu trữ sẽ không lấy lại được.',
+            { email: account.email },
+          )}
+          onClose={() => setRestoring(false)}
+          onConfirm={async () => {
+            const result = await accountsApi.restore(actor, account.id);
+            setNotice(
+              result.needsLicense
+                ? t(
+                    'Đã khôi phục tài khoản. Kho của tổ chức hết suất nên người dùng chưa có gói dịch vụ; trung tâm cần cấp một suất, trước đó chỉ dùng được SOS.',
+                  )
+                : t('Đã khôi phục tài khoản.'),
+            );
+            await refresh();
+          }}
+        />
+      )}
       {reset && !account.deletedAt && (
         <Dialog
           title={t('Đặt lại mật khẩu')}
@@ -594,7 +691,7 @@ function AccountDetails({
         >
           <p>
             {t(
-              'Tài khoản: {email}. Đặt lại mật khẩu sẽ thu hồi các phiên refresh; người dùng cần đăng nhập lại.',
+              'Tài khoản: {email}. Đặt lại mật khẩu sẽ đăng xuất người dùng khỏi mọi thiết bị; họ cần đăng nhập lại.',
               { email: account.email },
             )}
           </p>

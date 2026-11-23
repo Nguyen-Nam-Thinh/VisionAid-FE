@@ -1,4 +1,5 @@
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, LayoutList, ListOrdered, RefreshCw } from 'lucide-react';
+import { PageTabs } from '../../components/PageTabs';
 import { t, msg, labelMap, tText, getLocale } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +21,8 @@ import { toCsv, downloadCsv } from '../../services/csv';
 import { formatTime } from '../../constants/labels';
 import type { Person } from '../../models/domain';
 import { uiStore, useUI } from '../../stores/ui';
+import { objectLabel, resultLabels, voiceCommandLabels } from '../../constants/serverValues';
+import { ActivityTimeline } from './ActivityTimeline';
 
 const labels: Record<string, string> = labelMap({
   startedAt: msg('Bắt đầu'),
@@ -63,20 +66,10 @@ const labels: Record<string, string> = labelMap({
   audioDurationMs: msg('Thời lượng âm thanh'),
   isOffline: msg('Xử lý ngoại tuyến'),
   executedAt: msg('Thời gian thực hiện'),
+  responseText: msg('Phản hồi'),
+  spokenText: msg('Câu đã đọc'),
 });
 const values: Record<string, string> = labelMap({
-  Full: msg('Đầy đủ'),
-  Minimal: msg('Tối giản'),
-  Success: msg('Thành công'),
-  Failed: msg('Thất bại'),
-  Retried: msg('Đã thử lại'),
-  LowConfidence: msg('Độ tin cậy thấp'),
-  Matched: msg('Nhận diện được'),
-  NotMatched: msg('Chưa nhận diện được'),
-  Error: msg('Lỗi'),
-  Unrecognized: msg('Không nhận dạng được'),
-  Confirmed: msg('Đã xác nhận'),
-  Cancelled: msg('Đã hủy'),
   Near: msg('Gần'),
   Medium: msg('Trung bình'),
   Far: msg('Xa'),
@@ -89,7 +82,22 @@ function display(key: string, value: ActivityRecord[string]) {
   if (typeof value === 'boolean') return value ? t('Có') : t('Không');
   if (key.endsWith('At')) return formatTime(String(value));
   if (key.endsWith('Score')) return `${(Number(value) * 100).toFixed(1)}%`;
-  if (key.endsWith('Ms')) return `${value} ms`;
+  if (key === 'matchedCommand') return voiceCommandLabels[String(value)] ?? String(value);
+  // BE 86a0424: "Nhìn giúp tôi" rows carry ocrEngine = VisionAssist/Gemini|Groq|VietOCR|None.
+  if (key === 'ocrEngine' && String(value).startsWith('VisionAssist/')) {
+    const engine = String(value).slice('VisionAssist/'.length);
+    return t('Nhìn giúp tôi · {engine}', {
+      engine:
+        engine === 'Gemini'
+          ? t('AI Gemini')
+          : engine === 'Groq'
+            ? t('AI Groq')
+            : engine === 'None'
+              ? t('không đọc được')
+              : engine,
+    });
+  }
+  if (key.endsWith('Ms')) return `${value} ${t('mili giây')}`;
   return [
     'detectionMode',
     'resultStatus',
@@ -97,7 +105,7 @@ function display(key: string, value: ActivityRecord[string]) {
     'executionStatus',
     'distanceRange',
   ].includes(key)
-    ? values[String(value)] || String(value)
+    ? values[String(value)] || resultLabels[String(value)] || String(value)
     : String(value);
 }
 function Pager({
@@ -118,20 +126,24 @@ function Pager({
           p4: Math.max(1, data.totalPages),
         })}
       </span>
-      <button
-        className="btn"
-        disabled={busy || !data.hasPreviousPage}
-        onClick={() => onPage(data.page - 1)}
-      >
-        {t('Trang trước')}
-      </button>
-      <button
-        className="btn"
-        disabled={busy || !data.hasNextPage}
-        onClick={() => onPage(data.page + 1)}
-      >
-        {t('Trang sau')}
-      </button>
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasPreviousPage}
+          onClick={() => onPage(data.page - 1)}
+        >
+          {t('Trang trước')}
+        </button>
+      )}
+      {(data.hasPreviousPage || data.hasNextPage) && (
+        <button
+          className="btn"
+          disabled={busy || !data.hasNextPage}
+          onClick={() => onPage(data.page + 1)}
+        >
+          {t('Trang sau')}
+        </button>
+      )}
     </div>
   );
 }
@@ -151,34 +163,35 @@ function Events({ actor, viuId, sessionId }: { actor: Person; viuId: string; ses
         {t('Sắp xếp từ cũ đến mới. Đây là nhật ký phát hiện, không phải toàn bộ lộ trình GPS.')}
       </p>
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
-        {query.data?.items.length ? (
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{t('Thời gian')}</th>
-                  <th>{t('Đối tượng')}</th>
-                  <th>{t('Độ tin cậy')}</th>
-                  <th>{t('Khoảng cách')}</th>
-                  <th>{t('Đã cảnh báo')}</th>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{t('Thời gian')}</th>
+                <th>{t('Đối tượng')}</th>
+                <th>{t('Độ tin cậy')}</th>
+                <th>{t('Khoảng cách')}</th>
+                <th>{t('Đã cảnh báo')}</th>
+                <th>{t('Câu đã đọc')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {query.data?.items.map((item) => (
+                <tr key={item.id}>
+                  <td>{display('detectedAt', item.detectedAt)}</td>
+                  <td>{objectLabel(String(item.objectClass))}</td>
+                  <td>{display('confidenceScore', item.confidenceScore)}</td>
+                  <td>{display('distanceRange', item.distanceRange)}</td>
+                  <td>{display('alertIssued', item.alertIssued)}</td>
+                  <td>{item.spokenText ? String(item.spokenText) : '—'}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {query.data.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>{display('detectedAt', item.detectedAt)}</td>
-                    <td>{item.objectClass}</td>
-                    <td>{display('confidenceScore', item.confidenceScore)}</td>
-                    <td>{display('distanceRange', item.distanceRange)}</td>
-                    <td>{display('alertIssued', item.alertIssued)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>{t('Chưa có phát hiện được lưu trong phiên này.')}</p>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {!query.data?.items.length && (
+            <p className="empty">{t('Chưa có phát hiện được lưu trong phiên này.')}</p>
+          )}
+        </div>
         {query.data && <Pager data={query.data} busy={query.isFetching} onPage={setPage} />}
       </State>
     </section>
@@ -212,7 +225,6 @@ function Detail({
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {query.data && (
           <div className="stack">
-            <p>{t('Thời gian hiển thị theo giờ Việt Nam.')}</p>
             <dl className="record-details">
               {Object.entries(query.data)
                 .filter(([key]) => labels[key])
@@ -356,11 +368,7 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
           </label>
         </div>
       </FilterPanel>
-      <p>
-        {t(
-          'Ngày lọc và thời gian hiển thị theo giờ Việt Nam. Để trống ngày để xem toàn bộ thời gian còn lưu.',
-        )}
-      </p>
+      <p>{t('Để trống ngày để xem toàn bộ thời gian còn lưu.')}</p>
       {error && (
         <p className="notice error" role="alert">
           {error}
@@ -368,36 +376,33 @@ function ActivityHistory({ actor, viuId, name }: { actor: Person; viuId: string;
       )}
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
-        {query.data?.items.length ? (
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{t('Thời gian')}</th>
-                  <th>{kind === 'navigation' ? t('Chế độ phát hiện') : t('Kết quả')}</th>
-                  <th>{t('Thao tác')}</th>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{t('Thời gian')}</th>
+                <th>{kind === 'navigation' ? t('Chế độ phát hiện') : t('Kết quả')}</th>
+                <th>{t('Thao tác')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {query.data?.items.map((item) => (
+                <tr key={item.id}>
+                  <td>{display(activityKinds[kind].at, item[activityKinds[kind].at])}</td>
+                  <td>{display(activityKinds[kind].summary, item[activityKinds[kind].summary])}</td>
+                  <td>
+                    <button className="btn small" onClick={() => setDetail(item.id)}>
+                      {t('Chi tiết')}
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {query.data.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>{display(activityKinds[kind].at, item[activityKinds[kind].at])}</td>
-                    <td>
-                      {display(activityKinds[kind].summary, item[activityKinds[kind].summary])}
-                    </td>
-                    <td>
-                      <button className="btn small" onClick={() => setDetail(item.id)}>
-                        {t('Chi tiết')}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>{t('Chưa có lịch sử phù hợp với bộ lọc.')}</p>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {!query.data?.items.length && (
+            <p className="empty">{t('Chưa có lịch sử phù hợp với bộ lọc.')}</p>
+          )}
+        </div>
         {query.data && (
           <Pager
             data={query.data}
@@ -448,7 +453,7 @@ function Activity({ actor }: { actor: Person }) {
         title={t('Lịch sử hoạt động')}
         description={t('Xem các hoạt động đã được ghi nhận của người bạn chăm sóc.')}
       />
-      <section className="glass card stack">
+      <section className="glass card stack viu-picker">
         <FilterPanel
           active={search ? 1 : 0}
           onApply={(form) => {
@@ -490,8 +495,8 @@ function Activity({ actor }: { actor: Person }) {
               ))}
             </select>
           </label>
-          {users.data && (
-            <div className="row">
+          {users.data && users.data.totalPages > 1 && (
+            <div className="row pagination">
               <span>
                 {t('{totalCount} người · Trang {page}/{p4}', {
                   totalCount: users.data.totalCount,
@@ -499,37 +504,67 @@ function Activity({ actor }: { actor: Person }) {
                   p4: Math.max(1, users.data.totalPages),
                 })}
               </span>
-              <button
-                className="btn"
-                disabled={!users.data.hasPreviousPage || users.isFetching}
-                onClick={() => {
-                  setPage(page - 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang trước')}
-              </button>
-              <button
-                className="btn"
-                disabled={!users.data.hasNextPage || users.isFetching}
-                onClick={() => {
-                  setPage(page + 1);
-                  setSelected('');
-                }}
-              >
-                {t('Trang sau')}
-              </button>
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasPreviousPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page - 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang trước')}
+                </button>
+              )}
+              {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                <button
+                  className="btn"
+                  disabled={!users.data.hasNextPage || users.isFetching}
+                  onClick={() => {
+                    setPage(page + 1);
+                    setSelected('');
+                  }}
+                >
+                  {t('Trang sau')}
+                </button>
+              )}
             </div>
           )}
           {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
         </State>
       </section>
       {!users.error && person && (
-        <ActivityHistory
+        <PageTabs
           key={actor.id + person.id}
-          actor={actor}
-          viuId={person.id}
-          name={person.fullName}
+          label={t('Cách xem lịch sử')}
+          tabs={[
+            {
+              value: 'timeline',
+              label: t('Truy vết hoạt động'),
+              icon: ListOrdered,
+              content: (
+                <ActivityTimeline
+                  key={'timeline-' + actor.id + person.id}
+                  actor={actor}
+                  viuId={person.id}
+                  name={person.fullName}
+                />
+              ),
+            },
+            {
+              value: 'kinds',
+              label: t('Theo loại hoạt động'),
+              icon: LayoutList,
+              content: (
+                <ActivityHistory
+                  key={actor.id + person.id}
+                  actor={actor}
+                  viuId={person.id}
+                  name={person.fullName}
+                />
+              ),
+            },
+          ]}
         />
       )}
     </>

@@ -1,5 +1,7 @@
-import { RefreshCw } from 'lucide-react';
-import { t, msg } from '../../i18n';
+import { Link2, QrCode, RefreshCw } from 'lucide-react';
+import { PageTabs } from '../../components/PageTabs';
+import { CaregiverInvitations } from './CaregiverInvitations';
+import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
 import { useState } from 'react';
@@ -73,7 +75,13 @@ function Links({ actor }: { actor: Person }) {
   return (
     <>
       <PageHead
-        title={actor.role === 'Caregiver' ? t('Liên kết của tôi') : t('Phân công chăm sóc')}
+        title={
+          actor.role === 'Caregiver'
+            ? t('Liên kết của tôi')
+            : actor.role === 'Admin'
+              ? t('Liên kết chăm sóc')
+              : t('Phân công chăm sóc')
+        }
         description={
           actor.role === 'Caregiver'
             ? t('Những người cùng chăm sóc và quyền của từng người.')
@@ -81,6 +89,7 @@ function Links({ actor }: { actor: Person }) {
         }
       />
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
+
       {create && (
         <LinkEditor
           actor={actor}
@@ -93,165 +102,195 @@ function Links({ actor }: { actor: Person }) {
           }}
         />
       )}
-      <section className="glass card stack">
-        <FilterPanel
-          active={
-            [
-              filters.caregiverId,
-              filters.viuId,
-              actor.role !== 'CenterAdmin' && filters.linkType,
-              filters.active !== 'true',
-            ].filter(Boolean).length
-          }
-          submitLabel={t('Lọc liên kết')}
-          onApply={(form) => {
-            const data = new FormData(form);
-            filter({
-              caregiverId: draftCg,
-              viuId: draftViu,
-              ...(actor.role !== 'CenterAdmin' && { linkType: String(data.get('linkType') || '') }),
-              active: String(data.get('active') ?? 'true'),
-            });
-          }}
-          onReset={() => {
-            setDraftCg('');
-            setDraftViu('');
-            filter({ caregiverId: '', viuId: '', linkType: '', active: 'true' });
-          }}
-          tools={
-            <button
-              className="btn"
-              type="button"
-              disabled={list.isFetching}
-              onClick={() => void refresh()}
-            >
-              <RefreshCw size={16} aria-hidden="true" />
-              {t('Tải lại')}
-            </button>
-          }
-          extra={
-            <button className="btn primary" onClick={() => setCreate(true)}>
-              {actor.role === 'Caregiver' ? t('Thêm người chăm sóc phụ') : t('Tạo liên kết')}
-            </button>
-          }
-        >
-          {actor.role !== 'Caregiver' && (
-            <SearchPicker
-              label={t('Người chăm sóc')}
-              placeholder={t('Gõ tên hoặc email')}
-              value={draftCg}
-              onChange={setDraftCg}
-              search={searchAccounts(actor, 'Caregiver')}
-              queryKey={['link-filter-caregiver', actor.id, actor.orgId]}
-            />
-          )}
-          <SearchPicker
-            label={t('Người được chăm sóc')}
-            placeholder={t('Gõ tên hoặc email')}
-            value={draftViu}
-            onChange={setDraftViu}
-            search={
-              actor.role === 'Caregiver'
-                ? searchCareRecipients()
-                : searchAccounts(actor, 'VisuallyImpaired')
-            }
-            queryKey={['link-filter-viu', actor.id, actor.orgId]}
-          />
-          {actor.role !== 'CenterAdmin' && (
-            <label className="field">
-              {t('Loại liên kết')}
-              <select name="linkType" defaultValue={filters.linkType}>
-                <option value="">{t('Tất cả loại')}</option>
-                <option value="Personal">{t('Cá nhân')}</option>
-                <option value="Organization">{t('Tổ chức')}</option>
-              </select>
-            </label>
-          )}
-          <label className="field">
-            {t('Trạng thái liên kết')}
-            <select name="active" defaultValue={filters.active}>
-              <option value="true">{t('Đang liên kết')}</option>
-              <option value="false">{t('Đã gỡ')}</option>
-              <option value="">{t('Tất cả')}</option>
-            </select>
-          </label>
-        </FilterPanel>
-        <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
-          {list.data && (
-            <>
-              {!list.data.items.length && <p>{t('Không có liên kết phù hợp.')}</p>}
-              <div
-                className="table-scroll"
-                tabIndex={0}
-                role="region"
-                aria-label={t('Danh sách liên kết chăm sóc')}
-              >
-                <table className="care-links-table">
-                  <thead>
-                    <tr>
-                      <th>Caregiver</th>
-                      <th>{t('Người được chăm sóc')}</th>
-                      <th>{t('Loại')}</th>
-                      <th>{t('Trạng thái')}</th>
-                      <th>{t('Thao tác')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {list.data.items.map((link) => (
-                      <tr key={link.id}>
-                        <td>
-                          <strong>{link.caregiverFullName}</strong>
-                          <p className="care-secondary">{link.caregiverEmail}</p>
-                        </td>
-                        <td>
-                          <strong>{link.viuFullName}</strong>
-                          <p className="care-secondary">{link.viuEmail}</p>
-                        </td>
-                        <td>{link.linkType === 'Personal' ? t('Cá nhân') : t('Tổ chức')}</td>
-                        <td>
-                          <LinkStatus link={link} />
-                        </td>
-                        <td>
+      <PageTabs
+        label={t('Phần của trang liên kết')}
+        tabs={[
+          {
+            value: 'links',
+            label: actor.role === 'Caregiver' ? t('Danh sách liên kết') : t('Liên kết chăm sóc'),
+            icon: Link2,
+            content: (
+              <section className="glass card stack">
+                <FilterPanel
+                  active={
+                    [
+                      filters.caregiverId,
+                      filters.viuId,
+                      actor.role !== 'CenterAdmin' && filters.linkType,
+                      filters.active !== 'true',
+                    ].filter(Boolean).length
+                  }
+                  submitLabel={t('Lọc liên kết')}
+                  onApply={(form) => {
+                    const data = new FormData(form);
+                    filter({
+                      caregiverId: draftCg,
+                      viuId: draftViu,
+                      ...(actor.role !== 'CenterAdmin' && {
+                        linkType: String(data.get('linkType') || ''),
+                      }),
+                      active: String(data.get('active') ?? 'true'),
+                    });
+                  }}
+                  onReset={() => {
+                    setDraftCg('');
+                    setDraftViu('');
+                    filter({ caregiverId: '', viuId: '', linkType: '', active: 'true' });
+                  }}
+                  tools={
+                    <button
+                      className="btn"
+                      type="button"
+                      disabled={list.isFetching}
+                      onClick={() => void refresh()}
+                    >
+                      <RefreshCw size={16} aria-hidden="true" />
+                      {t('Tải lại')}
+                    </button>
+                  }
+                  extra={
+                    <button className="btn primary" onClick={() => setCreate(true)}>
+                      {actor.role === 'Caregiver'
+                        ? t('Thêm người chăm sóc phụ')
+                        : t('Tạo liên kết')}
+                    </button>
+                  }
+                >
+                  {actor.role !== 'Caregiver' && (
+                    <SearchPicker
+                      label={t('Người chăm sóc')}
+                      placeholder={t('Gõ tên hoặc email')}
+                      value={draftCg}
+                      onChange={setDraftCg}
+                      search={searchAccounts(actor, 'Caregiver')}
+                      queryKey={['link-filter-caregiver', actor.id, actor.orgId]}
+                    />
+                  )}
+                  <SearchPicker
+                    label={t('Người được chăm sóc')}
+                    placeholder={t('Gõ tên hoặc email')}
+                    value={draftViu}
+                    onChange={setDraftViu}
+                    search={
+                      actor.role === 'Caregiver'
+                        ? searchCareRecipients()
+                        : searchAccounts(actor, 'VisuallyImpaired')
+                    }
+                    queryKey={['link-filter-viu', actor.id, actor.orgId]}
+                  />
+                  {actor.role !== 'CenterAdmin' && (
+                    <label className="field">
+                      {t('Loại liên kết')}
+                      <select name="linkType" defaultValue={filters.linkType}>
+                        <option value="">{t('Tất cả loại')}</option>
+                        <option value="Personal">{t('Cá nhân')}</option>
+                        <option value="Organization">{t('Tổ chức')}</option>
+                      </select>
+                    </label>
+                  )}
+                  <label className="field">
+                    {t('Trạng thái liên kết')}
+                    <select name="active" defaultValue={filters.active}>
+                      <option value="true">{t('Đang liên kết')}</option>
+                      <option value="false">{t('Đã gỡ')}</option>
+                      <option value="">{t('Tất cả')}</option>
+                    </select>
+                  </label>
+                </FilterPanel>
+                <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
+                  {list.data && (
+                    <>
+                      <div
+                        className="table-scroll"
+                        tabIndex={0}
+                        role="region"
+                        aria-label={t('Danh sách liên kết chăm sóc')}
+                      >
+                        <table className="care-links-table">
+                          <thead>
+                            <tr>
+                              <th>{t('Người chăm sóc')}</th>
+                              <th>{t('Người được chăm sóc')}</th>
+                              <th>{t('Loại')}</th>
+                              <th>{t('Trạng thái')}</th>
+                              <th>{t('Thao tác')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {list.data.items.map((link) => (
+                              <tr key={link.id}>
+                                <td>
+                                  <strong>{link.caregiverFullName}</strong>
+                                  <p className="care-secondary">{link.caregiverEmail}</p>
+                                </td>
+                                <td>
+                                  <strong>{link.viuFullName}</strong>
+                                  <p className="care-secondary">{link.viuEmail}</p>
+                                </td>
+                                <td>
+                                  {link.linkType === 'Personal' ? t('Cá nhân') : t('Tổ chức')}
+                                </td>
+                                <td>
+                                  <LinkStatus link={link} />
+                                </td>
+                                <td>
+                                  <button
+                                    className="btn"
+                                    aria-label={t('Xem liên kết ') + link.id}
+                                    onClick={() => setSelected(link.id)}
+                                  >
+                                    {t('Chi tiết')}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {!list.data.items.length && (
+                          <p className="empty">{t('Không có liên kết phù hợp.')}</p>
+                        )}
+                      </div>
+                      <div className="row pagination">
+                        <span>
+                          {t('{totalCount} kết quả · Trang {page}/{p4}', {
+                            totalCount: list.data.totalCount,
+                            page: list.data.page,
+                            p4: Math.max(1, list.data.totalPages),
+                          })}
+                        </span>
+                        {(list.data.hasPreviousPage || list.data.hasNextPage) && (
                           <button
                             className="btn"
-                            aria-label={t('Xem liên kết ') + link.id}
-                            onClick={() => setSelected(link.id)}
+                            disabled={list.isFetching || !list.data.hasPreviousPage}
+                            onClick={() => filter({ page: filters.page - 1 })}
                           >
-                            {t('Chi tiết')}
+                            {t('Trang trước')}
                           </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="row pagination">
-                <span>
-                  {t('{totalCount} kết quả · Trang {page}/{p4}', {
-                    totalCount: list.data.totalCount,
-                    page: list.data.page,
-                    p4: Math.max(1, list.data.totalPages),
-                  })}
-                </span>
-                <button
-                  className="btn"
-                  disabled={list.isFetching || !list.data.hasPreviousPage}
-                  onClick={() => filter({ page: filters.page - 1 })}
-                >
-                  {t('Trang trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={list.isFetching || !list.data.hasNextPage}
-                  onClick={() => filter({ page: filters.page + 1 })}
-                >
-                  {t('Trang sau')}
-                </button>
-              </div>
-            </>
-          )}
-        </State>
-      </section>
+                        )}
+                        {(list.data.hasPreviousPage || list.data.hasNextPage) && (
+                          <button
+                            className="btn"
+                            disabled={list.isFetching || !list.data.hasNextPage}
+                            onClick={() => filter({ page: filters.page + 1 })}
+                          >
+                            {t('Trang sau')}
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </State>
+              </section>
+            ),
+          },
+          actor.role === 'Caregiver' && {
+            value: 'invite',
+            label: t('Mời bằng mã QR'),
+            icon: QrCode,
+            content: <CaregiverInvitations actor={actor} onAccepted={refresh} />,
+          },
+        ]}
+      />
       {selected && (
         <Dialog title={t('Thông tin liên kết')} onClose={() => setSelected('')}>
           <State loading={detail.isPending} error={detail.error} retry={() => detail.refetch()}>
@@ -296,11 +335,16 @@ function LinkEditor({
   saved: (link: CareLink) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  // Saving takes two steps: the form, then a separate review the user confirms.
+  const [review, setReview] = useState<Record<string, unknown> | null>(null);
+  const [error, setError] = useState('');
   const maxCaregivers = useLimit('caregiving.max_caregivers_per_viu');
   const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const picking = !link && actor.role === 'CenterAdmin';
   const staff = useOrgPeople(actor, 'Caregiver', picking);
   const vius = useOrgPeople(actor, 'VisuallyImpaired', picking);
+  // BE always grants a primary caregiver every permission, so those boxes are fixed and ticked.
+  const primary = !!link?.isPrimary;
   const fields: FieldSpec[] = [
     ...(!link
       ? [
@@ -314,7 +358,7 @@ function LinkEditor({
                   max: 255,
                   autoComplete: 'off',
                   hint: t(
-                    'Nhập đúng email tài khoản Caregiver cá nhân của người được mời. Họ cần đăng ký tài khoản trước.',
+                    'Nhập đúng email tài khoản người chăm sóc gia đình của người được mời. Họ cần đăng ký tài khoản trước.',
                   ),
                 },
               ]
@@ -336,7 +380,9 @@ function LinkEditor({
           personField(
             { key: 'viuId', label: t('Người được chăm sóc'), required: true },
             vius,
-            t('Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản VIU trước.'),
+            t(
+              'Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản người khiếm thị trước.',
+            ),
             {
               search:
                 actor.role === 'Caregiver'
@@ -361,15 +407,51 @@ function LinkEditor({
             : []),
         ]
       : []),
-    ...permissionFields,
-    {
-      key: 'confirmed',
-      label: link
-        ? t('Tôi xác nhận cập nhật các quyền trên')
-        : t('Tôi xác nhận tạo liên kết giữa các tài khoản trên'),
-      type: 'checkbox',
-    },
+    ...(primary
+      ? permissionFields.map((field, i) => ({
+          ...field,
+          disabled: true,
+          hint:
+            i === permissionFields.length - 1
+              ? msg('Người chăm sóc chính luôn có đủ quyền.')
+              : undefined,
+        }))
+      : permissionFields),
   ];
+  const save = async (values: Record<string, unknown>) => {
+    setBusy(true);
+    setError('');
+    try {
+      const permissions = {
+        canReceiveAlerts: primary || !!values.canReceiveAlerts,
+        canManageRegistry: primary || !!values.canManageRegistry,
+        canManageLocations: primary || !!values.canManageLocations,
+      };
+      const result = link
+        ? await linksApi.permissions(actor, link.id, permissions)
+        : await linksApi.create(actor, {
+            ...permissions,
+            caregiverId: String(values.caregiverId || ''),
+            caregiverEmail: String(values.caregiverEmail || ''),
+            viuId: String(values.viuId || ''),
+            linkType: String(values.linkType || ''),
+          });
+      await saved(result);
+    } catch (e) {
+      const status = (e as { status?: number }).status || 0;
+      setError(
+        status === 409 || status >= 500
+          ? t(
+              'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng hộp thoại, lọc theo hai tài khoản và tải lại trước khi gửi lại.',
+            )
+          : e instanceof Error
+            ? e.message
+            : t('Không thể thực hiện.'),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <Dialog
       title={
@@ -398,55 +480,78 @@ function LinkEditor({
       {picking && (staff.isLoading || vius.isLoading) ? (
         <p role="status">{t('Đang tải danh sách nhân viên và người được chăm sóc…')}</p>
       ) : (
-        <Form
-          fields={fields}
-          initial={{
-            canReceiveAlerts: link?.canReceiveAlerts ?? true,
-            canManageRegistry: link?.canManageRegistry ?? false,
-            canManageLocations: link?.canManageLocations ?? false,
-            linkType: 'Organization',
-          }}
-          submit={
-            link
-              ? t('Lưu quyền liên kết')
-              : actor.role === 'Caregiver'
-                ? t('Thêm người chăm sóc phụ')
-                : t('Tạo liên kết')
-          }
-          onSubmit={async (values) => {
-            if (!values.confirmed) throw new Error(t('Vui lòng xác nhận thao tác.'));
-            setBusy(true);
-            try {
-              const permissions = {
-                canReceiveAlerts: !!values.canReceiveAlerts,
-                canManageRegistry: !!values.canManageRegistry,
-                canManageLocations: !!values.canManageLocations,
-              };
-              const result = link
-                ? await linksApi.permissions(actor, link.id, permissions)
-                : await linksApi.create(actor, {
-                    ...permissions,
-                    caregiverId: String(values.caregiverId || ''),
-                    caregiverEmail: String(values.caregiverEmail || ''),
-                    viuId: String(values.viuId || ''),
-                    linkType: String(values.linkType || ''),
-                  });
-              await saved(result);
-            } catch (error) {
-              const status = (error as { status?: number }).status || 0;
-              if (status === 409 || status >= 500)
-                throw new Error(
-                  t(
-                    'Chưa xác nhận được kết quả hoặc liên kết đã tồn tại. Đóng form, lọc theo hai tài khoản và tải lại trước khi gửi lại.',
-                  ),
-                  { cause: error },
-                );
-              throw error;
-            } finally {
-              setBusy(false);
-            }
-          }}
-        />
+        <>
+          {/* The form stays mounted under the review so going back keeps every choice. */}
+          <div hidden={!!review}>
+            <Form
+              fields={fields}
+              initial={{
+                canReceiveAlerts: primary || (link?.canReceiveAlerts ?? true),
+                canManageRegistry: primary || (link?.canManageRegistry ?? false),
+                canManageLocations: primary || (link?.canManageLocations ?? false),
+                linkType: 'Organization',
+              }}
+              submit={
+                link
+                  ? t('Lưu quyền liên kết')
+                  : actor.role === 'Caregiver'
+                    ? t('Thêm người chăm sóc phụ')
+                    : t('Tạo liên kết')
+              }
+              onSubmit={async (values) => {
+                setError('');
+                setReview(values);
+              }}
+            />
+          </div>
+          {review && (
+            <section className="stack link-review" aria-label={t('Xác nhận thay đổi')}>
+              <p>
+                {link
+                  ? t('Kiểm tra lại các quyền sẽ được lưu cho liên kết này.')
+                  : t('Kiểm tra lại các quyền của liên kết sắp tạo.')}
+              </p>
+              <dl className="record-details">
+                {permissionFields.map((field) => {
+                  const next = primary || !!review[field.key];
+                  const before = link?.[field.key as keyof CareLink];
+                  return (
+                    <div key={field.key}>
+                      <dt>{tText(field.label)}</dt>
+                      <dd>
+                        {next ? t('Có') : t('Không')}
+                        {link && before !== next && (
+                          <>
+                            {' '}
+                            <Badge tone="amber">{t('Thay đổi')}</Badge>
+                          </>
+                        )}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+              {primary && <p className="muted">{t('Người chăm sóc chính luôn có đủ quyền.')}</p>}
+              {error && (
+                <p className="notice error" role="alert">
+                  {error}
+                </p>
+              )}
+              <div className="row">
+                <button className="btn" disabled={busy} onClick={() => setReview(null)}>
+                  {t('Quay lại chỉnh sửa')}
+                </button>
+                <button className="btn primary" disabled={busy} onClick={() => void save(review)}>
+                  {busy
+                    ? t('Đang lưu…')
+                    : link
+                      ? t('Xác nhận lưu quyền')
+                      : t('Xác nhận tạo liên kết')}
+                </button>
+              </div>
+            </section>
+          )}
+        </>
       )}
       {picking && (staff.isError || vius.isError) && (
         <p className="muted">{t('Không tải được danh sách tổ chức; tìm theo tên hoặc email.')}</p>
@@ -502,10 +607,6 @@ function LinkDetails({
               })}
             </p>
           </dd>
-        </div>
-        <div>
-          <dt>{t('Mã liên kết')}</dt>
-          <dd>{link.id}</dd>
         </div>
         <div>
           <dt>{t('Nhận cảnh báo')}</dt>

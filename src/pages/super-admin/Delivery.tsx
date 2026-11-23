@@ -19,12 +19,12 @@ export function Delivery() {
       <PageHead
         title={t('Theo dõi thông báo')}
         description={t(
-          'Giám sát trạng thái delivery theo kênh. Toàn bộ bản ghi dưới đây là dữ liệu minh họa, không phải xác nhận gửi thật.',
+          'Theo dõi thông báo đã gửi tới đâu theo từng cách gửi. Toàn bộ bản ghi dưới đây là dữ liệu minh họa, không phải xác nhận gửi thật.',
         )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <DataTable
-          title={t('Nhật ký delivery')}
+          title={t('Nhật ký gửi thông báo')}
           rows={
             db?.deliveries.filter(
               (d) =>
@@ -36,7 +36,7 @@ export function Delivery() {
           filter={
             <>
               <label className="field">
-                <span className="sr-only">{t('Trạng thái delivery')}</span>
+                <span className="sr-only">{t('Trạng thái gửi')}</span>
                 <select value={status} onChange={(e) => setStatus(e.target.value)}>
                   <option value="all">{t('Mọi trạng thái')}</option>
                   {Object.entries(labels).map(([v, l]) => (
@@ -47,10 +47,10 @@ export function Delivery() {
                 </select>
               </label>
               <label className="field">
-                <span className="sr-only">{t('Kênh delivery')}</span>
+                <span className="sr-only">{t('Kênh gửi')}</span>
                 <select value={channel} onChange={(e) => setChannel(e.target.value)}>
                   <option value="all">{t('Mọi kênh')}</option>
-                  <option value="PUSH">Push</option>
+                  <option value="PUSH">{t('Thông báo trên thiết bị')}</option>
                   <option value="EMAIL">Email</option>
                 </select>
               </label>
@@ -87,18 +87,15 @@ export function Delivery() {
         />
       </State>
       {delivery && (
-        <Dialog title={t('Chi tiết delivery mô phỏng')} onClose={() => setSelected('')}>
+        <Dialog title={t('Chi tiết gửi thông báo (mô phỏng)')} onClose={() => setSelected('')}>
           <div className="stack">
-            <p className="mono">{delivery.id}</p>
             <Badge>{labels[delivery.status]}</Badge>
             <p>
               {delivery.status === 'FAILED'
-                ? t(
-                    'Kịch bản demo: nhà cung cấp tạm thời không khả dụng. Chưa có API retry được xác nhận.',
-                  )
-                : t('Bản ghi trạng thái minh họa từ dịch vụ mock.')}
+                ? t('Kịch bản demo: nhà cung cấp tạm thời không khả dụng. Chưa hỗ trợ gửi lại.')
+                : t('Bản ghi trạng thái minh họa của bản demo.')}
             </p>
-            <small>{formatTime(delivery.at)} · UTC+7</small>
+            <small>{formatTime(delivery.at)}</small>
           </div>
         </Dialog>
       )}

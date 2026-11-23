@@ -46,6 +46,8 @@ const item = z.object({
   initiatorId: z.string().uuid().nullable(),
   receiverId: z.string().uuid().nullable(),
   viuUserId: z.string().uuid().nullable(),
+  // BE 6a56712: the alert of an SOS_AUTO call; optional so older deploys still parse.
+  emergencyEventId: z.string().uuid().nullable().optional(),
 });
 const pageSchema = z.object({
   items: z.array(item),
@@ -62,6 +64,7 @@ const sessionSchema = z.object({
   sessionId: z.string().uuid(),
   status: z.enum(['Initiated', 'Ringing', 'Connected']),
   myRole: z.literal('video_viewer_audio_sender'),
+  emergencyEventId: z.string().uuid().nullable().optional(),
   iceServers: z.array(
     z.object({
       urls: z.string().regex(/^(stun|stuns|turn|turns):[^\s]+$/),
@@ -125,7 +128,7 @@ export function createCallsApi(get = apiGet, write = apiWrite) {
       const query = new URLSearchParams({ page: String(page), pageSize: '10' });
       if (filters.viuUserId) {
         if (!z.string().uuid().safeParse(filters.viuUserId).success)
-          throw new ServiceError(t('Mã người được chăm sóc phải là UUID.'), 400);
+          throw new ServiceError(t('Mã người được chăm sóc không hợp lệ.'), 400);
         query.set('viuUserId', filters.viuUserId);
       }
       for (const key of ['dateFrom', 'dateTo'] as const)

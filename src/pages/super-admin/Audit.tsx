@@ -21,9 +21,7 @@ export function Audit() {
     <>
       <PageHead
         title={t('Nhật ký thao tác')}
-        description={t(
-          'Theo dõi thao tác quản trị. Chỉ đọc; không xóa hoặc sửa bản ghi audit trên giao diện.',
-        )}
+        description={t('Theo dõi các thao tác quản trị. Chỉ xem, không xóa hoặc sửa được.')}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         <div className="stack">
@@ -55,7 +53,7 @@ export function Audit() {
             rows={rows}
             searchText={(a) => a.action + ' ' + a.target}
             columns={[
-              { label: t('Thời gian · UTC+7'), render: (a) => formatTime(a.at) },
+              { label: t('Thời gian'), render: (a) => formatTime(a.at) },
               {
                 label: t('Người thực hiện'),
                 render: (a) => db?.people.find((p) => p.id === a.actor)?.name ?? t('Hệ thống'),
@@ -75,16 +73,14 @@ export function Audit() {
         </div>
       </State>
       {entry && (
-        <Dialog title={t('Chi tiết bản ghi audit')} onClose={() => setSelected('')}>
+        <Dialog title={t('Chi tiết bản ghi nhật ký')} onClose={() => setSelected('')}>
           <dl>
-            <dt>{t('Mã bản ghi')}</dt>
-            <dd className="mono">{entry.id}</dd>
             <dt>{t('Hành động')}</dt>
             <dd>{entry.action}</dd>
             <dt>{t('Đối tượng')}</dt>
             <dd>{entry.target}</dd>
             <dt>{t('Thời gian')}</dt>
-            <dd>{formatTime(entry.at)} · UTC+7</dd>
+            <dd>{formatTime(entry.at)}</dd>
             <dt>{t('Phạm vi')}</dt>
             <dd>
               {db?.entities.organizations.find((o) => o.id === entry.orgId)?.name ??

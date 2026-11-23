@@ -52,11 +52,11 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   MAX_SAVED_LOCATIONS_REACHED: msg('Đã đủ 20 địa điểm. Xóa bớt trước khi thêm.'),
   // Gương mặt
   NO_FACE_DETECTED: msg(
-    'Không tìm thấy khuôn mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
+    'Không tìm thấy gương mặt trong ảnh. Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
   ),
   FACE_REGISTRY_FULL: msg('Danh bạ gương mặt đã đủ 20 người.'),
   FACE_SERVICE_UNAVAILABLE: msg(
-    'Dịch vụ nhận diện khuôn mặt tạm thời không hoạt động. Thử lại sau.',
+    'Dịch vụ nhận diện gương mặt tạm thời không hoạt động. Thử lại sau.',
   ),
   UNSUPPORTED_IMAGE_TYPE: msg('Chỉ nhận ảnh JPEG, PNG hoặc WebP.'),
   IMAGE_CONTENT_TYPE_MISMATCH: msg('Nội dung tệp không khớp định dạng ảnh đã chọn.'),
@@ -64,46 +64,46 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   // License, gói, thanh toán
   // 402 license gate (middleware for the caller, InitiateCall for the VIU being called)
   LICENSE_REQUIRED: msg(
-    'Tài khoản của bạn chưa có license nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để chọn gói hoặc kích hoạt key.',
+    'Tài khoản của bạn chưa có gói dịch vụ nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục Gói dịch vụ để chọn gói hoặc kích hoạt mã.',
   ),
   LICENSE_EXPIRED: msg(
-    'License của bạn đã hết hạn và quá thời gian gia hạn nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục License để gia hạn.',
+    'Gói dịch vụ của bạn đã hết hạn và quá thời gian gia hạn nên không bắt đầu được cuộc gọi mới. Cảnh báo và cuộc gọi SOS vẫn hoạt động. Mở mục Gói dịch vụ để gia hạn.',
   ),
   VIU_LICENSE_REQUIRED: msg(
-    'Người được chăm sóc chưa có license nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Kích hoạt gói để gọi.',
+    'Người được chăm sóc chưa có gói dịch vụ nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Kích hoạt gói để gọi.',
   ),
   VIU_LICENSE_EXPIRED: msg(
-    'License của người được chăm sóc đã hết hạn và quá thời gian gia hạn nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.',
+    'Gói dịch vụ của người được chăm sóc đã hết hạn và quá thời gian gia hạn nên không gọi video được. Cuộc gọi SOS từ họ vẫn hoạt động. Gia hạn để gọi.',
   ),
-  LICENSE_KEY_INVALID: msg('Key không hợp lệ, đã được kích hoạt hoặc đã hết hạn.'),
-  LICENSE_KEY_EXPIRED: msg('Key đã hết hạn.'),
-  LICENSE_POOL_FULL: msg('Kho license đã hết suất. Mua thêm gói Business.'),
-  LICENSE_POOL_NOT_ACTIVE: msg('Kho license không còn hiệu lực. Kiểm tra gói Business.'),
+  LICENSE_KEY_INVALID: msg('Mã kích hoạt không hợp lệ, đã được kích hoạt hoặc đã hết hạn.'),
+  LICENSE_KEY_EXPIRED: msg('Mã kích hoạt đã hết hạn.'),
+  LICENSE_POOL_FULL: msg('Kho suất sử dụng đã hết suất. Mua thêm gói Business.'),
+  LICENSE_POOL_NOT_ACTIVE: msg('Kho suất sử dụng không còn hiệu lực. Kiểm tra gói Business.'),
   ORG_STAFF_CANNOT_BUY_PERSONAL: msg(
-    'Tài khoản thuộc trung tâm không mua gói cá nhân; license do trung tâm cấp.',
+    'Tài khoản thuộc trung tâm không mua gói cá nhân; gói dịch vụ do trung tâm cấp.',
   ),
   CANNOT_CANCEL_ORG_SUBSCRIPTION: msg(
-    'Gói này được kích hoạt bằng key của trung tâm nên không tự hủy được. Hãy liên hệ quản trị trung tâm.',
+    'Gói này được kích hoạt bằng mã kích hoạt của trung tâm nên không tự hủy được. Hãy liên hệ quản trị trung tâm.',
   ),
   CANNOT_AUTO_RENEW_ORG_SUBSCRIPTION: msg(
-    'Gói do trung tâm cấp được gia hạn theo kho license của tổ chức. Hãy liên hệ quản trị trung tâm.',
+    'Gói do trung tâm cấp được gia hạn theo kho suất sử dụng của tổ chức. Hãy liên hệ quản trị trung tâm.',
   ),
   SUBSCRIPTION_NOT_ACTIVE: msg('Gói không còn hiệu lực. Tải lại hoặc mua gói mới.'),
   AUTO_RENEW_REQUIRES_ACTIVE: msg('Chỉ bật tự gia hạn được khi gói trả phí đang hoạt động.'),
-  LICENSE_POOL_NOT_FOUND: msg('Tổ chức chưa có kho license. Mua gói Business trước.'),
+  LICENSE_POOL_NOT_FOUND: msg('Tổ chức chưa có kho suất sử dụng. Mua gói Business trước.'),
   LICENSE_POOL_ALREADY_SUSPENDED: msg(
-    'Kho license đã ở trạng thái tạm ngưng. Tải lại để xem trạng thái mới.',
+    'Kho suất sử dụng đã ở trạng thái tạm ngưng. Tải lại để xem trạng thái mới.',
   ),
   LICENSE_POOL_SUSPENDED: msg(
-    'Kho license đang tạm ngưng. Liên hệ quản trị hệ thống, hoặc kích hoạt lại kho trước khi gia hạn.',
+    'Kho suất sử dụng đang tạm ngưng. Liên hệ quản trị hệ thống, hoặc kích hoạt lại kho trước khi gia hạn.',
   ),
   NEW_EXPIRY_NOT_AFTER_CURRENT: msg(
     'Ngày hết hạn mới phải sau ngày hết hạn hiện tại. Tải lại kho để xem hạn mới nhất.',
   ),
   LICENSE_POOL_NOT_SUSPENDED: msg(
-    'Kho license không còn tạm ngưng. Tải lại để xem trạng thái mới.',
+    'Kho suất sử dụng không còn tạm ngưng. Tải lại để xem trạng thái mới.',
   ),
-  VIU_LICENSE_ALREADY_ASSIGNED: msg('Người này đã được cấp license.'),
+  VIU_LICENSE_ALREADY_ASSIGNED: msg('Người này đã được cấp suất sử dụng.'),
   GRACE_PERIOD_EXPIRED: msg('Đã quá thời gian gia hạn. Vui lòng mua hoặc gia hạn gói.'),
   WRONG_PACKAGE_TYPE: msg('Loại gói không phù hợp với tài khoản.'),
   PACKAGE_INVALID_PRICE: msg('Giá gói không hợp lệ.'),
@@ -111,6 +111,13 @@ export const errorCodeMessages: Record<string, string> = labelMap({
   PAYMENT_NOT_CANCELLABLE: msg('Giao dịch này không thể hủy nữa.'),
   PAYMENT_DISABLED: msg(
     'Thanh toán trực tuyến đang tạm ngưng. Chưa có giao dịch nào được tạo. Vui lòng thử lại sau hoặc liên hệ quản trị hệ thống.',
+  ),
+  // BE f9006b9: PayOS could not be reached (REJECTED keeps the BE text, which carries PayOS's reason).
+  PAYMENT_PROVIDER_UNAVAILABLE: msg(
+    'Không kết nối được cổng thanh toán PayOS. Chưa có giao dịch nào được tạo. Vui lòng thử lại sau.',
+  ),
+  PASSWORD_RESET_UNAVAILABLE: msg(
+    'Không thể đặt lại mật khẩu lúc này. Vui lòng thử lại sau ít phút.',
   ),
   // Cảnh báo, cuộc gọi, cấu hình, thông báo
   INVALID_EVENT_STATUS_TRANSITION: msg(
@@ -147,7 +154,7 @@ export async function request<T>(
   try {
     body = await response.json();
   } catch {
-    if (response.ok) throw new ServiceError(t('Phản hồi JSON không hợp lệ từ máy chủ.'), 502);
+    if (response.ok) throw new ServiceError(t('Máy chủ trả về dữ liệu không đúng định dạng.'), 502);
     body = null;
   }
   if (!response.ok) {
@@ -165,7 +172,7 @@ export async function request<T>(
         code && errorCodeMessages[code]
           ? errorCodeMessages[code]
           : t(
-              'Máy chủ yêu cầu kiểm tra license cho thao tác này. Phiên đăng nhập vẫn được giữ. Mở mục License để xem trạng thái hoặc tải lại sau khi license được cập nhật.',
+              'Máy chủ yêu cầu kiểm tra gói dịch vụ cho thao tác này. Phiên đăng nhập vẫn được giữ. Mở mục Gói dịch vụ để xem trạng thái hoặc tải lại sau khi gói dịch vụ được cập nhật.',
             ),
         402,
         {},

@@ -1,8 +1,8 @@
 import { t } from '../i18n';
 import jsQR from 'jsqr';
 import { ServiceError } from './contracts';
-/** Local image decoding only. Never navigates to the decoded content. */
-export async function decodeInvitation(file: File): Promise<string> {
+/** Reads the text of a QR code in a local image. Never navigates to the decoded content. */
+export async function decodeQrImage(file: File): Promise<string> {
   if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 5 * 1024 * 1024)
     throw new ServiceError(t('Chọn ảnh QR JPG/PNG dưới 5 MB.'));
   const bitmap = await createImageBitmap(file);
@@ -17,10 +17,17 @@ export async function decodeInvitation(file: File): Promise<string> {
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
     const code = jsQR(pixels.data, pixels.width, pixels.height)?.data;
-    if (!code || !/^VA-DEMO-[a-f0-9]{8}$/.test(code))
-      throw new ServiceError(t('Không tìm thấy mã liên kết VisionAid demo hợp lệ trong ảnh.'));
+    if (!code)
+      throw new ServiceError(t('Không tìm thấy mã QR trong ảnh. Hãy chụp rõ hơn hoặc nhập mã.'));
     return code;
   } finally {
     bitmap.close();
   }
+}
+/** Demo link codes (mock mode). */
+export async function decodeInvitation(file: File): Promise<string> {
+  const code = await decodeQrImage(file);
+  if (!/^VA-DEMO-[a-f0-9]{8}$/.test(code))
+    throw new ServiceError(t('Không tìm thấy mã liên kết VisionAid demo hợp lệ trong ảnh.'));
+  return code;
 }

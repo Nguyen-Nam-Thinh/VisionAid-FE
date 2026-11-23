@@ -18,8 +18,7 @@ import { GpsMap } from '../../components/GpsMap';
 import { FilterPanel } from '../../components/FilterPanel';
 import type { Person } from '../../models/domain';
 
-const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-const time = (value: string) => formatLocaleDateTime(value, { timeZone: timezone, hour12: false });
+const time = (value: string) => formatLocaleDateTime(value);
 const optional = (value: number | null, unit: string) =>
   value === null ? t('Không có dữ liệu') : `${value} ${unit}`;
 type Viu = { id: string; fullName: string; email: string; isActive: boolean };
@@ -120,84 +119,82 @@ function Fleet({ actor }: { actor: Person }) {
                   shown: shown.length,
                 })}
               </p>
-              <p>{t('Thời gian hiển thị theo {timezone}.', { timezone })}</p>
               <GpsMap points={points} selected={selected} onSelect={setSelected} />
-              {!shown.length ? (
-                <p>{t('Không có người khiếm thị phù hợp bộ lọc.')}</p>
-              ) : (
-                <div
-                  className="table-scroll"
-                  tabIndex={0}
-                  role="region"
-                  aria-label={t('Dữ liệu vị trí')}
-                >
-                  <table className="tracking-table">
-                    <thead>
-                      <tr>
-                        <th>{t('Người được theo dõi')}</th>
-                        <th>{t('Cảnh báo')}</th>
-                        <th>{t('Tọa độ (vĩ độ, kinh độ)')}</th>
-                        <th>{t('Thời gian ghi nhận')}</th>
-                        <th>{t('Thao tác')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {shown.map((item) => {
-                        const located = item.latitude !== null && item.longitude !== null;
-                        return (
-                          <tr key={item.viuId}>
-                            <td>
-                              {item.fullName}
-                              {item.formattedAddress && (
-                                <>
-                                  <br />
-                                  <small>{item.formattedAddress}</small>
-                                </>
-                              )}
-                            </td>
-                            <td>
-                              <Badge tone={item.hasOpenAlert ? 'red' : 'green'}>
-                                {item.hasOpenAlert ? t('Đang có cảnh báo') : t('An toàn')}
-                              </Badge>
-                            </td>
-                            <td>
-                              {located
-                                ? `${item.latitude!.toFixed(6)}, ${item.longitude!.toFixed(6)}`
-                                : t('Chưa có vị trí')}
-                            </td>
-                            <td>
-                              {item.cachedAt ? (
-                                <>
-                                  {time(item.cachedAt)}
-                                  <br />
-                                  <Badge
-                                    tone={
-                                      now - Date.parse(item.cachedAt) > 120000 ? 'amber' : 'green'
-                                    }
-                                  >
-                                    {locationAge(item.cachedAt, now)}
-                                  </Badge>
-                                </>
-                              ) : (
-                                '—'
-                              )}
-                            </td>
-                            <td>
-                              <button
-                                className="btn"
-                                onClick={() => setSelected(item.viuId)}
-                                aria-label={t('Xem GPS của ') + item.fullName}
-                              >
-                                {t('Vị trí & lịch sử')}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div
+                className="table-scroll"
+                tabIndex={0}
+                role="region"
+                aria-label={t('Dữ liệu vị trí')}
+              >
+                <table className="tracking-table">
+                  <thead>
+                    <tr>
+                      <th>{t('Người được theo dõi')}</th>
+                      <th>{t('Cảnh báo')}</th>
+                      <th>{t('Tọa độ (vĩ độ, kinh độ)')}</th>
+                      <th>{t('Thời gian ghi nhận')}</th>
+                      <th>{t('Thao tác')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shown.map((item) => {
+                      const located = item.latitude !== null && item.longitude !== null;
+                      return (
+                        <tr key={item.viuId}>
+                          <td>
+                            {item.fullName}
+                            {item.formattedAddress && (
+                              <>
+                                <br />
+                                <small>{item.formattedAddress}</small>
+                              </>
+                            )}
+                          </td>
+                          <td>
+                            <Badge tone={item.hasOpenAlert ? 'red' : 'green'}>
+                              {item.hasOpenAlert ? t('Đang có cảnh báo') : t('An toàn')}
+                            </Badge>
+                          </td>
+                          <td>
+                            {located
+                              ? `${item.latitude!.toFixed(6)}, ${item.longitude!.toFixed(6)}`
+                              : t('Chưa có vị trí')}
+                          </td>
+                          <td>
+                            {item.cachedAt ? (
+                              <>
+                                {time(item.cachedAt)}
+                                <br />
+                                <Badge
+                                  tone={
+                                    now - Date.parse(item.cachedAt) > 120000 ? 'amber' : 'green'
+                                  }
+                                >
+                                  {locationAge(item.cachedAt, now)}
+                                </Badge>
+                              </>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td>
+                            <button
+                              className="btn"
+                              onClick={() => setSelected(item.viuId)}
+                              aria-label={t('Xem GPS của ') + item.fullName}
+                            >
+                              {t('Vị trí & lịch sử')}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {!shown.length && (
+                  <p className="empty">{t('Không có người khiếm thị phù hợp bộ lọc.')}</p>
+                )}
+              </div>
             </>
           )}
         </State>
@@ -262,29 +259,35 @@ function Tracking({ actor }: { actor: Person }) {
               {!users.data.items.length && (
                 <p>{t('Chưa có người dùng phù hợp hoặc liên kết được phép xem.')}</p>
               )}
-              <div className="row">
-                <span>
-                  {t('{totalCount} người · Trang {page}/{p4}', {
-                    totalCount: users.data.totalCount,
-                    page: users.data.page,
-                    p4: Math.max(1, users.data.totalPages),
-                  })}
-                </span>
-                <button
-                  className="btn"
-                  disabled={users.isFetching || !users.data.hasPreviousPage}
-                  onClick={() => setPage(page - 1)}
-                >
-                  {t('Trang người dùng trước')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={users.isFetching || !users.data.hasNextPage}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {t('Trang người dùng sau')}
-                </button>
-              </div>
+              {users.data.totalPages > 1 && (
+                <div className="row pagination">
+                  <span>
+                    {t('{totalCount} người · Trang {page}/{p4}', {
+                      totalCount: users.data.totalCount,
+                      page: users.data.page,
+                      p4: Math.max(1, users.data.totalPages),
+                    })}
+                  </span>
+                  {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={users.isFetching || !users.data.hasPreviousPage}
+                      onClick={() => setPage(page - 1)}
+                    >
+                      {t('Trang người dùng trước')}
+                    </button>
+                  )}
+                  {(users.data.hasPreviousPage || users.data.hasNextPage) && (
+                    <button
+                      className="btn"
+                      disabled={users.isFetching || !users.data.hasNextPage}
+                      onClick={() => setPage(page + 1)}
+                    >
+                      {t('Trang người dùng sau')}
+                    </button>
+                  )}
+                </div>
+              )}
               <PageLocations key={page + ':' + search} actor={actor} people={users.data.items} />
             </>
           )}
@@ -338,12 +341,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
     current?.error instanceof ServiceError && [401, 403].includes(current.error.status);
   return (
     <div className="stack">
-      <p>
-        {t(
-          'Thời gian hiển thị theo {timezone}. Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.',
-          { timezone },
-        )}
-      </p>
+      <p>{t('Danh sách này chỉ lấy vị trí của tối đa 10 người trên trang hiện tại.')}</p>
       <GpsMap points={points} selected={selected} onSelect={setSelected} />
       <button
         className="btn"
@@ -462,7 +460,7 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
                   </p>
                   <p>
                     {t(
-                      'Pin, mạng và độ chính xác của vị trí hiện tại không có trong API này. Xem giá trị tại từng bản ghi lịch sử bên dưới.',
+                      'Pin, mạng và độ chính xác của vị trí hiện tại chưa được máy chủ cung cấp. Xem giá trị tại từng bản ghi lịch sử bên dưới.',
                     )}
                   </p>
                 </>
@@ -536,7 +534,6 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
         {query.data && (
           <>
-            {!query.data.items.length && <p>{t('Không có lịch sử trong khoảng thời gian này.')}</p>}
             <div
               className="table-scroll"
               tabIndex={0}
@@ -546,7 +543,7 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
               <table className="tracking-table">
                 <thead>
                   <tr>
-                    <th>{t('Ghi nhận ({timezone})', { timezone })}</th>
+                    <th>{t('Ghi nhận')}</th>
                     <th>{t('Vĩ độ / kinh độ')}</th>
                     <th>{t('Độ chính xác')}</th>
                     <th>{t('Độ cao')}</th>
@@ -582,6 +579,9 @@ function MovementHistory({ actor, viuId }: { actor: Person; viuId: string }) {
                   ))}
                 </tbody>
               </table>
+              {!query.data.items.length && (
+                <p className="empty">{t('Không có lịch sử trong khoảng thời gian này.')}</p>
+              )}
             </div>
             <div className="row">
               <span>

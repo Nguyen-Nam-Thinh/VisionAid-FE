@@ -1,6 +1,7 @@
 import { t, msg, tText } from '../../i18n';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
+import { Disclosure } from '../../components/UI';
 import {
   Compass,
   CreditCard,
@@ -44,7 +45,7 @@ const content: Record<
     icon: CreditCard,
     title: msg('Cần gói dịch vụ để dùng chức năng này'),
     description: msg(
-      'Tài khoản của bạn chưa có gói Personal. Đăng ký gói qua PayOS hoặc kích hoạt key do trung tâm cấp để mở chức năng này.',
+      'Tài khoản của bạn chưa có gói Personal. Đăng ký gói qua PayOS hoặc kích hoạt mã do trung tâm cấp để mở chức năng này.',
     ),
   },
   unsupported: {
@@ -101,10 +102,9 @@ export function StatusPage({
       </h1>
       <p className="status-description">{tText(description)}</p>
       {detail && (
-        <details className="status-detail">
-          <summary>{t('Thông tin kỹ thuật')}</summary>
+        <Disclosure className="status-detail" summary={t('Thông tin kỹ thuật')}>
           <code>{detail}</code>
-        </details>
+        </Disclosure>
       )}
       <div className="status-actions">{actions}</div>
       {children}

@@ -16,7 +16,7 @@ export function Configurations() {
       <PageHead
         title={t('Cấu hình hệ thống')}
         description={t(
-          'Thay đổi có kiểm soát, truy vết và khôi phục. Đây là thông số demo, chưa tác động thiết bị thật.',
+          'Chỉnh thiết lập chung, có lưu lịch sử và quay lại được. Đây là dữ liệu mô phỏng, chưa ảnh hưởng thiết bị thật.',
         )}
       />
       <State loading={query.isPending} error={query.error} retry={() => query.refetch()}>
@@ -59,7 +59,7 @@ export function Configurations() {
             rows={db?.revisions ?? []}
             searchText={(r) => r.name}
             columns={[
-              { label: t('Thời gian · UTC+7'), render: (r) => formatTime(r.at) },
+              { label: t('Thời gian'), render: (r) => formatTime(r.at) },
               { label: t('Thông số'), render: (r) => r.name },
               { label: t('Trước → Sau'), render: (r) => `${r.before} → ${r.after}` },
               {
