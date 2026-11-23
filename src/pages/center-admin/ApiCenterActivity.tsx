@@ -28,7 +28,7 @@ function CenterActivity({ actor }: { actor: Person }) {
       />
       <section className="glass card stack">
         <SearchPicker
-          label={t('Người được chăm sóc')}
+          label={t('Người khiếm thị')}
           value={viu}
           onChange={(value, option) => {
             setViu(value);

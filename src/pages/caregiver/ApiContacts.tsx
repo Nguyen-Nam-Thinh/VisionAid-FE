@@ -1,4 +1,5 @@
 import { RefreshCw } from 'lucide-react';
+import { formatPhone } from '../../services/api/phone';
 import { t } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -201,7 +202,7 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
                   <td>
                     <strong>{item.contactName}</strong>
                     <p className="care-secondary">{contactTypes[item.contactType]}</p>
-                    <p>{item.phoneNumber}</p>
+                    <p>{formatPhone(item.phoneNumber)}</p>
                     <p style={{ overflowWrap: 'anywhere' }}>{item.zaloDeepLink}</p>
                     <p className="care-secondary">{item.notes}</p>
                   </td>
@@ -312,7 +313,7 @@ function ContactList({ actor, viuId, name }: { actor: Person; viuId: string; nam
                     editing === 'new' ? undefined : editing.id,
                   );
                   setEditing(null);
-                  setNotice(t('Đã lưu liên hệ theo dữ liệu máy chủ.'));
+                  setNotice(t('Đã lưu liên hệ.'));
                 } catch (e) {
                   if ((e as { status?: number }).status! >= 500)
                     throw new Error(

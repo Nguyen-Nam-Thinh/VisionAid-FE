@@ -148,3 +148,31 @@ it('lists active organization accounts for CenterAdmin pickers and stops at the 
     status: 403,
   });
 });
+
+it('points create errors at the wrong fields instead of one generic sentence', async () => {
+  const write = vi.fn();
+  const api = createAccountsApi(vi.fn(), write);
+  const base = {
+    fullName: 'Nguyễn Văn An',
+    phoneNumber: '',
+    avatarUrl: '',
+    email: 'an@example.test',
+    password: 'Password@1',
+    role: 'Caregiver' as const,
+    organizationId: id,
+  };
+  await expect(api.create(admin, { ...base, phoneNumber: '12345' })).rejects.toMatchObject({
+    status: 400,
+    fields: { phoneNumber: expect.stringContaining('10 số') },
+  });
+  await expect(api.create(admin, { ...base, fullName: 'A' })).rejects.toMatchObject({
+    fields: { fullName: expect.stringContaining('2 đến 200') },
+  });
+  await expect(api.create(admin, { ...base, organizationId: '' })).rejects.toMatchObject({
+    fields: { organizationId: expect.stringContaining('tổ chức') },
+  });
+  await expect(api.create(admin, { ...base, password: 'password1' })).rejects.toMatchObject({
+    fields: { password: expect.stringContaining('chữ hoa') },
+  });
+  expect(write).not.toHaveBeenCalled();
+});

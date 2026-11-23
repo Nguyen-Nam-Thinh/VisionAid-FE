@@ -1,4 +1,5 @@
 import { RefreshCw } from 'lucide-react';
+import { formatPhone } from '../../services/api/phone';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -147,7 +148,7 @@ export function ApiLinkedUsers() {
                               <strong>{p.fullName}</strong>
                             </td>
                             <td>{p.email}</td>
-                            <td>{p.phoneNumber || t('Chưa có')}</td>
+                            <td>{formatPhone(p.phoneNumber) || t('Chưa có')}</td>
                             <td>
                               <Badge tone={p.isActive ? 'green' : 'amber'}>
                                 {p.isActive ? t('Đang hoạt động') : t('Đã vô hiệu hóa')}

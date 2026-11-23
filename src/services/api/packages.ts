@@ -1,4 +1,4 @@
-import { t, formatMoney } from '../../i18n';
+import { t, msg, formatMoney } from '../../i18n';
 import { z } from 'zod';
 import { apiGet, apiWrite } from './adapter';
 import { ServiceError } from '../contracts';
@@ -67,6 +67,24 @@ function parse<T>(schema: z.ZodType<T>, data: unknown): T {
   if (!result.success) throw new ServiceError(t('Dữ liệu gói không hợp lệ. Hãy tải lại.'), 502);
   return result.data;
 }
+/** Package features shown as checkboxes; the key is the flag name BE stores. */
+export const packageFeatures = [
+  {
+    flag: 'webrtc',
+    label: msg('Gọi thoại và video với người khiếm thị'),
+    hint: msg('Người chăm sóc gọi thoại hoặc video tới điện thoại của người khiếm thị.'),
+  },
+  {
+    flag: 'ai_navigation',
+    label: msg('Dẫn đường bằng AI'),
+    hint: msg('Điện thoại nhận hướng dẫn tránh vật cản từ máy chủ.'),
+  },
+  {
+    flag: 'fleet_map',
+    label: msg('Bản đồ theo dõi cả trung tâm'),
+    hint: msg('Hiện chỉ để ghi nhận trong gói; quản trị trung tâm vẫn luôn xem được bản đồ.'),
+  },
+] as const;
 export function packageInput(values: Fields, current?: LicensePackage) {
   let featureFlags: unknown;
   try {

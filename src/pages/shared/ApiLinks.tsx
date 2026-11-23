@@ -1,10 +1,15 @@
 import { Link2, QrCode, RefreshCw } from 'lucide-react';
+import { viuWord } from '../../constants/labels';
+import { accountsApi } from '../../services/api/accounts';
+import { caregivingApi } from '../../services/api/caregiving';
 import { PageTabs } from '../../components/PageTabs';
 import { CaregiverInvitations } from './CaregiverInvitations';
 import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { FilterPanel } from '../../components/FilterPanel';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { inviteToken } from '../../services/api/invitations';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { useLimit } from '../../hooks/useLimit';
@@ -14,6 +19,7 @@ import { Form, type FieldSpec } from '../../components/Form';
 import { Badge, Confirm, Dialog, PageHead, State } from '../../components/UI';
 import type { Person } from '../../models/domain';
 import { SearchPicker } from '../../components/SearchPicker';
+import { collectPages, containsText, pageOf } from '../../services/api/textSearch';
 import {
   searchAccounts,
   searchCareRecipients,
@@ -25,27 +31,79 @@ const permissionFields: FieldSpec[] = [
   { key: 'canManageRegistry', label: msg('Quản lý gương mặt'), type: 'checkbox' },
   { key: 'canManageLocations', label: msg('Quản lý địa điểm'), type: 'checkbox' },
 ];
+/**
+ * Which links to hide because one side's account was deleted. Admin and Center Admin read the
+ * deleted accounts in their scope; a caregiver keeps only the care recipients that still exist.
+ */
+async function deletedPeople(actor: Person, signal?: AbortSignal) {
+  if (actor.role === 'Caregiver') {
+    const people = await collectPages((page) => caregivingApi.users(page, '', signal));
+    const existing = new Set(people.map((person) => person.id));
+    return { check: true, keep: (link: CareLink) => existing.has(link.visuallyImpairedUserId) };
+  }
+  const deleted = await collectPages((page) =>
+    accountsApi.list(
+      actor,
+      { page, search: '', role: '', active: '', deleted: 'true', organizationId: '' },
+      signal,
+    ),
+  );
+  const ids = new Set(deleted.map((account) => account.id));
+  return {
+    check: ids.size > 0,
+    keep: (link: CareLink) => !ids.has(link.caregiverId) && !ids.has(link.visuallyImpairedUserId),
+  };
+}
 export function ApiLinks() {
   const { data: actor } = useSession();
   return actor ? <Links key={actor.id + actor.orgId} actor={actor} /> : null;
 }
 function Links({ actor }: { actor: Person }) {
   const cache = useQueryClient();
+  // Opened from a scanned or shared invitation link: go straight to accepting it.
+  const [params] = useSearchParams();
+  const invite = actor.role === 'Caregiver' ? inviteToken(params.get('invite') ?? '') : '';
   const [filters, setFilters] = useState<LinkFilters>({
     page: 1,
     caregiverId: '',
     viuId: '',
     linkType: '',
     active: 'true',
+    caregiverText: '',
+    viuText: '',
   });
   const [draftCg, setDraftCg] = useState('');
   const [draftViu, setDraftViu] = useState('');
+  const [draftCgText, setDraftCgText] = useState('');
+  const [draftViuText, setDraftViuText] = useState('');
   const [selected, setSelected] = useState('');
   const [create, setCreate] = useState(false);
   const [notice, setNotice] = useState('');
   const list = useQuery({
     queryKey: ['api-managed-links', actor.id, actor.orgId, filters],
-    queryFn: ({ signal }) => linksApi.list(actor, filters, signal),
+    queryFn: async ({ signal }) => {
+      const cgText = filters.caregiverId ? '' : (filters.caregiverText ?? '');
+      const viuText = filters.viuId ? '' : (filters.viuText ?? '');
+      // Deleting an account does not end its care links on the server, so links of deleted
+      // people are hidden here: they must not look like someone is still being cared for.
+      const hidden = await deletedPeople(actor, signal);
+      if (!cgText.trim() && !viuText.trim() && !hidden.check)
+        return linksApi.list(actor, filters, signal);
+      // The API filters by one person only; typed words are matched across every row instead.
+      const rows = await collectPages((page) =>
+        linksApi.list(actor, { ...filters, page, pageSize: 100 }, signal),
+      );
+      return pageOf(
+        rows.filter(
+          (link) =>
+            hidden.keep(link) &&
+            containsText(cgText, link.caregiverFullName, link.caregiverEmail) &&
+            containsText(viuText, link.viuFullName, link.viuEmail),
+        ),
+        filters.page,
+        10,
+      );
+    },
     refetchInterval: 30000,
   });
   const detail = useQuery({
@@ -97,13 +155,14 @@ function Links({ actor }: { actor: Person }) {
           saved={async (link) => {
             setCreate(false);
             setSelected(link.id);
-            setNotice(t('Đã tạo liên kết. Trạng thái chính/phụ do máy chủ quyết định.'));
+            setNotice(t('Đã tạo liên kết chăm sóc.'));
             await refresh();
           }}
         />
       )}
       <PageTabs
         label={t('Phần của trang liên kết')}
+        defaultValue={invite ? 'invite' : undefined}
         tabs={[
           {
             value: 'links',
@@ -114,8 +173,8 @@ function Links({ actor }: { actor: Person }) {
                 <FilterPanel
                   active={
                     [
-                      filters.caregiverId,
-                      filters.viuId,
+                      filters.caregiverId || filters.caregiverText,
+                      filters.viuId || filters.viuText,
                       actor.role !== 'CenterAdmin' && filters.linkType,
                       filters.active !== 'true',
                     ].filter(Boolean).length
@@ -126,6 +185,8 @@ function Links({ actor }: { actor: Person }) {
                     filter({
                       caregiverId: draftCg,
                       viuId: draftViu,
+                      caregiverText: draftCg ? '' : draftCgText.trim(),
+                      viuText: draftViu ? '' : draftViuText.trim(),
                       ...(actor.role !== 'CenterAdmin' && {
                         linkType: String(data.get('linkType') || ''),
                       }),
@@ -135,7 +196,16 @@ function Links({ actor }: { actor: Person }) {
                   onReset={() => {
                     setDraftCg('');
                     setDraftViu('');
-                    filter({ caregiverId: '', viuId: '', linkType: '', active: 'true' });
+                    setDraftCgText('');
+                    setDraftViuText('');
+                    filter({
+                      caregiverId: '',
+                      viuId: '',
+                      caregiverText: '',
+                      viuText: '',
+                      linkType: '',
+                      active: 'true',
+                    });
                   }}
                   tools={
                     <button
@@ -156,21 +226,38 @@ function Links({ actor }: { actor: Person }) {
                     </button>
                   }
                 >
-                  {actor.role !== 'Caregiver' && (
+                  {actor.role !== 'Caregiver' ? (
                     <SearchPicker
                       label={t('Người chăm sóc')}
                       placeholder={t('Gõ tên hoặc email')}
                       value={draftCg}
                       onChange={setDraftCg}
+                      freeText
+                      text={draftCgText}
+                      onText={setDraftCgText}
                       search={searchAccounts(actor, 'Caregiver')}
                       queryKey={['link-filter-caregiver', actor.id, actor.orgId]}
                     />
+                  ) : (
+                    // A caregiver cannot look up other accounts; the typed words are matched
+                    // against the caregivers already in their own links.
+                    <label className="field">
+                      {t('Người chăm sóc')}
+                      <input
+                        value={draftCgText}
+                        placeholder={t('Gõ tên hoặc email')}
+                        onChange={(e) => setDraftCgText(e.target.value)}
+                      />
+                    </label>
                   )}
                   <SearchPicker
-                    label={t('Người được chăm sóc')}
+                    label={viuWord(actor.role)}
                     placeholder={t('Gõ tên hoặc email')}
                     value={draftViu}
                     onChange={setDraftViu}
+                    freeText
+                    text={draftViuText}
+                    onText={setDraftViuText}
                     search={
                       actor.role === 'Caregiver'
                         ? searchCareRecipients()
@@ -210,7 +297,7 @@ function Links({ actor }: { actor: Person }) {
                           <thead>
                             <tr>
                               <th>{t('Người chăm sóc')}</th>
-                              <th>{t('Người được chăm sóc')}</th>
+                              <th>{viuWord(actor.role)}</th>
                               <th>{t('Loại')}</th>
                               <th>{t('Trạng thái')}</th>
                               <th>{t('Thao tác')}</th>
@@ -236,7 +323,10 @@ function Links({ actor }: { actor: Person }) {
                                 <td>
                                   <button
                                     className="btn"
-                                    aria-label={t('Xem liên kết ') + link.id}
+                                    aria-label={t('Xem liên kết giữa {caregiver} và {viu}', {
+                                      caregiver: link.caregiverFullName,
+                                      viu: link.viuFullName,
+                                    })}
                                     onClick={() => setSelected(link.id)}
                                   >
                                     {t('Chi tiết')}
@@ -287,7 +377,9 @@ function Links({ actor }: { actor: Person }) {
             value: 'invite',
             label: t('Mời bằng mã QR'),
             icon: QrCode,
-            content: <CaregiverInvitations actor={actor} onAccepted={refresh} />,
+            content: (
+              <CaregiverInvitations actor={actor} onAccepted={refresh} initialToken={invite} />
+            ),
           },
         ]}
       />
@@ -304,7 +396,7 @@ function Links({ actor }: { actor: Person }) {
                   setSelected('');
                   setNotice(
                     t(
-                      'Đã gỡ liên kết. BE sẽ chọn lại người chăm sóc chính nếu cần và còn liên kết hoạt động.',
+                      'Đã gỡ liên kết. Nếu đó là người chăm sóc chính, người chăm sóc lâu nhất còn lại sẽ tự trở thành người chính.',
                     ),
                   );
                 }}
@@ -378,7 +470,7 @@ function LinkEditor({
                 ),
               ]),
           personField(
-            { key: 'viuId', label: t('Người được chăm sóc'), required: true },
+            { key: 'viuId', label: viuWord(actor.role), required: true },
             vius,
             t(
               'Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản người khiếm thị trước.',
@@ -467,7 +559,10 @@ function LinkEditor({
     >
       <p>
         {link
-          ? link.caregiverEmail + ' → ' + link.viuEmail
+          ? t('{caregiver} chăm sóc {viu}', {
+              caregiver: link.caregiverFullName,
+              viu: link.viuFullName,
+            })
           : actor.role === 'Caregiver'
             ? t(
                 'Chỉ chọn được người bạn đang chăm sóc chính. Người được thêm là người chăm sóc phụ với các quyền bạn chọn bên dưới.',
@@ -591,21 +686,13 @@ function LinkDetails({
           <dd>
             <strong>{link.caregiverFullName}</strong>
             <p>{link.caregiverEmail}</p>
-            <p className="care-secondary">
-              {t('Mã: {caregiverId}', { caregiverId: link.caregiverId })}
-            </p>
           </dd>
         </div>
         <div>
-          <dt>{t('Người được chăm sóc')}</dt>
+          <dt>{viuWord(actor.role)}</dt>
           <dd>
             <strong>{link.viuFullName}</strong>
             <p>{link.viuEmail}</p>
-            <p className="care-secondary">
-              {t('Mã: {visuallyImpairedUserId}', {
-                visuallyImpairedUserId: link.visuallyImpairedUserId,
-              })}
-            </p>
           </dd>
         </div>
         <div>
@@ -622,6 +709,13 @@ function LinkDetails({
         </div>
       </dl>
       {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
+      {link.isPrimary && !link.unlinkedAt && (
+        <p className="notice">
+          {t(
+            'Người chăm sóc chính luôn có đủ quyền nên không chỉnh được. Muốn giới hạn quyền của người này, hãy chuyển một người chăm sóc khác thành người chính trước.',
+          )}
+        </p>
+      )}
       {manage && (
         <div className="row">
           {access.edit && (
@@ -670,16 +764,15 @@ function LinkDetails({
         <Confirm
           title={action === 'promote' ? t('Chuyển người chăm sóc chính') : t('Gỡ liên kết')}
           description={
-            link.caregiverEmail +
-            ' → ' +
-            link.viuEmail +
-            (action === 'promote'
+            action === 'promote'
               ? t(
-                  ': người chăm sóc chính hiện tại sẽ chuyển thành phụ. Quyền truy cập vẫn theo các cờ quyền.',
+                  '{caregiver} sẽ thành người chăm sóc chính của {viu}; người chăm sóc chính hiện tại chuyển thành phụ và giữ các quyền đang có.',
+                  { caregiver: link.caregiverFullName, viu: link.viuFullName },
                 )
               : t(
-                  ': mất quyền qua liên kết này; không xóa tài khoản. Nếu gỡ người chăm sóc chính, BE chọn liên kết còn hoạt động lâu nhất thay thế.',
-                ))
+                  '{caregiver} sẽ không còn chăm sóc {viu}; tài khoản của hai người vẫn giữ nguyên. Nếu đây là người chăm sóc chính, người chăm sóc lâu nhất còn lại sẽ thành người chính.',
+                  { caregiver: link.caregiverFullName, viu: link.viuFullName },
+                )
           }
           onClose={() => setAction(null)}
           onConfirm={async () => {

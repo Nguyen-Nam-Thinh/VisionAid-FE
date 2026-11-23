@@ -126,6 +126,13 @@ export const auditActions = [
   'UserRemovedFromOrg',
   'LicensePoolSuspended',
   'LicensePoolReactivated',
+  'LicensePoolAutoRenewChanged',
+  'LicenseKeyRevoked',
+  'LicensePoolPackageChangeScheduled',
+  'LicensePoolPackageChangeCancelled',
+  'UserRestored',
+  'NotificationRetried',
+  'LicensePackageDeleted',
 ] as const;
 export type AuditAction = (typeof auditActions)[number];
 export const auditActionLabels: Record<AuditAction, string> = labelMap({
@@ -151,7 +158,28 @@ export const auditActionLabels: Record<AuditAction, string> = labelMap({
   UserRemovedFromOrg: msg('Gỡ người dùng khỏi tổ chức'),
   LicensePoolSuspended: msg('Đình chỉ kho suất sử dụng'),
   LicensePoolReactivated: msg('Kích hoạt lại kho suất sử dụng'),
+  LicensePoolAutoRenewChanged: msg('Đổi tự động gia hạn kho suất sử dụng'),
+  LicenseKeyRevoked: msg('Thu hồi mã kích hoạt'),
+  LicensePoolPackageChangeScheduled: msg('Hẹn đổi gói của kho suất sử dụng'),
+  LicensePoolPackageChangeCancelled: msg('Hủy hẹn đổi gói của kho suất sử dụng'),
+  UserRestored: msg('Khôi phục tài khoản đã xóa'),
+  NotificationRetried: msg('Gửi lại thông báo'),
+  LicensePackageDeleted: msg('Xóa gói dịch vụ'),
 });
+/** Server table names an audit record can point to, as BE writes them (exact match filter). */
+export const auditTargets = [
+  'users',
+  'organizations',
+  'organization_license_pool',
+  'caregiver_links',
+  'emergency_contacts',
+  'face_registry_persons',
+  'face_registry_images',
+  'system_configurations',
+  'license_packages',
+  'license_subscriptions',
+  'alert_notifications',
+] as const;
 const kinds = {
   metrics: { path: '/api/ai-metrics', schema: metric },
   audit: { path: '/api/audit-logs', schema: audit },
@@ -191,6 +219,7 @@ export function createMonitoringApi(get = apiGet, write = apiWrite) {
       page: number,
       filters: MonitoringFilters,
       signal?: AbortSignal,
+      pageSize = 10,
     ) {
       authorize(actor);
       if (!Number.isInteger(page) || page < 1)
@@ -204,7 +233,7 @@ export function createMonitoringApi(get = apiGet, write = apiWrite) {
           t('Khoảng ngày không hợp lệ. Kiểm tra ngày bắt đầu và kết thúc.'),
           400,
         );
-      const query = new URLSearchParams({ page: String(page), pageSize: '10' });
+      const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
       // Vietnam day bounds sent as UTC: the deployed BE returns 500 for a non-zero offset.
       const utc = (date: string, time: string) => new Date(`${date}T${time}+07:00`).toISOString();
       if (from) query.set('dateFrom', kind === 'metrics' ? from : utc(from, '00:00:00'));

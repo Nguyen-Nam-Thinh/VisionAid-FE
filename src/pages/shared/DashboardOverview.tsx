@@ -321,7 +321,9 @@ function CareRoster({ actor, alertViuIds }: { actor: Person; alertViuIds: Set<st
   return (
     <section className="glass card stack overview-panel" aria-labelledby="overview-roster">
       <div className="row between">
-        <h2 id="overview-roster">{t('Người thân của bạn')}</h2>
+        <h2 id="overview-roster">
+          {actor.orgId ? t('Người bạn chăm sóc') : t('Người thân của bạn')}
+        </h2>
         <Link to="/caregiver/users">{t('Xem tất cả')}</Link>
       </div>
       <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
@@ -581,12 +583,24 @@ function PoolFigures({ actor, members, fresh }: { actor: Person; members: number
           },
           {
             label: t('Suất còn trống'),
-            value: data ? formatNumber(data.availableLicenses) : '—',
-            note: data ? t('trên {total} suất', { total: data.totalLicenses }) : undefined,
+            value: data
+              ? formatNumber(data.availableLicenses)
+              : pool.isPending
+                ? '…'
+                : t('Chưa có'),
+            note: data
+              ? t('trên {total} suất', { total: data.totalLicenses })
+              : pool.isPending
+                ? undefined
+                : t('Trung tâm chưa mua gói'),
           },
           {
             label: t('Kho hết hạn'),
-            value: data?.expiresAt ? formatLocaleDateTime(data.expiresAt, dateOnly) : '—',
+            value: data?.expiresAt
+              ? formatLocaleDateTime(data.expiresAt, dateOnly)
+              : pool.isPending
+                ? '…'
+                : t('Chưa có'),
             note: data ? subscriptionLabels[data.status] : undefined,
           },
         ]}

@@ -66,6 +66,9 @@ function Notifications({ actor }: { actor: Person }) {
   const [selected, setSelected] = useState<NotificationRule | null>(null);
   const [deleting, setDeleting] = useState<NotificationRule | null>(null);
   const [pending, setPending] = useState(false);
+  // A rule is saved in two steps: fill the form, then confirm a plain summary of what changes.
+  const [review, setReview] = useState<Fields | null>(null);
+  const [reviewError, setReviewError] = useState('');
   const [notice, setNotice] = useState('');
   const prefix = ['api-notifications', actor.id, actor.orgId];
   const prefs = useQuery({
@@ -102,11 +105,7 @@ function Notifications({ actor }: { actor: Person }) {
     orgId
       ? (orgId === actor.orgId && orgName) || orgNames.data?.[orgId] || t('Một trung tâm')
       : t('Toàn hệ thống');
-  async function changed(
-    message = t(
-      'Đã lưu trên máy chủ. Việc gửi thông báo còn phụ thuộc quy tắc và dịch vụ phân phối.',
-    ),
-  ) {
+  async function changed(message = t('Đã lưu quy tắc thông báo.')) {
     setNotice(message);
     await cache.invalidateQueries({ queryKey: prefix });
   }
@@ -114,7 +113,24 @@ function Notifications({ actor }: { actor: Person }) {
     if (!pending) {
       setEditor(null);
       setSelected(null);
+      setReview(null);
+      setReviewError('');
     }
+  };
+  const saveRule = async (values: Fields) => {
+    if (selected) await notificationsApi.updateRule(actor, selected, values);
+    else
+      await notificationsApi.createRule(actor, {
+        ...values,
+        organizationId:
+          actor.role === 'CenterAdmin'
+            ? actor.orgId
+            : String(values.organizationId ?? '').trim() || null,
+      });
+    setEditor(null);
+    setSelected(null);
+    setReview(null);
+    await changed();
   };
   if (!allowed)
     return (
@@ -378,71 +394,155 @@ function Notifications({ actor }: { actor: Person }) {
               {targetRoles[selected.targetRole]}
             </p>
           )}
-          <Form
-            initial={editor}
-            fields={
-              personal
-                ? [
-                    ...pairFields,
-                    { key: 'isEnabled', label: t('Bật nhận khi không bắt buộc'), type: 'checkbox' },
-                  ]
-                : [
-                    ...(selected
-                      ? []
-                      : [
-                          ...pairFields,
-                          {
-                            key: 'targetRole',
-                            label: t('Vai trò nhận'),
-                            type: 'select' as const,
-                            required: true,
-                            options: options(targetRoles),
-                          },
-                          ...(actor.role === 'Admin'
-                            ? [
-                                {
-                                  key: 'organizationId',
-                                  label: t('Trung tâm'),
-                                  type: 'search' as const,
-                                  search: searchOrganizations(actor),
-                                  searchKey: ['rule-org', actor.id],
-                                  hint: t('Để trống để áp dụng toàn hệ thống.'),
-                                },
-                              ]
-                            : []),
-                        ]),
-                    ...flagFields,
-                    {
-                      key: 'confirm',
-                      label: t('Tôi xác nhận thay đổi quy tắc gửi thông báo'),
-                      type: 'checkbox',
-                    },
-                  ]
-            }
-            onSubmit={async (values) => {
-              setPending(true);
-              try {
-                if (personal) await notificationsApi.savePreference(actor, values);
-                else {
-                  if (!values.confirm) throw new Error(t('Cần xác nhận thay đổi quy tắc.'));
-                  if (selected) await notificationsApi.updateRule(actor, selected, values);
-                  else
-                    await notificationsApi.createRule(actor, {
-                      ...values,
-                      organizationId:
-                        actor.role === 'CenterAdmin'
+          {review && (
+            <section className="stack" aria-label={t('Xác nhận thay đổi')}>
+              <p>{t('Kiểm tra lại quy tắc rồi bấm Xác nhận lưu.')}</p>
+              <dl className="record-details">
+                <div>
+                  <dt>{t('Loại thông báo')}</dt>
+                  <dd>
+                    {notificationTypes[
+                      (selected?.notificationType ??
+                        review.notificationType) as keyof typeof notificationTypes
+                    ] ?? String(review.notificationType)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('Kênh thông báo')}</dt>
+                  <dd>
+                    {channels[(selected?.channel ?? review.channel) as keyof typeof channels] ??
+                      String(review.channel)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('Vai trò nhận')}</dt>
+                  <dd>
+                    {targetRoles[
+                      (selected?.targetRole ?? review.targetRole) as keyof typeof targetRoles
+                    ] ?? String(review.targetRole)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('Phạm vi')}</dt>
+                  <dd>
+                    {scope(
+                      selected
+                        ? selected.organizationId
+                        : actor.role === 'CenterAdmin'
                           ? actor.orgId
-                          : String(values.organizationId ?? '').trim() || null,
-                    });
-                }
-                setEditor(null);
-                setSelected(null);
-                await changed();
-              } finally {
-                setPending(false);
+                          : String(review.organizationId ?? '').trim() || null,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('Bắt buộc nhận')}</dt>
+                  <dd>{review.isMandatory ? t('Có') : t('Không')}</dd>
+                </div>
+                <div>
+                  <dt>{t('Đang áp dụng')}</dt>
+                  <dd>{review.isActive ? t('Có') : t('Không')}</dd>
+                </div>
+              </dl>
+              {reviewError && (
+                <p className="notice error" role="alert">
+                  {reviewError}
+                </p>
+              )}
+              <div className="row">
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={pending}
+                  onClick={() => {
+                    setEditor(review);
+                    setReview(null);
+                    setReviewError('');
+                  }}
+                >
+                  {t('Quay lại chỉnh sửa')}
+                </button>
+                <button
+                  type="button"
+                  className="btn primary"
+                  disabled={pending}
+                  onClick={async () => {
+                    setPending(true);
+                    setReviewError('');
+                    try {
+                      await saveRule(review);
+                    } catch (error) {
+                      setReviewError(
+                        error instanceof Error ? error.message : t('Không thể lưu thay đổi.'),
+                      );
+                    } finally {
+                      setPending(false);
+                    }
+                  }}
+                >
+                  {pending ? t('Đang lưu…') : t('Xác nhận lưu')}
+                </button>
+              </div>
+            </section>
+          )}
+          {!review && (
+            <Form
+              initial={editor}
+              fields={
+                personal
+                  ? [
+                      ...pairFields,
+                      {
+                        key: 'isEnabled',
+                        label: t('Bật nhận khi không bắt buộc'),
+                        type: 'checkbox',
+                      },
+                    ]
+                  : [
+                      ...(selected
+                        ? []
+                        : [
+                            ...pairFields,
+                            {
+                              key: 'targetRole',
+                              label: t('Vai trò nhận'),
+                              type: 'select' as const,
+                              required: true,
+                              options: options(targetRoles),
+                            },
+                            ...(actor.role === 'Admin'
+                              ? [
+                                  {
+                                    key: 'organizationId',
+                                    label: t('Trung tâm'),
+                                    type: 'search' as const,
+                                    search: searchOrganizations(actor),
+                                    searchKey: ['rule-org', actor.id],
+                                    hint: t('Để trống để áp dụng toàn hệ thống.'),
+                                  },
+                                ]
+                              : []),
+                          ]),
+                      ...flagFields,
+                    ]
               }
-            }}
-          />
+              submit={personal ? t('Lưu thay đổi') : t('Tiếp tục')}
+              onSubmit={async (values) => {
+                if (!personal) {
+                  setReview(values);
+                  return;
+                }
+                setPending(true);
+                try {
+                  await notificationsApi.savePreference(actor, values);
+                  setEditor(null);
+                  setSelected(null);
+                  await changed();
+                } finally {
+                  setPending(false);
+                }
+              }}
+            />
+          )}
         </Dialog>
       )}
       {deleting && !query.isError && (
@@ -463,7 +563,7 @@ function Notifications({ actor }: { actor: Person }) {
           onClose={() => setDeleting(null)}
           onConfirm={async () => {
             await notificationsApi.removeRule(actor, deleting);
-            await changed(t('Đã xóa quy tắc trên máy chủ.'));
+            await changed(t('Đã xóa quy tắc thông báo.'));
           }}
         />
       )}

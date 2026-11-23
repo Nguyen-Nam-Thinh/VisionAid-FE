@@ -1,5 +1,7 @@
 import { t, msg, labelMap } from '../../i18n';
+import { formKey } from '../api/validation';
 import { ServiceError } from '../contracts';
+import { extraCodeMessages, localizeFieldMessage, localizeServerMessage } from './serverMessages';
 import { noteLicenseHeader, setLicenseWarning } from '../licenseWarning';
 /** Client-side codes for failures that never reached a BE ProblemDetails body. */
 export const PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE';
@@ -7,6 +9,9 @@ export const REQUEST_TIMEOUT = 'REQUEST_TIMEOUT';
 export const NETWORK_ERROR = 'NETWORK_ERROR';
 /** Transport only; callers must supply confirmed endpoints and payload mapping. No retries or mock fallback. */
 // Localized text for BE `errorCode` values (ProblemDetails extension), resolved at throw time.
+/** Wording for a server error code, from either table. */
+const codeMessage = (code: string): string | undefined =>
+  errorCodeMessages[code] ?? extraCodeMessages[code];
 export const errorCodeMessages: Record<string, string> = labelMap({
   // Tài khoản và đăng nhập
   WRONG_CURRENT_PASSWORD: msg('Mật khẩu hiện tại không đúng.'),
@@ -169,8 +174,8 @@ export async function request<T>(
       // Only the caller's own license; VIU_LICENSE_* codes are about the person being called.
       if (code === 'LICENSE_EXPIRED') setLicenseWarning({ kind: 'expired' });
       throw new ServiceError(
-        code && errorCodeMessages[code]
-          ? errorCodeMessages[code]
+        code && codeMessage(code)
+          ? codeMessage(code)!
           : t(
               'Máy chủ yêu cầu kiểm tra gói dịch vụ cho thao tác này. Phiên đăng nhập vẫn được giữ. Mở mục Gói dịch vụ để xem trạng thái hoặc tải lại sau khi gói dịch vụ được cập nhật.',
             ),
@@ -179,16 +184,19 @@ export async function request<T>(
         code,
       );
     }
-    let message =
+    // Known error codes get their own wording; any other server sentence is put into plain
+    // Vietnamese (English sentences never reach the screen).
+    let message = localizeServerMessage(
       typeof problem.detail === 'string'
         ? problem.detail
         : typeof problem.title === 'string'
           ? problem.title
-          : t('Yêu cầu thất bại. Mã lỗi: {status}.', { status: response.status });
-    // Known BE error codes get a localized message; unknown codes keep the BE detail.
-    if (code && errorCodeMessages[code]) message = errorCodeMessages[code];
+          : '',
+      response.status,
+    );
+    if (code && codeMessage(code)) message = codeMessage(code)!;
     // A 403 with a known errorCode explains what to do; others stay generic.
-    if (response.status === 403 && !(code && errorCodeMessages[code]))
+    if (response.status === 403 && !(code && codeMessage(code)))
       message = t('Bạn không có quyền thực hiện thao tác này.');
     if (response.status >= 500)
       message = t(
@@ -211,7 +219,10 @@ export async function request<T>(
       message,
       response.status,
       Object.fromEntries(
-        Object.entries(errors).map(([key, v]) => [key, Array.isArray(v) ? v.join(' ') : String(v)]),
+        Object.entries(errors).map(([key, v]) => [
+          formKey(key),
+          localizeFieldMessage(Array.isArray(v) ? v.join(' ') : String(v)),
+        ]),
       ),
       code,
     );

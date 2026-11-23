@@ -38,6 +38,10 @@ export type LinkFilters = {
   viuId: string;
   linkType: string;
   active: string;
+  /** Typed words matched against name/email when no single person was picked. */
+  caregiverText?: string;
+  viuText?: string;
+  pageSize?: number;
 };
 function parse<T>(rule: z.ZodType<T>, value: unknown, status = 502): T {
   const parsed = rule.safeParse(value);
@@ -85,10 +89,12 @@ export function linkAccess(
 ): LinkAccess {
   const none = { edit: false, remove: false, promote: false };
   if (link.unlinkedAt) return none;
-  if (actor.role === 'Admin') return { edit: true, remove: true, promote: true };
+  // A primary link always has every permission, so there is nothing to edit on it.
+  const edit = !link.isPrimary;
+  if (actor.role === 'Admin') return { edit, remove: true, promote: true };
   if (actor.role === 'CenterAdmin')
     return actor.orgId && link.linkType === 'Organization'
-      ? { edit: true, remove: true, promote: true }
+      ? { edit, remove: true, promote: true }
       : none;
   if (actor.role !== 'Caregiver' || link.linkType !== 'Personal') return none;
   if (link.caregiverId === actor.id) return { ...none, remove: true };
@@ -230,7 +236,10 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
     primaryVius,
     async list(actor: Actor, filters: LinkFilters, signal?: AbortSignal) {
       authorize(actor);
-      const query = new URLSearchParams({ page: String(filters.page), pageSize: '10' });
+      const query = new URLSearchParams({
+        page: String(filters.page),
+        pageSize: String(filters.pageSize ?? 10),
+      });
       if (filters.viuId) query.set('viuId', uuid(filters.viuId));
       // BE scopes a caregiver to their own links plus links of VIUs they are primary for.
       if (actor.role !== 'Caregiver' && filters.caregiverId)

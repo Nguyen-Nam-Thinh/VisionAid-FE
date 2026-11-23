@@ -1,4 +1,5 @@
 import { FileInput } from '../../components/FileInput';
+import { containsText } from '../../services/api/textSearch';
 import { RefreshCw } from 'lucide-react';
 import { t, msg, tText } from '../../i18n';
 import { Toast } from '../../components/UI';
@@ -168,7 +169,7 @@ function RegistryList({ actor, viuId, name }: Scope & { name: string }) {
   const items =
     query.data?.items.filter(
       (p) =>
-        p.displayName.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi')) &&
+        containsText(search, p.displayName, p.relationship, p.notes) &&
         (!active || String(p.isActive) === active),
     ) || [];
   return (
@@ -438,11 +439,15 @@ function RegistryPhotos({
           {person && (
             <>
               <p className="notice">
-                {t('{imageCount} ảnh ·', { imageCount: person.imageCount })}{' '}
-                {person.isActive ? t('Hoạt động') : t('Chưa hoạt động')}
-                {t('. Xóa ảnh khiến số lượng dưới {min} sẽ ngừng kích hoạt người này.', {
-                  min: minPhotos,
-                })}
+                {person.imageCount < minPhotos
+                  ? t(
+                      'Đã có {imageCount} ảnh. Cần thêm {missing} ảnh rõ mặt nữa để điện thoại nhận ra người này.',
+                      { imageCount: person.imageCount, missing: minPhotos - person.imageCount },
+                    )
+                  : t(
+                      'Đã có {imageCount} ảnh, điện thoại đã nhận ra được người này. Nếu xóa bớt còn dưới {min} ảnh, việc nhận diện sẽ tạm dừng.',
+                      { imageCount: person.imageCount, min: minPhotos },
+                    )}
               </p>
               {notice && <Toast message={notice} onDismiss={() => setNotice('')} />}
               {error && (

@@ -10,7 +10,7 @@ import {
   Users,
 } from 'lucide-react';
 import { PageTabs } from '../../components/PageTabs';
-import { t, formatNumber } from '../../i18n';
+import { t, msg, tText, formatNumber } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
@@ -23,6 +23,39 @@ import type { Person } from '../../models/domain';
 
 // yyyy-MM-dd from the API → dd/MM/yyyy.
 const day = (value: string) => value.split('-').reverse().join('/');
+/** yyyy-MM-dd of a local date. */
+const iso = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+type Period = 'week' | 'month30' | 'thisMonth' | 'lastMonth' | 'all' | 'custom';
+/** Report periods offered as one-click buttons; "custom" opens the two date fields. */
+function periodDates(period: Exclude<Period, 'custom'>) {
+  const today = new Date();
+  const back = (days: number) =>
+    new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
+  switch (period) {
+    case 'week':
+      return { from: iso(back(6)), to: iso(today) };
+    case 'month30':
+      return { from: iso(back(29)), to: iso(today) };
+    case 'thisMonth':
+      return { from: iso(new Date(today.getFullYear(), today.getMonth(), 1)), to: iso(today) };
+    case 'lastMonth':
+      return {
+        from: iso(new Date(today.getFullYear(), today.getMonth() - 1, 1)),
+        to: iso(new Date(today.getFullYear(), today.getMonth(), 0)),
+      };
+    default:
+      return { from: '', to: '' };
+  }
+}
+const periodLabels: [Period, string][] = [
+  ['week', msg('7 ngày qua')],
+  ['month30', msg('30 ngày qua')],
+  ['thisMonth', msg('Tháng này')],
+  ['lastMonth', msg('Tháng trước')],
+  ['all', msg('Toàn bộ')],
+  ['custom', msg('Tùy chọn khoảng ngày')],
+];
 export function ApiReports() {
   const { data: actor } = useSession();
   if (actor?.role !== 'CenterAdmin' || !actor.orgId)
@@ -35,6 +68,9 @@ export function ApiReports() {
 }
 function Reports({ actor }: { actor: Person }) {
   const [dates, setDates] = useState({ from: '', to: '' });
+  const [period, setPeriod] = useState<Period>('all');
+  // The period picked in the open filter; "custom" shows the two date fields.
+  const [draft, setDraft] = useState<Period>('all');
   const [filters, setFilters] = useState({ search: '', role: '', active: '' });
   const [page, setPage] = useState(1);
   const summary = useQuery({
@@ -78,16 +114,24 @@ function Reports({ actor }: { actor: Person }) {
               <section className="glass card stack">
                 <h2>{t('Hoạt động của trung tâm')}</h2>
                 <FilterPanel
-                  active={[dates.from, dates.to].filter(Boolean).length}
+                  compact
+                  active={period === 'all' ? 0 : 1}
                   submitLabel={t('Xem báo cáo')}
                   onApply={(form) => {
                     const data = new FormData(form);
-                    setDates({
-                      from: String(data.get('from') || ''),
-                      to: String(data.get('to') || ''),
-                    });
+                    const next = String(data.get('period') || 'all') as Period;
+                    setPeriod(next);
+                    setDates(
+                      next === 'custom'
+                        ? { from: String(data.get('from') || ''), to: String(data.get('to') || '') }
+                        : periodDates(next),
+                    );
                   }}
-                  onReset={() => setDates({ from: '', to: '' })}
+                  onReset={() => {
+                    setDraft('all');
+                    setPeriod('all');
+                    setDates({ from: '', to: '' });
+                  }}
                   tools={
                     <button
                       type="button"
@@ -100,16 +144,37 @@ function Reports({ actor }: { actor: Person }) {
                     </button>
                   }
                 >
-                  <div className="filter-range wide">
-                    <label className="field">
-                      {t('Từ ngày')}
-                      <input type="date" name="from" />
-                    </label>
-                    <label className="field">
-                      {t('Đến ngày')}
-                      <input type="date" name="to" />
-                    </label>
-                  </div>
+                  <label className="field wide">
+                    {t('Kỳ báo cáo')}
+                    <select
+                      name="period"
+                      value={draft}
+                      onChange={(e) => {
+                        const next = e.target.value as Period;
+                        setDraft(next);
+                        // A ready-made period applies at once; a custom range waits for the dates.
+                        if (next !== 'custom') e.target.form?.requestSubmit();
+                      }}
+                    >
+                      {periodLabels.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {tText(label)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {draft === 'custom' && (
+                    <div className="filter-range wide">
+                      <label className="field">
+                        {t('Từ ngày')}
+                        <input type="date" name="from" defaultValue={dates.from} />
+                      </label>
+                      <label className="field">
+                        {t('Đến ngày')}
+                        <input type="date" name="to" defaultValue={dates.to} />
+                      </label>
+                    </div>
+                  )}
                 </FilterPanel>
                 <State
                   loading={summary.isPending}
@@ -171,9 +236,7 @@ function Reports({ actor }: { actor: Person }) {
                         ))}
                       </div>
                       <p className="report-note">
-                        {t(
-                          'Số liệu do máy chủ tổng hợp cho các thành viên khiếm thị hiện thuộc trung tâm, chưa bị xóa. Các nhóm có thể trùng sự kiện nên không cộng thành một tổng chung.',
-                        )}
+                        {t('Một sự kiện có thể nằm ở nhiều ô, nên không cộng các ô lại với nhau.')}
                       </p>
                     </>
                   )}

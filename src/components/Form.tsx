@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Fields } from '../models/domain';
 import { SearchPicker, type PickerSearch } from './SearchPicker';
+import { LocationPicker } from './LocationPicker';
 
 /** `label`, `hint` and option labels may be message ids (`msg()`); they are translated at render. */
 export interface FieldSpec {
@@ -40,11 +41,17 @@ export function Form({
   initial = {},
   submit = t('Lưu thay đổi'),
   onSubmit,
+  location,
 }: {
   fields: FieldSpec[];
   initial?: Fields;
   submit?: string;
   onSubmit: (values: Fields) => Promise<unknown>;
+  /**
+   * Keys of a point (and its radius): the form then offers address search and a map to pick
+   * the point, with the raw coordinate inputs folded away for people who already know them.
+   */
+  location?: { lat: string; lng: string; radius?: string };
 }) {
   const prefix = useId();
   const shape: Record<string, z.ZodType<string | number | boolean, string | number | boolean>> = {};
@@ -97,6 +104,80 @@ export function Form({
   const values = useWatch({ control });
   const [failure, setFailure] = useState('');
   const hasCoordinates = fields.some((f) => f.key === 'lat') && fields.some((f) => f.key === 'lng');
+  const renderField = (field: FieldSpec) => {
+    const fieldId = prefix + '-' + field.key;
+    const props = {
+      id: fieldId,
+      disabled: field.disabled || isSubmitting,
+      'aria-invalid': !!errors[field.key],
+      'aria-describedby':
+        (errors[field.key] ? fieldId + '-error ' : '') + (field.hint ? fieldId + '-hint' : ''),
+    };
+    const feedback = (
+      <>
+        {errors[field.key] && (
+          <span id={fieldId + '-error'} className="field-error" role="alert">
+            {errors[field.key]?.message as string}
+          </span>
+        )}
+        {field.hint && <small id={fieldId + '-hint'}>{tText(field.hint)}</small>}
+      </>
+    );
+    if (field.type === 'search' && field.search)
+      return (
+        <SearchPicker
+          key={field.key}
+          id={fieldId}
+          label={tText(field.label)}
+          required={field.required}
+          disabled={props.disabled}
+          invalid={props['aria-invalid']}
+          describedBy={props['aria-describedby'] || undefined}
+          value={String(values[field.key] ?? '')}
+          onChange={(id) => setValue(field.key, id, { shouldValidate: true })}
+          search={field.search}
+          queryKey={field.searchKey ?? [field.key]}
+        >
+          {feedback}
+        </SearchPicker>
+      );
+    return (
+      <div className={field.type === 'checkbox' ? 'field field-checkbox' : 'field'} key={field.key}>
+        <label htmlFor={fieldId}>
+          {tText(field.label)}
+          {field.required ? ' *' : ''}
+        </label>
+        {field.type === 'select' ? (
+          <select {...register(field.key)} {...props}>
+            <option value="">{t('Chọn…')}</option>
+            {field.options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {tText(option.label)}
+              </option>
+            ))}
+          </select>
+        ) : field.type === 'textarea' ? (
+          <textarea {...register(field.key)} {...props} />
+        ) : (
+          <input
+            {...register(field.key, { valueAsNumber: field.type === 'number' })}
+            {...props}
+            type={field.type ?? 'text'}
+            step={field.step ?? 'any'}
+            autoComplete={
+              field.autoComplete ??
+              (field.type === 'password'
+                ? 'current-password'
+                : field.type === 'email'
+                  ? 'email'
+                  : 'off')
+            }
+          />
+        )}
+        {feedback}
+      </div>
+    );
+  };
   return (
     <form
       className="stack"
@@ -116,81 +197,31 @@ export function Form({
       })}
     >
       {fields.map((field) => {
-        const fieldId = prefix + '-' + field.key;
-        const props = {
-          id: fieldId,
-          disabled: field.disabled || isSubmitting,
-          'aria-invalid': !!errors[field.key],
-          'aria-describedby':
-            (errors[field.key] ? fieldId + '-error ' : '') + (field.hint ? fieldId + '-hint' : ''),
-        };
-        const feedback = (
-          <>
-            {errors[field.key] && (
-              <span id={fieldId + '-error'} className="field-error" role="alert">
-                {errors[field.key]?.message as string}
-              </span>
-            )}
-            {field.hint && <small id={fieldId + '-hint'}>{tText(field.hint)}</small>}
-          </>
-        );
-        if (field.type === 'search' && field.search)
+        if (location && field.key === location.lng) return null;
+        if (location && field.key === location.lat) {
+          const coordinate = (key: string) => {
+            const value = values[key];
+            return value === '' || value === undefined || value === null || Number.isNaN(value)
+              ? null
+              : Number(value);
+          };
           return (
-            <SearchPicker
-              key={field.key}
-              id={fieldId}
-              label={tText(field.label)}
-              required={field.required}
-              disabled={props.disabled}
-              invalid={props['aria-invalid']}
-              describedBy={props['aria-describedby'] || undefined}
-              value={String(values[field.key] ?? '')}
-              onChange={(id) => setValue(field.key, id, { shouldValidate: true })}
-              search={field.search}
-              queryKey={field.searchKey ?? [field.key]}
-            >
-              {feedback}
-            </SearchPicker>
+            <LocationPicker
+              key="location-picker"
+              lat={coordinate(location.lat)}
+              lng={coordinate(location.lng)}
+              radius={Number(values[location.radius ?? ''] ?? 50) || 50}
+              onPick={(lat, lng) => {
+                setValue(location.lat, Number(lat.toFixed(6)), { shouldValidate: true });
+                setValue(location.lng, Number(lng.toFixed(6)), { shouldValidate: true });
+              }}
+              manual={fields
+                .filter((f) => f.key === location.lat || f.key === location.lng)
+                .map(renderField)}
+            />
           );
-        return (
-          <div
-            className={field.type === 'checkbox' ? 'field field-checkbox' : 'field'}
-            key={field.key}
-          >
-            <label htmlFor={fieldId}>
-              {tText(field.label)}
-              {field.required ? ' *' : ''}
-            </label>
-            {field.type === 'select' ? (
-              <select {...register(field.key)} {...props}>
-                <option value="">{t('Chọn…')}</option>
-                {field.options?.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {tText(option.label)}
-                  </option>
-                ))}
-              </select>
-            ) : field.type === 'textarea' ? (
-              <textarea {...register(field.key)} {...props} />
-            ) : (
-              <input
-                {...register(field.key, { valueAsNumber: field.type === 'number' })}
-                {...props}
-                type={field.type ?? 'text'}
-                step={field.step ?? 'any'}
-                autoComplete={
-                  field.autoComplete ??
-                  (field.type === 'password'
-                    ? 'current-password'
-                    : field.type === 'email'
-                      ? 'email'
-                      : 'off')
-                }
-              />
-            )}
-            {feedback}
-          </div>
-        );
+        }
+        return renderField(field);
       })}
       {hasCoordinates && (
         <div className="stack">

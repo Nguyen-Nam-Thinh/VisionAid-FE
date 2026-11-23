@@ -7,7 +7,6 @@ import { useSession } from '../../hooks/useService';
 import { PageHead, State, Dialog, Badge } from '../../components/UI';
 import { Form } from '../../components/Form';
 import { iceServersApi, type IceServer, type IcePage } from '../../services/api/iceServers';
-import { ServiceError } from '../../services/contracts';
 import type { Person } from '../../models/domain';
 
 export function ApiIceServers() {
@@ -51,11 +50,25 @@ function Servers({ actor }: { actor: Person }) {
             {t('Thêm máy chủ')}
           </button>
         </CardActions>
-        <p>
-          {t(
-            'Số ưu tiên nhỏ được xếp trước. Thay đổi cấu hình không xác nhận máy chủ đang hoạt động; cần kiểm tra bằng cuộc gọi thực tế.',
-          )}
-        </p>
+        <div className="notice stack">
+          <p>{t('Khi gọi, hai thiết bị cần một máy chủ giúp nối với nhau. Có hai loại:')}</p>
+          <ul>
+            <li>
+              <strong>{t('Tìm đường kết nối')}</strong>
+              {' — '}
+              {t('giúp hai thiết bị tự nối thẳng với nhau khi mạng cho phép.')}
+            </li>
+            <li>
+              <strong>{t('Chuyển tiếp cuộc gọi')}</strong>
+              {' — '}
+              {t(
+                'khi mạng chặn kết nối thẳng (mạng công ty, 4G), cuộc gọi đi vòng qua máy chủ này để vẫn nghe và thấy được.',
+              )}
+            </li>
+          </ul>
+          <p>{t('Sau khi đổi, hãy thử một cuộc gọi.')}</p>
+          {query.data && <IceReadiness servers={query.data.items} />}
+        </div>
         <div className="row">
           <label className="field">
             {t('Trạng thái máy chủ')}
@@ -87,8 +100,8 @@ function Servers({ actor }: { actor: Person }) {
                   <thead>
                     <tr>
                       <th>{t('Loại')}</th>
-                      <th>{t('Địa chỉ')}</th>
-                      <th>{t('Ưu tiên')}</th>
+                      <th>{t('Máy chủ')}</th>
+                      <th>{t('Thứ tự dùng')}</th>
                       <th>{t('Trạng thái')}</th>
                       <th>{t('Thao tác')}</th>
                     </tr>
@@ -96,9 +109,12 @@ function Servers({ actor }: { actor: Person }) {
                   <tbody>
                     {query.data.items.map((server) => (
                       <tr key={server.id}>
-                        <td>{server.serverType.toUpperCase()}</td>
+                        <td>{serverKind(server.serverType)}</td>
                         <td style={{ overflowWrap: 'anywhere' }}>
-                          {server.url}
+                          <strong>{iceAddress(server.url)}</strong>
+                          <small className="muted" style={{ display: 'block' }}>
+                            {server.url}
+                          </small>
                           {server.serverType === 'Turn' && server.hasCredential !== undefined && (
                             <small className="muted" style={{ display: 'block' }}>
                               {server.hasCredential
@@ -107,7 +123,7 @@ function Servers({ actor }: { actor: Person }) {
                             </small>
                           )}
                         </td>
-                        <td>{server.priority}</td>
+                        <td>{t('Thứ {priority}', { priority: server.priority })}</td>
                         <td>
                           <Badge tone={server.isActive ? 'green' : 'amber'}>
                             {server.isActive ? t('Đang bật') : t('Đang tắt')}
@@ -184,11 +200,7 @@ function Servers({ actor }: { actor: Person }) {
           close={() => setChange(null)}
           saved={async () => {
             setChange(null);
-            setNotice(
-              t(
-                'Đã lưu thay đổi trên máy chủ. Cần kiểm tra kết nối cuộc gọi sau khi đổi cấu hình.',
-              ),
-            );
+            setNotice(t('Đã lưu máy chủ. Hãy thử một cuộc gọi để chắc chắn kết nối tốt.'));
             await cache.invalidateQueries({ queryKey: ['api-ice-servers', actor.id] });
           }}
         />
@@ -227,19 +239,10 @@ function Change({
         {server && (
           <p style={{ overflowWrap: 'anywhere' }}>{t('Máy chủ: {url}', { url: server.url })}</p>
         )}
-        <p>
-          {remove
-            ? t(
-                'Xóa cấu hình có thể làm cuộc gọi mới không kết nối được. Chỉ xóa khi đã có máy chủ thay thế phù hợp.',
-              )
-            : t(
-                'Máy chủ mới được bật ngay sau khi tạo. Thay đổi áp dụng cho cấu hình kết nối mới, không tự cài đặt hoặc đổi mật khẩu trên máy chủ TURN.',
-              )}
-        </p>
-        {!remove && (
+        {remove && (
           <p>
             {t(
-              'TURN: để trống cả tên đăng nhập và mật khẩu thì máy chủ tự cấp mật khẩu tạm cho mỗi cuộc gọi (nên dùng). Muốn dùng mật khẩu cố định thì nhập cả hai mỗi lần lưu; ô mật khẩu luôn trống khi mở. STUN bỏ qua hai ô này.',
+              'Xóa cấu hình có thể làm cuộc gọi mới không kết nối được. Chỉ xóa khi đã có máy chủ thay thế phù hợp.',
             )}
           </p>
         )}
@@ -258,7 +261,6 @@ function Change({
               credential: '',
               priority: server?.priority ?? 100,
               isActive: server?.isActive ?? true,
-              confirm: false,
             }}
             fields={[
               ...(!remove
@@ -269,8 +271,8 @@ function Change({
                       type: 'select' as const,
                       required: true,
                       options: [
-                        { value: 'Stun', label: 'STUN' },
-                        { value: 'Turn', label: 'TURN' },
+                        { value: 'Stun', label: serverKind('Stun') },
+                        { value: 'Turn', label: serverKind('Turn') },
                       ],
                     },
                     {
@@ -278,11 +280,14 @@ function Change({
                       label: t('Địa chỉ máy chủ'),
                       required: true,
                       max: 300,
-                      hint: t('Ví dụ: stun:host:3478 hoặc turns:host:5349?transport=tcp'),
+                      hint: t(
+                        'Do bên cung cấp máy chủ đưa, ví dụ stun:stun.l.google.com:19302 hoặc turn:ten-may-chu:3478.',
+                      ),
                     },
                     {
                       key: 'priority',
-                      label: t('Độ ưu tiên'),
+                      label: t('Thứ tự dùng'),
+                      hint: t('Số nhỏ được thử trước.'),
                       type: 'number' as const,
                       min: 1,
                       max: 1000,
@@ -290,32 +295,28 @@ function Change({
                     },
                     {
                       key: 'username',
-                      label: t('Tên đăng nhập TURN'),
+                      label: t('Tên đăng nhập (chỉ cho máy chủ chuyển tiếp)'),
                       max: 200,
                       autoComplete: 'off',
                     },
                     {
                       key: 'credential',
-                      label: t('Mật khẩu TURN muốn áp dụng'),
+                      label: t('Mật khẩu (chỉ cho máy chủ chuyển tiếp)'),
                       type: 'password' as const,
                       max: 200,
                       autoComplete: 'new-password',
+                      hint: t(
+                        'Để trống cả tên đăng nhập và mật khẩu (nên dùng): hệ thống tự cấp mật khẩu tạm cho mỗi cuộc gọi. Máy chủ tìm đường không cần hai ô này.',
+                      ),
                     },
                     ...(server
                       ? [{ key: 'isActive', label: t('Bật máy chủ'), type: 'checkbox' as const }]
                       : []),
                   ]
                 : []),
-              {
-                key: 'confirm',
-                label: t('Tôi xác nhận thay đổi cấu hình kết nối cuộc gọi'),
-                type: 'checkbox',
-              },
             ]}
             submit={remove ? t('Xác nhận xóa') : t('Lưu máy chủ')}
             onSubmit={async (values) => {
-              if (!values.confirm)
-                throw new ServiceError(t('Vui lòng xác nhận thay đổi trước khi tiếp tục.'), 400);
               try {
                 if (remove && server) await iceServersApi.remove(actor, server, filter);
                 else
@@ -343,5 +344,43 @@ function Change({
         )}
       </div>
     </Dialog>
+  );
+}
+
+/** "Stun" → "Tìm đường kết nối (STUN)"; the technical name stays for support conversations. */
+function serverKind(type: string) {
+  return type.toLowerCase() === 'turn'
+    ? t('Chuyển tiếp cuộc gọi (TURN)')
+    : t('Tìm đường kết nối (STUN)');
+}
+/** "turn:51.2.3.4:3478?transport=udp" → "51.2.3.4 · cổng 3478 · UDP". */
+function iceAddress(url: string) {
+  const match = /^(?:stuns?|turns?):([^?]+?)(?::(\d+))?(?:\?transport=(\w+))?$/i.exec(url.trim());
+  if (!match) return url;
+  const [, host, port, transport] = match;
+  return [host, port && t('cổng {port}', { port }), transport?.toUpperCase()]
+    .filter(Boolean)
+    .join(' · ');
+}
+/** One line telling whether calls have both kinds of server switched on. */
+function IceReadiness({ servers }: { servers: IceServer[] }) {
+  const active = servers.filter((server) => server.isActive);
+  const stun = active.filter((server) => server.serverType.toLowerCase() === 'stun').length;
+  const turn = active.filter((server) => server.serverType.toLowerCase() === 'turn').length;
+  return (
+    <p className={stun && turn ? undefined : 'notice error'} role="status">
+      {stun && turn
+        ? t('Đang bật {stun} máy chủ tìm đường và {turn} máy chủ chuyển tiếp: đủ để gọi.', {
+            stun,
+            turn,
+          })
+        : !turn
+          ? t(
+              'Chưa có máy chủ chuyển tiếp nào đang bật: cuộc gọi qua mạng 4G hoặc mạng công ty có thể không nối được.',
+            )
+          : t(
+              'Chưa có máy chủ tìm đường nào đang bật: cuộc gọi có thể nối chậm hoặc không nối được.',
+            )}
+    </p>
   );
 }

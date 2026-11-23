@@ -1,4 +1,5 @@
 import { ArrowRight, MapPinned, RefreshCw, Siren } from 'lucide-react';
+import { formatPhone } from '../../services/api/phone';
 import * as AnimatedTabs from '@animate-ui/react/primitives/radix-ui/tabs';
 import { t, formatLocaleDateTime } from '../../i18n';
 import { useEffect, useState } from 'react';
@@ -12,8 +13,10 @@ import {
   overdueAlerts,
   type AlertAction,
   type AlertFilters,
+  type Emergency,
   type Escalation,
 } from '../../services/api/emergencies';
+import { collectPages, pageOf } from '../../services/api/textSearch';
 import {
   historyRange,
   locationsApi,
@@ -35,7 +38,7 @@ import {
   historyReason,
 } from '../../constants/serverValues';
 import { contactTypes } from '../../services/api/contacts';
-import { roles } from '../../constants/labels';
+import { roles, viuWord } from '../../constants/labels';
 import {
   deliveryChannelLabels,
   deliveryStatusLabels,
@@ -67,6 +70,8 @@ function Alerts({ actor }: { actor: Person }) {
   });
   const [error, setError] = useState('');
   const [viu, setViu] = useState('');
+  const [draftText, setDraftText] = useState('');
+  const [viuText, setViuText] = useState('');
   // Alerts only carry the VIU id; show the care recipient's name when it is in the first page.
   const recipients = useQuery({
     queryKey: ['alert-recipients', actor.id, actor.orgId],
@@ -77,8 +82,23 @@ function Alerts({ actor }: { actor: Person }) {
     recipients.data?.items.find((person) => person.id === id)?.fullName ??
     t('Một người được chăm sóc');
   const query = useQuery({
-    queryKey: ['api-alerts', actor.id, actor.orgId, filters],
-    queryFn: ({ signal }) => emergenciesApi.list(actor, filters, signal),
+    queryKey: ['api-alerts', actor.id, actor.orgId, filters, viuText],
+    queryFn: async ({ signal }) => {
+      if (!viuText) return emergenciesApi.list(actor, filters, signal);
+      // Alerts only carry the person's id: find everyone whose name/email contains the words.
+      const ids = (await searchCareRecipients()(viuText, signal)).map((option) => option.value);
+      if (!ids.length) return pageOf<Emergency>([], 1);
+      if (ids.length === 1)
+        return emergenciesApi.list(actor, { ...filters, viuId: ids[0] }, signal);
+      const wanted = new Set(ids);
+      const rows = await collectPages((page) =>
+        emergenciesApi.list(actor, { ...filters, page, pageSize: 100 }, signal),
+      );
+      return pageOf(
+        rows.filter((event) => wanted.has(event.visuallyImpairedUserId)),
+        filters.page,
+      );
+    },
     refetchInterval: 30000,
     retry: false,
   });
@@ -115,14 +135,16 @@ function Alerts({ actor }: { actor: Person }) {
           <section className="stack">
             <FilterPanel
               active={
-                [filters.viuId, filters.status, filters.dateFrom, filters.dateTo].filter(Boolean)
-                  .length
+                [filters.viuId || viuText, filters.status, filters.dateFrom, filters.dateTo].filter(
+                  Boolean,
+                ).length
               }
               submitLabel={t('Lọc cảnh báo')}
               onApply={(form) => {
                 const data = new FormData(form);
                 try {
                   const range = historyRange(String(data.get('from')), String(data.get('to')));
+                  setViuText(viu ? '' : draftText.trim());
                   setFilters({ ...range, viuId: viu, status: String(data.get('status')), page: 1 });
                   setSelected('');
                   setError('');
@@ -132,6 +154,8 @@ function Alerts({ actor }: { actor: Person }) {
               }}
               onReset={() => {
                 setViu('');
+                setDraftText('');
+                setViuText('');
                 setFilters({ viuId: '', status: '', dateFrom: '', dateTo: '', page: 1 });
                 setSelected('');
                 setError('');
@@ -153,10 +177,13 @@ function Alerts({ actor }: { actor: Person }) {
               }
             >
               <SearchPicker
-                label={t('Người được chăm sóc')}
+                label={viuWord(actor.role)}
                 placeholder={t('Gõ tên hoặc email')}
                 value={viu}
                 onChange={setViu}
+                freeText
+                text={draftText}
+                onText={setDraftText}
                 search={searchCareRecipients()}
                 queryKey={['alert-viu', actor.id, actor.orgId]}
               />
@@ -199,7 +226,7 @@ function Alerts({ actor }: { actor: Person }) {
                     <table className="alerts-table">
                       <thead>
                         <tr>
-                          <th>{t('Người được chăm sóc')}</th>
+                          <th>{viuWord(actor.role)}</th>
                           <th>{t('Phát hiện')}</th>
                           <th>{t('Trạng thái')}</th>
                           <th>{t('Thời gian')}</th>
@@ -328,7 +355,7 @@ function BoundaryAlerts({ actor }: { actor: Person }) {
         }}
       >
         <SearchPicker
-          label={t('Người được chăm sóc')}
+          label={viuWord(actor.role)}
           placeholder={t('Gõ tên hoặc email')}
           value={viu}
           onChange={setViu}
@@ -586,7 +613,7 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                 <strong>{alertLabels[event.currentStatus]}</strong>
                 <dl className="record-details">
                   <div>
-                    <dt>{t('Người được chăm sóc')}</dt>
+                    <dt>{viuWord(actor.role)}</dt>
                     <dd>
                       {names.data?.[event.visuallyImpairedUserId] ?? t('Một người được chăm sóc')}
                     </dd>
@@ -665,7 +692,7 @@ function AlertDetail({ actor, id, onClose }: { actor: Person; id: string; onClos
                             {c.priorityOrder}. {c.contactName} ·{' '}
                             {contactTypes[c.contactType as keyof typeof contactTypes] ??
                               c.contactType}{' '}
-                            · {c.phoneNumber || t('Không có số điện thoại')}
+                            · {formatPhone(c.phoneNumber) || t('Không có số điện thoại')}
                             {c.zaloDeepLink && <span> · Zalo: {c.zaloDeepLink}</span>}
                           </p>
                         ))

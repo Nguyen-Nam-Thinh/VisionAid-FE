@@ -1,4 +1,5 @@
 import { RefreshCw } from 'lucide-react';
+import { formatPhone } from '../../services/api/phone';
 import { t, msg, formatLocaleDateTime } from '../../i18n';
 import { Toast } from '../../components/UI';
 import { useState } from 'react';
@@ -19,10 +20,10 @@ import type { Person } from '../../models/domain';
 import { Link } from 'react-router-dom';
 import { viuLicenseLabel } from '../../services/api/licenses';
 import { useOwnOrgName } from '../../hooks/useOrgPeople';
-import { SearchPicker } from '../../components/SearchPicker';
 import { FilterPanel } from '../../components/FilterPanel';
 import { searchOrganizations } from '../../services/api/pickers';
 import { organizationsApi } from '../../services/api/organizations';
+import { collectPages } from '../../services/api/textSearch';
 
 const profileFields: FieldSpec[] = [
   { key: 'fullName', label: msg('Họ và tên'), required: true, min: 2, max: 200 },
@@ -31,7 +32,6 @@ const profileFields: FieldSpec[] = [
     label: msg('Điện thoại'),
     hint: msg('Để trống hoặc nhập số Việt Nam có 10 chữ số.'),
   },
-  { key: 'avatarUrl', label: msg('URL ảnh đại diện'), max: 500 },
 ];
 const passwordFields: FieldSpec[] = [
   {
@@ -66,6 +66,14 @@ function Accounts({
     organizationId: '',
   });
   const [orgFilter, setOrgFilter] = useState('');
+  // Organizations are few: the filter lists them all instead of asking for a typed name.
+  const orgOptions = useQuery({
+    queryKey: ['account-org-options', actor.id],
+    queryFn: ({ signal }) =>
+      collectPages((page) => organizationsApi.list(actor, page, '', '', 'false', signal)),
+    enabled: actor.role === 'Admin',
+    staleTime: 60000,
+  });
   const [selected, setSelected] = useState('');
   const [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState('');
@@ -120,11 +128,7 @@ function Accounts({
           saved={async (account) => {
             setCreating(false);
             setSelected(account.id);
-            setNotice(
-              t(
-                'Đã tạo tài khoản. Kiểm tra thông tin gói dịch vụ và phân công chăm sóc cho người dùng.',
-              ),
-            );
+            setNotice(t('Đã tạo tài khoản cho {name}.', { name: account.fullName }));
             await refresh();
           }}
         />
@@ -199,14 +203,19 @@ function Accounts({
             </label>
           )}
           {actor.role === 'Admin' && (
-            <SearchPicker
-              label={t('Tổ chức')}
-              placeholder={t('Gõ tên tổ chức')}
-              value={orgFilter}
-              onChange={setOrgFilter}
-              search={searchOrganizations(actor)}
-              queryKey={['account-org-filter', actor.id]}
-            />
+            <label className="field">
+              {t('Tổ chức')}
+              <select value={orgFilter} onChange={(e) => setOrgFilter(e.target.value)}>
+                <option value="">{t('Tất cả tổ chức')}</option>
+                {[...(orgOptions.data ?? [])]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
           )}
           <label className="field">
             {t('Trạng thái')}
@@ -216,14 +225,17 @@ function Accounts({
               <option value="false">{t('Vô hiệu hóa')}</option>
             </select>
           </label>
-          <label className="field">
-            {t('Dữ liệu xóa')}
-            <select name="deleted" defaultValue={filters.deleted}>
-              <option value="false">{t('Chưa xóa')}</option>
-              <option value="true">{t('Đã xóa')}</option>
-              <option value="">{t('Tất cả')}</option>
-            </select>
-          </label>
+          {/* Only a system administrator can restore deleted accounts, so only they look for them. */}
+          {actor.role === 'Admin' && (
+            <label className="field">
+              {t('Tài khoản đã xóa')}
+              <select name="deleted" defaultValue={filters.deleted}>
+                <option value="false">{t('Không hiện')}</option>
+                <option value="true">{t('Chỉ hiện tài khoản đã xóa (để khôi phục)')}</option>
+                <option value="">{t('Hiện cả tài khoản đã xóa')}</option>
+              </select>
+            </label>
+          )}
         </FilterPanel>
         <State loading={list.isPending} error={list.error} retry={() => list.refetch()}>
           {list.data && (
@@ -307,7 +319,18 @@ function Accounts({
                 refresh={refresh}
                 removed={() => {
                   setSelected('');
-                  setNotice(t('Đã xóa mềm tài khoản.'));
+                  // Deleted accounts leave the default list, so say where to find them again.
+                  setNotice(
+                    actor.role === 'Admin'
+                      ? t(
+                          'Đã xóa tài khoản. Muốn khôi phục trong {days} ngày: mở Bộ lọc, ở ô Tài khoản đã xóa chọn "Chỉ hiện tài khoản đã xóa", rồi bấm Chi tiết → Khôi phục tài khoản.',
+                          { days: RESTORE_WINDOW_DAYS },
+                        )
+                      : t(
+                          'Đã xóa tài khoản. Quản trị viên hệ thống có thể khôi phục trong {days} ngày.',
+                          { days: RESTORE_WINDOW_DAYS },
+                        ),
+                  );
                 }}
               />
             )}
@@ -345,7 +368,9 @@ function AccountEditor({
     : [
         ...profileFields,
         { key: 'email', label: 'Email', type: 'email', required: true, max: 255 },
-        ...passwordFields,
+        // A new account gets its first password, not a "new" one.
+        { ...passwordFields[0], label: msg('Mật khẩu') },
+        passwordFields[1],
         ...(fixedRole
           ? []
           : [
@@ -415,7 +440,6 @@ function AccountEditor({
             ? {
                 fullName: account.fullName,
                 phoneNumber: account.phoneNumber || '',
-                avatarUrl: account.avatarUrl || '',
               }
             : {}
         }
@@ -428,7 +452,8 @@ function AccountEditor({
             const profile = {
               fullName: String(values.fullName),
               phoneNumber: String(values.phoneNumber),
-              avatarUrl: String(values.avatarUrl),
+              // The picture is uploaded by its owner on the profile page; keep what is there.
+              avatarUrl: account?.avatarUrl ?? '',
             };
             const result = account
               ? await accountsApi.update(actor, account.id, profile)
@@ -445,7 +470,9 @@ function AccountEditor({
               !account &&
               actor.role === 'CenterAdmin' &&
               (fixedRole || values.role) === 'VisuallyImpaired' &&
-              [402, 422].includes((error as { status?: number }).status || 0)
+              [402, 422].includes((error as { status?: number }).status || 0) &&
+              // A message that already names the license pool problem needs no extra hint.
+              !(error as { code?: string }).code?.startsWith('LICENSE_POOL')
             )
               throw new Error(
                 t(
@@ -536,7 +563,7 @@ function AccountDetails({
         </div>
         <div>
           <dt>{t('Số điện thoại')}</dt>
-          <dd>{account.phoneNumber || t('Chưa có điện thoại')}</dd>
+          <dd>{formatPhone(account.phoneNumber) || t('Chưa có điện thoại')}</dd>
         </div>
         <div>
           <dt>{t('Tổ chức')}</dt>
@@ -635,18 +662,20 @@ function AccountDetails({
                 : t('Vô hiệu hóa tài khoản')
           }
           description={
-            account.email +
-            (action === 'activate'
-              ? t(': mở lại tài khoản. Tổ chức cũng phải hoạt động để đăng nhập.')
-              : t(': đăng xuất khỏi mọi thiết bị và ngừng gửi thông báo. ') +
-                (action === 'delete'
-                  ? t(
-                      'Tài khoản vẫn được giữ lại; Quản trị viên hệ thống có thể khôi phục trong {days} ngày.',
-                      {
-                        days: RESTORE_WINDOW_DAYS,
-                      },
-                    )
-                  : t('Người dùng sẽ bị chặn đăng nhập.')))
+            action === 'activate'
+              ? t(
+                  '{name} ({email}) sẽ đăng nhập lại được. Tổ chức của tài khoản cũng phải đang hoạt động.',
+                  { name: account.fullName, email: account.email },
+                )
+              : action === 'delete'
+                ? t(
+                    '{name} ({email}) sẽ bị đăng xuất khỏi mọi thiết bị và không nhận thông báo nữa. Quản trị viên hệ thống có thể khôi phục tài khoản trong {days} ngày.',
+                    { name: account.fullName, email: account.email, days: RESTORE_WINDOW_DAYS },
+                  )
+                : t(
+                    '{name} ({email}) sẽ bị đăng xuất khỏi mọi thiết bị, không đăng nhập được và không nhận thông báo nữa.',
+                    { name: account.fullName, email: account.email },
+                  )
           }
           onClose={() => setAction(null)}
           onConfirm={async () => {
@@ -696,19 +725,11 @@ function AccountDetails({
             )}
           </p>
           <Form
-            fields={[
-              ...passwordFields,
-              {
-                key: 'confirm',
-                label: t('Tôi xác nhận đặt lại mật khẩu cho tài khoản này'),
-                type: 'checkbox',
-              },
-            ]}
+            fields={passwordFields}
             submit={t('Xác nhận đặt lại mật khẩu')}
             onSubmit={async (values) => {
               if (values.password !== values.confirmation)
                 throw new Error(t('Mật khẩu nhập lại không khớp.'));
-              if (!values.confirm) throw new Error(t('Vui lòng xác nhận thao tác.'));
               setBusy(true);
               try {
                 await accountsApi.resetPassword(actor, account.id, String(values.password));
