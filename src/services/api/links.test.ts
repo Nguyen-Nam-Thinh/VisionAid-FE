@@ -1,5 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { createLinksApi, linkAccess, type CareLink } from './links';
+import { ServiceError } from '../contracts';
 const cg = '01900000-0000-7000-8000-000000000001';
 const viu = '01900000-0000-7000-8000-000000000002';
 const id = '01900000-0000-7000-8000-000000000003';
@@ -186,4 +187,17 @@ it('uses paged filters and cancellation, forces Organization for center list', a
     isActive: 'false',
   });
   expect(get.mock.calls[0][1]).toBe(signal);
+});
+
+it('opens a secondary link from the list when the server refuses it by id', async () => {
+  const secondary = { ...link, caregiverId: other, caregiverEmail: 'sub@test.test' };
+  const mine = { ...link, id: other, isPrimary: true };
+  const get = vi.fn<NonNullable<Parameters<typeof createLinksApi>[0]>>(async (path) => {
+    if (path.startsWith('/api/caregiver-links?')) return linkPage([mine, secondary]);
+    throw new ServiceError('Bạn không có quyền thực hiện thao tác này.', 403);
+  });
+  const api = createLinksApi(get);
+  expect((await api.detail(caregiver, id)).caregiverEmail).toBe('sub@test.test');
+  // Another role keeps the refusal.
+  await expect(api.detail(admin, id)).rejects.toMatchObject({ status: 403 });
 });

@@ -161,7 +161,18 @@ export function createLinksApi(get = apiGet, write = apiWrite) {
   };
   const detail = async (actor: Actor, id: string, signal?: AbortSignal) => {
     authorize(actor);
-    const raw = await get('/api/caregiver-links/' + uuid(id), signal);
+    let raw: unknown;
+    try {
+      raw = await get('/api/caregiver-links/' + uuid(id), signal);
+    } catch (error) {
+      // BE lets a caregiver open only their own link by id, yet lists the secondaries' links of
+      // the people they are primary for (so they can manage them). Read those from the list.
+      if (!(actor.role === 'Caregiver' && error instanceof ServiceError && error.status === 403))
+        throw error;
+      const page = parse(pageSchema, await get('/api/caregiver-links?page=1&pageSize=100', signal));
+      raw = page.items.find((item) => item.id === uuid(id));
+      if (!raw) throw error;
+    }
     const link = checked(actor, raw, id, await primaryVius(actor, signal));
     if (actor.role === 'CenterAdmin')
       await checkPeople(
