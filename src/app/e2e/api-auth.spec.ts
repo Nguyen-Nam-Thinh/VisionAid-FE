@@ -2638,12 +2638,14 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   await page.getByLabel('Mật khẩu *', { exact: true }).fill('Test123!');
   await page.getByLabel('Nhập lại mật khẩu').fill('Test123!');
   await page.getByRole('button', { name: 'Bước 1: Tạo tài khoản người khiếm thị' }).click();
-  await expect(page.getByText(viuId, { exact: true })).toBeVisible();
+  await expect(page.getByText(`${person.fullName} (${person.email})`)).toBeVisible();
+  await expect(page.getByText(viuId)).toHaveCount(0);
   await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
   await expect(page.getByRole('alert')).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'Tiếp tục liên kết người được chăm sóc' }).click();
-  await expect(page.getByText(viuId, { exact: true })).toBeVisible();
+  await expect(page.getByText(`${person.fullName} (${person.email})`)).toBeVisible();
+  await expect(page.getByText(viuId)).toHaveCount(0);
   expect(await page.evaluate(() => JSON.stringify(sessionStorage))).not.toContain('Test123!');
   await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
   // Finishing step 2 closes the dialog instead of showing step 1 again.
