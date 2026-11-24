@@ -503,18 +503,9 @@ export const en = {
   '{p0} liên hệ {contactName}? Thao tác ảnh hưởng danh bạ khẩn cấp của {name}.':
     '{p0} contact {contactName}? This affects the emergency contacts of {name}.',
   'Đã cập nhật danh bạ.': 'Contacts updated.',
-  'Không lưu được tiến độ trong tab. Hãy ghi lại mã người khiếm thị trước khi tải lại trang.':
-    'Could not save progress in this tab. Note down the VIU ID before reloading the page.',
   'Tiếp tục liên kết người được chăm sóc': 'Continue linking the care recipient',
   'Thêm người được chăm sóc': 'Add care recipient',
-  'Bỏ tiến độ liên kết': 'Discard link progress',
-  'Hãy lưu mã người khiếm thị trước: ': 'Save the VIU ID first: ',
-  '. Thao tác này chỉ bỏ tiến độ trong tab, không xóa tài khoản trên máy chủ. Chỉ tạo lại khi quản trị viên xác nhận chưa có tài khoản.':
-    '. This only discards progress in this tab and does not delete the account on the server. Only create again if an administrator confirms there is no account.',
-  'Đã bỏ tiến độ trong tab.': 'Progress in this tab discarded.',
-  'Bỏ tiến độ trong tab': 'Discard progress in this tab',
   'Bước 1/2: Tạo tài khoản': 'Step 1/2: Create account',
-  'Cần xác minh tài khoản trước khi tiếp tục': 'The account must be verified before continuing',
   'Bước 2/2: Thiết lập liên kết chăm sóc': 'Step 2/2: Set up the care link',
   'Tạo tài khoản trước, sau đó tạo liên kết chăm sóc. Hai bước được lưu riêng trên hệ thống.':
     'Create the account first, then create the care link. The two steps are saved separately in the system.',
@@ -524,9 +515,6 @@ export const en = {
   'Ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.':
     'At least 8 characters with uppercase, lowercase, a number and a special character.',
   'Mật khẩu nhập lại không khớp.': 'Passwords do not match.',
-  'Chưa xác định được tài khoản đã tạo hay chưa. Nhờ quản trị viên kiểm tra email và cung cấp mã người khiếm thị trước khi tiếp tục; không gửi lại yêu cầu tạo tài khoản.':
-    'It is unclear whether the account was created. Ask an administrator to check the email and provide the VIU ID before continuing; do not resend the account creation request.',
-  'Mã người khiếm thị đang chờ liên kết:': 'VIU ID waiting to be linked:',
   'Nếu liên kết thất bại, thử lại bước này. Không cần tạo thêm tài khoản.':
     'If linking fails, retry this step. No need to create another account.',
   'Bước 2: Tạo liên kết': 'Step 2: Create link',
@@ -534,11 +522,6 @@ export const en = {
   'Quản lý gương mặt': 'Manage faces',
   'Quản lý địa điểm': 'Manage places',
   'Đã thêm người được chăm sóc.': 'Care recipient added.',
-  'Chờ xác minh tài khoản đã tạo với quản trị viên. Nhập mã người khiếm thị đã xác minh ở bên dưới để tiếp tục.':
-    'Waiting for an administrator to verify the created account. Enter the verified VIU ID below to continue.',
-  'Tiếp tục bằng mã người khiếm thị đã có': 'Continue with an existing VIU ID',
-  'Dùng mã người khiếm thị này': 'Use this VIU ID',
-  'Mã người khiếm thị đã xác minh': 'Verified VIU ID',
   'Mã người khiếm thị không hợp lệ.': 'The VIU ID must be a valid UUID.',
   'Danh sách người dùng được liên kết với tài khoản của bạn.': 'Users linked to your account.',
   'Tên, email hoặc số điện thoại': 'Name, email or phone number',
@@ -966,7 +949,8 @@ export const en = {
   'Không có liên kết phù hợp.': 'No matching links.',
   'Danh sách liên kết chăm sóc': 'Care link list',
   'Thông tin liên kết': 'Link information',
-  'Đã gỡ liên kết. Nếu đó là người chăm sóc chính, người chăm sóc lâu nhất còn lại sẽ tự trở thành người chính.': 'Link removed. If it was the primary caregiver, the longest-serving remaining caregiver becomes primary.',
+  'Đã gỡ liên kết. Nếu đó là người chăm sóc chính, người chăm sóc lâu nhất còn lại sẽ tự trở thành người chính.':
+    'Link removed. If it was the primary caregiver, the longest-serving remaining caregiver becomes primary.',
   'Trung tâm chưa có nhân viên đang hoạt động. Tạo nhân viên trước.':
     'The center has no active staff yet. Create staff first.',
   'Trung tâm chưa có người được chăm sóc đang hoạt động. Tạo tài khoản người khiếm thị trước.':
@@ -1044,7 +1028,8 @@ export const en = {
   'Không có tổ chức phù hợp.': 'No matching organizations.',
   'Xem tổ chức ': 'View organization ',
   'Chi tiết tổ chức': 'Organization details',
-  'Đã xóa tổ chức. Muốn xem lại: mở Bộ lọc, ở ô Tổ chức đã xóa chọn "Chỉ hiện tổ chức đã xóa".': 'Organisation deleted. To see it again: open Filters and set Deleted organisations to "Only deleted organisations".',
+  'Đã xóa tổ chức. Muốn xem lại: mở Bộ lọc, ở ô Tổ chức đã xóa chọn "Chỉ hiện tổ chức đã xóa".':
+    'Organisation deleted. To see it again: open Filters and set Deleted organisations to "Only deleted organisations".',
   'Sửa tổ chức': 'Edit organization',
   'Lưu tổ chức': 'Save organization',
   'Lỗi máy chủ.': 'Server error.',
@@ -3222,7 +3207,8 @@ export const en = {
     '{imageCount} photos so far. Add {missing} more clear face photos so the phone can recognise this person.',
   'Đã có {imageCount} ảnh, điện thoại đã nhận ra được người này. Nếu xóa bớt còn dưới {min} ảnh, việc nhận diện sẽ tạm dừng.':
     '{imageCount} photos: the phone can recognise this person. Deleting down to fewer than {min} photos pauses recognition.',
-  'Đã xóa tài khoản. Muốn khôi phục trong {days} ngày: mở Bộ lọc, ở ô Tài khoản đã xóa chọn "Chỉ hiện tài khoản đã xóa", rồi bấm Chi tiết → Khôi phục tài khoản.': 'Account deleted. To restore it within {days} days: open Filters, set Deleted accounts to "Only deleted accounts", then Details → Restore account.',
+  'Đã xóa tài khoản. Muốn khôi phục trong {days} ngày: mở Bộ lọc, ở ô Tài khoản đã xóa chọn "Chỉ hiện tài khoản đã xóa", rồi bấm Chi tiết → Khôi phục tài khoản.':
+    'Account deleted. To restore it within {days} days: open Filters, set Deleted accounts to "Only deleted accounts", then Details → Restore account.',
   'Đã xóa tài khoản. Quản trị viên hệ thống có thể khôi phục trong {days} ngày.':
     'Account deleted. A system administrator can restore it within {days} days.',
   'Bán kính phải là số nguyên trong khoảng cho phép.':
@@ -3272,12 +3258,16 @@ export const en = {
   'SOS tự động': 'Automatic SOS',
   'Đang xem các thao tác trên một {table} cụ thể.': 'Showing the actions on one specific {table}.',
   'đối tượng': 'object',
-  'Không hiển thị hình ảnh hay lời nói của người khiếm thị.': 'Pictures and speech of the visually impaired user are never shown.',
+  'Không hiển thị hình ảnh hay lời nói của người khiếm thị.':
+    'Pictures and speech of the visually impaired user are never shown.',
   'Người dùng không còn trong hệ thống': 'User no longer in the system',
-  '“Máy chủ (theo quy tắc)” và “Điện thoại tự quyết định” là khi AI đang tắt, trả lời chậm hoặc điện thoại mất mạng.': '“Server (rules)” and “Phone decided itself” mean AI was off, slow, or the phone was offline.',
-  'Khi gọi, hai thiết bị cần một máy chủ giúp nối với nhau. Có hai loại:': 'During a call, the two devices need a server to connect them. There are two kinds:',
+  '“Máy chủ (theo quy tắc)” và “Điện thoại tự quyết định” là khi AI đang tắt, trả lời chậm hoặc điện thoại mất mạng.':
+    '“Server (rules)” and “Phone decided itself” mean AI was off, slow, or the phone was offline.',
+  'Khi gọi, hai thiết bị cần một máy chủ giúp nối với nhau. Có hai loại:':
+    'During a call, the two devices need a server to connect them. There are two kinds:',
   'Sau khi đổi, hãy thử một cuộc gọi.': 'After a change, try a call.',
-  'Để trống cả tên đăng nhập và mật khẩu (nên dùng): hệ thống tự cấp mật khẩu tạm cho mỗi cuộc gọi. Máy chủ tìm đường không cần hai ô này.': 'Leave both username and password empty (recommended): the system issues a temporary password for each call. Route-finding servers do not need these two fields.',
+  'Để trống cả tên đăng nhập và mật khẩu (nên dùng): hệ thống tự cấp mật khẩu tạm cho mỗi cuộc gọi. Máy chủ tìm đường không cần hai ô này.':
+    'Leave both username and password empty (recommended): the system issues a temporary password for each call. Route-finding servers do not need these two fields.',
   'Tài khoản đã xóa': 'Deleted accounts',
   'Không hiện': 'Hide',
   'Chỉ hiện tài khoản đã xóa (để khôi phục)': 'Only deleted accounts (to restore)',
@@ -3289,54 +3279,95 @@ export const en = {
   'Tháng trước': 'Last month',
   'Toàn bộ': 'All time',
   'Kỳ báo cáo': 'Report period',
-  'Một sự kiện có thể nằm ở nhiều ô, nên không cộng các ô lại với nhau.': 'One event can appear in several boxes, so do not add the boxes together.',
+  'Một sự kiện có thể nằm ở nhiều ô, nên không cộng các ô lại với nhau.':
+    'One event can appear in several boxes, so do not add the boxes together.',
   'Tùy chọn khoảng ngày': 'Custom date range',
   'Hãy chọn ít nhất một tệp.': 'Choose at least one file.',
-  'Đã sao chép liên kết lời mời. Gửi liên kết này cho người được mời.': 'Invitation link copied. Send it to the person you are inviting.',
+  'Đã sao chép liên kết lời mời. Gửi liên kết này cho người được mời.':
+    'Invitation link copied. Send it to the person you are inviting.',
   'Sao chép liên kết': 'Copy link',
   'Dán mã hoặc liên kết lời mời': 'Paste the invitation code or link',
   'Chọn ảnh QR JPG, PNG hoặc WebP dưới 5 MB.': 'Choose a JPG, PNG or WebP QR image under 5 MB.',
-  'Bạn không thể tự nhận lời mời do chính mình tạo.': 'You cannot accept an invitation you created yourself.',
-  'Chỉ hẹn đổi được sang gói rẻ hơn. Gia hạn hoặc nâng cấp thì thanh toán trực tiếp.': 'Only a cheaper package can be scheduled. Renewals and upgrades are paid directly.',
+  'Bạn không thể tự nhận lời mời do chính mình tạo.':
+    'You cannot accept an invitation you created yourself.',
+  'Chỉ hẹn đổi được sang gói rẻ hơn. Gia hạn hoặc nâng cấp thì thanh toán trực tiếp.':
+    'Only a cheaper package can be scheduled. Renewals and upgrades are paid directly.',
   'Cảnh báo này đã được tạo trước đó.': 'This alert was already created.',
-  'Cổng thanh toán đang tạm ngưng nhận đơn. Chưa có tiền nào bị trừ. Vui lòng thử lại sau hoặc liên hệ quản trị hệ thống.': 'The payment gateway is not taking orders right now. No money was charged. Please try again later or contact the system administrator.',
-  'Dữ liệu vừa được thay đổi ở nơi khác. Hãy tải lại rồi thử lại.': 'The data was just changed elsewhere. Reload and try again.',
+  'Cổng thanh toán đang tạm ngưng nhận đơn. Chưa có tiền nào bị trừ. Vui lòng thử lại sau hoặc liên hệ quản trị hệ thống.':
+    'The payment gateway is not taking orders right now. No money was charged. Please try again later or contact the system administrator.',
+  'Dữ liệu vừa được thay đổi ở nơi khác. Hãy tải lại rồi thử lại.':
+    'The data was just changed elsewhere. Reload and try again.',
   'Email hoặc mật khẩu không đúng.': 'Wrong email or password.',
-  'Gói hiện tại không có tính năng này. Hãy nâng cấp gói.': 'Your current package does not include this feature. Please upgrade.',
-  'Gói mặc định của hệ thống không xóa được. Hãy ngừng bán nếu không dùng.': 'System default packages cannot be deleted. Stop selling it if unused.',
-  'Gói này rẻ hơn gói hiện tại nên chỉ đổi được vào cuối kỳ đã thanh toán. Hãy hẹn đổi gói.': 'This package is cheaper than the current one, so it can only start at the end of the paid period. Schedule the change.',
-  'Gói đã có người mua hoặc đang được dùng, hãy ngừng bán thay vì xóa.': 'Someone bought or uses this package; stop selling it instead of deleting.',
-  'Kho suất sử dụng này chưa có lịch đổi gói nào.': 'This license pool has no scheduled package change.',
-  'Kho suất sử dụng đã hết hạn. Hãy gia hạn gói trước khi cấp suất.': 'The license pool has expired. Renew the package before assigning licenses.',
-  'Khoảng ngày quá dài. Hãy chọn khoảng ngắn hơn.': 'The date range is too long. Choose a shorter one.',
+  'Gói hiện tại không có tính năng này. Hãy nâng cấp gói.':
+    'Your current package does not include this feature. Please upgrade.',
+  'Gói mặc định của hệ thống không xóa được. Hãy ngừng bán nếu không dùng.':
+    'System default packages cannot be deleted. Stop selling it if unused.',
+  'Gói này rẻ hơn gói hiện tại nên chỉ đổi được vào cuối kỳ đã thanh toán. Hãy hẹn đổi gói.':
+    'This package is cheaper than the current one, so it can only start at the end of the paid period. Schedule the change.',
+  'Gói đã có người mua hoặc đang được dùng, hãy ngừng bán thay vì xóa.':
+    'Someone bought or uses this package; stop selling it instead of deleting.',
+  'Kho suất sử dụng này chưa có lịch đổi gói nào.':
+    'This license pool has no scheduled package change.',
+  'Kho suất sử dụng đã hết hạn. Hãy gia hạn gói trước khi cấp suất.':
+    'The license pool has expired. Renew the package before assigning licenses.',
+  'Khoảng ngày quá dài. Hãy chọn khoảng ngắn hơn.':
+    'The date range is too long. Choose a shorter one.',
   'Không thể tự liên kết với chính mình.': 'You cannot link an account to itself.',
-  'Không thực hiện được thao tác này. Hãy kiểm tra lại thông tin.': 'This action could not be done. Check the information.',
+  'Không thực hiện được thao tác này. Hãy kiểm tra lại thông tin.':
+    'This action could not be done. Check the information.',
   'Không thực hiện được. Vui lòng thử lại sau.': 'Could not be done. Please try again later.',
-  'Không tìm thấy dữ liệu. Có thể nó đã bị xóa; hãy tải lại.': 'Not found. It may have been deleted; reload.',
-  'Lời mời không đúng, đã được dùng hoặc đã hết hạn. Hãy xin người mời tạo mã mới.': 'The invitation is wrong, used or expired. Ask the inviter for a new code.',
-  'Mã khôi phục không đúng hoặc đã hết hạn. Hãy yêu cầu email mới.': 'The recovery code is wrong or expired. Request a new email.',
-  'Mã kích hoạt này đã được một gia đình dùng nên không thu hồi được nữa.': 'A family already used this activation code, so it can no longer be revoked.',
+  'Không tìm thấy dữ liệu. Có thể nó đã bị xóa; hãy tải lại.':
+    'Not found. It may have been deleted; reload.',
+  'Lời mời không đúng, đã được dùng hoặc đã hết hạn. Hãy xin người mời tạo mã mới.':
+    'The invitation is wrong, used or expired. Ask the inviter for a new code.',
+  'Mã khôi phục không đúng hoặc đã hết hạn. Hãy yêu cầu email mới.':
+    'The recovery code is wrong or expired. Request a new email.',
+  'Mã kích hoạt này đã được một gia đình dùng nên không thu hồi được nữa.':
+    'A family already used this activation code, so it can no longer be revoked.',
   'Mã kích hoạt này đã được thu hồi trước đó.': 'This activation code was already revoked.',
-  'Mã kích hoạt vừa được dùng hoặc thay đổi trong lúc bạn thu hồi. Hãy tải lại danh sách.': 'The activation code was used or changed while you revoked it. Reload the list.',
-  'Mã kích hoạt đã hết hạn. Hãy xin trung tâm mã mới.': 'The activation code has expired. Ask the centre for a new one.',
+  'Mã kích hoạt vừa được dùng hoặc thay đổi trong lúc bạn thu hồi. Hãy tải lại danh sách.':
+    'The activation code was used or changed while you revoked it. Reload the list.',
+  'Mã kích hoạt đã hết hạn. Hãy xin trung tâm mã mới.':
+    'The activation code has expired. Ask the centre for a new one.',
   'Mật khẩu mới phải khác mật khẩu hiện tại.': 'The new password must differ from the current one.',
   'Người này không có trong danh bạ gương mặt.': 'This person is not in the face registry.',
   'Phiên này đã kết thúc.': 'This session has ended.',
-  'Thanh toán trực tuyến đang tạm ngưng. Vui lòng thử lại sau.': 'Online payment is paused. Please try again later.',
-  'Thông báo này đang được gửi lại, hãy chờ một chút.': 'This notification is being resent; please wait.',
-  'Thông tin chưa hợp lệ. Hãy kiểm tra lại các ô đã nhập.': 'Some information is not valid. Check the fields you entered.',
-  'Thông tin này đã tồn tại. Hãy kiểm tra lại để tránh tạo trùng.': 'This already exists. Check to avoid a duplicate.',
+  'Thanh toán trực tuyến đang tạm ngưng. Vui lòng thử lại sau.':
+    'Online payment is paused. Please try again later.',
+  'Thông báo này đang được gửi lại, hãy chờ một chút.':
+    'This notification is being resent; please wait.',
+  'Thông tin chưa hợp lệ. Hãy kiểm tra lại các ô đã nhập.':
+    'Some information is not valid. Check the fields you entered.',
+  'Thông tin này đã tồn tại. Hãy kiểm tra lại để tránh tạo trùng.':
+    'This already exists. Check to avoid a duplicate.',
   'Tài khoản cần thuộc một tổ chức.': 'The account must belong to an organisation.',
-  'Tài khoản này chưa bị xóa nên không cần khôi phục.': 'This account is not deleted, so there is nothing to restore.',
-  'Tài khoản đã bị khóa. Hãy liên hệ quản trị viên.': 'The account is locked. Contact an administrator.',
-  'Tài khoản đã bị xóa nên không đổi được trạng thái.': 'The account is deleted, so its status cannot change.',
-  'Tổ chức của tài khoản này đang bị vô hiệu hóa. Hãy kích hoạt lại tổ chức trước.': "This account's organisation is deactivated. Reactivate it first.",
+  'Tài khoản này chưa bị xóa nên không cần khôi phục.':
+    'This account is not deleted, so there is nothing to restore.',
+  'Tài khoản đã bị khóa. Hãy liên hệ quản trị viên.':
+    'The account is locked. Contact an administrator.',
+  'Tài khoản đã bị xóa nên không đổi được trạng thái.':
+    'The account is deleted, so its status cannot change.',
+  'Tổ chức của tài khoản này đang bị vô hiệu hóa. Hãy kích hoạt lại tổ chức trước.':
+    "This account's organisation is deactivated. Reactivate it first.",
   'Vui lòng nhập đủ các ô bắt buộc.': 'Please fill in all required fields.',
-  'Đây có vẻ là ảnh chụp hoặc màn hình, không phải người thật.': 'This looks like a photo or a screen, not a real person.',
-  'Đã quá thời gian chờ hủy; cảnh báo khẩn cấp đã được gửi đi.': 'The cancel window has passed; the emergency alert was sent.',
+  'Đây có vẻ là ảnh chụp hoặc màn hình, không phải người thật.':
+    'This looks like a photo or a screen, not a real person.',
+  'Đã quá thời gian chờ hủy; cảnh báo khẩn cấp đã được gửi đi.':
+    'The cancel window has passed; the emergency alert was sent.',
   'Đã quá thời hạn khôi phục tài khoản này.': 'The restore period for this account has passed.',
-  'Ảnh bị hỏng hoặc không đúng định dạng. Hãy chọn ảnh khác.': 'The image is damaged or in the wrong format. Choose another.',
-  'Thứ tự ưu tiên này đã được dùng cho liên hệ khác. Chọn số khác.': 'This priority is already used by another contact. Choose another number.',
+  'Ảnh bị hỏng hoặc không đúng định dạng. Hãy chọn ảnh khác.':
+    'The image is damaged or in the wrong format. Choose another.',
+  'Thứ tự ưu tiên này đã được dùng cho liên hệ khác. Chọn số khác.':
+    'This priority is already used by another contact. Choose another number.',
+  'Không lưu được tiến độ. Hãy làm xong bước 2 trước khi tải lại hoặc đóng trang.':
+    'Could not save progress. Finish step 2 before reloading or closing the page.',
+  'Bỏ bước liên kết': 'Skip linking',
+  'Đã bỏ bước liên kết.': 'Linking skipped.',
+  'Tài khoản vừa tạo': 'The account just created',
+  '{who} vẫn còn trên hệ thống nhưng chưa có người chăm sóc. Nếu bỏ bước này, bạn cần nhờ quản trị viên liên kết giúp.':
+    '{who} stays in the system without a caregiver. If you skip this step, ask an administrator to link it.',
+  'Chưa chắc tài khoản đã được tạo. Hãy thử lại với cùng email; nếu báo email đã được đăng ký, hãy nhờ quản trị viên liên kết giúp.':
+    'The account may not have been created. Try again with the same email; if it is already registered, ask an administrator to link it.',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',
