@@ -200,7 +200,8 @@ function ConfigPanel({
   const [page, setPage] = useState(1);
   const [change, setChange] = useState<'edit' | ConfigHistory | null>(null);
   const history = useQuery({
-    queryKey: ['api-config-history', actor.id, config.id, page],
+    // updatedAt: a saved value always loads a fresh history instead of the cached one.
+    queryKey: ['api-config-history', actor.id, config.id, config.updatedAt, page],
     queryFn: ({ signal }) => configurationsApi.history(actor, config, page, signal),
     retry: false,
     gcTime: 0,
@@ -342,7 +343,7 @@ function ConfigDetail({
   // growing from a loading line to the details and then to the history table.
   const base = query.data ?? seed;
   const firstHistory = useQuery({
-    queryKey: ['api-config-history', actor.id, id, 1],
+    queryKey: ['api-config-history', actor.id, id, base?.updatedAt, 1],
     queryFn: ({ signal }) => configurationsApi.history(actor, base!, 1, signal),
     enabled: !!base,
     retry: false,
