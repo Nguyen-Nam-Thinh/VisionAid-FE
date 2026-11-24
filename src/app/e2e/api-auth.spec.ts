@@ -2580,6 +2580,12 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
     linkedAt: '2026-09-26',
     unlinkedAt: null,
   };
+  const otherLink = {
+    ...link,
+    id: '01900000-0000-7000-8000-000000000008',
+    caregiverId: '01900000-0000-7000-8000-000000000009',
+    visuallyImpairedUserId: '01900000-0000-7000-8000-000000000007',
+  };
   let creates = 0,
     links = 0,
     deletes = 0,
@@ -2614,12 +2620,13 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
       linked = false;
       return route.fulfill({ status: 204 });
     }
+    // A primary caregiver also gets the co-caregivers' links of the same VIUs (TC-FE28-01).
+    const url = new URL(route.request().url());
+    const others = url.searchParams.has('viuId') ? [] : [otherLink];
     return route.fulfill({
       json: {
         success: true,
-        data: new URL(route.request().url()).pathname.endsWith(linkId)
-          ? link
-          : paged(linked ? [link] : []),
+        data: url.pathname.endsWith(linkId) ? link : paged(linked ? [...others, link] : others),
       },
     });
   });
@@ -2639,7 +2646,9 @@ test('4b: partial link failure survives reload; unlink requires confirmation and
   await expect(page.getByText(viuId, { exact: true })).toBeVisible();
   expect(await page.evaluate(() => JSON.stringify(sessionStorage))).not.toContain('Test123!');
   await page.getByRole('button', { name: 'Bước 2: Tạo liên kết' }).click();
-  await actionDialog(page).getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  // Finishing step 2 closes the dialog instead of showing step 1 again.
+  await expect(actionDialog(page)).toHaveCount(0);
+  await expect(page.getByText('Đã thêm người được chăm sóc.')).toBeVisible();
   await page.getByRole('button', { name: 'Xem liên kết của người khiếm thị mới' }).click();
   await page.getByRole('button', { name: 'Gỡ liên kết', exact: true }).click();
   await page.getByRole('button', { name: 'Hủy', exact: true }).click();
