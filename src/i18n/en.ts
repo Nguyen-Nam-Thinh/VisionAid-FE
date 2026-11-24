@@ -533,7 +533,7 @@ export const en = {
   'Nhận cảnh báo': 'Receive alerts',
   'Quản lý gương mặt': 'Manage faces',
   'Quản lý địa điểm': 'Manage places',
-  'Liên kết đã sẵn sàng. Danh sách đang được tải lại.': 'The link is ready. The list is reloading.',
+  'Đã thêm người được chăm sóc.': 'Care recipient added.',
   'Chờ xác minh tài khoản đã tạo với quản trị viên. Nhập mã người khiếm thị đã xác minh ở bên dưới để tiếp tục.':
     'Waiting for an administrator to verify the created account. Enter the verified VIU ID below to continue.',
   'Tiếp tục bằng mã người khiếm thị đã có': 'Continue with an existing VIU ID',
@@ -1625,7 +1625,6 @@ export const en = {
     'User or link data has an invalid format.',
   'Liên kết không thuộc tài khoản hoặc người được chọn.':
     'The link does not belong to the account or the selected person.',
-  'Liên kết không thuộc tài khoản hiện tại.': 'The link does not belong to the current account.',
   'Bạn đã có tối đa {max} liên kết hoạt động. Chưa tạo tài khoản mới.':
     'You already have the maximum of {max} active links. No new account was created.',
   'Mã liên kết không hợp lệ.': 'Invalid link ID.',

@@ -2,7 +2,7 @@ import { t } from '../../i18n';
 import { useState } from 'react';
 import { z } from 'zod';
 import { Form } from '../../components/Form';
-import { Confirm, Dialog, Disclosure } from '../../components/UI';
+import { Confirm, Dialog, Disclosure, Toast } from '../../components/UI';
 import { caregivingApi } from '../../services/api/caregiving';
 import { ServiceError } from '../../services/contracts';
 
@@ -23,6 +23,8 @@ export function ApiCreateLinkedUser({
   });
   const [open, setOpen] = useState(false);
   const [notice, setNotice] = useState('');
+  // Shown over the list once the dialog has closed.
+  const [done, setDone] = useState('');
   const [discard, setDiscard] = useState(false);
   const save = (id: string) => {
     setPending(id);
@@ -39,7 +41,14 @@ export function ApiCreateLinkedUser({
   };
   return (
     <>
-      <button className="btn primary" onClick={() => setOpen(true)}>
+      <button
+        className="btn primary"
+        onClick={() => {
+          if (pending !== 'unknown') setNotice('');
+          setDone('');
+          setOpen(true);
+        }}
+      >
         {pending ? t('Tiếp tục liên kết người được chăm sóc') : t('Thêm người được chăm sóc')}
       </button>
       {open && (
@@ -90,7 +99,14 @@ export function ApiCreateLinkedUser({
                 submit={t('Bước 1: Tạo tài khoản người khiếm thị')}
                 fields={[
                   { key: 'fullName', label: t('Họ và tên'), required: true, min: 2, max: 200 },
-                  { key: 'email', label: 'Email', type: 'email', required: true, max: 255 },
+                  {
+                    key: 'email',
+                    label: 'Email',
+                    type: 'email',
+                    required: true,
+                    max: 255,
+                    autoComplete: 'off',
+                  },
                   {
                     key: 'phoneNumber',
                     label: t('Số điện thoại'),
@@ -101,12 +117,14 @@ export function ApiCreateLinkedUser({
                     label: t('Mật khẩu'),
                     type: 'password',
                     required: true,
+                    autoComplete: 'new-password',
                     hint: t('Ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.'),
                   },
                   {
                     key: 'confirmation',
                     label: t('Nhập lại mật khẩu'),
                     type: 'password',
+                    autoComplete: 'new-password',
                     required: true,
                   },
                 ]}
@@ -162,7 +180,9 @@ export function ApiCreateLinkedUser({
                       canManageLocations: !!values.canManageLocations,
                     });
                     save('');
-                    setNotice(t('Liên kết đã sẵn sàng. Danh sách đang được tải lại.'));
+                    setNotice('');
+                    setOpen(false);
+                    setDone(t('Đã thêm người được chăm sóc.'));
                     onLinked();
                   }}
                 />
@@ -193,6 +213,7 @@ export function ApiCreateLinkedUser({
           </div>
         </Dialog>
       )}
+      {done && <Toast message={done} onDismiss={() => setDone('')} />}
     </>
   );
 }

@@ -26,8 +26,57 @@ const page = (items: unknown[]) => ({
   hasNextPage: false,
   hasPreviousPage: false,
 });
+/** An active link of `owner` to the VIU numbered `viu`. */
+const linkOf = (owner: string, viu: number, n: number) => ({
+  ...link,
+  id: '01900000-0000-7000-8000-0000000001' + String(n).padStart(2, '0'),
+  caregiverId: owner,
+  visuallyImpairedUserId: '01900000-0000-7000-8000-0000000002' + String(viu).padStart(2, '0'),
+});
+const own = (count: number) => Array.from({ length: count }, (_, i) => linkOf(caregiverId, i, i));
+const otherId = '01900000-0000-7000-8000-000000000009';
+const others = (count: number) =>
+  Array.from({ length: count }, (_, i) => linkOf(otherId, i, 50 + i));
+it.each([
+  { mine: 1, theirs: 1, allowed: true },
+  { mine: 3, theirs: 2, allowed: false },
+  { mine: 2, theirs: 3, allowed: true },
+])(
+  'counts only own links: $mine own, $theirs of co-caregivers, allowed $allowed',
+  async ({ mine, theirs, allowed }) => {
+    // Co-caregivers' links come first, as staging returns them.
+    const read = vi.fn(async (path: string) =>
+      path.startsWith('/api/system-configs/public')
+        ? page([{ configKey: 'caregiving.max_vius_per_caregiver', configValue: '3' }])
+        : page([...others(theirs), ...own(mine)]),
+    );
+    const write = vi.fn(async () => ({
+      id: viuId,
+      fullName: 'VIU',
+      email: 'viu@example.com',
+      phoneNumber: '',
+      role: 'VisuallyImpaired',
+      organizationId: null,
+      isActive: true,
+    }));
+    const result = createCaregivingApi(read, write).createUser(
+      { fullName: 'VIU', email: 'viu@example.com', phoneNumber: '', password: 'Test123!' },
+      caregiverId,
+    );
+    if (allowed) {
+      await result;
+      expect(write).toHaveBeenCalledWith('/api/users', expect.anything());
+    } else {
+      await expect(result).rejects.toMatchObject({
+        status: 422,
+        message: expect.stringContaining('tối đa 3'),
+      });
+      expect(write).not.toHaveBeenCalled();
+    }
+  },
+);
 it('creates only a VIU and prevents account creation when caregiver quota is full', async () => {
-  const read = vi.fn(async () => page([]));
+  const read = vi.fn(async () => page([] as unknown[]));
   const person = {
     id: viuId,
     fullName: 'VIU',
@@ -47,7 +96,7 @@ it('creates only a VIU and prevents account creation when caregiver quota is ful
     role: 'VisuallyImpaired',
     organizationId: null,
   });
-  read.mockResolvedValue({ ...page([]), totalCount: 3 });
+  read.mockResolvedValue(page(own(3)));
   await expect(api.createUser(input, caregiverId)).rejects.toMatchObject({ status: 422 });
   expect(write).toHaveBeenCalledTimes(1);
   // BR-10: names need at least 2 characters after trimming.
@@ -60,7 +109,7 @@ it('uses the Admin-configured VIU limit before creating an account', async () =>
   const read = vi.fn(async (path: string) =>
     path.startsWith('/api/system-configs/public')
       ? page([{ configKey: 'caregiving.max_vius_per_caregiver', configValue: '2' }])
-      : { ...page([]), totalCount: 2 },
+      : page(own(2)),
   );
   const write = vi.fn();
   const api = createCaregivingApi(read, write);

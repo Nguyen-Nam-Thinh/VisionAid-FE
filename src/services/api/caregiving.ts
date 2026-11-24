@@ -92,12 +92,20 @@ export function createCaregivingApi(get: typeof apiGet, write: typeof apiWrite =
         });
       const active = parse(
         paged(linkSchema),
-        await get('/api/caregiver-links?page=1&pageSize=1&isActive=true'),
+        await get(
+          '/api/caregiver-links?page=1&pageSize=100&isActive=true&caregiverId=' +
+            encodeURIComponent(caregiverId),
+        ),
       );
-      if (active.items.some((l) => l.caregiverId !== caregiverId))
-        throw new ServiceError(t('Liên kết không thuộc tài khoản hiện tại.'), 403);
+      // A primary caregiver also receives the co-caregivers' links of the same VIUs; only the
+      // caller's own links count towards the limit.
+      const mine = new Set(
+        active.items
+          .filter((l) => l.caregiverId === caregiverId)
+          .map((l) => l.visuallyImpairedUserId),
+      );
       const max = (await fetchLimits(get))['caregiving.max_vius_per_caregiver'];
-      if (active.totalCount >= max)
+      if (mine.size >= max)
         throw new ServiceError(
           t('Bạn đã có tối đa {max} liên kết hoạt động. Chưa tạo tài khoản mới.', { max }),
           422,
