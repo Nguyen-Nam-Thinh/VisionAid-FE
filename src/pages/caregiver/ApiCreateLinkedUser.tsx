@@ -2,9 +2,23 @@ import { t } from '../../i18n';
 import { useState } from 'react';
 import { z } from 'zod';
 import { Form } from '../../components/Form';
-import { Confirm, Dialog, Disclosure, Toast } from '../../components/UI';
+import { Confirm, Dialog, Toast } from '../../components/UI';
 import { caregivingApi } from '../../services/api/caregiving';
 import { ServiceError } from '../../services/contracts';
+
+/** The account waiting for its care link; the id is only sent to the server, never shown. */
+const pendingSchema = z.object({ id: z.string().uuid(), name: z.string(), email: z.string() });
+type Pending = z.infer<typeof pendingSchema>;
+function readPending(key: string): Pending | null {
+  try {
+    const raw = sessionStorage.getItem(key) || '';
+    // Progress saved by an older version was the bare id.
+    if (z.string().uuid().safeParse(raw).success) return { id: raw, name: '', email: '' };
+    return pendingSchema.parse(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
 
 export function ApiCreateLinkedUser({
   caregiverId,
@@ -14,37 +28,30 @@ export function ApiCreateLinkedUser({
   onLinked: () => void;
 }) {
   const key = 'visionaid.pending-viu.' + caregiverId;
-  const [pending, setPending] = useState(() => {
-    try {
-      return sessionStorage.getItem(key) || '';
-    } catch {
-      return '';
-    }
-  });
+  const [pending, setPending] = useState(() => readPending(key));
   const [open, setOpen] = useState(false);
   const [notice, setNotice] = useState('');
   // Shown over the list once the dialog has closed.
   const [done, setDone] = useState('');
   const [discard, setDiscard] = useState(false);
-  const save = (id: string) => {
-    setPending(id);
+  const save = (next: Pending | null) => {
+    setPending(next);
     try {
-      if (id) sessionStorage.setItem(key, id);
+      if (next) sessionStorage.setItem(key, JSON.stringify(next));
       else sessionStorage.removeItem(key);
     } catch {
       setNotice(
-        t(
-          'Không lưu được tiến độ trong tab. Hãy ghi lại mã người khiếm thị trước khi tải lại trang.',
-        ),
+        t('Không lưu được tiến độ. Hãy làm xong bước 2 trước khi tải lại hoặc đóng trang.'),
       );
     }
   };
+  const who = pending?.name ? `${pending.name} (${pending.email})` : t('Tài khoản vừa tạo');
   return (
     <>
       <button
         className="btn primary"
         onClick={() => {
-          if (pending !== 'unknown') setNotice('');
+          setNotice('');
           setDone('');
           setOpen(true);
         }}
@@ -56,32 +63,25 @@ export function ApiCreateLinkedUser({
           <div className="stack">
             {discard && (
               <Confirm
-                title={t('Bỏ tiến độ liên kết')}
-                description={
-                  t('Hãy lưu mã người khiếm thị trước: ') +
-                  pending +
-                  t(
-                    '. Thao tác này chỉ bỏ tiến độ trong tab, không xóa tài khoản trên máy chủ. Chỉ tạo lại khi quản trị viên xác nhận chưa có tài khoản.',
-                  )
-                }
+                title={t('Bỏ bước liên kết')}
+                description={t(
+                  '{who} vẫn còn trên hệ thống nhưng chưa có người chăm sóc. Nếu bỏ bước này, bạn cần nhờ quản trị viên liên kết giúp.',
+                  { who },
+                )}
                 onClose={() => setDiscard(false)}
                 onConfirm={async () => {
-                  save('');
-                  setNotice(t('Đã bỏ tiến độ trong tab.'));
+                  save(null);
+                  setNotice(t('Đã bỏ bước liên kết.'));
                 }}
               />
             )}
             {pending && (
               <button className="btn" onClick={() => setDiscard(true)}>
-                {t('Bỏ tiến độ trong tab')}
+                {t('Bỏ bước liên kết')}
               </button>
             )}
             <p className="notice" role="status">
-              {!pending
-                ? t('Bước 1/2: Tạo tài khoản')
-                : pending === 'unknown'
-                  ? t('Cần xác minh tài khoản trước khi tiếp tục')
-                  : t('Bước 2/2: Thiết lập liên kết chăm sóc')}
+              {!pending ? t('Bước 1/2: Tạo tài khoản') : t('Bước 2/2: Thiết lập liên kết chăm sóc')}
             </p>
             <p>
               {t(
@@ -141,27 +141,29 @@ export function ApiCreateLinkedUser({
                       },
                       caregiverId,
                     );
-                    save(person.id);
+                    save({ id: person.id, name: person.fullName, email: person.email });
                   } catch (error) {
-                    if (error instanceof ServiceError && error.status >= 500) {
-                      save('unknown');
-                      setNotice(
+                    // The email is unique on the server, so sending the same form again cannot
+                    // create a second account.
+                    if (error instanceof ServiceError && error.status >= 500)
+                      throw new Error(
                         t(
-                          'Chưa xác định được tài khoản đã tạo hay chưa. Nhờ quản trị viên kiểm tra email và cung cấp mã người khiếm thị trước khi tiếp tục; không gửi lại yêu cầu tạo tài khoản.',
+                          'Chưa chắc tài khoản đã được tạo. Hãy thử lại với cùng email; nếu báo email đã được đăng ký, hãy nhờ quản trị viên liên kết giúp.',
                         ),
+                        { cause: error },
                       );
-                    } else throw error;
+                    throw error;
                   }
                 }}
               />
-            ) : pending !== 'unknown' ? (
+            ) : (
               <>
                 <p>
-                  {t('Mã người khiếm thị đang chờ liên kết:')} <strong>{pending}</strong>
+                  <strong>{who}</strong>
                 </p>
                 <p>{t('Nếu liên kết thất bại, thử lại bước này. Không cần tạo thêm tài khoản.')}</p>
                 <Form
-                  key={pending}
+                  key={pending.id}
                   submit={t('Bước 2: Tạo liên kết')}
                   initial={{
                     canReceiveAlerts: true,
@@ -174,12 +176,12 @@ export function ApiCreateLinkedUser({
                     { key: 'canManageLocations', label: t('Quản lý địa điểm'), type: 'checkbox' },
                   ]}
                   onSubmit={async (values) => {
-                    await caregivingApi.createLink(pending, caregiverId, {
+                    await caregivingApi.createLink(pending.id, caregiverId, {
                       canReceiveAlerts: !!values.canReceiveAlerts,
                       canManageRegistry: !!values.canManageRegistry,
                       canManageLocations: !!values.canManageLocations,
                     });
-                    save('');
+                    save(null);
                     setNotice('');
                     setOpen(false);
                     setDone(t('Đã thêm người được chăm sóc.'));
@@ -187,28 +189,6 @@ export function ApiCreateLinkedUser({
                   }}
                 />
               </>
-            ) : (
-              <p role="alert">
-                {t(
-                  'Chờ xác minh tài khoản đã tạo với quản trị viên. Nhập mã người khiếm thị đã xác minh ở bên dưới để tiếp tục.',
-                )}
-              </p>
-            )}
-            {(!pending || pending === 'unknown') && (
-              <Disclosure summary={t('Tiếp tục bằng mã người khiếm thị đã có')}>
-                <Form
-                  submit={t('Dùng mã người khiếm thị này')}
-                  fields={[
-                    { key: 'id', label: t('Mã người khiếm thị đã xác minh'), required: true },
-                  ]}
-                  onSubmit={async (values) => {
-                    const id = String(values.id).trim();
-                    if (!z.string().uuid().safeParse(id).success)
-                      throw new Error(t('Mã người khiếm thị không hợp lệ.'));
-                    save(id);
-                  }}
-                />
-              </Disclosure>
             )}
           </div>
         </Dialog>
