@@ -430,6 +430,9 @@ function LinkEditor({
   // Saving takes two steps: the form, then a separate review the user confirms.
   const [review, setReview] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState('');
+  // A new link becomes primary (with every permission) when the person has no active link yet:
+  // true/false once checked, null when the check failed.
+  const [first, setFirst] = useState<boolean | null>(false);
   const maxCaregivers = useLimit('caregiving.max_caregivers_per_viu');
   const maxVius = useLimit('caregiving.max_vius_per_caregiver');
   const picking = !link && actor.role === 'CenterAdmin';
@@ -595,6 +598,22 @@ function LinkEditor({
               }
               onSubmit={async (values) => {
                 setError('');
+                // A caregiver only adds secondaries to a person who already has them as primary.
+                if (!link && actor.role !== 'Caregiver') {
+                  try {
+                    const active = await linksApi.list(actor, {
+                      page: 1,
+                      pageSize: 1,
+                      caregiverId: '',
+                      viuId: String(values.viuId || ''),
+                      linkType: '',
+                      active: 'true',
+                    });
+                    setFirst(active.totalCount === 0);
+                  } catch {
+                    setFirst(null);
+                  }
+                }
                 setReview(values);
               }}
             />
@@ -608,7 +627,7 @@ function LinkEditor({
               </p>
               <dl className="record-details">
                 {permissionFields.map((field) => {
-                  const next = primary || !!review[field.key];
+                  const next = primary || (!link && first === true) || !!review[field.key];
                   const before = link?.[field.key as keyof CareLink];
                   return (
                     <div key={field.key}>
@@ -626,7 +645,23 @@ function LinkEditor({
                   );
                 })}
               </dl>
-              {primary && <p className="muted">{t('Người chăm sóc chính luôn có đủ quyền.')}</p>}
+              {!link && first === true && (
+                <p className="notice">
+                  {t(
+                    'Người này chưa có người chăm sóc nào, nên liên kết này sẽ là chăm sóc chính.',
+                  )}
+                </p>
+              )}
+              {(primary || (!link && first === true)) && (
+                <p className="muted">{t('Người chăm sóc chính luôn có đủ quyền.')}</p>
+              )}
+              {!link && first === null && (
+                <p className="muted">
+                  {t(
+                    'Nếu người này chưa có người chăm sóc nào, liên kết sẽ là chăm sóc chính và có đủ quyền.',
+                  )}
+                </p>
+              )}
               {error && (
                 <p className="notice error" role="alert">
                   {error}
