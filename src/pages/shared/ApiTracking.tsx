@@ -460,11 +460,6 @@ function PageLocations({ actor, people }: { actor: Person; people: Viu[] }) {
                       p5: time(current.data.updatedAt),
                     })}
                   </p>
-                  <p>
-                    {t(
-                      'Pin, mạng và độ chính xác của vị trí hiện tại chưa được máy chủ cung cấp. Xem giá trị tại từng bản ghi lịch sử bên dưới.',
-                    )}
-                  </p>
                 </>
               )}
             </State>

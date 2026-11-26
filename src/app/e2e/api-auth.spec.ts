@@ -3359,6 +3359,11 @@ for (const actorRole of ['Admin', 'CenterAdmin']) {
         await pick(dialog, 'Người khiếm thị *', 'VIU', /người khiếm thị mẫu/);
       }
       await dialog.getByRole('button', { name: 'Tạo liên kết', exact: true }).click();
+      // TC-FE52-01: the person has no link yet, so BE makes it primary with every permission.
+      const firstReview = dialog.getByRole('region', { name: 'Xác nhận thay đổi' });
+      await expect(firstReview).toContainText('sẽ là chăm sóc chính');
+      await expect(firstReview.locator('dl')).toContainText('Quản lý gương mặtCó');
+      await expect(firstReview.locator('dl')).not.toContainText('Không');
       await dialog.getByRole('button', { name: 'Xác nhận tạo liên kết' }).click();
       await expect(dialog).toHaveCount(0);
       await expect(page.getByRole('heading', { name: 'Chi tiết liên kết' })).toBeVisible();
