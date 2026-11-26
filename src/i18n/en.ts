@@ -1182,8 +1182,6 @@ export const en = {
   'Địa chỉ:': 'Address:',
   'Chưa có địa chỉ': 'No address yet',
   'Ghi nhận GPS: {p1} · Máy chủ cập nhật: {p5}': 'GPS recorded: {p1} · Server updated: {p5}',
-  'Pin, mạng và độ chính xác của vị trí hiện tại chưa được máy chủ cung cấp. Xem giá trị tại từng bản ghi lịch sử bên dưới.':
-    'Battery, network and accuracy of the current location are not in this API. See the values in each history record below.',
   'Lịch sử di chuyển': 'Movement history',
   'Thời gian không hợp lệ.': 'Invalid time.',
   'Không có lịch sử trong khoảng thời gian này.': 'No history in this time range.',
@@ -3368,6 +3366,10 @@ export const en = {
     '{who} stays in the system without a caregiver. If you skip this step, ask an administrator to link it.',
   'Chưa chắc tài khoản đã được tạo. Hãy thử lại với cùng email; nếu báo email đã được đăng ký, hãy nhờ quản trị viên liên kết giúp.':
     'The account may not have been created. Try again with the same email; if it is already registered, ask an administrator to link it.',
+  'Người này chưa có người chăm sóc nào, nên liên kết này sẽ là chăm sóc chính.':
+    'This person has no caregiver yet, so this link will be the primary one.',
+  'Nếu người này chưa có người chăm sóc nào, liên kết sẽ là chăm sóc chính và có đủ quyền.':
+    'If this person has no caregiver yet, the link will be the primary one with every permission.',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',
