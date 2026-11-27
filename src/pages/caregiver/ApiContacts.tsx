@@ -7,6 +7,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../hooks/useService';
 import { useLimit } from '../../hooks/useLimit';
 import { caregivingApi } from '../../services/api/caregiving';
+import { accountsApi } from '../../services/api/accounts';
+import { viuWord } from '../../constants/labels';
 import { contactsApi, contactTypes, type EmergencyContact } from '../../services/api/contacts';
 import { FilterPanel } from '../../components/FilterPanel';
 import { PageHead, State, Dialog, Confirm, Badge } from '../../components/UI';
@@ -16,11 +18,44 @@ import { uiStore, useUI } from '../../stores/ui';
 
 export function ApiContacts() {
   const { data: actor } = useSession();
-  return actor?.role === 'Caregiver' ? (
+  return actor?.role === 'Caregiver' || (actor?.role === 'CenterAdmin' && actor.orgId) ? (
     <Contacts key={actor.id + actor.orgId} actor={actor} />
   ) : null;
 }
+/** The people whose contacts this actor manages: linked care recipients, or the centre's VIUs. */
+type Choice = { id: string; fullName: string; email: string };
+type ChoicePage = {
+  items: Choice[];
+  page: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
+function people(
+  actor: Person,
+  page: number,
+  search: string,
+  signal?: AbortSignal,
+): Promise<ChoicePage> {
+  return actor.role === 'CenterAdmin'
+    ? accountsApi.list(
+        actor,
+        {
+          page,
+          search,
+          role: 'VisuallyImpaired',
+          active: '',
+          deleted: 'false',
+          organizationId: actor.orgId,
+        },
+        signal,
+      )
+    : caregivingApi.users(page, search, signal);
+}
 function Contacts({ actor }: { actor: Person }) {
+  const center = actor.role === 'CenterAdmin';
+  const who = viuWord(actor.role);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   // Shared with the other care-recipient pages; cleared on logout via uiStore.clear().
@@ -28,7 +63,7 @@ function Contacts({ actor }: { actor: Person }) {
   const setSelected = (id: string) => uiStore.set({ selectedViu: id });
   const users = useQuery({
     queryKey: ['api-contact-users', actor.id, actor.orgId, page, search],
-    queryFn: ({ signal }) => caregivingApi.users(page, search, signal),
+    queryFn: ({ signal }) => people(actor, page, search, signal),
     refetchInterval: 30000,
   });
   const person =
@@ -39,9 +74,13 @@ function Contacts({ actor }: { actor: Person }) {
     <>
       <PageHead
         title={t('Liên hệ khẩn cấp')}
-        description={t(
-          'Danh bạ khẩn cấp của người được chăm sóc. Lưu liên hệ không thực hiện cuộc gọi.',
-        )}
+        description={
+          center
+            ? t(
+                'Danh bạ khẩn cấp của người khiếm thị trong trung tâm. Lưu liên hệ không thực hiện cuộc gọi.',
+              )
+            : t('Danh bạ khẩn cấp của người được chăm sóc. Lưu liên hệ không thực hiện cuộc gọi.')
+        }
       />
       <section className="glass card stack viu-picker">
         <FilterPanel
@@ -69,15 +108,17 @@ function Contacts({ actor }: { actor: Person }) {
           }
         >
           <label className="field wide">
-            {t('Tìm người được chăm sóc')}
+            {center ? t('Tìm người khiếm thị') : t('Tìm người được chăm sóc')}
             <input name="search" placeholder={t('Tên, email hoặc số điện thoại')} />
           </label>
         </FilterPanel>
         <State loading={users.isPending} error={users.error} retry={() => users.refetch()}>
           <label className="field">
-            {t('Người được chăm sóc')}
+            {who}
             <select value={person?.id || ''} onChange={(e) => setSelected(e.target.value)}>
-              <option value="">{t('Chọn người được chăm sóc')}</option>
+              <option value="">
+                {center ? t('Chọn người khiếm thị') : t('Chọn người được chăm sóc')}
+              </option>
               {users.data?.items.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.fullName} · {item.email}
@@ -87,9 +128,11 @@ function Contacts({ actor }: { actor: Person }) {
           </label>
           {!person && (
             <p className="notice">
-              {t(
-                'Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.',
-              )}
+              {center
+                ? t('Chọn người khiếm thị ở trên để xem và thêm liên hệ cho đúng người.')
+                : t(
+                    'Chọn người được chăm sóc ở trên để xem danh sách và thêm mới thông tin cho đúng người.',
+                  )}
             </p>
           )}
           {users.data && users.data.totalPages > 1 && (
@@ -127,7 +170,13 @@ function Contacts({ actor }: { actor: Person }) {
               )}
             </div>
           )}
-          {!users.data?.items.length && <p>{t('Chưa có người được chăm sóc phù hợp.')}</p>}
+          {!users.data?.items.length && (
+            <p>
+              {center
+                ? t('Trung tâm chưa có người khiếm thị phù hợp.')
+                : t('Chưa có người được chăm sóc phù hợp.')}
+            </p>
+          )}
         </State>
       </section>
       {!users.error && person && (

@@ -1,3 +1,4 @@
+import { runtime } from '../../configs/runtime';
 import { ArrowRight, MapPinned, RefreshCw, Siren } from 'lucide-react';
 import { formatPhone } from '../../services/api/phone';
 import * as AnimatedTabs from '@animate-ui/react/primitives/radix-ui/tabs';
@@ -548,7 +549,7 @@ function EscalationBanner({ actor, open }: { actor: Person; open: (id: string) =
         <small>{t('Còn cảnh báo Đã gửi khác; lọc theo trạng thái Đã gửi để xem đủ.')}</small>
       )}
       <div className="row">
-        <a className="btn" href="tel:115">
+        <a className="btn" href={runtime.emergencyDialHref}>
           {t('Mở trình gọi 115')}
         </a>
         <small>

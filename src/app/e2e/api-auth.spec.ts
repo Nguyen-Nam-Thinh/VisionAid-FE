@@ -317,7 +317,10 @@ test('U7a: ICE CRUD, credential exclusion and uncertain writes', async ({ page }
   );
   await expect(page.getByText('EXISTING_SECRET')).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Lưu máy chủ' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('Nhập cả tên đăng nhập và mật khẩu');
+  // The message shows above the form and under both fields.
+  await expect(dialog.locator('p[role="alert"]')).toContainText(
+    'Nhập cả tên đăng nhập và mật khẩu',
+  );
   expect(writes).toHaveLength(0);
   await dialog.getByLabel('Mật khẩu (chỉ cho máy chủ chuyển tiếp)').fill('replacement');
   await dialog.getByLabel('Thứ tự dùng').fill('25');
@@ -346,7 +349,7 @@ test('U7a: ICE CRUD, credential exclusion and uncertain writes', async ({ page }
   await page.getByRole('button', { name: 'Thêm máy chủ', exact: true }).click();
   await dialog.getByLabel('Địa chỉ máy chủ').fill('https://wrong.test');
   await dialog.getByRole('button', { name: 'Lưu máy chủ' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('Địa chỉ phải');
+  await expect(dialog.locator('p[role="alert"]')).toContainText('Địa chỉ phải');
   expect(writes).toHaveLength(2);
   await dialog.getByLabel('Địa chỉ máy chủ').fill('stun:relay.test:3478');
   await page.screenshot({ path: 'test-results/stageU7a-create-mobile.png', fullPage: false });
@@ -509,7 +512,9 @@ test('13b: metrics, audit and delivery filters, details and independent errors',
   await page.getByRole('button', { name: 'Xem các thao tác trên đối tượng này' }).click();
   await expect.poll(() => calls.at(-1)?.searchParams.get('targetRecordId')).toBe(id);
   expect(calls.at(-1)?.searchParams.get('targetTable')).toBe('system_configurations');
-  await expect(page.getByText('Đang xem các thao tác trên một bản ghi')).toBeVisible();
+  await expect(
+    page.getByText('Đang xem các thao tác trên một cấu hình hệ thống cụ thể.'),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Bỏ lọc này' }).click();
   await expect.poll(() => calls.at(-1)?.searchParams.has('targetRecordId')).toBe(false);
   await page.goto('/admin/delivery');
@@ -627,7 +632,7 @@ test('13a: config edit, rollback old value, unknown key hidden and ambiguous wri
   const editor = page.getByRole('dialog', { name: 'Điều chỉnh cấu hình', exact: true });
   await editor.getByLabel('Giá trị mới').fill('31');
   await editor.getByRole('button', { name: 'Lưu cấu hình' }).click();
-  await expect(editor.getByRole('alert')).toContainText('giới hạn');
+  await expect(editor.locator('p[role="alert"]')).toContainText('giới hạn');
   expect(writes).toHaveLength(0);
   await editor.getByLabel('Giá trị mới').fill('8');
   await editor.getByLabel('Lý do thay đổi').fill('Test update');
@@ -2268,7 +2273,7 @@ test('profile save, reload, password rejection and successful change', async ({ 
   await page.getByLabel('Mật khẩu mới', { exact: false }).first().fill('NewPassword@2');
   await page.getByLabel('Nhập lại mật khẩu mới').fill('NewPassword@2');
   await actionDialog(page).getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Mật khẩu hiện tại không đúng.');
+  await expect(page.locator('p[role="alert"]')).toContainText('Mật khẩu hiện tại không đúng.');
   await expect(page).toHaveURL(/profile$/);
   accepted = true;
   await actionDialog(page).getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
@@ -2781,7 +2786,7 @@ test('5a Admin: create, detail, update, status, delete and restore with confirma
   await dialog.getByRole('button', { name: 'Xác nhận' }).click();
   await expect(dialog).toHaveCount(0);
   await openFilters(page);
-  await page.getByLabel('Tài khoản đã xóa').selectOption('true');
+  await page.getByLabel('Tổ chức đã xóa').selectOption('true');
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
   await page.getByRole('button', { name: 'Xem tổ chức ' + org.name }).click();
   await expect(page.getByRole('button', { name: 'Sửa tổ chức', exact: true })).toHaveCount(0);
@@ -5421,6 +5426,104 @@ test('11a: staff manages contacts with conflict recovery, confirmations and revo
   await expect(page.getByRole('alert')).toContainText('không còn liên kết');
   await expect(page.getByRole('button', { name: 'Thêm liên hệ', exact: true })).toHaveCount(0);
   expect(writes).toEqual(['POST', 'POST', 'PUT', 'PATCH', 'DELETE']);
+  expect(await page.locator('a[href^="tel:"], a[href^="zalo:"]').count()).toBe(0);
+});
+test('Center Admin manages emergency contacts of the centre’s visually impaired people', async ({
+  page,
+}) => {
+  await stubApi(page, 'CenterAdmin', organizationId);
+  const viuId = '01900000-0000-7000-8000-000000000062';
+  const writes: string[] = [];
+  const userQueries: URLSearchParams[] = [];
+  let contacts: Record<string, unknown>[] = [];
+  // A Center Admin has no care links; the page must never ask for them.
+  let linkReads = 0;
+  await page.route('**/api/caregiver-links**', (route) => {
+    linkReads++;
+    return route.fulfill({ status: 403, json: { detail: 'Không có liên kết' } });
+  });
+  await page.route('**/api/users?**', (route) => {
+    userQueries.push(new URL(route.request().url()).searchParams);
+    return route.fulfill({
+      json: {
+        success: true,
+        data: organizationPage([
+          {
+            id: viuId,
+            fullName: 'Cụ Ông Trung Tâm',
+            email: 'cuong@example.test',
+            phoneNumber: null,
+            role: 'VisuallyImpaired',
+            organizationId,
+            isActive: true,
+            avatarUrl: null,
+            deletedAt: null,
+            lastLoginAt: null,
+            createdAt: '2026-10-01T00:00:00Z',
+            updatedAt: '2026-10-01T00:00:00Z',
+          },
+        ]),
+      },
+    });
+  });
+  await page.route(`**/api/users/${viuId}/emergency-contacts**`, (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    const method = request.method();
+    if (method !== 'GET') writes.push(method);
+    if (method === 'POST') {
+      contacts = [
+        {
+          id: cgLinkId,
+          visuallyImpairedUserId: viuId,
+          isActive: true,
+          notes: null,
+          createdAt: '2026-11-27T00:00:00Z',
+          updatedAt: '2026-11-27T00:00:00Z',
+          ...request.postDataJSON(),
+        },
+      ];
+      return route.fulfill({ status: 201, json: { success: true, data: contacts[0] } });
+    }
+    if (method === 'PATCH') contacts = [{ ...contacts[0], ...request.postDataJSON() }];
+    if (method === 'DELETE') {
+      contacts = [];
+      return route.fulfill({ status: 204 });
+    }
+    return route.fulfill({
+      json: {
+        success: true,
+        data: path.endsWith('/emergency-contacts') ? contacts : contacts[0],
+      },
+    });
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Liên hệ khẩn cấp', exact: true }).click();
+  await expect(page).toHaveURL(/\/center-admin\/contacts$/);
+  await expect(
+    page.getByText('Danh bạ khẩn cấp của người khiếm thị trong trung tâm.', { exact: false }),
+  ).toBeVisible();
+  // Only the centre's visually impaired people, never deleted accounts.
+  expect(userQueries[0].get('role')).toBe('VisuallyImpaired');
+  expect(userQueries[0].get('organizationId')).toBe(organizationId);
+  expect(userQueries[0].get('isDeleted')).toBe('false');
+  // The only person in the centre is picked without asking.
+  await expect(page.getByRole('heading', { name: 'Danh bạ của Cụ Ông Trung Tâm' })).toBeVisible();
+  await page.getByRole('button', { name: 'Thêm liên hệ', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Tên liên hệ').fill('Con trai');
+  await dialog.getByLabel('Số điện thoại').fill('0901234567');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('cell', { name: /Con trai/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Tạm ngưng', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Kích hoạt', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Xóa', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByText('Chưa có liên hệ khẩn cấp.', { exact: true })).toBeVisible();
+  expect(writes).toEqual(['POST', 'PATCH', 'DELETE']);
+  expect(linkReads).toBe(0);
   expect(await page.locator('a[href^="tel:"], a[href^="zalo:"]').count()).toBe(0);
 });
 test('TC-FE26-01 · U5: distribute once, mask/copy key, then family activates and refreshes entitlement', async ({

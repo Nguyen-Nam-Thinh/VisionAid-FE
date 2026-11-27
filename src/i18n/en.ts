@@ -3370,6 +3370,11 @@ export const en = {
     'This person has no caregiver yet, so this link will be the primary one.',
   'Nếu người này chưa có người chăm sóc nào, liên kết sẽ là chăm sóc chính và có đủ quyền.':
     'If this person has no caregiver yet, the link will be the primary one with every permission.',
+  'Chọn người khiếm thị ở trên để xem và thêm liên hệ cho đúng người.': 'Choose a visually impaired person above to view and add contacts for the right person.',
+  'Chọn người khiếm thị': 'Choose a visually impaired person',
+  'Danh bạ khẩn cấp của người khiếm thị trong trung tâm. Lưu liên hệ không thực hiện cuộc gọi.': "Emergency contacts of the centre's visually impaired people. Saving a contact does not place a call.",
+  'Trung tâm chưa có người khiếm thị phù hợp.': 'The centre has no matching visually impaired person.',
+  'Tìm người khiếm thị': 'Find a visually impaired person',
   'Phía trước có bậc thềm,': 'Step ahead,',
   'cách khoảng 2 mét.': 'about 2 meters away.',
   'Người chăm sóc làm gì trên Web.': 'What caregivers do on the web.',
