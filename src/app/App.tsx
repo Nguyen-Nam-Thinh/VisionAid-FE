@@ -329,6 +329,7 @@ function Shell() {
           'assignments',
           'map',
           'alerts',
+          'contacts',
           'routing',
           'reports',
         ].includes(item.path)),
@@ -742,7 +743,8 @@ export function App() {
                         >
                           {f.role === 'Caregiver' && f.path === 'users' ? (
                             <ApiLinkedUsers />
-                          ) : f.role === 'Caregiver' && f.path === 'contacts' ? (
+                          ) : ['Caregiver', 'CenterAdmin'].includes(f.role) &&
+                            f.path === 'contacts' ? (
                             <ApiContacts />
                           ) : f.role === 'Caregiver' && f.path === 'locations' ? (
                             <ApiPlaces />

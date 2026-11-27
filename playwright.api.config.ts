@@ -20,6 +20,8 @@ export default defineConfig({
       VITE_API_BASE_URL: 'http://localhost:5176',
       VITE_SIGNALR_URL: 'http://localhost:5176/hubs/location',
       VITE_MAPBOX_PUBLIC_TOKEN: 'pk.eyJ1IjoiZTJlIiwiYSI6ImUyZSJ9.e2e',
+      // Tests check the real 115 link even when a local .env sets a test number.
+      VITE_EMERGENCY_DIAL_NUMBER: '',
     },
   },
   reporter: [['list'], ['html', { open: 'never' }]],
