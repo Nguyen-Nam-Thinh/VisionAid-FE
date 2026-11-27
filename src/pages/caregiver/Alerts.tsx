@@ -1,3 +1,4 @@
+import { runtime } from '../../configs/runtime';
 import { t } from '../../i18n';
 import { useNow } from '../../hooks/useNow';
 import { useState } from 'react';
@@ -153,7 +154,7 @@ export function Alerts() {
                   {label[s]}
                 </button>
               ))}
-              <a className="btn" href="tel:115">
+              <a className="btn" href={runtime.emergencyDialHref}>
                 <Phone size={16} />
                 {t('Mở trình gọi 115')}
               </a>

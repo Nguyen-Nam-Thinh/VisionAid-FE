@@ -112,3 +112,18 @@ it('explains a taken priority (409) in Vietnamese and keeps other conflicts unch
     message: 'Contact limit reached.',
   });
 });
+it('lets a Center Admin manage contacts without a care link; BE checks the organization', async () => {
+  const root = `/api/users/${viuId}/emergency-contacts`;
+  const get = vi.fn<NonNullable<Parameters<typeof createContactsApi>[0]>>(async (path) =>
+    path === root ? [contact] : contact,
+  );
+  const write = vi.fn<NonNullable<Parameters<typeof createContactsApi>[1]>>(async () => contact);
+  const api = createContactsApi(get, write);
+  const center: Person = { ...actor, role: 'CenterAdmin' };
+  expect(await api.list(center, viuId)).toEqual([contact]);
+  await api.save(center, viuId, contact);
+  expect(write.mock.calls[0][0]).toBe(root);
+  expect(get.mock.calls.some(([path]) => String(path).includes('caregiver-links'))).toBe(false);
+  // A Center Admin without an organization has no scope.
+  await expect(api.list({ ...center, orgId: '' }, viuId)).rejects.toMatchObject({ status: 403 });
+});

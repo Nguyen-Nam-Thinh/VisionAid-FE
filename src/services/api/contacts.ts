@@ -54,6 +54,9 @@ export function createContactsApi(get = apiGet, write = apiWrite) {
   const base = (viuId: string) => `/api/users/${validId(viuId)}/emergency-contacts`;
   const authorize = async (actor: Person, viuId: string, signal?: AbortSignal) => {
     validId(viuId);
+    // BE lets a Center Admin manage the contacts of people in their own organization; it checks
+    // the organization itself, so there is no link to confirm here.
+    if (actor.role === 'CenterAdmin' && actor.orgId) return;
     if (actor.role !== 'Caregiver')
       throw new ServiceError(t('Màn hình này dành cho người chăm sóc có liên kết.'), 403);
     const links = await createCaregivingApi(get, write).links(actor.id, viuId, 1, signal);
